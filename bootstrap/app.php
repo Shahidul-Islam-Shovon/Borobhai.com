@@ -16,7 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin'   => \App\Http\Middleware\AdminMiddleware::class,
             'alumni'  => \App\Http\Middleware\AlumniMiddleware::class,
             'student' => \App\Http\Middleware\StudentMiddleware::class,
-        ]);
+            'role' =>   \App\Http\Middleware\CheckRole::class,
+            
+    ]);
+        
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
