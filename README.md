@@ -1,60 +1,167 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
-
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
-```
-
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-"# Borobhai.com" 
-"# Borobhai.com" 
+**Final Year Project Summary**
+**Project: Borobhai.com – Alumni Tracking and Networking Portal**
+*Design and Developed By – Shahidul Islam Khan*.
+This project will be a modern web-based platform that connects university alumni and
+current students in one centralized networking system.
+**The project goal is to:**
+* help students connect with senior alumni
+* provide career guidance
+* share internship/job opportunities
+* build professional networking
+* maintain alumni communication with the university
+**Project Development Approach**
+The project will be developed using:
+* approximately 40% custom human-written code
+* approximately 60% AI-assisted/generated code or can be more
+All code will be implemented, customized, tested, and validated manually during
+development.
+The developer (me) will mainly implement and integrate code with AI assistance.
+**Tech Stack**
+Backend
+* Laravel 11
+* PHP
+Frontend
+* Blade Template Engine
+* Bootstrap 5
+* AJAX
+* JavaScript
+Database
+* MySQL
+Additional Tools
+* Chart.js
+* Laravel Notifications (optional)
+* Pusher/WebSocket (optional later)
+**Main User Roles**
+1. Admin
+Can manage:
+* users
+* posts
+* jobs
+* reports
+* analytics
+* system settings
+2. Alumni
+Can:
+* create profile
+* create posts
+* post jobs/internships
+* connect with students
+* message users
+* Check Alumni thesis paper
+3. Student
+Can:
+* create profile
+* search alumni
+* apply for jobs
+* connect with alumni
+* interact with posts
+**Core Features**
+Authentication System
+* Login
+* Register
+* Forgot Password
+* Role-based Authentication
+Alumni Profile System
+* Profile image
+* Bio
+* Skills
+* Company
+* Experience
+* Social links
+Post & Feed System
+* Create post
+* Image upload
+* Like/comment system
+* News feed
+Job Portal
+* Alumni post jobs
+* Students apply
+* Application management
+Networking System
+* Send connection request
+* Accept/reject request
+* Friend list/network
+**Search System**
+Search by:
+* name
+* batch
+* department
+* research paper topic
+* company
+* skills
+**Messaging System**
+* Private messaging
+* Notifications
+**Admin Dashboard**
+* Total users
+* Total posts
+* Total jobs
+* Charts and analytics
+* User management
+**Project Architecture Modules**
+1. Authentication Module
+2. Profile Module
+3. Feed/Post Module
+4. Job Portal Module
+5. Networking Module
+6. Messaging Module
+7. Admin Dashboard Module
+**Database Tables (Planned)**
+* users
+* alumni_profiles
+* posts
+* research paper
+* comments
+* likes
+* jobs
+* job_applications
+* connections
+* messages
+* notifications
+**Development Strategy**
+The project will be developed step-by-step in phases.
+**Phase 1**
+Basic system setup:
+* Laravel installation
+* Authentication
+* Database setup
+* Admin dashboard
+**Phase 2**
+Core modules:
+* profiles
+* posts
+* jobs
+* search
+**Phase 3**
+Advanced features:
+* messaging
+* notifications
+* analytics
+* UI improvements
+**Phase 4**
+Finalization:
+* bug fixing
+* responsive design
+* hosting
+* documentation
+* presentation
+* viva preparation
+**Development Philosophy**
+The project should:
+* look modern and premium
+* be viva-board friendly
+* be achievable within 2 months
+* use Laravel efficiently
+* avoid unnecessary overengineering
+**The project should NOT use:**
+* Flutter
+* complex microservices
+* advanced AI systems
+* overly difficult realtime architecture
+**The focus should be:**
+* clean UI
+* strong database relationships
+* proper CRUD structure
+* professional dashboard
+* practical functionality
+**The End** 
