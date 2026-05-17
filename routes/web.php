@@ -3,24 +3,47 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
 
-// ১. স্টুডেন্ট বা ডিফল্ট ড্যাশবোর্ড (লারাভেলের ডিফল্টটাই রাখলাম আপাতত)
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-// ২. অ্যাডমিন ড্যাশবোর্ড রাউট (Admin Middleware দিয়ে সুরক্ষিত)
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/admin/dashboard', function () {
-        return "<h1>Welcome To Admin Panel</h1><p>This Can Access only Admin</p>";
-    })->name('admin.dashboard');
+// Public Landing Page
+Route::get('/', function () {
+    return view('welcome');
 });
 
-// ৩. অ্যালমনাই ড্যাশবোর্ড রাউট (Alumni Middleware দিয়ে সুরক্ষিত)
-Route::middleware(['auth', 'alumni'])->group(function () {
-    Route::get('/alumni/dashboard', function () {
-        return "<h1>Welcome To Alumni Dashboard</h1><p>This Can Access only Alumni</p>";
-    })->name('alumni.dashboard');
+// Authenticated Session Multi-Routing Fallback
+// If someone visits /dashboard directly, this middleware tree handles them safely
+Route::middleware(['auth'])->group(function () {
+    
+    // 1. Admin Space
+    Route::middleware(['admin'])->group(function () {
+        Route::get('/admin/dashboard', function () {
+            return "<h1>Welcome To Admin Panel</h1><p>This page is restricted to Administrators only.</p>";
+        })->name('admin.dashboard');
+    });
+
+    // 2. Alumni Space
+    Route::middleware(['alumni'])->group(function () {
+        Route::get('/alumni/dashboard', function () {
+            return "<h1>Welcome To Alumni Dashboard</h1><p>This page is restricted to Alumni members only.</p>";
+        })->name('alumni.dashboard');
+    });
+
+    // 3. Student Space (Standard Default Dashboard)
+    Route::middleware(['student'])->group(function () {
+        Route::get('/dashboard', function () {
+            return view('dashboard');
+        })->name('dashboard');
+    });
+
+    // Profile Management (Shared by all roles)
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-
+// Auth Routes (Breeze)
+require __DIR__.'/auth.php';

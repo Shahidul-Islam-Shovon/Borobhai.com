@@ -11,8 +11,6 @@ class AlumniMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -20,6 +18,18 @@ class AlumniMiddleware
             return $next($request);
         }
 
-        return redirect('/')->with('error', 'Only Alumni can access this page!');
+        if (Auth::check()) {
+            return $this->redirectBasedOnRole(Auth::user()->role);
+        }
+
+        return redirect()->route('login')->with('error', 'Please login to access this page.');
+    }
+
+    private function redirectBasedOnRole(string $role): Response
+    {
+        if ($role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('dashboard');
     }
 }
