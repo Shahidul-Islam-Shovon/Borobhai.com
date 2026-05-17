@@ -28,36 +28,50 @@ class RegisteredUserController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request): RedirectResponse
-    {
-       $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'in:student,alumni'], // সিকিউরিটির জন্য শুধু এই দুটি রোল অ্যালাউড
-        ]);
+   public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
+{
+    // ১. ব্রিজের ডিফল্ট ভ্যালিডেশন
+    $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+        'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        'role' => ['required', 'string', 'in:student,alumni'], // এই লাইনটি যোগ করুন
+    ]);
 
-        $user = User::create([
+    // ২. ডাটাবেজে ইউজার ক্রিয়েট করা
+    $user = User::create([
         'name' => $request->name,
         'email' => $request->email,
         'password' => Hash::make($request->password),
-        'role' => $request->role,
-        'status' => 'active', // ডিফল্ট এক্টিভ
+        'role' => $request->role, // ফর্ম থেকে আসা রোলটি ডাটাবেজে সেভ হবে
     ]);
 
-        event(new Registered($user));
+    event(new Registered($user));
 
-        Auth::login($user);
+    Auth::login($user);
 
-        // ইউজার রোল অনুযায়ী রিডাইরেক্ট পাথ ঠিক করা
-        $role = Auth::user()->role;
+    // 🔥 রোল অনুযায়ী ডাইনামিক রিডাইরেক্ট পাথ সেট করা
+    $redirectUrl = '/dashboard'; // ডিফল্ট সেফ ফলব্যাক
 
-        if ($role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        } elseif ($role === 'alumni') {
-            return redirect()->route('alumni.dashboard');
-        } else {
-            return redirect()->route('dashboard'); // Student-দের জন্য ডিফল্ট ড্যাশবোর্ড/ফিড
-        }
-            }
+    if ($user->role === 'admin') {
+        $redirectUrl = route('admin.dashboard');
+    } elseif ($user->role === 'student') {
+        $redirectUrl = route('student.dashboard'); // আপনার প্রজেক্টের স্টুডেন্ট ড্যাশবোর্ড রাউট নাম
+    } elseif ($user->role === 'alumni') {
+        $redirectUrl = route('alumni.dashboard'); // আপনার প্রজেক্টের এলামনাই ড্যাশবোর্ড রাউট নাম
+    } elseif ($user->role === 'alumni') {
+        $redirectUrl = route('alumni.dashboard'); 
+    }
+
+    // 🔥 আমাদের মডার্ন এজাক্স চেক (এখন এটি ডাইনামিক ইউআরএল পাঠাবে)
+    if ($request->ajax()) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Registration successful! Preparing your dashboard...',
+            'redirect' => $redirectUrl
+        ]);
+    }
+
+    return redirect($redirectUrl);
+}
 }

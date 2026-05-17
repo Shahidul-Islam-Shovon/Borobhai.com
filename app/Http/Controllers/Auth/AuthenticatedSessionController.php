@@ -22,25 +22,40 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
-    {
-        $request->authenticate();
 
-        $request->session()->regenerate();
+    public function store(LoginRequest $request): RedirectResponse|\Illuminate\Http\JsonResponse
+{
+    // ১. ব্রিজের ডিফল্ট অথেন্টিকেশন লজিক (ইমেইল-পাসওয়ার্ড চেক)
+    $request->authenticate();
 
-        // Custom Role-Based Redirection Logic
-        $user = Auth::user();
+    $request->session()->regenerate();
 
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        } elseif ($user->role === 'alumni') {
-            return redirect()->route('alumni.dashboard');
-        } elseif ($user->role === 'student') {
-            return redirect()->route('dashboard');
-        }
+    // ২. লগইন করা ইউজারের অবজেক্ট নেওয়া
+    $user = Auth::user();
 
-        return redirect('/');
+    // ৩. ইউজারের রোল অনুযায়ী ডাইনামিক রিডাইরেক্ট পাথ সেট করা
+    $redirectUrl = '/dashboard'; // সেফ ফলব্যাক ইউআরএল
+
+    if ($user->role === 'admin') {
+        $redirectUrl = route('admin.dashboard');
+    } elseif ($user->role === 'student') {
+        $redirectUrl = route('student.dashboard'); // আপনার স্টুডেন্ট ড্যাশবোর্ড রাউট নেম
+    } elseif ($user->role === 'alumni') {
+        $redirectUrl = route('alumni.dashboard'); // আপনার এলামনাই ড্যাশবোর্ড রাউট নেম
     }
+
+    // 🔥 আমাদের মডার্ন এজাক্স চেক (লগইনের পর সঠিক ড্যাশবোর্ডে পাঠাবে)
+    if ($request->ajax()) {
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful! Redirecting to your dashboard...',
+            'redirect' => $redirectUrl
+        ]);
+    }
+
+    return redirect()->intended($redirectUrl);
+}
+     
 
     /**
      * Destroy an authenticated session (Logout Logic).

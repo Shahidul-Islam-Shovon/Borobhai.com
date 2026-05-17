@@ -85,24 +85,27 @@
         </div>
     </div>
     
-    <div class="split-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+    <div class="split-card">
+    <div class="chart-header-flex">
         <div>
-            <h5 style="font-weight: 700; color: #0f172a; margin-bottom: 2px;">Administrative Core</h5>
-            <p style="color: #64748b; font-size: 0.8rem;">Fast control triggers</p>
+            <h5 style="font-weight: 700; color: #0f172a; margin-bottom: 2px;">User Metrics Stream</h5>
+            <p style="color: #64748b; font-size: 0.8rem;">Platform registration analysis</p>
         </div>
-        <div class="control-btn-stack">
-            <button class="btn-action-core btn-core-dark"><i class="fa-solid fa-user-shield"></i> Verify Profiles</button>
-            <button class="btn-action-core btn-core-outline"><i class="fa-solid fa-paper-plane"></i> System Broadcast</button>
-            <button class="btn-action-core btn-core-outline" style="background: #f8fafc;"><i class="fa-solid fa-database"></i> Database Backup</button>
-        </div>
+        <span class="live-dot-badge">Live Tracking</span>
     </div>
+    <div style="position: relative; height:260px; width:100%;">
+        <canvas id="metricsChartContainer"></canvas>
+    </div>
+</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const ctx = document.getElementById('metricsChartContainer').getContext('2d');
+        const canvas = document.getElementById('metricsChartContainer');
+        if(!canvas) return;
         
+        const ctx = canvas.getContext('2d');
         const gradient = ctx.createLinearGradient(0, 0, 0, 250);
         gradient.addColorStop(0, 'rgba(37, 99, 235, 0.15)');
         gradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
@@ -128,8 +131,8 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { family: 'Inter' } } },
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: 'Inter' } } }
+                    y: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8' } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
                 }
             }
         });
