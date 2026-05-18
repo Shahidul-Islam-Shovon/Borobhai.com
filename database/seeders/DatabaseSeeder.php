@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
 
         // 2. Create Sample Alumni Account for testing
         User::updateOrCreate(
-            ['email' => 'alumni@borobhai.com'],
+            ['email' => 'shahidul.webdev@gmail.com'],
             [
                 'name' => 'John Doe (Alumni)',
                 'password' => Hash::make('Alumni@1234'),

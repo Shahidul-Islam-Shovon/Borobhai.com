@@ -176,18 +176,21 @@
         </div>
 
         <div class="mb-4">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <label class="form-label mb-0">Password</label>
-                @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" style="font-size: 0.82rem; color: #2563eb; text-decoration: none; font-weight: 500;">Forgot Password?</a>
-                @endif
-            </div>
-            <div class="input-group-custom">
-                <input type="password" id="password" name="password" class="form-control-custom" placeholder="••••••••" required autocomplete="current-password">
-                <i class="fa-regular fa-lock-keyhole input-icon"></i>
-            </div>
-            <div class="error-text" id="passwordError"></div>
-        </div>
+    <div class="d-flex justify-content-between align-items-center mb-1">
+        <label class="form-label mb-0">Password</label>
+        @if (Route::has('password.request'))
+            <a href="{{ route('password.request') }}" style="font-size: 0.82rem; color: #2563eb; text-decoration: none; font-weight: 500;">Forgot Password?</a>
+        @endif
+    </div>
+    <div class="input-group-custom">
+        <input type="password" id="password" name="password" class="form-control-custom" placeholder="" required autocomplete="current-password" style="padding-right: 45px;">
+        <i class="fa-regular fa-lock-keyhole input-icon"></i>
+        <span id="togglePassword" style="position: absolute; right: 16px; color: #94a3b8; cursor: pointer; z-index: 10;">
+            <i class="fa-regular fa-eye" id="eyeIcon"></i>
+        </span>
+    </div>
+    <div class="error-text" id="passwordError"></div>
+</div>
 
         <div class="form-check mb-4 text-start">
             <input class="form-check-input" type="checkbox" name="remember" id="remember_me" style="cursor: pointer; border-radius: 4px;">
@@ -208,6 +211,29 @@
 </div>
 
 <script>
+// 🔥 ১. পাসওয়ার্ড শো/হাইড করার ম্যাজিক লজিক
+const togglePassword = document.getElementById('togglePassword');
+const passwordInput = document.getElementById('password');
+const eyeIcon = document.getElementById('eyeIcon');
+
+togglePassword.addEventListener('click', function () {
+    // টাইপ টেক্সট হলে পাসওয়ার্ড দেখা যাবে, পাসওয়ার্ড হলে হাইড হবে
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    
+    // আইকন চেঞ্জ করা (চোখ খোলা এবং চোখ বন্ধ)
+    if (type === 'text') {
+        eyeIcon.classList.remove('fa-eye');
+        eyeIcon.classList.add('fa-eye-slash');
+        eyeIcon.style.color = '#2563eb'; // একটিভ হলে ব্লু কালার হবে
+    } else {
+        eyeIcon.classList.remove('fa-eye-slash');
+        eyeIcon.classList.add('fa-eye');
+        eyeIcon.style.color = '#94a3b8';
+    }
+});
+
+// 🔥 ২. এজাক্স লগইন সাবমিশন লজিক
 document.getElementById('ajaxLoginForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -217,14 +243,15 @@ document.getElementById('ajaxLoginForm').addEventListener('submit', function(e) 
     const btnSpinner = document.getElementById('btnSpinner');
     const globalAlert = document.getElementById('globalAlert');
 
-    // ক্লিয়ার প্রিভিয়াস এররস
+    // আগের এরর ক্লিয়ার করা
     document.querySelectorAll('.error-text').forEach(el => { el.style.display = 'none'; el.innerHTML = ''; });
     globalAlert.classList.add('d-none');
 
     loginBtn.disabled = true;
-    btnText.innerText = 'Verifying Credential...';
+    btnText.innerText = 'Verifying Credentials...';
     btnSpinner.classList.remove('d-none');
 
+    // FormData এখানে অটোমেটিক ইমেইল, পাসওয়ার্ড এবং 'remember' চেকবক্সের ভ্যালু নিয়ে নেয়
     const formData = new FormData(form);
 
     fetch(form.action, {
@@ -272,5 +299,7 @@ document.getElementById('ajaxLoginForm').addEventListener('submit', function(e) 
     });
 });
 </script>
+
+
 </body>
 </html>

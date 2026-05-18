@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -24,22 +25,39 @@ class PasswordResetLinkController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'email' => ['required', 'email'],
-        ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+    public function store(Request $request): RedirectResponse|JsonResponse
+{
+    $request->validate([
+        'email' => ['required', 'email'],
+    ]);
 
-        return $status == Password::RESET_LINK_SENT
-                    ? back()->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+    // ব্রিজের ডিফল্ট মেকানিজমে মেইল পাঠানো
+    $status = Password::broker()->sendResetLink(
+        $request->only('email')
+    );
+
+    if ($status === Password::RESET_LINK_SENT) {
+        // 🔥 এজাক্স রিকোয়েস্ট হলে সুন্দর JSON রেসপন্স ব্যাক করা
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => __($status) // "We have emailed your password reset link."
+            ]);
+        }
+
+        return back()->with('status', __($status));
     }
+
+    // যদি ইমেইল ভুল হয় বা কোনো প্রবলেম হয়
+    if ($request->ajax()) {
+        return response()->json([
+            'success' => false,
+            'errors' => ['email' => [__($status)]]
+        ], 422);
+    }
+
+    return back()->withErrors(['email' => __($status)]);
+}
+   
 }
