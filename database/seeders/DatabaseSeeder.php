@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         // 1. Create Default Admin Account
         User::updateOrCreate(
-            ['email' => 'admin@borobhai.com'],
+            ['email' => 'shahidul.webdev@gmail.com'],
             [
                 'name' => 'System Administrator',
                 'password' => Hash::make('Admin@1234'), // Secure default password
@@ -26,9 +26,9 @@ class DatabaseSeeder extends Seeder
 
         // 2. Create Sample Alumni Account for testing
         User::updateOrCreate(
-            ['email' => 'shahidul.webdev@gmail.com'],
+            ['email' => 'shahidul.shovon.work@gmail.com'],
             [
-                'name' => 'John Doe (Alumni)',
+                'name' => 'John Doe',
                 'password' => Hash::make('Alumni@1234'),
                 'role' => 'alumni',
                 'status' => 'active',
@@ -39,7 +39,7 @@ class DatabaseSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'student@borobhai.com'],
             [
-                'name' => 'Alex Smith (Student)',
+                'name' => 'Alex Smith',
                 'password' => Hash::make('Student@1234'),
                 'role' => 'student',
                 'status' => 'active',
