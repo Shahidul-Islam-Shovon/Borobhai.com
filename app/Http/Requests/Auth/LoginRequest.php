@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class LoginRequest extends FormRequest
 {
@@ -38,20 +40,54 @@ class LoginRequest extends FormRequest
      *
      * @throws ValidationException
      */
-    public function authenticate(): void
-    {
-        $this->ensureIsNotRateLimited();
+    /**
+ * Attempt to authenticate the request's credentials.
+ * ল্যারাভেল ১৩ + ব্রিজ: লগইন সাকসেস হওয়ার আগেই সাসপেনশন ফায়ারওয়াল (BUG FIXED)
+ *
+ * @throws \Illuminate\Validation\ValidationException
+ */
+public function authenticate(): void
+{
+    $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+    // ১. ডেটাবেজ থেকে লগইন করতে চাওয়া ইউজারকে খুঁজে বের করা
+    $user = User::query()->where('email', $this->boolean('email') ? null : $this->string('email'))->first();
 
-            throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
-            ]);
+    // ২. ইউজার যদি এক্সিস্ট করে এবং তার দেওয়া পাসওয়ার্ড যদি একদম সঠিক হয়
+    if ($user && Hash::check($this->string('password'), $user->password)) {
+        
+        // চেক ১: পারমানেন্ট সাসপেনশন
+        if ($user->status === 'suspended_perm') {
+            redirect()->route('login')->with('suspended_error', 'Security Alert: You are Suspended Permanently from this site.')->send();
+            exit;
         }
 
-        RateLimiter::clear($this->throttleKey());
+        // 🚫 চেক ২: সাময়িক (৭ দিন) সাসপেনশন
+            if ($user->status === 'suspended_temp') {
+                if ($user->suspended_until && now()->greaterThan($user->suspended_until)) {
+                    $user->status = 'active';
+                    $user->suspended_until = null;
+                    $user->save();
+                } else {
+                    $unlockTime = $user->suspended_until ? $user->suspended_until->format('j M Y, \a\t h:i A') : 'N/A';
+                    
+                    redirect()->route('login')->with('suspended_error', "Access Denied: You are Suspended By Admin. Unlocks at: {$unlockTime}.")->send();
+                    exit;
+                }
+            }
     }
+
+    // ৩. ইউজার যদি একটিভ থাকে, তবেই কেবল ব্রিজের ডিফল্ট লগইন সাকসেস এটেম্পট রান হবে
+    if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        RateLimiter::hit($this->throttleKey());
+
+        throw ValidationException::withMessages([
+            'email' => __('auth.failed'),
+        ]);
+    }
+
+    RateLimiter::clear($this->throttleKey());
+}
 
     /**
      * Ensure the login request is not rate limited.

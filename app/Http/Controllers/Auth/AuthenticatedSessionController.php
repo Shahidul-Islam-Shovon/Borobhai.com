@@ -4,10 +4,14 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Providers\RouteServiceProvider;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+use App\Models\User;
+use Carbon\Carbon;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -22,43 +26,70 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
+    public function store(LoginRequest $request)
+    {
+        // ১. ইমেইল দিয়ে ইউজার অবজেক্ট খুঁজে বের করা
+        $user = User::where('email', $request->email)->first();
 
-    public function store(LoginRequest $request): RedirectResponse|\Illuminate\Http\JsonResponse
-{
-    // ১. ব্রিজের ডিফল্ট অথেন্টিকেশন লজিক (ইমেইল-পাসওয়ার্ড চেক)
-    $request->authenticate();
+        if ($user) {
+            // ২. পাসওয়ার্ড চেক করা
+            if (Hash::check($request->password, $user->password)) {
+                
+                // 🛡️ ৩. ইউজার যদি একটিভ না থাকে (সাসপেন্ডেড থাকে)
+                if ($user->status !== 'active') {
+    
+                // টেম্পোরারি সাসপেনশনের ডেট পার হয়ে গেছে কি না চেক
+                if ($user->status === 'suspended_temp' && $user->suspended_until && Carbon::now()->greaterThan(Carbon::parse($user->suspended_until))) {
+                    $user->status = 'active';
+                    $user->suspended_until = null;
+                    $user->save();
+                } else {
+                    // 👑 একদম নিখুঁত কাস্টম ডেট ফরম্যাট: 26 May 2026 at 09:50 AM
+                    if ($user->status === 'suspended_perm') {
+                        $errorMessage = "Access Denied: Your account has been permanently suspended.";
+                    } else {
+                        // 'j M Y \a\t g:i A' দিয়ে দিন, মাস, বছর এবং 'at' সহ ১২ ঘণ্টার সময় সেট করা হয়েছে
+                        $unlockTime = $user->suspended_until ? Carbon::parse($user->suspended_until)->format('j M Y \a\t g:i A') : 'N/A';
+                        $errorMessage = "Access Denied: Temporarily suspended. Unlocks at: " . $unlockTime;
+                    }
 
-    $request->session()->regenerate();
+                    // AJAX বা Fetch রিকোয়েস্টের জন্য রেসপন্স
+                    if ($request->wantsJson() || $request->ajax()) {
+                        return response()->json([
+                            'errors' => ['email' => [$errorMessage]]
+                        ], 422);
+                    }
 
-    // ২. লগইন করা ইউজারের অবজেক্ট নেওয়া
-    $user = Auth::user();
+                    return redirect()->back()->withInput($request->only('email', 'remember'))->withErrors([
+                        'email' => $errorMessage,
+                    ]);
+                }
+            }
+                
+               
+            }
+        }
 
-    // ৩. ইউজারের রোল অনুযায়ী ডাইনামিক রিডাইরেক্ট পাথ সেট করা
-    $redirectUrl = '/dashboard'; // সেফ ফলব্যাক ইউআরএল
+        // ৪. ইউজার একটিভ থাকলে ল্যারাভেল ব্রিজের নরমাল অথেন্টিকেশন প্রসেস চলবে
+        $request->authenticate();
 
-    if ($user->role === 'admin') {
-        $redirectUrl = route('admin.dashboard');
-    } elseif ($user->role === 'student') {
-        $redirectUrl = route('student.dashboard'); // আপনার স্টুডেন্ট ড্যাশবোর্ড রাউট নেম
-    } elseif ($user->role === 'alumni') {
-        $redirectUrl = route('alumni.dashboard'); // আপনার এলামনাই ড্যাশবোর্ড রাউট নেম
+        $request->session()->regenerate();
+
+        // সফল লগইনের পর রোল অনুযায়ী সঠিক রিডাইরেক্ট ইউআরএল সেট করা
+        $redirectUrl = Auth::user()->role === 'admin' ? '/admin/dashboard' : '/dashboard';
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'redirect' => url($redirectUrl)
+            ], 200);
+        }
+
+        return redirect()->intended($redirectUrl);
     }
-
-    // 🔥 আমাদের মডার্ন এজাক্স চেক (লগইনের পর সঠিক ড্যাশবোর্ডে পাঠাবে)
-    if ($request->ajax()) {
-        return response()->json([
-            'success' => true,
-            'message' => 'Login successful! Redirecting to your dashboard...',
-            'redirect' => $redirectUrl
-        ]);
-    }
-
-    return redirect()->intended($redirectUrl);
-}
-     
 
     /**
-     * Destroy an authenticated session (Logout Logic).
+     * Destroy an authenticated session.
      */
     public function destroy(Request $request): RedirectResponse
     {

@@ -30,6 +30,16 @@ class User extends Authenticatable
         ];
     }
 
+        /**
+     * দ্য অ্যাট্রিবিউটস দ্যাট শুড বি কাস্টেড।
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        // 👑 বাগ ফিক্স: এই লাইনটি অবশ্যই যোগ করবেন
+        'suspended_until' => 'datetime', 
+    ];
+
     protected $fillable = [
     'name',
     'email',

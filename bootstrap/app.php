@@ -11,15 +11,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // এখানে আমাদের ৩টি কাস্টম মিডলওয়্যার রেজিস্টার করছি
+        // ১. আপনার আগের ৩টি কাস্টম মিডলওয়্যার ও রোল চেক অ্যালিয়াস (সংরক্ষিত)
         $middleware->alias([
             'admin'   => \App\Http\Middleware\AdminMiddleware::class,
             'alumni'  => \App\Http\Middleware\AlumniMiddleware::class,
             'student' => \App\Http\Middleware\StudentMiddleware::class,
-            'role' =>   \App\Http\Middleware\CheckRole::class,
-            
-    ]);
-        
+            'role'    => \App\Http\Middleware\CheckRole::class,
+        ]);
+
+        // ২. নতুন রিকোয়ারমেন্ট: ইউজার সাসপেনশন গ্লোবাল চেক মিডলওয়্যার (web গ্রুপে অ্যাপেন্ড)
+        // এটি প্রতিবার পেজ রিকোয়েস্ট বা রিলোডের সময় ব্যাকএন্ডে ইউজার স্ট্যাটাস চেক করবে
+        $middleware->web(append: [
+            \App\Http\Middleware\CheckUserStatus::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
