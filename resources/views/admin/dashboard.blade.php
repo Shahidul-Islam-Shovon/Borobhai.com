@@ -158,10 +158,10 @@
                 <table id="usersTable" class="table table-hover align-middle w-100">
                     <thead>
                         <tr>
-                            <th style="width: 8%;">UID</th>
-                            <th style="width: 27%;">User Details</th>
-                            <th style="width: 23%;">Email Address</th>
-                            <th style="width: 15%;">Account Role</th>
+                            <th style="width: 8%;">Id</th>
+                            <th style="width: 27%;">User Info</th>
+                            <th style="width: 23%;">Email</th>
+                            <th style="width: 15%;">User Role</th>
                             <th style="width: 10%; text-align: center;">Status</th>
                             <th style="width: 17%; text-align: right;">System Actions</th>
                         </tr>
@@ -183,7 +183,7 @@
                                             @endif
                                         </div>
                                         <div class="text-muted mt-0.5" style="font-size: 0.68rem; font-weight: 500;">
-                                            <i class="fa-regular fa-calendar-days me-1"></i>Joined: {{ $user->created_at->format('d M Y') }}
+                                            Joined: {{ $user->created_at->format('d M Y') }}
                                         </div>
                                     </div>
                                 </div>
