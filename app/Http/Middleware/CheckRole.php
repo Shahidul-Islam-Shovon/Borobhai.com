@@ -9,25 +9,32 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
 {
-   public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, $role)
     {
         if (!Auth::check()) {
             return redirect()->route('login');
         }
 
-        if (Auth::user()->role !== $role) {
-            $userRole = Auth::user()->role;
+        $user = Auth::user();
+
+        // 🔄 ইউজার যদি লগইন থাকে কিন্তু তার কারেন্ট রোল যদি রাউটের রোলের সাথে না মেলে
+        if ($user->role !== $role) {
             
-            // ডাবল রিডাইরেক্ট এড়াতে সরাসরি যার যার নির্দিষ্ট ড্যাশবোর্ড রাউটে ওয়ার্নিং সহ রিডাইরেক্ট
-            if ($userRole === 'admin') {
-                return redirect()->route('admin.dashboard')->with('warning', 'Unauthorized Access! You Are Not Allowed To Access Other Dashboard !!');
-            } elseif ($userRole === 'alumni') {
-                return redirect()->route('alumni.dashboard')->with('warning', 'Unauthorized Access! You Are Not Allowed To Access Other Dashboard !!');
-            } else {
-                return redirect()->route('student.dashboard')->with('warning', 'Unauthorized Access! You Are Not Allowed To Access Other Dashboard !!');
+            // ইউজার যদি আসলে এডমিন হয়, কিন্তু ভুল করে স্টুডেন্ট বা অন্য রাউটে ঢুকে পড়ে
+            if ($user->role === 'admin') {
+                return redirect()->route('admin.dashboard');
+            } 
+            // ইউজার যদি এলামনাই হয়
+            elseif ($user->role === 'alumni') {
+                return redirect()->route('alumni.dashboard');
+            } 
+            // ইউজার যদি স্টুডেন্ট হয়
+            else {
+                return redirect()->route('student.dashboard');
             }
         }
 
         return $next($request);
     }
 }
+   

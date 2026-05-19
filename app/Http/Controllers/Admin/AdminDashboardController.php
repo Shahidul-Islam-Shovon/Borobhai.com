@@ -51,57 +51,61 @@ class AdminDashboardController extends Controller
         ]);
     }
 
-    // 👑 রোল আপডেট মেথড
-    public function changeUserRole(Request $request, $id)
-    {
-        try {
-            $user = User::findOrFail($id);
-            $user->role = $request->role;
-            $user->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'User role updated successfully to ' . ucfirst($request->role)
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Database Error: ' . $e->getMessage()
-            ], 500);
-        }
+    //  রোল আপডেট মেথড
+    // ১. রোল চেঞ্জ মেথডে সিকিউরিটি লেয়ার
+public function changeUserRole(Request $request, $id)
+{
+    // মেইন সুপার অ্যাডমিনের আইডি যদি ১ হয় (আপনার আইডি ১ না হলে সেই নম্বরটি দিন)
+    if ($id == 1) {
+        return response()->json([
+            'success' => false,
+            'message' => 'The Main System Administrator is fully secured. Role cannot be altered!'
+        ], 403);
     }
 
-    // 👑 সাসপেনশন আপডেট মেথড
-    public function updateSuspensionStatus(Request $request, $id)
-    {
-        try {
-            $user = User::findOrFail($id);
-            $action = $request->action; 
+    $user = User::findOrFail($id);
+    $user->role = $request->role;
+    $user->save();
 
-            if ($action === 'temp') {
-                $user->status = 'suspended_temp';
-                $user->suspended_until = Carbon::now()->addDays(7);
-            } elseif ($action === 'perm') {
-                $user->status = 'suspended_perm';
-                $user->suspended_until = null;
-            } else {
-                $user->status = 'active';
-                $user->suspended_until = null;
-            }
-            
-            $user->save();
+    return response()->json([
+        'success' => true,
+        'message' => 'User role updated successfully to ' . ucfirst($request->role)
+    ]);
+}
+    
 
-            return response()->json([
-                'success' => true,
-                'message' => 'User status updated to ' . strtoupper($action) . ' successfully!'
-            ]);
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Database Error: ' . $e->getMessage()
-            ], 500);
-        }
+    //  সাসপেনশন আপডেট মেথড
+    // ২. সাসপেনশন মেথডে সিকিউরিটি লেয়ার
+public function updateSuspensionStatus(Request $request, $id)
+{
+    if ($id == 1) {
+        return response()->json([
+            'success' => false,
+            'message' => 'The Main System Administrator is fully secured. Action denied!'
+        ], 403);
     }
+
+    $user = User::findOrFail($id);
+    $action = $request->action;
+
+    if ($action === 'temp') {
+        $user->status = 'suspended_temp';
+        $user->suspended_until = now()->addDays(7);
+    } elseif ($action === 'perm') {
+        $user->status = 'suspended_perm';
+    } elseif ($action === 'active') {
+        $user->status = 'active';
+        $user->suspended_until = null;
+    }
+    
+    $user->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'User status updated successfully.'
+    ]);
+}
+    
 
     // পোস্ট ডিলিট
     public function deletePost($id)
