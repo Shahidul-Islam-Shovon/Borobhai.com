@@ -6,20 +6,19 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Premium Admin Control Center - Borobhai.com</title>
     
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }
         .sidebar { width: 260px; height: 100vh; background: #0f172a; position: fixed; top: 0; left: 0; padding: 25px 15px; color: #fff; z-index: 100; }
@@ -32,15 +31,33 @@
         .counter-card { background: #fff; border-radius: 20px; padding: 25px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
         .counter-icon { width: 55px; height: 55px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
         
-        /* DataTables Custom Styling to make it Premium */
+        /* 📋 ফাইনাল ক্লিন ও ছোট ফন্ট টেবিল UI */
         .card-table-wrapper { background: #fff; border-radius: 20px; padding: 25px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
-        .table th { background: #f8fafc !important; color: #64748b !important; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid #e2e8f0 !important; }
-        .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: #3b82f6 !important; color: #fff !important; border-color: #3b82f6 !important; border-radius: 8px; }
-        .form-control-sm { border-radius: 8px !important; padding: 0.4rem 0.8rem !important; border: 1px solid #cbd5e1; }
+        .table { font-size: 0.82rem !important; } 
+        .table th { background: #f8fafc !important; color: #64748b !important; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; border-bottom: 1px solid #e2e8f0 !important; padding: 12px 14px !important; }
+        .table td { padding: 12px 14px !important; vertical-align: middle; color: #334155; }
         
-        .badge-active { background-color: #d1fae5; color: #065f46; font-weight: 600; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; }
-        .badge-suspended { background-color: #fee2e2; color: #991b1b; font-weight: 600; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; }
+        /* ড্রপডাউন অপ্টিমাইজেশন */
+        .form-select-sm-custom { padding: 4px 8px !important; font-size: 0.78rem !important; border-radius: 6px; font-weight: 500; min-width: 105px; height: auto !important; }
+
+        .badge-active { background-color: #d1fae5; color: #065f46; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; }
+        .badge-suspended { background-color: #fee2e2; color: #991b1b; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; }
+        .badge-pending { background-color: #fef3c7; color: #92400e; font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; }
         
+        /* সিস্টেম অ্যাকশন প্রফেশনাল বাটন স্টাইল */
+        .btn-action-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border-radius: 6px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+        .btn-action-pill.temp-ban { color: #d97706; }
+        .btn-action-pill.temp-ban:hover { background: #fff7ed; border-color: #fdba74; }
+        .btn-action-pill.perm-ban { color: #dc2626; }
+        .btn-action-pill.perm-ban:hover { background: #fef2f2; border-color: #fca5a5; }
+        .btn-action-pill.activate { color: #16a34a; background: #f0fdf4; border-color: #86efac; }
+        .btn-action-pill.activate:hover { background: #bbf7d0; }
+
+        /* ডাইনামিক স্ট্যাটাস টেক্সট লেবেল */
+        .text-suspended-label { font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.3px; }
+        .text-suspended-label.temp { color: #d97706; }
+        .text-suspended-label.perm { color: #dc2626; }
+
         .tab-content-panel { display: none; }
         .tab-content-panel.active { display: block; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -66,7 +83,7 @@
 </div>
 
 <div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="fw-extrabold h3 mb-1 text-slate-900">Welcome back, Chief Admin!</h1>
             <p class="text-muted small mb-0">Borobhai.com control center is completely active.</p>
@@ -111,101 +128,92 @@
 
     <div id="users-tab" class="tab-content-panel">
         <div class="card-table-wrapper">
-
-           <h5 class="fw-bold mb-4"><i class="fa-solid fa-users-gear text-primary me-2"></i> Member Control Panel</h5>
-<div class="table-responsive">
-    <table id="usersTable" class="table table-hover align-middle w-100">
-        <thead>
-            <tr>
-                <th>User Details</th>
-                <th>Role (Assign Admin)</th>
-                <th>Joined Date</th>
-                <th class="text-center">Status</th>
-                <th class="text-end">Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{-- @foreach লুপটি এখানে সঠিকভাবে শুরু করা হলো --}}
-
-
-            @foreach($users as $user)
-    <tr id="user-row-{{ $user->id }}">
-        <td>
-            <div class="d-flex align-items-center gap-3">
-                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center fw-bold text-secondary" style="width: 42px; height: 42px;">
-                    {{ substr($user->name, 0, 1) }}
-                </div>
-                <div>
-                    <div class="fw-semibold">
-                        {{ $user->name }} 
-                        @if(auth()->id() == $user->id) 
-                            <span class="badge bg-primary ms-1" style="font-size: 10px;">You</span> 
-                        @endif
-                    </div>
-                    <div class="text-muted small">{{ $user->email }}</div>
-                </div>
-            </div>
-        </td>
-        <td>
-            {{--  বাগ ফিক্স: লগইন থাকা এডমিন নিজের রোল চেঞ্জ করতে পারবে না --}}
-            @if(auth()->id() == $user->id)
-                <span class="badge bg-dark px-3 py-2" style="border-radius: 8px;">Admin</span>
-            @else
-                <select onchange="changeUserRole({{ $user->id }}, this.value)" class="form-select form-select-sm" style="border-radius: 8px; width: 110px;">
-                    <option value="student" {{ $user->role == 'student' ? 'selected' : '' }}>Student</option>
-                    <option value="alumni" {{ $user->role == 'alumni' ? 'selected' : '' }}>Alumni</option>
-                    <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>
-                </select>
-            @endif
-        </td>
-        <td>{{ $user->created_at->format('Y-m-d') }}</td>
-        <td class="text-center">
-            <span id="status-badge-{{ $user->id }}" class="{{ $user->status === 'active' ? 'badge-active' : 'badge-suspended' }}">
-                @if($user->status === 'active') Active 
-                @elseif($user->status === 'suspended_temp') Temp Suspended
-                @else Perm Suspended @endif
-            </span>
-        </td>
-
-       <td class="text-end">
-    {{-- বাগ ফিক্স: এডমিন নিজেকে নিজে সাসপেন্ড করা ব্লক --}}
-    @if(auth()->id() == $user->id)
-        <button class="btn btn-light btn-sm border disabled" style="border-radius: 8px;" disabled>
-            <i class="fa-solid fa-lock text-muted"></i> Restricted
-        </button>
-    @else
-        <div class="dropdown d-inline-block">
-            <button class="btn btn-light btn-sm border dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 8px;">
-                <i class="fa-solid fa-user-shield me-1"></i> Manage Status
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                {{-- 🔄 টগল লজিক: ইউজার যদি অলরেডি সাসপেন্ডেড থাকে, তবে রিমুভ অপশন দেখাবে --}}
-                @if($user->status === 'suspended_temp' || $user->status === 'suspended_perm')
-                    <li>
-                        <a class="dropdown-item text-success fw-bold" href="javascript:void(0)" onclick="manageSuspension({{ $user->id }}, 'active')">
-                            <i class="fa-solid fa-key me-2"></i> Remove Suspension
-                        </a>
-                    </li>
-                @else
-                    {{-- ইউজার একটিভ থাকলে সাধারণ সাসপেনশন অপশনগুলো দেখাবে --}}
-                    <li><a class="dropdown-item text-warning fw-medium" href="javascript:void(0)" onclick="manageSuspension({{ $user->id }}, 'temp')"><i class="fa-solid fa-clock me-2"></i> Suspend: 7 Days</a></li>
-                    <li><a class="dropdown-item text-danger fw-medium" href="javascript:void(0)" onclick="manageSuspension({{ $user->id }}, 'perm')"><i class="fa-solid fa-ban me-2"></i> Suspend: Permanently</a></li>
-                @endif
-            </ul>
-        </div>
-    @endif
-</td>
-
-    </tr>
-@endforeach
-
-            
-            {{-- লুপ এখানে শেষ হলো --}}
-        </tbody>
-    </table>
-</div> 
-
-
+            <h5 class="fw-bold mb-4"><i class="fa-solid fa-users-gear text-primary me-2"></i> Member Control Panel</h5>
+            <div class="table-responsive">
+                <table id="usersTable" class="table table-hover align-middle w-100">
+                    <thead>
+                        <tr>
+                            <th style="width: 8%;">UID</th>
+                            <th style="width: 27%;">User Details</th>
+                            <th style="width: 22%;">Email Address</th>
+                            <th style="width: 15%;">Account Role</th>
+                            <th style="width: 10%; text-align: center;">Status</th>
+                            <th style="width: 18%; text-align: right;">System Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($users as $user)
+                        <tr id="user-row-{{ $user->id }}">
+                            <td class="fw-bold text-secondary">#{{ $user->id }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center fw-bold text-secondary" style="width: 35px; height: 35px; min-width: 35px; font-size: 0.82rem;">
+                                        {{ strtoupper(substr($user->name, 0, 1)) }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size: 0.82rem;">
+                                            {{ $user->name }} 
+                                            @if(auth()->id() == $user->id) 
+                                                <span class="badge bg-primary ms-1" style="font-size: 9px; padding: 2px 4px;">You</span> 
+                                            @endif
+                                        </div>
+                                        <div class="text-muted mt-0.5" style="font-size: 0.72rem; font-weight: 500;">
+                                            Joined: {{ $user->created_at->format('d M Y') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-secondary" style="font-size: 0.78rem;">{{ $user->email }}</td>
+                            <td>
+                                @if(auth()->id() == $user->id)
+                                    <span class="badge bg-dark px-2 py-1" style="border-radius: 4px; font-size: 0.75rem;">Admin</span>
+                                @else
+                                    <select data-previous="{{ $user->role }}" onchange="confirmRoleChange({{ $user->id }}, this)" class="form-select form-select-sm form-select-sm-custom">
+                                        <option value="student" {{ $user->role == 'student' ? 'selected' : '' }}>Student</option>
+                                        <option value="alumni" {{ $user->role == 'alumni' ? 'selected' : '' }}>Alumni</option>
+                                        <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>
+                                    </select>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <span class="{{ $user->status === 'active' ? 'badge-active' : ($user->status === 'suspended_temp' ? 'badge-pending' : 'badge-suspended') }}">
+                                    @if($user->status === 'active') <i class="fa-solid fa-circle-check"></i> Active 
+                                    @elseif($user->status === 'suspended_temp')  Tempurary Suspended 
+                                    @else Blocked Permanently 
+                                    @endif
+                                </span>
+                            </td>
+                            <td style="text-align: right;">
+                                @if(auth()->id() == $user->id)
+                                    <span class="text-muted style-disabled" style="font-size: 0.75rem;"><i class="fa-solid fa-lock"></i> Secured</span>
+                                @else
+                                    <div class="d-flex justify-content-end align-items-center gap-1">
+                                        @if($user->status === 'active')
+                                            <button onclick="manageSuspension({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Suspend 7 Days">
+                                                 Suspend 7 Days
+                                            </button>
+                                            <button onclick="manageSuspension({{ $user->id }}, 'perm')" class="btn-action-pill perm-ban" title="Suspend Permanently">
+                                                Suspend Permanently
+                                            </button>
+                                        @else
+                                            @if($user->status === 'suspended_temp')
+                                                <span class="text-suspended-label temp me-2">
+                                            @else
+                                                <span class="text-suspended-label perm me-2">
+                                            @endif
+                                            
+                                            <button onclick="manageSuspension({{ $user->id }}, 'active')" class="btn-action-pill activate" title="Remove Suspension">
+                                                <i class="fa-solid fa-circle-check"></i> Remove Suspension
+                                            </button>
+                                        @endif
+                                    </div>
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div> 
         </div>
     </div>
 
@@ -216,18 +224,18 @@
                 <table id="postsTable" class="table table-hover align-middle w-100">
                     <thead>
                         <tr>
-                            <th>Author</th>
-                            <th>Post Excerpt</th>
-                            <th>Published At</th>
-                            <th class="text-end">Action</th>
+                            <th style="width: 15%;">ID</th>
+                            <th style="width: 25%;">Author</th>
+                            <th style="width: 45%;">Post Excerpt</th>
+                            <th style="width: 15%; text-align: right;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($posts as $post)
                         <tr id="post-row-{{ $post->id }}">
+                            <td>#{{ $post->id }}</td>
                             <td><span class="fw-medium">{{ $post->user->name ?? 'Unknown' }}</span></td>
-                            <td><span class="text-muted d-inline-block text-truncate" style="max-width: 350px;">{{ $post->content }}</span></td>
-                            <td>{{ $post->created_at->format('Y-m-d') }}</td>
+                            <td><span class="text-muted d-inline-block text-truncate" style="max-width: 450px;">{{ $post->content }}</span></td>
                             <td class="text-end">
                                 <button onclick="deletePost({{ $post->id }})" class="btn btn-sm btn-light text-danger border px-3" style="border-radius: 8px;">
                                     <i class="fa-regular fa-trash-can me-1"></i> Terminate
@@ -248,18 +256,18 @@
                 <table id="circularsTable" class="table table-hover align-middle w-100">
                     <thead>
                         <tr>
-                            <th>Posted By</th>
-                            <th>Job Profile & Company</th>
-                            <th>Deadline</th>
-                            <th class="text-end">Action</th>
+                            <th style="width: 15%;">ID</th>
+                            <th style="width: 25%;">Posted By</th>
+                            <th style="width: 45%;">Job Profile & Company</th>
+                            <th style="width: 15%; text-align: right;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($circulars as $circular)
                         <tr id="circular-row-{{ $circular->id }}">
+                            <td>#{{ $circular->id }}</td>
                             <td><span class="fw-medium text-dark">{{ $circular->user->name ?? 'Alumni' }}</span></td>
                             <td><div><strong class="text-primary">{{ $circular->title }}</strong></div><span class="text-muted small"><i class="fa-solid fa-building me-1"></i> {{ $circular->company }}</span></td>
-                            <td><span class="badge bg-warning-subtle text-dark fw-semibold">{{ $circular->deadline }}</span></td>
                             <td class="text-end">
                                 <button onclick="deleteCircular({{ $circular->id }})" class="btn btn-sm btn-light text-danger border px-3" style="border-radius: 8px;">
                                     <i class="fa-solid fa-ban me-1"></i> Remove
@@ -275,284 +283,250 @@
 </div>
 
 <script>
+// ==========================================
+// ১. ট্যাব মেমোরি এবং স্ক্রোল রিস্টোর ইঞ্জিন 
+// ==========================================
+document.addEventListener("DOMContentLoaded", function() {
+    const activeTab = localStorage.getItem('admin_active_tab');
+    if (activeTab) {
+        document.querySelectorAll('.nav-link-custom').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.tab-content-panel').forEach(t => t.classList.remove('active'));
+        
+        const tabBtn = document.querySelector(`[data-target="${activeTab}"]`);
+        if (tabBtn) tabBtn.classList.add('active');
+        const tabContent = document.getElementById(activeTab);
+        if (tabContent) tabContent.classList.add('active');
+    }
 
-// --- ১. এডমিন অন্য কাউকে এডমিন বা অন্য রোল বানানোর ফাংশন ---
-function changeUserRole(userId, newRole) {
-    Swal.fire({
-        title: 'Change User Role?',
-        text: `Are you sure you want to change this user role to ${newRole.toUpperCase()}?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#3b82f6',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Yes, Update Role!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/admin/users/${userId}/change-role`, {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ role: newRole })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    Toast.fire({ icon: 'success', title: data.message });
-                } else {
-                    Toast.fire({ icon: 'error', title: data.message });
-                }
-            });
-        }
-    });
+    const savedScrollPos = localStorage.getItem("admin_scroll_pos");
+    if (savedScrollPos) {
+        setTimeout(() => {
+            window.scrollTo(0, parseInt(savedScrollPos));
+            localStorage.removeItem("admin_scroll_pos"); 
+        }, 60);
+    }
+});
+
+function saveDashboardState() {
+    localStorage.setItem("admin_scroll_pos", window.scrollY);
+    const activeTabEl = document.querySelector('.nav-link-custom.active');
+    if (activeTabEl) {
+        localStorage.setItem('admin_active_tab', activeTabEl.getAttribute('data-target'));
+    }
 }
 
-// --- ২. সাময়িক এবং পারমানেন্ট সাসপেনশন হ্যান্ডেলিং এজাক্স ---
-function manageSuspension(userId, actionType) {
-    let confirmText = "Activate this account / Remove suspension?";
-    if(actionType === 'temp') confirmText = "Suspend this user for exactly 7 Days?";
-    if(actionType === 'perm') confirmText = "Permanently suspend this user? They will never be able to login!";
-
-    Swal.fire({
-        title: 'Confirm Action',
-        text: confirmText,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: actionType === 'active' ? '#10b981' : '#ef4444',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Execute!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/admin/users/${userId}/suspension`, {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ action: actionType })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: data.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        // ⚡ ড্রপডাউন এবং স্ট্যাটাস ব্যাজ লাইভ সিঙ্ক করার জন্য ইনস্ট্যান্ট রিলোড
-                        window.location.reload();
-                    });
-                } else {
-                    Toast.fire({ icon: 'error', title: data.message });
-                }
-            });
-        }
-    });
-}
-
-// --- ১. নো-লোড ক্যাশড ট্যাব ইঞ্জিন ---
 document.querySelectorAll('.nav-link-custom').forEach(link => {
     link.addEventListener('click', function() {
         document.querySelectorAll('.nav-link-custom').forEach(l => l.classList.remove('active'));
         document.querySelectorAll('.tab-content-panel').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
         document.getElementById(this.getAttribute('data-target')).classList.add('active');
+        localStorage.setItem('admin_active_tab', this.getAttribute('data-target'));
     });
 });
 
-// --- ২. JQUERY DATATABLES INITIALIZATION (বড় ডেটাবেজ ম্যানেজমেন্ট) ---
+// ==========================================
+// ২. JQUERY DATATABLES INITIALIZATION
+// ==========================================
 $(document).ready(function() {
-    $('#usersTable').DataTable({ "pageLength": 10, "responsive": true, "order": [[2, "desc"]] });
-    $('#postsTable').DataTable({ "pageLength": 10, "responsive": true, "order": [[2, "desc"]] });
-    $('#circularsTable').DataTable({ "pageLength": 10, "responsive": true, "order": [[2, "desc"]] });
+    $('#usersTable').DataTable({ "pageLength": 10, "responsive": true, "order": [[0, "asc"]] });
+    $('#postsTable').DataTable({ "pageLength": 10, "responsive": true, "order": [[0, "desc"]] });
+    $('#circularsTable').DataTable({ "pageLength": 10, "responsive": true, "order": [[0, "desc"]] });
 });
 
-// --- ৩. সুইট-অ্যালার্ট টোস্ট ইঞ্জিন (প্রিমিয়াম নোটিফিকেশন) ---
-const Toast = Swal.mixin({
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 3000,
-    timerProgressBar: true
-});
+const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
 
-// --- ৪. প্রিমিয়াম সাইন-আউট কনফার্মেশন অ্যালার্ট ---
-function confirmLogout() {
+// ==========================================
+// ৩. রোল পরিবর্তন করার কনফার্মেশন মেথড
+// ==========================================
+function confirmRoleChange(userId, selectElement) {
+    const previousRole = selectElement.getAttribute('data-previous');
+    const newRole = selectElement.value;
+
     Swal.fire({
         title: 'Are you sure?',
-        text: "You will be safely logged out of the admin panel!",
+        text: `Do you want to change this user's role from ${previousRole.toUpperCase()} to ${newRole.toUpperCase()}?`,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#ef4444',
+        confirmButtonColor: '#2563eb',
         cancelButtonColor: '#64748b',
-        confirmButtonText: 'Yes, Sign Out!',
-        background: '#fff',
-        border: '1px solid #e2e8f0'
+        confirmButtonText: 'Yes, Update Role'
     }).then((result) => {
         if (result.isConfirmed) {
-            Swal.fire({
-                title: 'Logging out...',
-                text: 'Please wait a moment.',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
-            document.getElementById('logout-form').submit();
+            executeRoleChange(userId, newRole);
+        } else {
+            selectElement.value = previousRole;
         }
     });
 }
 
-// --- ৫. ইউজার স্ট্যাটাস পরিবর্তন এজাক্স (সুইট অ্যালার্ট সহ) ---
-function toggleUserStatus(userId) {
-    fetch(`/admin/users/${userId}/toggle-status`, {
+function executeRoleChange(userId, newRole) {
+    fetch(`/admin/users/${userId}/change-role`, {
         method: "POST",
         headers: {
-            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ role: newRole })
+    })
+    .then(async response => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Server error');
+        return data;
+    })
+    .then(data => {
+        saveDashboardState();
+        if (data.success) {
+            Swal.fire({ icon: 'success', title: data.message, timer: 1250, showConfirmButton: false })
+            .then(() => { window.location.reload(); });
         }
     })
-    .then(res => res.json())
-    .then(data => {
-        if(data.success) {
-            Toast.fire({ icon: 'success', title: data.message });
-            const badge = document.getElementById(`status-badge-${userId}`);
-            badge.innerText = data.new_status.charAt(0).toUpperCase() + data.new_status.slice(1);
-            badge.className = data.new_status === 'active' ? 'badge-active' : 'badge-suspended';
-        } else {
-            Toast.fire({ icon: 'error', title: data.message });
-        }
-    }).catch(() => Toast.fire({ icon: 'error', title: 'Connection error.' }));
+    .catch(error => {
+        Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+    });
 }
 
-// --- 👑 ৬. চার্ট কেটে যাওয়া ফিক্সড এবং প্রিমিয়াম লুক ইঞ্জিন ---
+// ==========================================
+// ৪. সাসপেনশন হ্যান্ডেলিং
+// ==========================================
+function manageSuspension(userId, action) {
+    let textBody = "";
+    let confirmText = "Confirm";
+    let confirmColor = '#2563eb';
+
+    if (action === 'temp') {
+        textBody = "Are you Sure ? You Want to Suspend This User For 7 Days ?";
+        confirmText = "Yes, Suspend";
+        confirmColor = '#d97706';
+    } else if (action === 'perm') {
+        textBody = "Are you Sure ? You Want to Suspend This User For Permanently ?";
+        confirmText = "Yes, Suspend Permanently";
+        confirmColor = '#dc2626';
+    } else if (action === 'active') {
+        textBody = "Are You Sure you want To Remove Suspension of this User ?";
+        confirmText = "Yes, Remove Suspension";
+        confirmColor = '#16a34a';
+    }
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: textBody,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: confirmColor,
+        cancelButtonColor: '#64748b',
+        confirmButtonText: confirmText
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/users/${userId}/suspension`, { 
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ action: action })
+            })
+            .then(async response => {
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Error updating status');
+                return data;
+            })
+            .then(data => {
+                saveDashboardState();
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: data.message, timer: 1250, showConfirmButton: false })
+                    .then(() => { window.location.reload(); });
+                }
+            })
+            .catch(error => {
+                Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+            });
+        }
+    });
+}
+
+// ==========================================
+// 📊 ৫. চার্ট রেন্ডারিং ইঞ্জিন
+// ==========================================
 document.addEventListener("DOMContentLoaded", function() {
     fetch('/admin/dashboard/analytics-data', { method: 'GET' })
     .then(res => res.json())
     .then(data => {
-        const ctx = document.getElementById('adminTrendChart').getContext('2d');
-        
-        // চার্টের লাইনগুলোর জন্য প্রিমিয়াম গ্রাডিয়েন্ট এফেক্ট তৈরি
-        const blueGradient = ctx.createLinearGradient(0, 0, 0, 400);
+        const chartCanvas = document.getElementById('adminTrendChart');
+        if (!chartCanvas) return;
+
+        const ctx = chartCanvas.getContext('2d');
+        const blueGradient = ctx.createLinearGradient(0, 0, 0, 350);
         blueGradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
         blueGradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
 
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: data.labels,
+                labels: data.labels || [],
                 datasets: [
-                    {
-                        label: 'New Registrations',
-                        data: data.users,
-                        borderColor: '#3b82f6',
-                        backgroundColor: blueGradient,
-                        borderWidth: 3,
-                        pointBackgroundColor: '#3b82f6',
-                        pointHoverRadius: 7,
-                        tension: 0.35,
-                        fill: true
-                    },
-                    {
-                        label: 'Engagement (Posts)',
-                        data: data.posts,
-                        borderColor: '#10b981',
-                        backgroundColor: 'transparent',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#10b981',
-                        tension: 0.35,
-                        borderDash: [6, 4]
-                    }
+                    { label: 'New Registrations', data: data.users || [], borderColor: '#3b82f6', backgroundColor: blueGradient, borderWidth: 3, fill: true, tension: 0.35 },
+                    { label: 'Engagement (Posts)', data: data.posts || [], borderColor: '#10b981', backgroundColor: 'transparent', borderWidth: 2, tension: 0.35, borderDash: [6, 4] }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: {
-                    padding: { left: 10, right: 25, top: 10, bottom: 20 } // টেক্সট কাটার মেইন সলিউশন
-                },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: { boxWidth: 12, font: { family: 'Plus Jakarta Sans', size: 12, weight: 500 } }
-                    }
-                },
+                plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', size: 12 } } } },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { padding: 10, font: { family: 'Plus Jakarta Sans', size: 11 } },
-                        grid: { color: '#f1f5f9' }
-                    },
-                    x: {
-                        ticks: { padding: 10, font: { family: 'Plus Jakarta Sans', size: 11 } },
-                        grid: { display: false }
-                    }
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                    x: { grid: { display: false } }
                 }
             }
         });
-    });
+    }).catch(err => console.error('Chart Load Error:', err));
 });
 
-// --- ৭. পোস্ট ও সার্কুলার ডিলিট মডারেশন এজাক্স ---
-function deletePost(postId) {
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "This post will be permanently deleted!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
+function confirmLogout() {
+    Swal.fire({ 
+        title: 'Are you sure?', 
+        text: "You will be logged out of the session!", 
+        icon: 'warning', 
+        showCancelButton: true, 
+        confirmButtonColor: '#ef4444', 
         cancelButtonColor: '#64748b',
-        confirmButtonText: 'Yes, Delete it!'
-    }).then((result) => {
+        confirmButtonText: 'Yes, Sign Out!' 
+    }).then((result) => { 
         if (result.isConfirmed) {
-            fetch(`/admin/posts/${postId}/delete`, {
-                method: "DELETE",
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    Toast.fire({ icon: 'success', title: data.message });
-                    $('#postsTable').DataTable().row(`#post-row-${postId}`).remove().draw(false);
-                }
+            // ১. ওয়ান-টাইম সাকসেস মেসেজ টোস্ট (অপশনাল কিন্তু প্রিমিয়াম লুক দেয়)
+            Swal.fire({
+                icon: 'success',
+                title: 'Signing Out...',
+                text: 'You have been logged out successfully.',
+                showConfirmButton: false,
+                timer: 1500, // ১.৫ সেকেন্ডের প্রিমিয়াম ডিলে
+                timerProgressBar: true
             });
+
+            // ২. মেসেজটি শেষ হওয়ার পর ফর্ম সাবমিট হবে
+            setTimeout(() => {
+                document.getElementById('logout-form').submit();
+            }, 1300);
+        } 
+    });
+}
+
+function deletePost(postId) {
+    Swal.fire({ title: 'Are you sure?', text: "Permanently delete this post?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Yes, Delete!' }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/posts/${postId}/delete`, { method: "DELETE", headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') } })
+            .then(res => res.json()).then(data => { if(data.success) { Toast.fire({ icon: 'success', title: data.message }); $('#postsTable').DataTable().row(`#post-row-${postId}`).remove().draw(false); } });
         }
     });
 }
 
 function deleteCircular(circularId) {
-    Swal.fire({
-        title: 'Delete Circular?',
-        text: "This circular will be removed from job board!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Yes, Remove!'
-    }).then((result) => {
+    Swal.fire({ title: 'Delete Circular?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Yes, Remove!' }).then((result) => {
         if (result.isConfirmed) {
-            fetch(`/admin/circulars/${circularId}/delete`, {
-                method: "DELETE",
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    Toast.fire({ icon: 'success', title: data.message });
-                    $('#circularsTable').DataTable().row(`#circular-row-${circularId}`).remove().draw(false);
-                    const counter = document.getElementById('count-circulars');
-                    if(counter) counter.innerText = parseInt(counter.innerText) - 1;
-                }
-            });
+            fetch(`/admin/circulars/${circularId}/delete`, { method: "DELETE", headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') } })
+            .then(res => res.json()).then(data => { if(data.success) { Toast.fire({ icon: 'success', title: data.message }); $('#circularsTable').DataTable().row(`#circular-row-${circularId}`).remove().draw(false); } });
         }
     });
 }
