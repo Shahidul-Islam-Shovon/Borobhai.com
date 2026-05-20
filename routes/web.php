@@ -40,6 +40,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // জব/সার্কুলার মডারেশন (AJAX Delete)
     Route::delete('/circulars/{id}/delete', [AdminDashboardController::class, 'deleteCircular'])->name('circulars.delete');
+
+    // আপনার অ্যাডমিন বা সুপার অ্যাডমিন রাউট গ্রুপের ভেতরে এই লাইনটি যোগ করুন
+    Route::post('/admin/manage-authority', [AdminDashboardController::class, 'manageAuthority'])->name('admin.manage.authority');
 });
 
 // Group for Student Protected Routes
@@ -51,5 +54,10 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->group(function (
 Route::middleware(['auth', 'role:alumni'])->prefix('alumni')->group(function () {
     Route::get('/dashboard', function () { return view('alumni.dashboard'); })->name('alumni.dashboard');
 });
+
+
+// কোনো মিডলওয়্যার বা প্রিফিক্স গ্রুপের বাইরে একদম নিচে স্বাধীনভাবে দিন
+Route::post('/admin/manage-authority', [App\Http\Controllers\Admin\AdminDashboardController::class, 'manageAuthority'])->name('admin.manage.authority')->middleware('auth');
+
 
 require __DIR__.'/auth.php';

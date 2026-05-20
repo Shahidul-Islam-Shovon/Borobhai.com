@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;        // 👈 App\Models নিশ্চিত করা হলো
+use App\Models\User;        
 use App\Models\Post;        
 use App\Models\Circular;    
 use Carbon\Carbon;
@@ -26,16 +26,15 @@ class AdminDashboardController extends Controller
         $posts = Post::with('user')->latest()->get();
         $circulars = Circular::with('user')->latest()->get();
 
-        // 📊 ব্লেড ফাইলের চার্টের রিকোয়ারমেন্ট অনুযায়ী গত ৭ দিনের ট্রেন্ড ডেটা এখানেই ক্যালকুলেট করা হলো
+        // 📊 গত ৭ দিনের ট্রেন্ড ডেটা ক্যালকুলেট
         $months = [];
         $students = [];
         $alumni = [];
 
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
-            $months[] = $date->format('d M'); // যেমন: "20 May"
+            $months[] = $date->format('d M'); 
 
-            // প্রতিদিন কতজন স্টুডেন্ট এবং অ্যাল্যামনাই জয়েন করেছে তা কাউন্ট করা
             $students[] = User::where('role', 'student')->whereDate('created_at', $date->format('Y-m-d'))->count();
             $alumni[] = User::where('role', 'alumni')->whereDate('created_at', $date->format('Y-m-d'))->count();
         }
@@ -46,58 +45,130 @@ class AdminDashboardController extends Controller
             'alumni'   => $alumni
         ];
 
-        // 🚀 এখন compact-এর ভেতরে $chartData পাস করে দেওয়া হলো, যা ব্লেডের সাথে ১০০% ম্যাচ করবে
         return view('admin.dashboard', compact('counters', 'users', 'posts', 'circulars', 'chartData'));
     }
 
 
+    // 👑 +Admin, +Super এবং সাধারণ ইউজারে ব্যাক করার (Demote) মেথড
     public function manageAuthority(Request $request)
     {
-        // 🛡️ সিকিউরিটি লেয়ার ১: রিকোয়েস্টকারী নিজে সুপার অ্যাডমিন কিনা চেক
         if (!auth()->user()->isSuperAdmin()) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized access! Only Super Admin can perform this action.'], 403);
+            return response()->json(['success' => false, 'message' => 'Unauthorized access!'], 403);
         }
 
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'type' => 'required|in:admin,super'
+            'type'    => 'required|in:student,alumni,admin,super' 
         ]);
 
         $targetUser = User::find($request->user_id);
 
-        // 🟢 কন্ডিশন ১: সাধারণ অ্যাডমিন বানানো (আনলিমিটেড)
-        if ($request->type === 'admin') {
-            $targetUser->update([
-                'role' => 'admin',
-                'is_super_admin' => false // যদি সে আগে সুপার অ্যাডমিন থেকে থাকে, তবে ডাউনগ্রেড হবে
-            ]);
-            return response()->json(['success' => true, 'message' => "{$targetUser->name} কে সফলভাবে সাধারণ Admin বানানো হয়েছে!"]);
+        // 🛡️ .env ফাইল থেকে ডাইনামিক চিফ সুপার অ্যাডমিন ইমেইল প্রটেকশন
+        $chiefEmail = env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com');
+
+        if ($targetUser->email === $chiefEmail) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The Main System Administrator is fully secured. Role cannot be altered!'
+            ], 422);
         }
 
-        // 👑 কন্ডিশন ২: সুপার অ্যাডমিন বানানো (সর্বোচ্চ ২ জন লিমিট)
+        // 🟢 কন্ডিশন ১: অ্যাডমিন বা সুপার থেকে নরমাল স্টুডেন্ট/অ্যাল্যামনাই বানানো (Make Normal)
+        if (in_array($request->type, ['student', 'alumni'])) {
+            $targetUser->update([
+                'role'           => $request->type, 
+                'is_super_admin' => false
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$targetUser->name} কে সফলভাবে সাধারণ সদস্য গ্রুপে নামানো হয়েছে!"
+            ]);
+        }
+
+        // 🔵 কন্ডিশন ২: সাধারণ অ্যাডমিন বানানো
+        if ($request->type === 'admin') {
+            $targetUser->update([
+                'role'           => 'admin',
+                'is_super_admin' => false
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => "{$targetUser->name} কে সফলভাবে সাধারণ Admin করা হয়েছে!"
+            ]);
+        }
+
+        // 👑 কন্ডিশন ৩: সুপার অ্যাডমিন বানানো (সর্বোচ্চ ২ জন লিমিট)
         if ($request->type === 'super') {
-            // অলরেডি ডেটাবেজে কয়জন সুপার অ্যাডমিন আছে তা কাউন্ট করা
             $superAdminCount = User::where('is_super_admin', true)->count();
 
-            // যদি অলরেডি ২ জন থাকে এবং টার্গেট ইউজার নতুন কেউ হয়, তবেই ওয়ার্নিং দেবে
             if ($superAdminCount >= 2 && !$targetUser->isSuperAdmin()) {
                 return response()->json([
                     'success' => false, 
-                    'message' => 'সিস্টেমে সর্বোচ্চ ২ জনের বেশি Super Admin থাকা সম্ভব নয়! নতুন কাউকে বানাতে হলে আগের একজনকে সাধারণ অ্যাডমিন বানিয়ে সিট খালি করুন।'
-                ], 422); // 422 Unprocessable Entity
+                    'message' => 'সিস্টেমে সর্বোচ্চ ২ জনের বেশি Super Admin থাকা সম্ভব নয়!'
+                ], 422);
             }
 
-            // লজিক ওকে থাকলে কারেন্ট সুপার অ্যাডমিনও সুপার থাকবে এবং নতুনজনও সুপার হবে
             $targetUser->update([
-                'role' => 'admin', // ড্যাশবোর্ড পারমিশনের জন্য রোল 'admin' থাকবে
+                'role'           => 'admin', 
                 'is_super_admin' => true
             ]);
 
-            return response()->json(['success' => true, 'message' => "অভিনন্দন! {$targetUser->name} এখন থেকে সিস্টেমে একজন নতুন Super Admin হিসেবে নিযুক্ত হয়েছেন।"]);
+            return response()->json([
+                'success' => true, 
+                'message' => "{$targetUser->name} এখন থেকে একজন Super Admin!"
+            ]);
         }
     }
 
-    // 📊 চার্টের আলাদা এপিআই ডাটা ইঞ্জিন (ভবিষ্যতে লাগলে ব্যবহার করতে পারবেন)
+
+    
+    // 🔄 ড্রপডাউন থেকে রোল চেঞ্জ করার মেথড
+// 🔄 ড্রপডাউন থেকে রোল চেঞ্জ করার মেথড
+public function changeRole(Request $request)
+{
+    $request->validate([
+        'user_id' => 'required|exists:users,id',
+        'role'    => 'required|in:student,alumni,admin'
+    ]);
+
+    $user = User::find($request->user_id);
+
+    // 🛡️ ১. ডাইনামিক চিফ সুপার অ্যাডমিন প্রটেকশন
+    $chiefEmail = env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com');
+    if ($user->email === $chiefEmail) {
+        return response()->json([
+            'success' => false,
+            'message' => 'The Main System Administrator is fully secured. Role cannot be altered!'
+        ], 422);
+    }
+
+    // 🛡️ ২. আপনার স্পেশাল লজিক: 
+    // টার্গেট ইউজার যদি অলরেডি একজন Admin (বা সুপার) হয়, এবং লগইন করা ইউজার যদি নিজে Super Admin না হয়,
+    // তবে সে কোনো কারেন্ট/আগের অ্যাডমিনের রোল পরিবর্তন করতে পারবে না!
+    if ($user->role === 'admin' && !auth()->user()->isSuperAdmin()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'অ্যাকশন রিজেক্টেড! একজন সাধারণ Admin হয়ে আপনি অন্য কোনো বর্তমান বা পূর্বতন Admin-এর রোল পরিবর্তন করতে পারবেন না।'
+        ], 403);
+    }
+
+    // রোল চেঞ্জ হয়ে স্টুডেন্ট বা অ্যাল্যামনাই হলে সে আর সুপার অ্যাডমিন থাকবে না
+    $isSuper = ($request->role === 'admin') ? $user->is_super_admin : false;
+
+    $user->update([
+        'role'           => $request->role,
+        'is_super_admin' => $isSuper
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'User role updated successfully!'
+    ]);
+}
+       
+    // 📊 চার্টের আলাদা এপিআই ডাটা ইঞ্জিন
     public function getAnalyticsData()
     {
         $labels = [];
@@ -119,18 +190,19 @@ class AdminDashboardController extends Controller
         ]);
     }
 
-    //  রোল আপডেট মেথড
+    //  ম্যানুয়াল রোল আপডেট মেথড (যদি অন্য কোথাও কল করা থাকে)
     public function changeUserRole(Request $request, $id)
     {
-        // মেইন সুপার অ্যাডমিনের আইডি যদি ১ হয়
-        if ($id == 1) {
+        $user = User::findOrFail($id);
+        $chiefEmail = env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com');
+
+        if ($user->email === $chiefEmail) {
             return response()->json([
                 'success' => false,
                 'message' => 'The Main System Administrator is fully secured. Role cannot be altered!'
             ], 403);
         }
 
-        $user = User::findOrFail($id);
         $user->role = $request->role;
         $user->save();
 
@@ -139,37 +211,74 @@ class AdminDashboardController extends Controller
             'message' => 'User role updated successfully to ' . ucfirst($request->role)
         ]);
     }
+
         
     //  সাসপেনশন আপডেট মেথড
-    public function updateSuspensionStatus(Request $request, $id)
-    {
-        if ($id == 1) {
-            return response()->json([
-                'success' => false,
-                'message' => 'The Main System Administrator is fully secured. Action denied!'
-            ], 403);
-        }
+    // 🚫 সাসপেনশন আপডেট মেথড (নতুন হায়ারার্কি লজিক)
 
-        $user = User::findOrFail($id);
-        $action = $request->action;
+    // old version
+// public function updateSuspensionStatus(Request $request, $id)
+// {
+//     $request->validate([
+//         'action' => 'required|in:active,temp,perm'
+//     ]);
 
-        if ($action === 'temp') {
-            $user->status = 'suspended_temp';
-            $user->suspended_until = now()->addDays(7);
-        } elseif ($action === 'perm') {
-            $user->status = 'suspended_perm';
-        } elseif ($action === 'active') {
-            $user->status = 'active';
-            $user->suspended_until = null;
-        }
+//     $targetUser = User::findOrFail($id);
+//     $currentUser = auth()->user();
+
+//     // 🛡️ ১. চিফ সুপার অ্যাডমিন প্রটেকশন (.env থেকে)
+//     $chiefEmail = env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com');
+//     if ($targetUser->email === $chiefEmail) {
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'The Main System Administrator is fully secured. Action denied!'
+//         ], 403);
+//     }
+
+//     // 🛡️ ২. লগইন করা ইউজার নিজে যদি নরমাল এডমিন হয় (Super Admin না হয়)
+//     if (!$currentUser->isSuperAdmin()) {
         
-        $user->save();
+//         // ক) নরমাল অ্যাডমিন হয়ে অন্য কোনো Admin বা Super Admin কে সাসপেন্ড করার চেষ্টা করলে ব্লক
+//         if ($targetUser->role === 'admin') {
+//             return response()->json([
+//                 'success' => false,
+//                 'message' => 'অ্যাকশন রিজেক্টেড! একজন সাধারণ Admin হয়ে আপনি অন্য কোনো Admin বা Super Admin-এর স্ট্যাটাস পরিবর্তন করতে পারবেন না।'
+//             ], 403);
+//         }
+//     }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User status updated successfully.'
-        ]);
-    }
+//     // 🛡️ ৩. লগইন করা ইউজার যদি Super Admin হয়, কিন্তু টার্গেট ইউজারও যদি আরেকজন Super Admin হয় (Chief বা Second)
+//     if ($currentUser->isSuperAdmin() && $targetUser->isSuperAdmin() && $currentUser->id !== $targetUser->id) {
+//         // আপনি নিজে নিজের স্ট্যাটাস ছাড়া অন্য কোনো সুপার অ্যাডমিনকে সাসপেন্ড করতে পারবেন না
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'অ্যাকশন রিজেক্টেড! একজন Super Admin অন্য একজন Super Admin-কে সাসপেন্ড করতে পারবেন না।'
+//         ], 403);
+//     }
+
+//     // 🟢 ওপরের সব সিকিউরিটি চেক পাস হলে সাসপেনশন লজিক এক্সিকিউট হবে
+//     $action = $request->action;
+
+//     if ($action === 'temp') {
+//         $user->status = 'suspended_temp'; // দুঃখিত, ভ্যারিয়েবল $targetUser হবে
+//         $targetUser->status = 'suspended_temp';
+//         $targetUser->suspended_until = now()->addDays(7);
+//     } elseif ($action === 'perm') {
+//         $targetUser->status = 'suspended_perm';
+//         $targetUser->suspended_until = null;
+//     } elseif ($action === 'active') {
+//         $targetUser->status = 'active';
+//         $targetUser->suspended_until = null;
+//     }
+    
+//     $targetUser->save();
+
+//     return response()->json([
+//         'success' => true,
+//         'message' => 'ইউজারের স্ট্যাটাস সফলভাবে আপডেট করা হয়েছে।'
+//     ]);
+// }
+  
         
     // পোস্ট ডিলিট
     public function deletePost($id)
@@ -207,5 +316,58 @@ class AdminDashboardController extends Controller
                 'message' => 'Error: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+public function updateSuspensionStatus(Request $request, $id)
+    {
+        // ১. আইডি দিয়ে ইউজার খোঁজা
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found in database.'
+            ], 404);
+        }
+
+        $action = $request->input('action');
+
+        // ২. টেম্পোরারি ব্লকের জন্য কার্বন ফরম্যাট একদম স্ট্রিক্ট করে দেওয়া হলো
+        if ($action === 'temp') {
+            $user->status = 'suspended_temp';
+            
+            // 🎯 অনেক সময় সরাসরি অবজেক্ট ডাটাবেজ নিতে পারে না, তাই string ফরম্যাটে কাস্ট করা হলো
+            $user->suspended_until = Carbon::now()->addDays(7)->toDateTimeString(); 
+            
+        } elseif ($action === 'perm') {
+            $user->status = 'suspended_perm';
+            $user->suspended_until = null;
+             
+        } elseif ($action === 'active') {
+            $user->status = 'active';
+            $user->suspended_until = null;
+        } else {
+            return response()->json(['success' => false, 'message' => 'Invalid action.'], 400);
+        }
+
+        // ৩. ডিরেক্ট ডাটাবেজ আপডেট (যা কোনো মডেল কনস্ট্রেইন্ট বা মিউটেটরে আটকাবে না)
+        // এটি ব্যবহার করলে মডেলের ভেতর কোনো হিডেন ঝামেলা থাকলেও সেটা বাইপাস হয়ে যাবে
+        $updated = \DB::table('users')->where('id', $id)->update([
+            'status' => $user->status,
+            'suspended_until' => $user->suspended_until,
+            'updated_at' => Carbon::now()
+        ]);
+
+        if ($updated) {
+            return response()->json([
+                'success' => true,
+                'message' => 'User status updated successfully to ' . $action
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to write data to database.'
+        ], 500);
     }
 }

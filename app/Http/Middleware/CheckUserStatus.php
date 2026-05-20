@@ -9,38 +9,56 @@ use Carbon\Carbon;
 
 class CheckUserStatus
 {
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @return mixed
+     */
     public function handle(Request $request, Closure $next)
     {
         if (Auth::check()) {
             $user = Auth::user();
 
-            if ($user->status !== 'active') {
-                // যদি সময় নির্দিষ্ট থাকে এবং সেই সময় পার হয়ে যায়, তবে একটিভ করে দেওয়া হবে
-                if ($user->status === 'suspended_temp' && $user->suspended_until && Carbon::now()->greaterThan(Carbon::parse($user->suspended_until))) {
-                    $user->status = 'active';
-                    $user->suspended_until = null;
-                    $user->save();
-                    return $next($request);
+            // 🎯 প্রথম রিফ্রেশে ওল্ড সেশন অবজেক্ট এড়াতে সরাসরি ডাটাবেজ থেকে ফ্রেশ ডেটা রিড করা হলো
+            $freshUser = \DB::table('users')->where('id', $user->id)->first();
+
+            if ($freshUser) {
+                // ১. টেম্পোরারি সাসপেনশন চেক
+                if ($freshUser->status === 'suspended_temp') {
+                    
+                    // প্রথম রিফ্রেশেই যাতে ডেট নাল বা N/A না হয়, তার জন্য কন্ডিশনাল ব্যাকআপ সহ ফরম্যাট
+                    if ($freshUser->suspended_until) {
+                        $dateText = Carbon::parse($freshUser->suspended_until)->format('d M Y \a\t  g:i a');
+                    } else {
+                        // যদি কোনো কারণে ইমিডিয়েটলি ডেট না পায়, তবে কারেন্ট টাইম থেকে ৭ দিন যোগ করে ইনস্ট্যান্ট দেখাবে
+                        $dateText = Carbon::now()->addDays(7)->format('d M Y \a\t  g:i a');
+                    }
+
+                    // সেশন আউট করে দেওয়া যাতে ব্যাক বোতাম চাপলেও আর ঢুকতে না পারে
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+
+                    // 🎯 আপনার চাহিদামতো একদম নিখুঁত মেসেজ ফরম্যাট (লগইন ব্লেডের গ্লোবাল অ্যালার্ট এটি রিড করবে)
+                    return redirect()->route('login')->with('error', "Access Denied ! You are tempurary Suspended Untill : {$dateText}");
                 }
 
-                // সময় বাকি থাকলে সেশন আউট করে এরর থ্রো করবে
-                $unlockTime = $user->suspended_until ? Carbon::parse($user->suspended_until)->format('Y-m-d H:i:s') : 'N/A';
-                
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
+                // ২. পারমানেন্ট সাসপেনশন চেক
+                if ($freshUser->status === 'suspended_perm') {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
 
-                $errorMessage = "Access Denied: You are Suspended By Admin. Unlocks at: " . $unlockTime;
+                    // return redirect()->route('login')->with('error', "Access Denied ! ..."); 
+                    // উপরের লাইনের বদলে সেশনে পুশ করে রিডাইরেক্ট করুন:
 
-                if ($request->expectsJson() || $request->ajax()) {
-                    return response()->json([
-                        'errors' => ['email' => [$errorMessage]]
-                    ], 422);
-                }
-
-                return redirect()->route('login')->with('suspended_error', $errorMessage);
-            }
-        }
+                    $request->session()->put('suspended_permanent_msg', "Access Denied ! You are tempurary Suspended Untill : {$dateText}");
+                    return redirect()->route('login');
+                                    }
+                                }
+                            }
 
         return $next($request);
     }

@@ -40,6 +40,7 @@
         }
         .brand-title { font-size: 1.6rem; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
         .brand-subtitle { font-size: 0.88rem; color: #64748b; margin-top: 5px; }
+        .brand-subtitle.error-subtitle { color: #dc2626; font-weight: 500; }
         .form-label { font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 8px; }
         .input-group-custom { position: relative; display: flex; align-items: center; }
         .input-icon { position: absolute; left: 16px; color: #94a3b8; font-size: 1.05rem; z-index: 10; }
@@ -68,11 +69,16 @@
         <div class="brand-subtitle">Welcome back! Please sign in to your account.</div>
     </div>
 
-    {{-- 🛡️ গ্লোবাল অ্যালার্ট বক্স --}}
-    <div id="globalAlert" class="alert {{ session('suspended_error') ? 'alert-danger d-block' : 'd-none' }} text-center fw-medium mb-4" role="alert" 
-         style="border-radius: 12px; font-size: 0.9rem; padding: 12px; {{ session('suspended_error') ? 'background-color: #fef2f2; color: #dc2626; border: 1px solid #fca5a5;' : '' }}">
-        @if(session('suspended_error'))
-            <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ session('suspended_error') }}
+    {{-- 🛡️ গ্লোবাল অ্যালার্ট বক্স (প্রথম রিফ্রেশে আসা সব ধরনের সেশন এরর হ্যান্ডেল করবে) --}}
+    @php
+        $hasError = session('suspended_error') || session('error');
+        $errorMessage = session('suspended_error') ?? session('error');
+    @endphp
+
+    <div id="globalAlert" class="alert {{ $hasError ? 'd-block' : 'd-none' }} text-center fw-medium mb-4" role="alert" 
+         style="border-radius: 12px; font-size: 0.88rem; padding: 12px 16px; line-height: 1.4; {{ $hasError ? 'background-color: #fef2f2; color: #dc2626; border: 1px solid #fca5a5;' : '' }}">
+        @if($hasError)
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> {!! $errorMessage !!}
         @endif
     </div>
 
@@ -168,36 +174,40 @@ document.getElementById('ajaxLoginForm').addEventListener('submit', function(e) 
         btnText.innerText = 'Sign In';
         btnSpinner.classList.add('d-none');
 
-        // 👑 চেক ১: স্ট্যাটাস ২০০ হলেই কেবল সাকসেস দেখাবে
+        // চেক ১: স্ট্যাটাস ২০০ হলে সফল লগইন
         if (res.status === 200) {
             globalAlert.className = "alert alert-success d-block text-center fw-medium mb-4";
             globalAlert.style.backgroundColor = "#ecfdf5";
             globalAlert.style.color = "#059669";
+            globalAlert.style.borderRadius = "12px";
+            globalAlert.style.padding = "12px";
             globalAlert.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i> Logged in successfully!`;
             
             setTimeout(() => {
                 window.location.href = (res.body && res.body.redirect) ? res.body.redirect : window.location.origin;
             }, 800);
 
-        // 👑 চেক ২: স্ট্যাটাস ৪২২ হলে এরর দেখাবে (সাসপেন্ডসহ সব ভ্যালিডেশন এরর)
+        // চেক ২: ভ্যালিডেশন বা সাসপেনশন এরর (৪২২)
         } else if (res.status === 422 && res.body && res.body.errors) {
             const errors = res.body.errors;
             
             if (errors.email) {
-                // যদি মেসেজে Suspended বা Access Denied লেখা থাকে তবে বড় লাল বক্সে দেখাবে
-                if (errors.email[0].includes('Suspended') || errors.email[0].includes('Denied') || errors.email[0].includes('Access')) {
+                const msg = errors.email[0];
+                // যদি মেসেজে সাসপেন্ড বা ব্লকড রিলেটেড কিছু থাকে, তবে বড় লাল বক্সে দেখাবে
+                if (msg.includes('Suspended') || msg.includes('Denied') || msg.includes('Access') || msg.includes('Blocked')) {
                     globalAlert.className = "alert alert-danger d-block text-center fw-medium mb-4";
                     globalAlert.style.backgroundColor = "#fef2f2";
                     globalAlert.style.color = "#dc2626";
                     globalAlert.style.border = "1px solid #fca5a5";
                     globalAlert.style.borderRadius = "12px";
-                    globalAlert.style.padding = "12px";
-                    globalAlert.style.fontSize = "0.9rem";
-                    globalAlert.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-2"></i> ${errors.email[0]}`;
+                    globalAlert.style.padding = "12px 16px";
+                    globalAlert.style.fontSize = "0.88rem";
+                    globalAlert.style.lineHeight = "1.4";
+                    globalAlert.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-2"></i> ${msg}`;
                 } else {
-                    // নরমাল ভুল ইমেইলের এরর ফিল্ডের নিচে দেখাবে
+                    // সাধারণ ভুল ইমেইলের জন্য ইনপুটের নিচে এরর
                     const emailErr = document.getElementById('emailError');
-                    emailErr.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${errors.email[0]}`;
+                    emailErr.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${msg}`;
                     emailErr.style.display = 'flex';
                 }
             }
@@ -208,8 +218,9 @@ document.getElementById('ajaxLoginForm').addEventListener('submit', function(e) 
                 passErr.style.display = 'flex';
             }
         } else {
-            // অন্য কোনো আননোন সার্ভার এরর হলে
+            // অন্য কোনো সার্ভার এরর
             globalAlert.className = "alert alert-danger d-block text-center mb-4";
+            globalAlert.style.borderRadius = "12px";
             globalAlert.innerHTML = `<i class="fa-solid fa-circle-xmark me-2"></i> Error occurred. Status: ${res.status}`;
         }
     })
@@ -220,8 +231,6 @@ document.getElementById('ajaxLoginForm').addEventListener('submit', function(e) 
         console.error('Error:', error);
     });
 });
-
-
 </script>
 </body>
 </html>

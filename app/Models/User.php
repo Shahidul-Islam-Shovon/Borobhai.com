@@ -38,6 +38,8 @@ class User extends Authenticatable
         'password' => 'hashed',
         // 👑 বাগ ফিক্স: এই লাইনটি অবশ্যই যোগ করবেন
         'suspended_until' => 'datetime', 
+        'is_super_admin' => 'boolean', // ডাটাবেজের ০ বা ১ কে লারাভেল true/false বানিয়ে দেবে
+        
     ];
 
     protected $fillable = [
@@ -46,10 +48,22 @@ class User extends Authenticatable
     'password',
     'role',
     'status',
+    'is_super_admin',
     ];
 
-    public function isSuperAdmin()
-    {
-        return $this->email === env('SUPER_ADMIN_EMAIL', 'sajal@gmail.com');
+
+
+public function isSuperAdmin()
+{
+    // .env ফাইল থেকে ইমেইল নিয়ে ডাইনামিক চেক
+    if ($this->email === env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com')) {
+        return true;
     }
+
+    return (bool) $this->is_super_admin;
+}
+
+
+
+
 }
