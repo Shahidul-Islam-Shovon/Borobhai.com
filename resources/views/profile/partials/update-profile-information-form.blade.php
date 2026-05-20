@@ -11,11 +11,26 @@
 
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
+
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6" enctype="multipart/form-data" class="mt-6 space-y-6">
         @csrf
         @method('patch')
+
+        <div class="mb-4">
+    <x-input-label :value="__('Current Profile Picture')" />
+    @if(auth()->user()->profile_picture)
+        <img src="{{ asset('storage/' . auth()->user()->profile_picture) }}" class="w-20 h-20 rounded-full object-cover">
+    @else
+        <p>No picture uploaded</p>
+    @endif
+</div>
+
+<div class="mb-4">
+    <x-input-label for="profile_picture" :value="__('Upload New Picture')" />
+    <input type="file" name="profile_picture" id="profile_picture" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full">
+</div>
 
         <div>
             <x-input-label for="name" :value="__('Name')" />

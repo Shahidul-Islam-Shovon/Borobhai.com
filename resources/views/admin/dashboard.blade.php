@@ -63,6 +63,14 @@
     <div class="nav-link-custom" data-target="jobs-tab"><i class="fa-solid fa-briefcase"></i> Job Portal Audits</div>
     
     <div style="position: absolute; bottom: 30px; width: calc(100% - 30px);">
+        <div class="d-flex align-items-center gap-5">
+                    <img src="{{ auth()->user()->profile_picture ? asset('storage/'.auth()->user()->profile_picture) : asset('default-avatar.png') }}" 
+                        alt="Profile" class="rounded-full" style="width: 40px; height: 40px; object-fit: cover;">
+                    
+                    <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-outline-warning" style="font-size: 0.8rem; text-decoration: none;">
+                        Edit Profile
+                    </a>
+                </div>
         <form id="logout-form" method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="button" onclick="confirmLogout()" class="w-100 btn btn-danger btn-sm" style="border-radius: 10px; padding: 9px; font-size: 0.78rem; font-weight: 600;">
@@ -88,7 +96,8 @@
         
         <div class="d-flex align-items-center gap-3 bg-white px-3 py-2 border rounded-4 shadow-sm" style="border-radius: 12px;">
             <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px; font-size: 0.85rem; background-color: #eff6ff; border: 1px solid #bfdbfe;">
-                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                            
+
             </div>
             <div class="d-none d-sm-block">
                 <div class="fw-bold text-dark" style="font-size: 0.82rem; line-height: 1.2;">
@@ -152,7 +161,7 @@
                             <th style="width: 32%;">User Info</th>
                             <th style="width: 25%;">Email</th>
                             <th style="width: 15%;">User Role</th>
-                            <th style="width: 20%; text-align: right;">Administrative Actions</th>
+                            <th style="width: 20%; text-align: right;">Admin Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -260,8 +269,8 @@
                                                     <button onclick="executeAuthorityChange({{ $user->id }}, 'super')" class="btn btn-xs btn-dark py-0.5 px-1.5" style="font-size: 9px; font-weight: 700; border-radius: 4px; background-color: #1e293b; color: #fff;" title="Promote to Super Admin">+ Super</button>
                                                     <button onclick="executeAuthorityChange({{ $user->id }}, 'student')" class="btn btn-xs btn-outline-danger py-0.5 px-1.5" style="font-size: 9px; font-weight: 700; border-radius: 4px;" title="Demote to Regular User">Make Normal</button>
                                                 @elseif($user->isSuperAdmin())
-                                                    <button onclick="executeAuthorityChange({{ $user->id }}, 'admin')" class="btn btn-xs btn-outline-warning py-0.5 px-1.5" style="font-size: 9px; font-weight: 700; border-radius: 4px;" title="Demote to Normal Admin">Demote Admin</button>
-                                                    <button onclick="executeAuthorityChange({{ $user->id }}, 'alumni')" class="btn btn-xs btn-outline-danger py-0.5 px-1.5" style="font-size: 9px; font-weight: 700; border-radius: 4px;" title="Demote to Regular Alumni">Make Normal</button>
+                                                    <button onclick="executeAuthorityChange({{ $user->id }}, 'admin')" class="btn btn-xs btn-outline-warning py-0.5 px-1.5" style="font-size: 9px; font-weight: 700; border-radius: 4px;" title="Demote to Normal Admin">Only Admin</button>
+                                                    <button onclick="executeAuthorityChange({{ $user->id }}, 'alumni')" class="btn btn-xs btn-outline-danger py-0.5 px-1.5" style="font-size: 9px; font-weight: 700; border-radius: 4px;" title="Demote to Regular Alumni">Normal User</button>
                                                 @endif
                                             </div>
                                         @endif

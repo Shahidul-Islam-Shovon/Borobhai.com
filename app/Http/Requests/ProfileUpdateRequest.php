@@ -25,7 +25,8 @@ class ProfileUpdateRequest extends FormRequest
                 'email',
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
-            ],
+            ], 
+            'profile_picture' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'], // এই লাইনটি নিশ্চিত করুন
         ];
     }
 }

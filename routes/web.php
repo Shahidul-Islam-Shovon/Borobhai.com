@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -59,5 +60,13 @@ Route::middleware(['auth', 'role:alumni'])->prefix('alumni')->group(function () 
 // কোনো মিডলওয়্যার বা প্রিফিক্স গ্রুপের বাইরে একদম নিচে স্বাধীনভাবে দিন
 Route::post('/admin/manage-authority', [App\Http\Controllers\Admin\AdminDashboardController::class, 'manageAuthority'])->name('admin.manage.authority')->middleware('auth');
 
-
 require __DIR__.'/auth.php';
+
+
+// লারাভেল ব্রিজের ডিফল্ট রাউটগুলো এভাবে রাখা উচিত:
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy'); // এই লাইনটিই আপনার মিসিং ছিল!
+});
+
