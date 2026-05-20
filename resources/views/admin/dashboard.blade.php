@@ -91,29 +91,30 @@
 </div>
 
 <div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="fw-extrabold h4 mb-1 text-slate-900" style="letter-spacing: -0.5px;">Welcome back, {{ auth()->user()->name }}</h1>
-        <p class="text-muted mb-0" style="font-size: 0.78rem;">Borobhai.com control center is completely active.</p>
-    </div>
     
-    <div class="d-flex align-items-center gap-3 bg-white px-3 py-2 border rounded-4 shadow-sm" style="border-radius: 12px;">
-        <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" 
-             style="width: 38px; height: 38px; font-size: 0.85rem; background-color: #eff6ff; border: 1px solid #bfdbfe;">
-            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-extrabold h4 mb-1 text-slate-900" style="letter-spacing: -0.5px;">Welcome back, {{ auth()->user()->name }}</h1>
+            <p class="text-muted mb-0" style="font-size: 0.78rem;">Borobhai.com control center is completely active.</p>
         </div>
-        <div class="d-none d-sm-block">
-            <div class="fw-bold text-dark" style="font-size: 0.82rem; line-height: 1.2;">
-                {{ auth()->user()->name }}
+        
+        <div class="d-flex align-items-center gap-3 bg-white px-3 py-2 border rounded-4 shadow-sm" style="border-radius: 12px;">
+            <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" 
+                 style="width: 38px; height: 38px; font-size: 0.85rem; background-color: #eff6ff; border: 1px solid #bfdbfe;">
+                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
             </div>
-            <div class="text-muted mt-0.5" style="font-size: 0.68rem; font-weight: 600;">
-                <span class="badge {{ auth()->id() == 1 ? 'bg-dark' : 'bg-secondary' }}" style="padding: 2px 5px; border-radius: 4px; font-size: 8px; text-transform: uppercase;">
-                    {{ auth()->id() == 1 ? 'Super Admin' : ucfirst(auth()->user()->role) }}
-                </span>
+            <div class="d-none d-sm-block">
+                <div class="fw-bold text-dark" style="font-size: 0.82rem; line-height: 1.2;">
+                    {{ auth()->user()->name }}
+                </div>
+                <div class="text-muted mt-0.5" style="font-size: 0.68rem; font-weight: 600;">
+                    <span class="badge {{ auth()->id() == 1 ? 'bg-dark' : 'bg-secondary' }}" style="padding: 2px 5px; border-radius: 4px; font-size: 8px; text-transform: uppercase;">
+                        {{ auth()->id() == 1 ? 'Super Admin' : ucfirst(auth()->user()->role) }}
+                    </span>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
     <div class="row g-4 mb-5">
         <div class="col-md-3">
@@ -163,7 +164,7 @@
                             <th style="width: 23%;">Email</th>
                             <th style="width: 15%;">User Role</th>
                             <th style="width: 10%; text-align: center;">Status</th>
-                            <th style="width: 17%; text-align: right;">System Actions</th>
+                            <th style="width: 17%; text-align: right;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -190,8 +191,10 @@
                             </td>
                             <td class="text-secondary" style="font-size: 0.74rem;">{{ $user->email }}</td>
                             <td>
-                                {{-- 👑 নিরাপত্তা কন্ডিশন ১: আইডি ১ (মেইন সুপার এডমিন)-এর জন্য অন্য সাব-অ্যাডমিনদের স্ক্রিনে ড্রপডাউন লক থাকবে --}}
-                                @if($user->id == 1 && auth()->id() != 1)
+                                {{-- 🛡️ সিকিউরিটি লেয়ার ১: ইউজার যদি নিজের আইডির লাইনে আসে (auth()->id() == $user->id) অথবা কোনো নরমাল এডমিন যদি সুপার এডমিন (ID 1)-এর রোল চেঞ্জ করতে চায়, তবে ড্রপডাউন লক থাকবে --}}
+                                @if(auth()->id() == $user->id)
+                                    <span class="badge bg-light text-dark border px-2 py-1" style="border-radius: 4px; font-size: 0.7rem; font-weight: 600;"><i class="fa-solid fa-user-lock me-1"></i> Myself</span>
+                                @elseif($user->id == 1 && auth()->id() != 1)
                                     <span class="badge bg-dark px-2 py-1" style="border-radius: 4px; font-size: 0.7rem; font-weight: 600;">Super Admin</span>
                                 @else
                                     <select data-previous="{{ $user->role }}" onchange="confirmRoleChange({{ $user->id }}, this)" class="form-select form-select-sm form-select-sm-custom role-select-dropdown">
@@ -204,37 +207,52 @@
                             <td class="text-center">
                                 <span class="{{ $user->status === 'active' ? 'badge-active' : ($user->status === 'suspended_temp' ? 'badge-pending' : 'badge-suspended') }}">
                                     @if($user->status === 'active') <i class="fa-solid fa-circle-check"></i> Active 
-                                    @elseif($user->status === 'suspended_temp') <i class="fa-solid fa-clock"></i> Tempurary Blocked
-                                    @else <i class="fa-solid fa-ban"></i> Blocked Permanently @endif
+                                    @elseif($user->status === 'suspended_temp') <i class="fa-solid fa-clock"></i> Tempurary Suspended
+                                    @else <i class="fa-solid fa-ban"></i> Permanently Blocked @endif
                                 </span>
                             </td>
+
                             <td style="text-align: right;">
-                                {{-- 👑 নিরাপত্তা কন্ডিশন ২: আইডি ১ এর লাইনে অন্য সাব-অ্যাডমিনদের জন্য একশন বাটন সম্পূর্ণ ব্লক করে Secured দেখানো হবে --}}
-                                @if($user->id == 1 && auth()->id() != 1)
-                                    <span class="text-muted style-disabled" style="font-size: 0.72rem; font-weight: 500;"><i class="fa-solid fa-lock"></i> Secured</span>
-                                @else
-                                    <div class="d-flex justify-content-end align-items-center gap-1">
-                                        @if($user->status === 'active')
-                                            <button onclick="manageSuspension({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Suspend 7 Days">
-                                                Suspend 7 Days
-                                            </button>
-                                            <button onclick="manageSuspension({{ $user->id }}, 'perm')" class="btn-action-pill perm-ban" title="Suspend Permanently">
-                                                 Suspend Permanently
-                                            </button>
-                                        @else
-                                            @if($user->status === 'suspended_temp')
-                                                <span class="text-suspended-label temp me-2"></span>
-                                            @else
-                                                <span class="text-suspended-label perm me-2"></span>
-                                            @endif
-                                            
-                                            <button onclick="manageSuspension({{ $user->id }}, 'active')" class="btn-action-pill activate" title="Remove Suspension">
-                                                <i class="fa-solid fa-circle-check"></i> Remove Suspension
-                                            </button>
-                                        @endif
-                                    </div>
-                                @endif
-                            </td>
+    {{-- 🛡️ সিকিউরিটি লেয়ার ২: লগইন থাকা ইউজার নিজের লাইনে কোনো অ্যাকশন বাটন পাবে না। সাব-অ্যাডমিনরা সুপার অ্যাডমিন (ID 1)-কে টাচ করতে পারবে না --}}
+    @if(auth()->id() == $user->id)
+        <span class="text-muted style-disabled" style="font-size: 0.72rem; font-weight: 500;"><i class="fa-solid fa-shield-halved"></i> Protected</span>
+    @elseif($user->id == 1 && auth()->id() != 1)
+        <span class="text-muted style-disabled" style="font-size: 0.72rem; font-weight: 500;"><i class="fa-solid fa-lock"></i> Secured</span>
+    @else
+        <div class="d-flex justify-content-end align-items-center gap-1">
+            
+            {{-- অবস্থা ১: ইউজার যদি অ্যাক্টিভ থাকে --}}
+            @if($user->status === 'active')
+                <button onclick="manageSuspension({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Suspend 7 Days">
+                    <i class="fa-solid fa-clock"></i> Suspend 7 Days
+                </button>
+                <button onclick="manageSuspension({{ $user->id }}, 'perm')" class="btn-action-pill perm-ban" title="Suspend Permanently">
+                    <i class="fa-solid fa-ban"></i> Suspend Permanently
+                </button>
+
+            {{-- অবস্থা ২: ইউজার যদি অলরেডি সাময়িক (Temp) ব্লকে থাকে --}}
+            @elseif($user->status === 'suspended_temp')
+                <button onclick="manageSuspension({{ $user->id }}, 'active')" class="btn-action-pill activate" title="Remove Suspension">
+                    <i class="fa-solid fa-circle-check"></i> Remove Suspension
+                </button>
+                <button onclick="manageSuspension({{ $user->id }}, 'perm')" class="btn-action-pill perm-ban" title="Upgrade to Permanent Ban">
+                    <i class="fa-solid fa-ban"></i> Suspend Permanently
+                </button>
+
+            {{-- অবস্থা ৩: ইউজার যদি অলরেডি পার্মানেন্ট (Perm) ব্লকে থাকে --}}
+            @elseif($user->status === 'suspended_perm')
+                <button onclick="manageSuspension({{ $user->id }}, 'active')" class="btn-action-pill activate" title="Remove Suspension">
+                    <i class="fa-solid fa-circle-check"></i> Remove Suspension
+                </button>
+                <button onclick="manageSuspension({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Downgrade to 7 Days Suspension">
+                    <i class="fa-solid fa-clock"></i> Suspend 7 Days
+                </button>
+            @endif
+
+        </div>
+    @endif
+</td>
+                           
                         </tr>
                         @endforeach
                     </tbody>
@@ -428,7 +446,6 @@ function executeRoleChange(userId, newRole) {
     .then(data => {
         saveDashboardState();
         if (data.success) {
-            // 🛡️ রিফ্রেশের ক্যাশ বাগ দূর করতে রিলোড হবার ঠিক আগে অনচেঞ্জ ইভেন্ট সাময়িক অফ করে দেওয়া হলো
             document.querySelectorAll('.role-select-dropdown').forEach(el => {
                 el.onchange = null;
                 el.removeAttribute('onchange');
