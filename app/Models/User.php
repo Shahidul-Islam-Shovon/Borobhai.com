@@ -47,4 +47,9 @@ class User extends Authenticatable
     'role',
     'status',
     ];
+
+    public function isSuperAdmin()
+    {
+        return $this->email === env('SUPER_ADMIN_EMAIL', 'sajal@gmail.com');
+    }
 }

@@ -21,38 +21,25 @@
     
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-        
-        /* 🏢 সাইডবার প্রিমিয়াম ট্রানজিশন */
         .sidebar { width: 260px; height: 100vh; background: #0f172a; position: fixed; top: 0; left: 0; padding: 25px 15px; color: #fff; z-index: 100; box-shadow: 4px 0 24px rgba(15, 23, 42, 0.08); }
         .main-content { margin-left: 260px; padding: 40px; min-height: 100vh; transition: all 0.3s ease; }
         .sidebar-brand { font-size: 1.35rem; font-weight: 800; color: #3b82f6; margin-bottom: 35px; text-align: center; letter-spacing: -0.5px; }
-        
         .nav-link-custom { display: flex; align-items: center; gap: 12px; padding: 11px 16px; color: #94a3b8; font-size: 0.82rem; font-weight: 500; border-radius: 10px; text-decoration: none; margin-bottom: 6px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
         .nav-link-custom:hover { background: #1e293b; color: #f1f5f9; transform: translateX(2px); }
         .nav-link-custom.active { background: #1e293b; color: #fff; border-left: 4px solid #3b82f6; font-weight: 600; }
-        
-        /* 📈 কাউন্টারカード */
         .counter-card { background: #fff; border-radius: 16px; padding: 22px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .counter-card:hover { transform: translateY(-3px); box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.04); border-color: #cbd5e1; }
         .counter-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
-        
-        /* 📋 আল্ট্রা-ক্লিন ও সুপার স্মল ফন্ট টেবিল UI */
         .card-table-wrapper { background: #fff; border-radius: 16px; padding: 22px; border: 1px solid #e2e8f0; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.015); }
         .table { font-size: 0.76rem !important; } 
         .table th { background: #f8fafc !important; color: #64748b !important; font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0 !important; padding: 10px 12px !important; }
         .table td { padding: 10px 12px !important; vertical-align: middle; color: #334155; border-bottom: 1px solid #f1f5f9 !important; }
         .table tr:hover td { background-color: #f8fafc; }
-        
-        /* ড্রপডাউন অপ্টিমাইজেশন */
         .form-select-sm-custom { padding: 4px 24px 4px 8px !important; font-size: 0.74rem !important; border-radius: 6px; font-weight: 600; color: #475569; min-width: 100px; height: auto !important; border: 1px solid #cbd5e1; background-color: #f8fafc; cursor: pointer; transition: all 0.2s; }
         .form-select-sm-custom:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); background-color: #fff; }
-
-        /* ব্যাজ স্টাইলিং */
         .badge-active { background-color: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; font-weight: 600; padding: 4px 8px; border-radius: 6px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px; }
         .badge-suspended { background-color: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; font-weight: 600; padding: 4px 8px; border-radius: 6px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px; }
         .badge-pending { background-color: #fff7ed; color: #d97706; border: 1px solid #fed7aa; font-weight: 600; padding: 4px 8px; border-radius: 6px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px; }
-        
-        /*システムアクション プレミアムピলボタン */
         .btn-action-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; font-size: 0.72rem; font-weight: 600; border-radius: 6px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); text-decoration: none; }
         .btn-action-pill:hover { transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
         .btn-action-pill.temp-ban { color: #d97706; }
@@ -61,12 +48,9 @@
         .btn-action-pill.perm-ban:hover { background: #fef2f2; border-color: #fca5a5; }
         .btn-action-pill.activate { color: #16a34a; background: #f0fdf4; border-color: #86efac; }
         .btn-action-pill.activate:hover { background: #bbf7d0; }
-
         .text-suspended-label { font-weight: 700; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.3px; }
         .text-suspended-label.temp { color: #d97706; }
         .text-suspended-label.perm { color: #dc2626; }
-
-        /* 💎 লিনিয়ার অ্যান্ড লাক্সারি ট্যাব ফ্লুইড অ্যানিমেশন */
         .tab-content-panel { display: none; opacity: 0; transform: scale(0.995) translateY(4px); transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .tab-content-panel.active { display: block; opacity: 1; transform: scale(1) translateY(0); }
     </style>
@@ -100,7 +84,7 @@
         
         <div class="d-flex align-items-center gap-3 bg-white px-3 py-2 border rounded-4 shadow-sm" style="border-radius: 12px;">
             <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" 
-                 style="width: 38px; height: 38px; font-size: 0.85rem; background-color: #eff6ff; border: 1px solid #bfdbfe;">
+                  style="width: 38px; height: 38px; font-size: 0.85rem; background-color: #eff6ff; border: 1px solid #bfdbfe;">
                 {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
             </div>
             <div class="d-none d-sm-block">
@@ -189,14 +173,21 @@
                                     </div>
                                 </div>
                             </td>
+
                             <td class="text-secondary" style="font-size: 0.74rem;">{{ $user->email }}</td>
+
                             <td>
-                                {{-- 🛡️ সিকিউরিটি লেয়ার ১: ইউজার যদি নিজের আইডির লাইনে আসে (auth()->id() == $user->id) অথবা কোনো নরমাল এডমিন যদি সুপার এডমিন (ID 1)-এর রোল চেঞ্জ করতে চায়, তবে ড্রপডাউন লক থাকবে --}}
+                                {{-- অবস্থা ১: ইউজার যদি নিজে নিজের আইডির লাইনে আসে --}}
                                 @if(auth()->id() == $user->id)
                                     <span class="badge bg-light text-dark border px-2 py-1" style="border-radius: 4px; font-size: 0.7rem; font-weight: 600;"><i class="fa-solid fa-user-lock me-1"></i> Myself</span>
-                                @elseif($user->id == 1 && auth()->id() != 1)
-                                    <span class="badge bg-dark px-2 py-1" style="border-radius: 4px; font-size: 0.7rem; font-weight: 600;">Super Admin</span>
+                                
+                                {{-- অবস্থা ২: লুপের ইউজারটি যদি নিজে সুপার এডমিন হয় (এবং সে যদি অন্য কেউ হয়) --}}
+                                @elseif($user->isSuperAdmin())
+                                    <span class="badge bg-dark text-white" style="padding: 4px 6px; border-radius: 4px; font-size: 8px; text-transform: uppercase; font-weight: 700;">
+                                        Super Admin
+                                    </span>
                                 @else
+                                    {{-- অবস্থা ৩: সাধারণ ইউজারদের জন্য ডেটাবেজ রোল অনুযায়ী ড্রপডাউন --}}
                                     <select data-previous="{{ $user->role }}" onchange="confirmRoleChange({{ $user->id }}, this)" class="form-select form-select-sm form-select-sm-custom role-select-dropdown">
                                         <option value="student" {{ $user->role == 'student' ? 'selected' : '' }}>Student</option>
                                         <option value="alumni" {{ $user->role == 'alumni' ? 'selected' : '' }}>Alumni</option>
@@ -204,55 +195,57 @@
                                     </select>
                                 @endif
                             </td>
+                        
                             <td class="text-center">
                                 <span class="{{ $user->status === 'active' ? 'badge-active' : ($user->status === 'suspended_temp' ? 'badge-pending' : 'badge-suspended') }}">
                                     @if($user->status === 'active') <i class="fa-solid fa-circle-check"></i> Active 
-                                    @elseif($user->status === 'suspended_temp') <i class="fa-solid fa-clock"></i> Tempurary Suspended
+                                    @elseif($user->status === 'suspended_temp') <i class="fa-solid fa-clock"></i> Temporary Suspended
                                     @else <i class="fa-solid fa-ban"></i> Permanently Blocked @endif
                                 </span>
                             </td>
 
                             <td style="text-align: right;">
-    {{-- 🛡️ সিকিউরিটি লেয়ার ২: লগইন থাকা ইউজার নিজের লাইনে কোনো অ্যাকশন বাটন পাবে না। সাব-অ্যাডমিনরা সুপার অ্যাডমিন (ID 1)-কে টাচ করতে পারবে না --}}
-    @if(auth()->id() == $user->id)
-        <span class="text-muted style-disabled" style="font-size: 0.72rem; font-weight: 500;"><i class="fa-solid fa-shield-halved"></i> Protected</span>
-    @elseif($user->id == 1 && auth()->id() != 1)
-        <span class="text-muted style-disabled" style="font-size: 0.72rem; font-weight: 500;"><i class="fa-solid fa-lock"></i> Secured</span>
-    @else
-        <div class="d-flex justify-content-end align-items-center gap-1">
-            
-            {{-- অবস্থা ১: ইউজার যদি অ্যাক্টিভ থাকে --}}
-            @if($user->status === 'active')
-                <button onclick="manageSuspension({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Suspend 7 Days">
-                    <i class="fa-solid fa-clock"></i> Suspend 7 Days
-                </button>
-                <button onclick="manageSuspension({{ $user->id }}, 'perm')" class="btn-action-pill perm-ban" title="Suspend Permanently">
-                    <i class="fa-solid fa-ban"></i> Suspend Permanently
-                </button>
+                                {{-- অবস্থা ১: নিজের একাউন্ট প্রটেক্টেড --}}
+                                @if(auth()->id() == $user->id)
+                                    <span class="text-muted style-disabled" style="font-size: 0.72rem; font-weight: 500;"><i class="fa-solid fa-shield-halved"></i> Protected</span>
+                                
+                                {{-- অবস্থা ২: লুপের অন্য কোনো সুপার এডমিন থাকলে তার অ্যাকশন লক থাকবে --}}
+                                @elseif($user->isSuperAdmin())
+                                    <span class="text-muted style-disabled" style="font-size: 0.72rem; font-weight: 500;"><i class="fa-solid fa-lock"></i> Secured</span>
+                                
+                                {{-- অবস্থা ৩: সাধারণ ইউজারদের ক্ষেত্রে কন্ডিশন অনুযায়ী অ্যাকশন বাটন রেন্ডার হবে --}}
+                                @else
+                                    <div class="d-flex justify-content-end align-items-center gap-1">
+                                        {{-- ইউজার অ্যাক্টিভ থাকলে --}}
+                                        @if($user->status === 'active')
+                                            <button onclick="manageSuspension({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Suspend 7 Days">
+                                                <i class="fa-solid fa-clock"></i> Suspend 7 Days
+                                            </button>
+                                            <button onclick="manageSuspension({{ $user->id }}, 'perm')" class="btn-action-pill perm-ban" title="Suspend Permanently">
+                                                <i class="fa-solid fa-ban"></i> Suspend Permanently
+                                            </button>
 
-            {{-- অবস্থা ২: ইউজার যদি অলরেডি সাময়িক (Temp) ব্লকে থাকে --}}
-            @elseif($user->status === 'suspended_temp')
-                <button onclick="manageSuspension({{ $user->id }}, 'active')" class="btn-action-pill activate" title="Remove Suspension">
-                    <i class="fa-solid fa-circle-check"></i> Remove Suspension
-                </button>
-                <button onclick="manageSuspension({{ $user->id }}, 'perm')" class="btn-action-pill perm-ban" title="Upgrade to Permanent Ban">
-                    <i class="fa-solid fa-ban"></i> Suspend Permanently
-                </button>
+                                        {{-- ইউজার সাময়িক ব্লকে থাকলে --}}
+                                        @elseif($user->status === 'suspended_temp')
+                                            <button onclick="manageSuspension({{ $user->id }}, 'active')" class="btn-action-pill activate" title="Remove Suspension">
+                                                <i class="fa-solid fa-circle-check"></i> Remove Suspension
+                                            </button>
+                                            <button onclick="manageSuspension({{ $user->id }}, 'perm')" class="btn-action-pill perm-ban" title="Upgrade to Permanent Ban">
+                                                <i class="fa-solid fa-ban"></i> Suspend Permanently
+                                            </button>
 
-            {{-- অবস্থা ৩: ইউজার যদি অলরেডি পার্মানেন্ট (Perm) ব্লকে থাকে --}}
-            @elseif($user->status === 'suspended_perm')
-                <button onclick="manageSuspension({{ $user->id }}, 'active')" class="btn-action-pill activate" title="Remove Suspension">
-                    <i class="fa-solid fa-circle-check"></i> Remove Suspension
-                </button>
-                <button onclick="manageSuspension({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Downgrade to 7 Days Suspension">
-                    <i class="fa-solid fa-clock"></i> Suspend 7 Days
-                </button>
-            @endif
-
-        </div>
-    @endif
-</td>
-                           
+                                        {{-- ইউজার পার্মানেন্ট ব্লকে থাকলে --}}
+                                        @elseif($user->status === 'suspended_perm')
+                                            <button onclick="manageSuspension({{ $user->id }}, 'active')" class="btn-action-pill activate" title="Remove Suspension">
+                                                <i class="fa-solid fa-circle-check"></i> Remove Suspension
+                                            </button>
+                                            <button onclick="manageSuspension({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Downgrade to 7 Days Suspension">
+                                                <i class="fa-solid fa-clock"></i> Suspend 7 Days
+                                            </button>
+                                        @endif
+                                    </div>
+                                @endif
+                            </td>                          
                         </tr>
                         @endforeach
                     </tbody>
@@ -327,9 +320,6 @@
 </div>
 
 <script>
-// ==========================================
-// ১. ট্যাব মেমোরি এবং লাক্সারি অ্যানিমেশন ইঞ্জিন 
-// ==========================================
 document.addEventListener("DOMContentLoaded", function() {
     const activeTab = localStorage.getItem('admin_active_tab') || 'analytics-tab';
     
@@ -381,7 +371,7 @@ document.querySelectorAll('.nav-link-custom').forEach(link => {
                 currentActiveContent.classList.remove('active');
                 const nextActiveContent = document.getElementById(targetTabId);
                 nextActiveContent.classList.add('active');
-                
+        
                 setTimeout(() => {
                     nextActiveContent.style.opacity = '1';
                     nextActiveContent.style.transform = 'scale(1) translateY(0)';
@@ -393,9 +383,6 @@ document.querySelectorAll('.nav-link-custom').forEach(link => {
     });
 });
 
-// ==========================================
-// ২. JQUERY DATATABLES INITIALIZATION
-// ==========================================
 $(document).ready(function() {
     $('#usersTable').DataTable({ "pageLength": 10, "responsive": true, "order": [[0, "asc"]] });
     $('#postsTable').DataTable({ "pageLength": 10, "responsive": true, "order": [[0, "desc"]] });
@@ -404,13 +391,9 @@ $(document).ready(function() {
 
 const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
 
-// ==========================================
-// ৩. রোল পরিবর্তন করার কনফার্মেশন মেথড
-// ==========================================
 function confirmRoleChange(userId, selectElement) {
     const previousRole = selectElement.getAttribute('data-previous');
     const newRole = selectElement.value;
-
     Swal.fire({
         title: 'Are you sure?',
         text: `Do you want to change this user's role from ${previousRole.toUpperCase()} to ${newRole.toUpperCase()}?`,
@@ -460,9 +443,6 @@ function executeRoleChange(userId, newRole) {
     });
 }
 
-// ==========================================
-// ৪. সাসপেনশন হ্যান্ডেলিং
-// ==========================================
 function manageSuspension(userId, action) {
     let textBody = "";
     let confirmText = "Confirm";
@@ -492,7 +472,7 @@ function manageSuspension(userId, action) {
         confirmButtonText: confirmText
     }).then((result) => {
         if (result.isConfirmed) {
-            fetch(`/admin/users/${userId}/suspension`, { 
+             fetch(`/admin/users/${userId}/suspension`, { 
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json',
@@ -520,9 +500,6 @@ function manageSuspension(userId, action) {
     });
 }
 
-// ==========================================
-// 📊 ৫. চার্ট রেন্ডারিং انجن
-// ==========================================
 document.addEventListener("DOMContentLoaded", function() {
     fetch('/admin/dashboard/analytics-data', { method: 'GET' })
     .then(res => res.json())
