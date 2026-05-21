@@ -9,7 +9,22 @@ class Post extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'parent_id', 'content', 'image'];
+    // এই কলামগুলোতে ডাটা ইনসার্ট করা যাবে
+    protected $fillable = [
+        'user_id', 
+        'content', 
+        'parent_id', 
+        'images', 
+        'video', 
+        'bg_color'
+    ];
+
+    // ডাটাবেজের JSON কে অ্যারে হিসেবে ব্যবহার করার জন্য
+    protected $casts = [
+        'images' => 'array',
+        'video' => 'string',
+        'bg_color' => 'string'
+    ];
 
     // পোস্টটি কোন ইউজারের তা জানার রিলেশনশিপ
     public function user()
@@ -20,5 +35,21 @@ class Post extends Model
     public function parentPost()
     {
         return $this->belongsTo(Post::class, 'parent_id')->with('user');
+    }
+
+    public function likes()
+    {
+        return $this->hasMany(Like::class);
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class)->latest();
+    }
+
+    // বর্তমান ইউজার পোস্টটিতে লাইক দিয়েছে কি না তা চেক করার জন্য
+    public function isLikedByAuthUser()
+    {
+        return $this->likes()->where('user_id', auth()->id())->exists();
     }
 }

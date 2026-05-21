@@ -9,13 +9,9 @@ use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
-    /**
-     * ১. নিউজফিড ও ড্যাশবোর্ড ডাটা লোড করা
-     */
     public function index()
     {
-        // parentPost এবং তার ইউজার রিলেশনসহ লেটেস্ট পোস্টগুলো লোড করা
-        $posts = Post::with(['user', 'parentPost.user'])->latest()->get();
+        $posts = Post::with(['user', 'parentPost.user', 'likes', 'comments.user'])->latest()->get();
         $user = Auth::user();
 
         if ($user->role === 'alumni') {
@@ -24,122 +20,142 @@ class PostController extends Controller
         return view('student.dashboard', compact('posts'));
     }
 
-    /**
-     * ২. রেগুলার নতুন পোস্ট তৈরি করা (AJAX)
-     */
     public function store(Request $request)
     {
+        // ভ্যালিডেশন
         $request->validate([
-            'content' => 'required_without:image|string|max:5000',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'content'  => 'nullable|string|max:5000',
+            'bg_color' => 'nullable|string|max:50',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'video'    => 'nullable|mimes:mp4,mov,ogg,qt|max:20480',
         ]);
 
-        $imagePath = $request->hasFile('image') ? $request->file('image')->store('posts', 'public') : null;
+        $post = new Post();
+        $post->user_id = Auth::id();
+        $post->content = $request->content ?? '';
 
-        $post = Post::create([
-            'user_id' => Auth::id(),
-            'content' => $request->content ?? '',
-            'image' => $imagePath,
-        ]);
+        // 🎨 কালার ব্যাকগ্রাউন্ড লজিক (ছবি/ভিডিও না থাকলেই কেবল এটি কাজ করবে)
+        if ($request->filled('bg_color') && !$request->hasFile('images') && !$request->hasFile('video')) {
+            $post->bg_color = $request->bg_color;
+        }
+
+        // 📸 মাল্টিপল ইমেজ লজিক (লুপ চালিয়ে সেভ করা)
+        if ($request->hasFile('images')) {
+            $imagePaths = [];
+            foreach ($request->file('images') as $image) {
+                $imagePaths[] = $image->store('posts/images', 'public');
+            }
+            $post->images = $imagePaths; // Model casting এর কারণে অটোমেটিক JSON হয়ে যাবে
+        }
+
+        // 🎥 ভিডিও লজিক
+        if ($request->hasFile('video')) {
+            $post->video = $request->file('video')->store('posts/videos', 'public');
+        }
+
+        $post->save();
 
         return response()->json([
             'success' => true,
             'message' => 'Published successfully!',
-            'post' => $post
-        ]);
+            'post'    => $post
+        ]);         
+    }
+
+    public function share(Request $request, $id)
+    {
+        $targetPost = Post::findOrFail($id);
+        $actualParentId = $targetPost->parent_id ? $targetPost->parent_id : $targetPost->id;
+
+        $post = new Post();
+        $post->user_id   = Auth::id();
+        $post->content   = $request->content;
+        $post->parent_id = $actualParentId;
+        $post->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $post = Post::findOrFail($id);
+
+        if ($post->user_id !== Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized action'], 403);
+        }
+
+        $post->content = $request->content;
+
+        // মিডিয়া রিমুভ রিকোয়েস্ট (এডিট মডাল থেকে ডিলিট করলে)
+        if ($request->delete_image == "1") {
+            $this->deleteMediaFromStorage($post);
+            $post->images = null;
+            $post->video = null;
+            $post->bg_color = null;
+        }
+
+        // নতুন ব্যাকগ্রাউন্ড কালার আসলে
+        if ($request->filled('bg_color') && !$request->hasFile('images') && !$request->hasFile('video')) {
+            $this->deleteMediaFromStorage($post);
+            $post->images = null;
+            $post->video = null;
+            $post->bg_color = $request->bg_color;
+        }
+
+        // নতুন ছবি আসলে
+        if ($request->hasFile('images')) {
+            $this->deleteMediaFromStorage($post);
+            $post->video = null;
+            $post->bg_color = null;
+
+            $imagePaths = [];
+            foreach ($request->file('images') as $image) {
+                $imagePaths[] = $image->store('posts/images', 'public');
+            }
+            $post->images = $imagePaths;
+        }
+
+        // নতুন ভিডিও আসলে
+        if ($request->hasFile('video')) {
+            $this->deleteMediaFromStorage($post);
+            $post->images = null;
+            $post->bg_color = null;
+            $post->video = $request->file('video')->store('posts/videos', 'public');
+        }
+
+        $post->save();
+        return response()->json(['success' => true]);
+    }
+
+    public function destroy($id)
+    {
+        $post = Post::findOrFail($id);
+
+        if ($post->user_id !== Auth::id()) {
+            return response()->json(['success' => false], 403);
+        }
+
+        $this->deleteMediaFromStorage($post);
+        $post->delete();
+
+        return response()->json(['success' => true]);
     }
 
     /**
-     * 🎯 ৩. ফেসবুক স্টাইল ইন্টারনাল শেয়ার লজিক (শুধুমাত্র এই একটিই থাকবে)
+     * 🛠️ হেল্পার ফাংশন: স্টোরেজ থেকে মিডিয়া ডিলিট করা
      */
-    public function share(Request $request, $id)
+    private function deleteMediaFromStorage($post)
     {
-        // ভ্যালিডেশন চেক
-        $request->validate([
-            'content' => 'nullable|string|max:5000'
-        ]);
+        if ($post->video && Storage::disk('public')->exists($post->video)) {
+            Storage::disk('public')->delete($post->video);
+        }
 
-        try {
-            // ডাটাবেজে শেয়ার করা পোস্টটি তৈরি করা (parent_id অ্যাসাইন করে)
-            $sharedPost = Post::create([
-                'user_id'   => Auth::id(),
-                'parent_id' => $id, // মূল পোস্টের আইডি
-                'content'   => $request->input('content') ?? '',
-            ]);
-
-            // রিলেশন লোড করা ফ্রন্টএন্ডে পাঠানোর জন্য
-            $sharedPost->load(['user', 'parentPost.user']);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Post shared successfully!',
-                'post'    => $sharedPost
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Backend Error: ' . $e->getMessage()
-            ], 500);
+        if ($post->images && is_array($post->images)) {
+            foreach ($post->images as $image) {
+                if (Storage::disk('public')->exists($image)) {
+                    Storage::disk('public')->delete($image);
+                }
+            }
         }
     }
-public function update(Request $request, $id)
-{
-    $post = Post::findOrFail($id);
-
-    // নিরাপত্তা চেক: শুধুমাত্র পোস্টের নিজস্ব মালিকই এটি পরিবর্তন করতে পারবে
-    if ($post->user_id !== Auth::id()) {
-        return response()->json(['success' => false, 'message' => 'Unauthorized action'], 403);
-    }
-
-    // ভ্যালিডেশন (কন্টেন্ট রিকোয়ার্ড না, কারণ শুধু ছবিও থাকতে পারে)
-    $request->validate([
-        'content' => 'nullable|string|max:5000',
-        'image'   => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120' // সর্বোচ্চ 5MB
-    ]);
-
-    $postData = [
-        'content' => $request->content
-    ];
-
-    // ১. ইউজার যদি ক্রস বাটনে চাপ দিয়ে ছবি রিমুভ করে দেয় (delete_image == "1")
-    if ($request->delete_image == "1" && $post->image) {
-        if (Storage::disk('public')->exists($post->image)) {
-            Storage::disk('public')->delete($post->image); // স্টোরেজ থেকে পুরোনো ছবি ডিলিট
-        }
-        $postData['image'] = null; // ডাটাবেজে নাল সেট
-    }
-
-    // ২. ইউজার যদি নতুন কোনো ছবি আপলোড করে থাকে
-    if ($request->hasFile('image')) {
-        // নতুন ছবি রাখার আগে পুরোনো কোনো ছবি থাকলে তা স্টোরেজ থেকে ক্লিন করা
-        if ($post->image && Storage::disk('public')->exists($post->image)) {
-            Storage::disk('public')->delete($post->image);
-        }
-        
-        // নতুন ইমেজ ফাইল সেভ করা
-        $path = $request->file('image')->store('posts', 'public');
-        $postData['image'] = $path;
-    }
-
-    // ডাটাবেজ আপডেট সম্পাদন করা
-    $post->update($postData);
-
-    return response()->json(['success' => true, 'message' => 'Post updated successfully']);
-}
-
-public function destroy($id)
-{
-    $post = Post::findOrFail($id);
-
-    // সিকিউরিটি লক: পোস্টের মালিক ছাড়া কেউ ডিলিট করতে পারবে না
-    if ($post->user_id !== Auth::id()) {
-        return response()->json(['success' => false, 'message' => 'Unauthorized action'], 403);
-    }
-
-    $post->delete();
-
-    return response()->json(['success' => true, 'message' => 'Post deleted successfully']);
-}
-
 }
