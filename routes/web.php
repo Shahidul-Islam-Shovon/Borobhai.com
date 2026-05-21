@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -46,14 +47,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/admin/manage-authority', [AdminDashboardController::class, 'manageAuthority'])->name('admin.manage.authority');
 });
 
+
 // Group for Student Protected Routes
 Route::middleware(['auth', 'role:student'])->prefix('student')->group(function () {
-    Route::get('/dashboard', function () { return view('student.dashboard'); })->name('student.dashboard');
+    // সরাসরি ভিউ রিটার্ন না করে কন্ট্রোলারের মাধ্যমে ভিউ লোড হবে
+    Route::get('/dashboard', [PostController::class, 'index'])->name('student.dashboard');
 });
 
 // Group for Alumni Protected Routes
 Route::middleware(['auth', 'role:alumni'])->prefix('alumni')->group(function () {
-    Route::get('/dashboard', function () { return view('alumni.dashboard'); })->name('alumni.dashboard');
+    // অ্যালামনাইদের জন্যও একই ইউনিফাইড নিউজফিড কন্ট্রোলার কাজ করবে
+    Route::get('/dashboard', [PostController::class, 'index'])->name('alumni.dashboard');  
 });
 
 
@@ -70,3 +74,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy'); // এই লাইনটিই আপনার মিসিং ছিল!
 });
 
+
+Route::post('/posts/{id}/share', [PostController::class, 'share'])->name('posts.share');
+
+Route::middleware(['auth'])->group(function () {
+    // আগের অন্যান্য রাউটগুলোর সাথে নিচে এই দুটি বসিয়ে দিন
+    Route::put('/posts/{id}', [PostController::class, 'update'])->name('posts.update');
+    Route::delete('/posts/{id}', [PostController::class, 'destroy'])->name('posts.destroy');
+});

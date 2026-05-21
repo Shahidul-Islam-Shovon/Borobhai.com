@@ -9,11 +9,16 @@ class Post extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'content', 'image'];
+    protected $fillable = ['user_id', 'parent_id', 'content', 'image'];
 
     // পোস্টটি কোন ইউজারের তা জানার রিলেশনশিপ
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function parentPost()
+    {
+        return $this->belongsTo(Post::class, 'parent_id')->with('user');
     }
 }
