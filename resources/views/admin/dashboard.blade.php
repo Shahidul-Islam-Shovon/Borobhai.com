@@ -65,15 +65,17 @@
     <div style="position: absolute; bottom: 30px; width: calc(100% - 30px);">
         <div class="d-flex align-items-center gap-5">
                     <img src="{{ auth()->user()->profile_picture ? asset('storage/'.auth()->user()->profile_picture) : asset('default-avatar.png') }}" 
-                        alt="Profile" class="rounded-full" style="width: 40px; height: 40px; object-fit: cover;">
+                        alt="Profile" class="rounded-full" style="width: 60px; height: 60px; object-fit: cover;">
+                    
                     
                     <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-outline-warning" style="font-size: 0.8rem; text-decoration: none;">
                         Edit Profile
                     </a>
+                    <span class="mb-4"></span>
                 </div>
         <form id="logout-form" method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="button" onclick="confirmLogout()" class="w-100 btn btn-danger btn-sm" style="border-radius: 10px; padding: 9px; font-size: 0.78rem; font-weight: 600;">
+            <button type="button" onclick="confirmLogout()" class="w-100 btn btn-danger btn-sm" style="margin-top:10px; border-radius: 10px; padding: 9px; font-size: 0.78rem; font-weight: 600;">
                 <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Sign Out
             </button>
         </form>
@@ -95,8 +97,9 @@
         </div>
         
         <div class="d-flex align-items-center gap-3 bg-white px-3 py-2 border rounded-4 shadow-sm" style="border-radius: 12px;">
-            <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px; font-size: 0.85rem; background-color: #eff6ff; border: 1px solid #bfdbfe;">
-                            
+            <div>
+                
+                 <img  src="{{ asset('storage/'.auth()->user()->profile_picture) }}" class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px; font-size: 0.85rem;">           
 
             </div>
             <div class="d-none d-sm-block">

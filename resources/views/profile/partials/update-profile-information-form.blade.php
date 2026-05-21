@@ -9,38 +9,48 @@
         </p>
     </header>
 
-    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
-        @csrf
-
-    </form>
-
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6" enctype="multipart/form-data" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="mt-6 space-y-6">
         @csrf
         @method('patch')
 
-        <div class="mb-4">
-    <x-input-label :value="__('Current Profile Picture')" />
-    @if(auth()->user()->profile_picture)
-        <img src="{{ asset('storage/' . auth()->user()->profile_picture) }}" class="w-20 h-20 rounded-full object-cover">
-    @else
-        <p>No picture uploaded</p>
-    @endif
-</div>
+        <div>
+            <x-input-label for="profile_picture" :value="__('Profile Picture')" />
+            
+            <div class="flex items-center gap-6 mt-2 mb-4">
+                <div class="text-center">
+                    <span class="block text-xs text-gray-500 mb-1 font-medium">Current Picture</span>
+                    <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 shadow-sm bg-gray-50 flex items-center justify-center">
+                        @if(auth()->user()->profile_picture)
+                            <img src="{{ asset('storage/'.auth()->user()->profile_picture) }}" class="w-full h-full object-cover">
+                        @else
+                            <img src="{{ asset('default-avatar.png') }}" class="w-full h-full object-cover">
+                        @endif
+                    </div>
+                </div>
 
-<div class="mb-4">
-    <x-input-label for="profile_picture" :value="__('Upload New Picture')" />
-    <input type="file" name="profile_picture" id="profile_picture" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mt-1 block w-full">
-</div>
+                <div id="preview-container" class="hidden text-center">
+                    <span class="block text-xs text-indigo-600 font-semibold mb-1">New Selection</span>
+                    <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-500 shadow-md bg-gray-50 flex items-center justify-center">
+                        <img id="image-preview" src="#" alt="New Preview" class="w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+
+            <input type="file" name="profile_picture" id="profile_picture" 
+                   accept="image/png, image/jpeg, image/jpg, image/gif"
+                   class="mt-1 block w-full text-sm text-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            <x-input-error class="mt-2" :messages="$errors->get('profile_picture')" />
+        </div>
 
         <div>
             <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
+            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', auth()->user()->name)" required autofocus autocomplete="name" />
             <x-input-error class="mt-2" :messages="$errors->get('name')" />
         </div>
 
         <div>
             <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
+            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', auth()->user()->email)" required autocomplete="username" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
@@ -68,7 +78,7 @@
             @if (session('status') === 'profile-updated')
                 <p
                     x-data="{ show: true }"
-                    x-show="show"
+                    x-show={show}
                     x-transition
                     x-init="setTimeout(() => show = false, 2000)"
                     class="text-sm text-gray-600"
@@ -76,4 +86,24 @@
             @endif
         </div>
     </form>
+
+    <script>
+        document.getElementById('profile_picture').onchange = function (evt) {
+            const [file] = this.files;
+            if (file) {
+                const fileType = file['type'];
+                const validImageTypes = ['image/gif', 'image/jpeg', 'image/png', 'image/jpg'];
+                
+                if (!validImageTypes.includes(fileType)) {
+                    alert('Only JPG, JPEG, PNG or GIF images are allowed!');
+                    this.value = ''; 
+                    document.getElementById('preview-container').classList.add('hidden');
+                    return;
+                }
+
+                document.getElementById('image-preview').src = URL.createObjectURL(file);
+                document.getElementById('preview-container').classList.remove('hidden');
+            }
+        }
+    </script>
 </section>
