@@ -22,39 +22,52 @@ class PostController extends Controller
 
     public function store(Request $request)
     {
-        // ভ্যালিডেশন
+        // ১. ভ্যালিডেশন (১০০ মেগা বাইট = ১০২৪০০ কিলোবাইট)
         $request->validate([
-        'content' => 'nullable|string',
-
-        'images.*' => 'nullable|image|max:10240',
-
-        'video' => 'nullable|mimes:mp4,mov,avi,webm|max:102400',
-    ], [
-        'images.*.max' => 'Each image maximum size is 10MB.',
-        'video.max' => 'Video maximum size is 100MB.'
-    ]);
+            'content' => 'nullable|string',
+            'media.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,wmv|max:102400',
+        ], [
+            'media.*.max' => 'Each file maximum size cannot exceed 100MB.',
+            'media.*.mimes' => 'Unsupported file format.'
+        ]);
 
         $post = new Post();
         $post->user_id = Auth::id();
         $post->content = $request->content ?? '';
 
-        // 🎨 কালার ব্যাকগ্রাউন্ড লজিক (ছবি/ভিডিও না থাকলেই কেবল এটি কাজ করবে)
-        if ($request->filled('bg_color') && !$request->hasFile('images') && !$request->hasFile('video')) {
+        // 🎨 কালার ব্যাকগ্রাউন্ড লজিক (মিডিয়া না থাকলেই কেবল এটি কাজ করবে)
+        if ($request->filled('bg_color') && !$request->hasFile('media')) {
             $post->bg_color = $request->bg_color;
         }
 
-        // 📸 মাল্টিপল ইমেজ লজিক (লুপ চালিয়ে সেভ করা)
-        if ($request->hasFile('images')) {
+        // 📸 🎥 মাল্টিপল মিডিয়া (ইмеется এবং ভিডিও) প্রসেসিং লজিক
+        if ($request->hasFile('media')) {
             $imagePaths = [];
-            foreach ($request->file('images') as $image) {
-                $imagePaths[] = $image->store('posts/images', 'public');
-            }
-            $post->images = $imagePaths; // Model casting এর কারণে অটোমেটিক JSON হয়ে যাবে
-        }
+            $videoPaths = [];
 
-        // 🎥 ভিডিও লজিক
-        if ($request->hasFile('video')) {
-            $post->video = $request->file('video')->store('posts/videos', 'public');
+            foreach ($request->file('media') as $file) {
+                $mimeType = $file->getMimeType();
+                
+                if (str_starts_with($mimeType, 'video/')) {
+                    $videoPaths[] = $file->store('posts/videos', 'public');
+                } else {
+                    $imagePaths[] = $file->store('posts/images', 'public');
+                }
+            }
+
+            // ইমেজ সেভ করা
+            if (count($imagePaths) > 0) {
+                $post->images = $imagePaths;
+            }
+            
+            // ভিডিও সেভ করা (সিঙ্গেল ভিডিও হলে ডিরেক্ট পাথ, মাল্টিপল হলে JSON অ্যারে স্ট্রিং)
+            if (count($videoPaths) > 0) {
+                if (count($videoPaths) === 1) {
+                    $post->video = $videoPaths[0];
+                } else {
+                    $post->video = json_encode($videoPaths);
+                }
+            }
         }
 
         $post->save();
@@ -63,7 +76,7 @@ class PostController extends Controller
             'success' => true,
             'message' => 'Published successfully!',
             'post'    => $post
-        ]);         
+        ]);
     }
 
     public function share(Request $request, $id)
@@ -85,50 +98,28 @@ class PostController extends Controller
         $post = Post::findOrFail($id);
 
         if ($post->user_id !== Auth::id()) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized action'], 403);
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $post->content = $request->content;
+        $request->validate([
+            'content' => 'nullable|string',
+        ]);
 
-        // মিডিয়া রিমুভ রিকোয়েস্ট (এডিট মডাল থেকে ডিলিট করলে)
-        if ($request->delete_image == "1") {
-            $this->deleteMediaFromStorage($post);
-            $post->images = null;
-            $post->video = null;
-            $post->bg_color = null;
-        }
-
-        // নতুন ব্যাকগ্রাউন্ড কালার আসলে
-        if ($request->filled('bg_color') && !$request->hasFile('images') && !$request->hasFile('video')) {
-            $this->deleteMediaFromStorage($post);
-            $post->images = null;
-            $post->video = null;
+        $post->content = $request->content ?? '';
+        
+        // এডিট করার সময় যদি কালার ব্যাকগ্রাউন্ড আপডেট করতে চান
+        if ($request->has('bg_color')) {
             $post->bg_color = $request->bg_color;
         }
 
-        // নতুন ছবি আসলে
-        if ($request->hasFile('images')) {
-            $this->deleteMediaFromStorage($post);
-            $post->video = null;
-            $post->bg_color = null;
-
-            $imagePaths = [];
-            foreach ($request->file('images') as $image) {
-                $imagePaths[] = $image->store('posts/images', 'public');
-            }
-            $post->images = $imagePaths;
-        }
-
-        // নতুন ভিডিও আসলে
-        if ($request->hasFile('video')) {
-            $this->deleteMediaFromStorage($post);
-            $post->images = null;
-            $post->bg_color = null;
-            $post->video = $request->file('video')->store('posts/videos', 'public');
-        }
-
         $post->save();
-        return response()->json(['success' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Post updated successfully!',
+            'content' => $post->content,
+            'bg_color' => $post->bg_color
+        ]);
     }
 
     public function destroy($id)
