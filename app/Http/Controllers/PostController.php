@@ -24,11 +24,15 @@ class PostController extends Controller
     {
         // ভ্যালিডেশন
         $request->validate([
-            'content'  => 'nullable|string|max:5000',
-            'bg_color' => 'nullable|string|max:50',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-            'video'    => 'nullable|mimes:mp4,mov,ogg,qt|max:20480',
-        ]);
+        'content' => 'nullable|string',
+
+        'images.*' => 'nullable|image|max:10240',
+
+        'video' => 'nullable|mimes:mp4,mov,avi,webm|max:102400',
+    ], [
+        'images.*.max' => 'Each image maximum size is 10MB.',
+        'video.max' => 'Video maximum size is 100MB.'
+    ]);
 
         $post = new Post();
         $post->user_id = Auth::id();
