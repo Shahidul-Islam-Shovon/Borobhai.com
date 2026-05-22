@@ -260,7 +260,11 @@
                                             <ul class="dropdown-menu dropdown-menu-end shadow p-1">
                                                 <li>
                                                     <a class="dropdown-item py-1 fs-7" href="javascript:void(0)" 
-                                                       onclick="openEditModal({{ $post->id }}, `{{ $post->content }}`, `{{ $post->bg_color }}`, `{{ json_encode($post->images) }}`, `{{ $post->video }}`)">
+                                                    onclick="prepareEditModal(this)"
+                                                    data-id="{{ $post->id }}"
+                                                    data-content="{{ $post->content }}"
+                                                    data-images="{{ json_encode($post->images) }}"
+                                                    data-video="{{ is_array($post->video) ? json_encode($post->video) : $post->video }}">
                                                         <i class="bi bi-pencil me-1"></i> Edit Post
                                                     </a>
                                                 </li>
@@ -274,63 +278,85 @@
                                     @endif
                                 </div>
 
+                                {{-- Feed Media part Start --}}
                                 @php
-                                    $hasImages = !empty($post->images) && (is_array($post->images) ? count($post->images) > 0 : count(json_decode($post->images, true) ?? [] ) > 0);
-                                    $hasVideo = !empty($post->video);
-                                    $renderBg = $post->bg_color && !$hasImages && !$hasVideo;
-                                @endphp
-
-                                <div id="postInputWrapper-{{ $post->id }}" class="{{ $renderBg ? 'p-4 rounded text-center text-white fw-bold d-flex align-items-center justify-content-center fb-colored-post-render ' . $post->bg_color : 'p-0 text-start' }}" style="{{ $renderBg ? 'min-height: 200px; font-size: 22px;' : 'font-size: 14px;' }}">
-                                    <p class="mb-0 dynamic-caption" id="captionText-{{ $post->id }}">{!! nl2br(e($post->content)) !!}</p>
-                                </div>
-
-                                @php
-                                    $mediaItems = [];
-                                    if($post->images) {
-                                        $imagesArray = is_array($post->images) ? $post->images : json_decode($post->images, true);
-                                        if(is_array($imagesArray)) {
-                                            foreach($imagesArray as $img) { 
-                                                $mediaItems[] = ['type' => 'image', 'url' => asset('storage/' . $img)]; 
-                                            }
+                                $hasImages = is_array($post->images) && count($post->images) > 0;
+                                
+                                // ভিডিও ডাটাবেজে জেসন অ্যারে কি না তা চেক করা এবং ডিকোড করা
+                                $videoItemsArray = [];
+                                if (!empty($post->video) && $post->video !== 'null') {
+                                    // যদি অলরেডি অ্যারে না হয়, তবে জেসন ডিকোড করার চেষ্টা করা
+                                    $decodedVideo = is_array($post->video) ? $post->video : json_decode($post->video, true);
+                                    if (is_array($decodedVideo)) {
+                                        $videoItemsArray = $decodedVideo;
+                                    } else {
+                                        // যদি সিঙ্গেল স্ট্রিং হয়, তবে ট্রিম করে পুশ করা
+                                        $cleanSingleVid = trim($post->video, '"[]');
+                                        if(!empty($cleanSingleVid)) {
+                                            $videoItemsArray[] = $cleanSingleVid;
                                         }
                                     }
-                                    if($post->video) {
-                                        $decodedVideos = json_decode($post->video, true);
-                                        if(is_array($decodedVideos)) {
-                                            foreach($decodedVideos as $vid) { 
-                                                $mediaItems[] = ['type' => 'video', 'url' => asset('storage/' . $vid)]; 
-                                            }
-                                        } else {
-                                            $mediaItems[] = ['type' => 'video', 'url' => asset('storage/' . $post->video)];
+                                }
+                                
+                                $hasVideo = count($videoItemsArray) > 0;
+                                $renderBg = !empty($post->bg_color) && !$hasImages && !$hasVideo;
+                            @endphp
+
+                            <div id="postInputWrapper-{{ $post->id }}" class="{{ $renderBg ? 'p-4 rounded text-center text-white fw-bold d-flex align-items-center justify-content-center fb-colored-post-render ' . $post->bg_color : 'p-0 text-start' }}" style="{{ $renderBg ? 'min-height: 200px; font-size: 22px;' : 'font-size: 14px;' }}">
+                                <p class="mb-0 dynamic-caption" id="captionText-{{ $post->id }}">{!! nl2br(e($post->content)) !!}</p>
+                            </div>
+
+                            @php
+                                $mediaItems = [];
+                                
+                                // ১. ছবিগুলো পুশ করা হচ্ছে
+                                if($hasImages) {
+                                    foreach($post->images as $img) { 
+                                        // ডাবল স্ল্যাশ রিমুভ করার জন্য পাথ ক্লিন করা
+                                        $cleanImgPath = str_replace('//', '/', $img);
+                                        $mediaItems[] = ['type' => 'image', 'url' => asset('storage/' . $cleanImgPath)]; 
+                                    }
+                                }
+                                
+                                // ২. ভিডিওগুলো পুশ করা হচ্ছে (জেসন অ্যারে থেকে প্রতিটি ভিডিও আলাদা করে)
+                                if($hasVideo) {
+                                    foreach($videoItemsArray as $vid) {
+                                        $cleanVidPath = str_replace('//', '/', trim($vid, '"[] '));
+                                        if(!empty($cleanVidPath)) {
+                                            $mediaItems[] = ['type' => 'video', 'url' => asset('storage/' . $cleanVidPath)];
                                         }
                                     }
-                                    $mediaCount = count($mediaItems);
-                                    $escapedImagesJson = htmlspecialchars(json_encode($mediaItems), ENT_QUOTES, 'UTF-8');
-                                @endphp
+                                }
+                                
+                                $mediaCount = count($mediaItems);
+                                // জাভাস্ক্রিপ্টের জন্য সেফ জেসন তৈরি
+                                $escapedImagesJson = json_encode($mediaItems, JSON_HEX_APOS | JSON_HEX_QUOT);
+                            @endphp
 
-                                @if($mediaCount > 0)
-                                    <div class="mt-2 dynamic-media-container-zone position-relative overflow-hidden rounded border border-light-subtle mb-3">
-                                        <div class="row g-1">
-                                            @foreach($mediaItems as $index => $media)
-                                                @if($index < 4)
-                                                    <div class="{{ $mediaCount == 1 ? 'col-12' : ($mediaCount == 2 ? 'col-6' : ($index == 0 && $mediaCount > 2 ? 'col-12' : 'col-4')) }} position-relative bg-black text-center d-flex align-items-center justify-content-center" style="max-height: 380px; min-height: {{ $mediaCount == 1 ? '260px' : '150px' }};">
-                                                        @if($media['type'] == 'image')
-                                                            <img src="{{ $media['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer" onclick="openLightbox('{{ $escapedImagesJson }}', {{ $index }})">
-                                                        @else
-                                                            <video src="{{ $media['url'] }}" controls preload="metadata" class="w-100 h-100 object-fit-contain cursor-pointer" onclick="openLightbox('{{ $escapedImagesJson }}', {{ $index }})"></video>
-                                                        @endif
+                            @if($mediaCount > 0)
+                                <div class="mt-2 dynamic-media-container-zone position-relative overflow-hidden rounded border border-light-subtle mb-3">
+                                    <div class="row g-1">
+                                        @foreach($mediaItems as $index => $media)
+                                            @if($index < 4)
+                                                <div class="{{ $mediaCount == 1 ? 'col-12' : ($mediaCount == 2 ? 'col-6' : ($index == 0 && $mediaCount > 2 ? 'col-12' : 'col-4')) }} position-relative bg-black text-center d-flex align-items-center justify-content-center" style="max-height: 380px; min-height: {{ $mediaCount == 1 ? '260px' : '150px' }};">
+                                                    @if($media['type'] == 'image')
+                                                        <img src="{{ $media['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer" onclick="openLightbox(this.getAttribute('data-json'), {{ $index }})" data-json="{{ $escapedImagesJson }}">
+                                                    @else
+                                                        <video src="{{ $media['url'] }}" controls preload="metadata" class="w-100 h-100 object-fit-contain cursor-pointer" onclick="openLightbox(this.getAttribute('data-json'), {{ $index }})" data-json="{{ $escapedImagesJson }}"></video>
+                                                    @endif
 
-                                                        @if($index == 3 && $mediaCount > 4)
-                                                            <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center text-white fw-bold fs-4 cursor-pointer" onclick="openLightbox('{{ $escapedImagesJson }}', 3)">
-                                                                +{{ $mediaCount - 4 }}
-                                                            </div>
-                                                        @endif
-                                                    </div>
-                                                @endif
-                                            @endforeach
-                                        </div>
+                                                    @if($index == 3 && $mediaCount > 4)
+                                                        <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center text-white fw-bold fs-4 cursor-pointer" onclick="openLightbox(this.getAttribute('data-json'), 3)" data-json="{{ $escapedImagesJson }}">
+                                                            +{{ $mediaCount - 4 }}
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                        @endforeach
                                     </div>
-                                @endif
+                                </div>
+                            @endif
+{{-- Feed media End --}}
 
                                 @if($post->parentPost)
                                     <div class="mt-3 p-3 border rounded bg-light border-light-subtle shared-post-root-node text-start">
@@ -521,27 +547,42 @@
         </div>
     </div>
 
-    <div class="modal fade" id="editPostModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-3 border-0 shadow">
-                <div class="modal-header border-bottom-0 pb-0">
-                    <h5 class="modal-title fw-bold mx-auto" style="font-size: 17px;">Edit Post</h5>
-                    <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="editPostId">
-                    <div id="editPostInputWrapper" class="p-3 rounded mb-2 bg-transparent">
-                        <textarea id="editPostContent" class="form-control border-0 bg-transparent shadow-none" rows="4" style="resize: none; font-size: 15px;"></textarea>
-                    </div>
-                    <div id="editModalMediaPreview" class="row g-1 my-2 d-none"></div>
-                </div>
-                <div class="modal-footer border-top-0 pt-0">
-                    <button type="button" class="btn btn-secondary btn-sm w-100" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary btn-sm w-100 px-4" onclick="submitEditPost()">Save Changes</button>
-                </div>
+    {{-- edit post modal start --}}
+    <div class="modal fade" id="editPostModal" tabindex="-1" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3 border-0 shadow">
+            
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold mx-auto" style="font-size: 17px;">Edit Post</h5>
+                <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        </div>
+            
+            <form id="editPostForm" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" id="editPostId">
+                
+                <div class="modal-body">
+                    <textarea id="editPostContent" name="content" class="form-control border-0 mb-3" rows="3" placeholder="What's on your mind?"></textarea>
+                    
+                    <div id="editMediaPreviewContainer" class="row g-2 mb-3"></div>
+
+                    <div class="mb-3">
+                        <label for="editMediaInput" class="btn btn-light btn-sm border cursor-pointer">
+                            <i class="bi bi-image text-success"></i> আরও ছবি/ভিডিও যোগ করুন
+                        </label>
+                        <input type="file" id="editMediaInput" name="media[]" multiple class="d-none" accept="image/*,video/*">
+                    </div>
+                </div>
+                
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" id="editSubmitBtn" class="btn btn-primary btn-sm px-4">Save Changes</button>
+                </div>
+            </form>
+            </div>
     </div>
+</div>
+    {{-- edit post modal end --}}
 
     <div class="modal fade" id="editCommentModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -610,214 +651,136 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+   {{-- script [updated 11.34 / 22.5.26 Start] --}}
+   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <script>
-        let selectedMediaFiles = []; 
-        let bootstrapEditModal = null;
-        let bootstrapShareModal = null;
-        let bootstrapLightboxModal = null;
-        let bootstrapCommentEditModal = null;
+<script>
+    // --- গ্লোবাল স্টেট ও ট্র্যাকিং ভ্যারিয়েবল সমূহ ---
+    let selectedMediaFiles = [];
+    let removedImages = [];
+    let removedVideos = [];
+    let editSelectedFiles = [];
 
-        // ৪. মেথড কনফ্লিক্ট বা ডুপ্লিকেট ইনিশিয়ালাইজেশন রোধে DOMContentLoaded লজিক
-        document.addEventListener("DOMContentLoaded", function() {
-            bootstrapEditModal = new bootstrap.Modal(document.getElementById('editPostModal'));
-            bootstrapShareModal = new bootstrap.Modal(document.getElementById('fbShareModal'));
-            bootstrapLightboxModal = new bootstrap.Modal(document.getElementById('imageLightboxModal'));
-            
-            const editCommentModalEl = document.getElementById('editCommentModal');
-            if(editCommentModalEl) {
-                bootstrapCommentEditModal = new bootstrap.Modal(editCommentModalEl);
-            }
-        });
+    // --- বুটস্ট্র্যাপ মডাল গ্লোবাল ইনস্ট্যান্সসমূহ ---
+    let bootstrapEditModal = null;
+    let bootstrapShareModal = null;
+    let bootstrapLightboxModal = null;
+    let bootstrapCommentEditModal = null;
 
-        // 🔍 ১. অ্যাডভান্সড লাইটবক্স লজিক (ইমেজ এবং ভিডিও দুটোই একসাথে হ্যান্ডেল করবে)
-        function openLightbox(mediaJson, index = 0) {
-            try {
-                const mediaItems = JSON.parse(mediaJson);
-                const inner = document.getElementById('lightboxInner');
-                if(!inner) return;
-                inner.innerHTML = '';
-                
-                mediaItems.forEach((item, i) => {
-                    let activeClass = (i === index) ? 'active' : '';
-                    if(item.type === 'image') {
-                        inner.innerHTML += `
-                            <div class="carousel-item ${activeClass}">
-                                <img src="${item.url}" class="d-block w-100 rounded" style="max-height: 80vh; object-fit: contain;">
-                            </div>`;
-                    } else if(item.type === 'video') {
-                        inner.innerHTML += `
-                            <div class="carousel-item ${activeClass}">
-                                <video src="${item.url}" controls class="d-block w-100 rounded" style="max-height: 80vh; object-fit: contain; background:#000;"></video>
-                            </div>`;
-                    }
-                });
-                
-                bootstrapLightboxModal.show();
-            } catch (e) {
-                console.error("Lightbox open error:", e);
-            }
-        }
-
-        // Color Palettes Rendering Actions
-        function toggleColorPlates() { 
-            document.getElementById('colorPlatesZone').classList.toggle('d-none'); 
-        }
+    // =========================================================================
+    // ⚙️ পেজ লোড বা ডম রেডি ইনিশিয়েলাইজার (DOMContentLoaded)
+    // =========================================================================
+    document.addEventListener("DOMContentLoaded", function() {
         
-        function selectPostBg(className) {
-            const wrapper = document.getElementById('postInputWrapper');
-            const textarea = document.getElementById('postContent');
-            wrapper.className = "p-2 rounded fb-colored-post-render " + className;
-            textarea.style.fontSize = "24px"; 
-            textarea.style.textAlign = "center"; 
-            textarea.style.color = "white"; 
-            textarea.placeholder = ""; 
-            document.getElementById('bg_color_input').value = className;
-            
-            selectedMediaFiles = [];
-            renderMediaPreviews();
-        }
+        // মডালগুলো গ্লোবালি ডিক্লেয়ার করা হচ্ছে যাতে Cannot read properties এরর না আসে
+        const editPostModalEl = document.getElementById('editPostModal');
+        if (editPostModalEl) bootstrapEditModal = new bootstrap.Modal(editPostModalEl);
+
+        const shareModalEl = document.getElementById('fbShareModal');
+        if (shareModalEl) bootstrapShareModal = new bootstrap.Modal(shareModalEl);
+
+        const lightboxModalEl = document.getElementById('imageLightboxModal');
+        if (lightboxModalEl) bootstrapLightboxModal = new bootstrap.Modal(lightboxModalEl);
+
+        const editCommentModalEl = document.getElementById('editCommentModal');
+        if (editCommentModalEl) bootstrapCommentEditModal = new bootstrap.Modal(editCommentModalEl);
+
+        // --- নতুন পোস্ট ক্রিয়েশন: মিডিয়া ফাইল ইনপুট ট্রিগার লজিক ---
+        const triggerUploadBtn = document.getElementById('triggerUploadBtn');
+        const postImageInput = document.getElementById('postImageInput');
         
-        function resetPostBg() {
-            const wrapper = document.getElementById('postInputWrapper');
-            const textarea = document.getElementById('postContent');
-            if(wrapper) wrapper.className = "p-1 rounded bg-transparent";
-            if(textarea) {
-                textarea.style.fontSize = "14px"; 
-                textarea.style.textAlign = "left"; 
-                textarea.style.color = "inherit"; 
-                textarea.placeholder = "Start a post...";
-            }
-            const bgInp = document.getElementById('bg_color_input');
-            if(bgInp) bgInp.value = "";
-        }
-
-        // Live Upload Feature & Previews Logic
-        const imageInput = document.getElementById('postImageInput');
-        const previewContainer = document.getElementById('imagePreviewContainer');
-
-        if(document.getElementById('triggerUploadBtn')) {
-            document.getElementById('triggerUploadBtn').addEventListener('click', function() { 
-                imageInput.click(); 
+        if (triggerUploadBtn && postImageInput) {
+            triggerUploadBtn.addEventListener('click', function() {
+                postImageInput.click();
             });
         }
 
-        if(imageInput) {
-            imageInput.addEventListener('change', function() {
+        // --- নতুন পোস্ট ক্রিয়েশন: ফাইল সিলেক্ট ও ১০০ এমবি সাইজ ভ্যালিডেশন ---
+        if (postImageInput) {
+            postImageInput.addEventListener('change', function() {
                 const files = Array.from(this.files);
-                const MAX_SIZE_BYTES = 100 * 1024 * 1024; 
-                
-                for(let file of files) {
-                    if(file.size > MAX_SIZE_BYTES) {
-                        Swal.fire({ icon: 'error', title: 'File too large!', text: `"${file.name}" সর্বোচ্চ ১০০ MB অ্যালাউড।` });
-                        imageInput.value = ''; 
-                        return; 
+                const MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB Limit
+
+                for (let file of files) {
+                    if (file.size > MAX_SIZE_BYTES) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'File too large!',
+                            text: `"${file.name}" ফাইলটি অনেক বড়। সর্বোচ্চ ১০০ MB পর্যন্ত ফাইল আপলোড করতে পারবেন।`
+                        });
+                        postImageInput.value = '';
+                        return;
                     }
                 }
+                
+                // ফাইল সিলেক্ট করলে ব্যাকগ্রাউন্ড কালার রিসেট হয়ে যাবে
                 resetPostBg();
+                
                 files.forEach(file => selectedMediaFiles.push(file));
                 renderMediaPreviews();
-                imageInput.value = ''; 
+                postImageInput.value = ''; // ইনপুট রিসেট
             });
         }
 
-        function renderMediaPreviews() {
-            if(!previewContainer) return;
-            previewContainer.innerHTML = '';
-            if (selectedMediaFiles.length === 0) {
-                previewContainer.classList.add('d-none');
-                return;
-            }
-            previewContainer.classList.remove('d-none');
-            
-            selectedMediaFiles.forEach((file, index) => {
-                const col = document.createElement('div');
-                col.className = 'col-4 col-md-3 position-relative';
-                col.style.height = '100px';
-                
-                let mediaElement;
-                if (file.type.startsWith('video/')) {
-                    mediaElement = document.createElement('video');
-                    mediaElement.src = URL.createObjectURL(file);
-                    mediaElement.className = 'w-100 h-100 object-fit-cover rounded border';
-                    mediaElement.muted = true;
-                } else {
-                    mediaElement = document.createElement('img');
-                    mediaElement.src = URL.createObjectURL(file);
-                    mediaElement.className = 'w-100 h-100 object-fit-cover rounded border';
-                }
-                
-                const closeBtn = document.createElement('button');
-                closeBtn.type = 'button';
-                closeBtn.className = 'btn btn-dark btn-sm position-absolute top-0 end-0 m-1 rounded-circle';
-                closeBtn.style.cssText = 'background: rgba(0,0,0,0.7); border:none; width:22px; height:22px; display:flex; align-items:center; justify-content:center; z-index:10; padding:0;';
-                closeBtn.innerHTML = '<i class="bi bi-x-lg" style="font-size:10px; color:#fff;"></i>';
-                
-                closeBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    selectedMediaFiles.splice(index, 1);
-                    renderMediaPreviews();
-                });
-                
-                col.appendChild(mediaElement);
-                col.appendChild(closeBtn);
-                previewContainer.appendChild(col);
-            });
-        }
-
-        // AJAX Post Form Submission with Custom Progress Animation
-        const ajaxFormEl = document.getElementById('ajaxPostForm');
-        if(ajaxFormEl) {
-            ajaxFormEl.addEventListener('submit', function(e) {
+        // --- নতুন পোস্ট ক্রিয়েশন: ফর্ম সাবমিট (AJAX উইথ প্রোগ্রেস বার) ---
+        const ajaxPostForm = document.getElementById('ajaxPostForm');
+        if (ajaxPostForm) {
+            ajaxPostForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 const content = document.getElementById('postContent').value.trim();
-                if (content === "" && selectedMediaFiles.length === 0) return;
-
+                const bgColor = document.getElementById('bg_color_input').value;
                 const submitBtn = document.getElementById('submitBtn');
+
+                if (!content && selectedMediaFiles.length === 0 && !bgColor) {
+                    Swal.fire({ icon: 'warning', title: 'Empty Post!', text: 'পোস্টে কিছু লিখুন অথবা ছবি/ভিডিও সিলেক্ট করুন।' });
+                    return;
+                }
+
                 submitBtn.disabled = true;
 
                 const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false });
                 Toast.fire({
-                    icon: 'info', title: 'Uploading post...',
+                    icon: 'info',
+                    title: 'Publishing your post...',
                     html: '<div class="progress mt-2" style="height:8px;"><div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div></div>'
                 });
 
-                const formData = new FormData(this);
-                formData.delete('images[]');
-                
-                // ইমেজ এবং ভিডিও ডিফাইনড কন্টেন্ট টাইপ আলাদা করে পাঠানো
+                const formData = new FormData();
+                formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                formData.append('content', content);
+                formData.append('bg_color', bgColor);
+
                 selectedMediaFiles.forEach(file => {
-                    if (file.type.startsWith('video/')) {
-                        formData.append('video', file);
-                    } else {
-                        formData.append('images[]', file);
-                    }
+                    formData.append('media[]', file);
                 });
 
                 const xhr = new XMLHttpRequest();
-                xhr.open('POST', "{{ route('posts.store') }}", true);
-                xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                xhr.open('POST', "/posts/store", true);
                 xhr.setRequestHeader('Accept', 'application/json');
 
+                // প্রোগ্রেস বার অ্যানিমেশন হ্যান্ডেলার
                 xhr.upload.addEventListener('progress', function(e) {
                     if (e.lengthComputable) {
                         const progBar = document.getElementById('uploadProgressBar');
-                        if(progBar) progBar.style.width = Math.round((e.loaded / e.total) * 100) + '%';
+                        if (progBar) {
+                            const percent = Math.round((e.loaded / e.total) * 100);
+                            progBar.style.width = percent + '%';
+                        }
                     }
                 });
 
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === 4) {
-                        if(xhr.status === 200) {
-                            Toast.fire({ icon: 'success', title: 'Published!', timer: 1000 }).then(() => {
+                        if (xhr.status === 200 || xhr.status === 201) {
+                            Toast.fire({ icon: 'success', title: 'Published Successfully!', timer: 1000 }).then(() => {
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                                 setTimeout(() => { window.location.reload(); }, 400);
                             });
                         } else {
                             submitBtn.disabled = false;
-                            Swal.fire({ icon: 'error', title: 'Failed!', text: 'Something went wrong.' });
+                            Swal.fire({ icon: 'error', title: 'Failed!', text: 'পোস্ট আপলোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।' });
                         }
                     }
                 };
@@ -825,252 +788,549 @@
             });
         }
 
-        // Toggle Post Likes
-        function toggleLike(postId) {
-            const likeBtn = document.getElementById(`likeBtn-${postId}`);
-            const likeZone = document.getElementById(`like-zone-${postId}`);
-            fetch(`/posts/${postId}/like`, {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' }
-            }).then(res => res.json()).then(data => {
-                if(data.success) {
-                    if(data.liked) {
-                        likeBtn.className = "btn btn-link btn-sm text-decoration-none text-primary fw-bold";
-                        likeBtn.innerHTML = `<i class="bi bi-hand-thumbs-up-fill"></i> Like`;
-                    } else {
-                        likeBtn.className = "btn btn-link btn-sm text-decoration-none text-muted";
-                        likeBtn.innerHTML = `<i class="bi bi-hand-thumbs-up"></i> Like`;
-                    }
-                    if(likeZone) {
-                        likeZone.innerHTML = data.like_count > 0 ? `<i class="bi bi-heart-fill text-danger"></i> <span class="like-count-text">${data.like_count} Likes</span>` : '';
-                    }
-                }
+        // --- এডিট মোড: নতুন অতিরিক্ত মিডিয়া ফাইল সিলেক্ট লিসেনার ---
+        const editMediaInputEl = document.getElementById('editMediaInput');
+        if (editMediaInputEl) {
+            editMediaInputEl.addEventListener('change', function() {
+                const files = Array.from(this.files);
+                files.forEach(file => {
+                    editSelectedFiles.push(file);
+                    const currIdx = editSelectedFiles.length - 1;
+                    const isVideo = file.type.startsWith('video/');
+                    renderEditPreviewItem(file, isVideo ? 'video' : 'image', true, currIdx);
+                });
+                this.value = ''; 
             });
         }
 
-        // Live Comment System Controller Core Actions
-        function toggleComments(postId) { 
-            const zone = document.getElementById(`commentZone-${postId}`);
-            if(zone) zone.classList.toggle('d-none'); 
-        }
+        // --- এডিট মোড: ফর্ম আপডেট সাবমিশন (AJAX - FIXED 405 METHOD ERROR) ---
+        const editPostFormEl = document.getElementById('editPostForm');
+        if (editPostFormEl) {
+            editPostFormEl.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const id = document.getElementById('editPostId').value;
+                const submitBtn = document.getElementById('editSubmitBtn');
+                if (!id) return;
 
-        function submitComment(e, postId) {
-            e.preventDefault();
-            const inputField = document.getElementById(`commentInput-${postId}`);
-            const commentContent = inputField.value.trim();
-            if(!commentContent) return;
+                submitBtn.disabled = true;
 
-            fetch(`/posts/${postId}/comments`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' },
-                body: JSON.stringify({ content: commentContent })
-            }).then(res => res.json()).then(data => {
-                if(data.success) {
-                    inputField.value = '';
-                    const mainCounter = document.getElementById(`comment-count-${postId}`);
-                    if(mainCounter) mainCounter.innerText = `${data.comment_count} Comments`;
-                    
-                    const noCommentMsg = document.querySelector(`.dynamic-no-comment-${postId}`);
-                    if(noCommentMsg) noCommentMsg.remove();
+                const formData = new FormData();
+                formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                formData.append('content', document.getElementById('editPostContent').value);
+                formData.append('removed_images', JSON.stringify(removedImages));
+                formData.append('removed_videos', JSON.stringify(removedVideos));
 
-                    const newCommentHtml = `
-                        <div class="bg-light p-2 px-3 rounded-4 mb-2 d-flex justify-content-between align-items-start comment-node-item" id="comment-container-${data.comment_id}">
-                            <div class="flex-grow-1">
-                                <strong class="small text-dark d-block" style="font-size: 12px;">${data.user_name}</strong>
-                                <span class="small text-dark-50" id="comment-text-${data.comment_id}" style="font-size: 13px;">${data.content}</span>
-                            </div>
-                            <div class="dropdown">
-                                <button type="button" class="btn btn-link btn-sm text-muted p-0 border-0 shadow-none" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width: 100px;">
-                                    <li><a class="dropdown-item py-1 fs-7" href="javascript:void(0)" onclick="editComment(event, ${data.comment_id})"><i class="bi bi-pencil me-1"></i> Edit</a></li>
-                                    <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deleteComment(${data.comment_id}, ${postId})"><i class="bi bi-trash me-1"></i> Delete</a></li>
-                                </ul>
-                            </div>
-                        </div>`;
-                    document.getElementById(`commentList-${postId}`).insertAdjacentHTML('afterbegin', newCommentHtml);
-                }
-            });
-        }
+                editSelectedFiles.forEach(file => {
+                    formData.append('media[]', file);
+                });
 
-        function editComment(event, commentId) {
-            const commentText = document.getElementById(`comment-text-${commentId}`).innerText;
-            document.getElementById('editTargetCommentId').value = commentId;
-            if(bootstrapCommentEditModal) bootstrapCommentEditModal.show();
-            setTimeout(() => {
-                const inputField = document.getElementById('editCommentInput');
-                if(inputField) { inputField.value = commentText; inputField.focus(); }
-            }, 400);
-        }
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `/posts/${id}`, true); 
+                xhr.setRequestHeader('Accept', 'application/json');
 
-        function submitUpdateComment() {
-            const commentId = document.getElementById('editTargetCommentId').value;
-            const updatedText = document.getElementById('editCommentInput').value.trim();
-            if(!updatedText) return;
-
-            fetch(`/comments/${commentId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' },
-                body: JSON.stringify({ content: updatedText })
-            }).then(res => res.json()).then(data => {
-                if(data.success) {
-                    const textNode = document.getElementById(`comment-text-${commentId}`);
-                    if(textNode) textNode.innerText = updatedText;
-                    bootstrapCommentEditModal.hide();
-                }
-            });
-        }
-
-        function deleteComment(commentId, postId) {
-            Swal.fire({ title: 'Delete comment?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444' }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch(`/comments/${commentId}`, {
-                        method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' }
-                    }).then(res => res.json()).then(data => {
-                        if(data.success) {
-                            const cEl = document.getElementById(`comment-container-${commentId}`);
-                            if(cEl) cEl.remove();
-                            const mainCounter = document.getElementById(`comment-count-${postId}`);
-                            if(mainCounter && data.comment_count !== undefined) mainCounter.innerText = `${data.comment_count} Comments`;
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            Swal.fire({ icon: 'success', title: 'Post Updated Successfully!', timer: 1200 }).then(() => {
+                                if (bootstrapEditModal) bootstrapEditModal.hide();
+                                window.location.reload();
+                            });
+                        } else {
+                            submitBtn.disabled = false;
+                            Swal.fire({ icon: 'error', title: 'Update Failed', text: 'পোস্ট আপডেট করতে কোথাও কোনো সমস্যা হয়েছে।' });
                         }
-                    });
-                }
+                    }
+                };
+                xhr.send(formData);
             });
         }
+    });
 
-        // Post Edit Layer
-        function openEditModal(id, content, bgColor, imagesJson, videoPath) {
-            document.getElementById('editPostId').value = id;
-            document.getElementById('editPostContent').value = content;
-            
-            const wrapper = document.getElementById('editPostInputWrapper');
-            const textarea = document.getElementById('editPostContent');
-            
-            if(bgColor && bgColor !== 'null' && bgColor !== '') {
-                wrapper.className = "p-4 rounded text-center text-white fw-bold fb-colored-post-render " + bgColor;
-                textarea.style.fontSize = "20px"; textarea.style.color = "white"; textarea.style.textAlign = "center";
+    // =========================================================================
+    // 🔍 ৩. এডভান্সড ফেসবুক-স্টাইল লাইটবক্স গ্যালারি সিস্টেম
+    // =========================================================================
+    function openLightbox(mediaJson, index = 0) {
+        try {
+            const mediaItems = typeof mediaJson === 'string' ? JSON.parse(mediaJson) : mediaJson;
+            const inner = document.getElementById('lightboxInner');
+            if (!inner) return;
+            inner.innerHTML = '';
+
+            mediaItems.forEach((item, i) => {
+                const activeClass = (i === index) ? 'active' : '';
+                const div = document.createElement('div');
+                div.className = `carousel-item ${activeClass}`;
+
+                if (item.type === 'video') {
+                    div.innerHTML = `<video src="${item.url}" controls autoplay class="d-block w-100 style-lightbox-player" style="max-height:80vh; background:#000;"></video>`;
+                } else {
+                    div.innerHTML = `<img src="${item.url}" class="d-block w-100 h-100 object-fit-contain" style="max-height:80vh;">`;
+                }
+                inner.appendChild(div);
+            });
+
+            if (bootstrapLightboxModal) {
+                bootstrapLightboxModal.show();
+                const carouselEl = document.getElementById('lightboxCarousel');
+                if (carouselEl) {
+                    const carouselInstance = new bootstrap.Carousel(carouselEl);
+                    carouselInstance.to(index);
+                }
+            }
+        } catch (e) {
+            console.error("Lightbox rendering crash:", e);
+        }
+    }
+
+    // =========================================================================
+    // 🎨 ৪. ফেসবুক ব্যাকড্রপ গ্রাডিয়েন্ট কালার সিস্টেম লজিক
+    // =========================================================================
+    function toggleColorPlates() {
+        const zone = document.getElementById('colorPlatesZone');
+        if (zone) zone.classList.toggle('d-none');
+    }
+
+    function selectPostBg(gradientClass) {
+        const wrapper = document.getElementById('postInputWrapper');
+        const textarea = document.getElementById('postContent');
+        const bgInp = document.getElementById('bg_color_input');
+
+        if (!wrapper || !textarea || !bgInp) return;
+
+        wrapper.className = `p-4 rounded text-center text-white fw-bold fb-colored-post-render ${gradientClass}`;
+        wrapper.style.minHeight = "200px";
+        wrapper.style.display = "flex";
+        wrapper.style.alignItems = "center";
+        wrapper.style.justifyContent = "center";
+
+        textarea.className = "form-control border-0 bg-transparent shadow-none text-white text-center fw-bold placeholder-white p-0";
+        textarea.style.fontSize = "22px";
+        textarea.style.color = "#ffffff";
+        textarea.placeholder = "";
+
+        bgInp.value = gradientClass;
+        selectedMediaFiles = []; // কালার সিলেক্ট করলে ফাইল রিমুভ হবে
+        renderMediaPreviews();
+    }
+
+    function resetPostBg() {
+        const wrapper = document.getElementById('postInputWrapper');
+        const textarea = document.getElementById('postContent');
+        const bgInp = document.getElementById('bg_color_input');
+
+        if (wrapper) {
+            wrapper.className = "p-1 rounded bg-transparent";
+            wrapper.style.minHeight = "initial";
+            wrapper.style.display = "block";
+        }
+        if (textarea) {
+            textarea.className = "form-control border-0 bg-transparent shadow-none";
+            textarea.style.fontSize = "14px";
+            textarea.style.textAlign = "left";
+            textarea.style.color = "inherit";
+            textarea.placeholder = "Start a post...";
+        }
+        if (bgInp) bgInp.value = "";
+    }
+
+    // নতুন পোস্ট ক্রিয়েশনের সময় থাম্বনেইল প্রিভিউ দেখানো ও ক্রস বাটন লজিক
+    function renderMediaPreviews() {
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        if (!previewContainer) return;
+        previewContainer.innerHTML = '';
+
+        if (selectedMediaFiles.length === 0) {
+            previewContainer.classList.add('d-none');
+            return;
+        }
+        previewContainer.classList.remove('d-none');
+
+        selectedMediaFiles.forEach((file, index) => {
+            const col = document.createElement('div');
+            col.className = 'col-4 col-md-3 position-relative';
+            col.style.height = '100px';
+
+            let mediaElement;
+            if (file.type.startsWith('video/')) {
+                mediaElement = document.createElement('video');
+                mediaElement.src = URL.createObjectURL(file);
+                mediaElement.className = 'w-100 h-100 object-fit-cover rounded border';
+                mediaElement.muted = true;
             } else {
-                wrapper.className = "p-2 rounded bg-transparent border";
-                textarea.style.fontSize = "14px"; textarea.style.color = "inherit"; textarea.style.textAlign = "left";
+                mediaElement = document.createElement('img');
+                mediaElement.src = URL.createObjectURL(file);
+                mediaElement.className = 'w-100 h-100 object-fit-cover rounded border';
             }
 
-            const mediaZone = document.getElementById('editModalMediaPreview');
-            mediaZone.innerHTML = '';
-            let hasMedia = false;
-
-            if(imagesJson && imagesJson !== 'null' && imagesJson !== '[]') {
-                try {
-                    const images = JSON.parse(imagesJson);
-                    images.forEach(img => {
-                        hasMedia = true;
-                        mediaZone.innerHTML += `<div class="col-3" style="height:65px;"><img src="/storage/${img}" class="w-100 h-100 object-fit-cover rounded border"></div>`;
-                    });
-                } catch(e){}
-            }
-            if(videoPath && videoPath !== 'null' && videoPath !== '') {
-                hasMedia = true;
-                mediaZone.innerHTML += `<div class="col-4" style="height:65px;"><video src="/storage/${videoPath}" class="w-100 h-100 object-fit-cover rounded border" muted></video></div>`;
-            }
-
-            if(hasMedia) { mediaZone.classList.remove('d-none'); } else { mediaZone.classList.add('d-none'); }
-            bootstrapEditModal.show();
-        }
-
-        function submitEditPost() {
-            const id = document.getElementById('editPostId').value;
-            const content = document.getElementById('editPostContent').value;
-
-            fetch(`/posts/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' },
-                body: JSON.stringify({ content: content })
-            }).then(res => res.json()).then(data => {
-                if (data.success) {
-                    const captionNode = document.getElementById(`captionText-${id}`);
-                    if(captionNode) captionNode.innerHTML = content.replace(/\n/g, '<br>');
-                    bootstrapEditModal.hide();
-                    Swal.fire({ icon: 'success', title: 'Post updated!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-                }
-            });
-        }
-
-        // Delete Post
-        function deletePost(id) {
-            Swal.fire({ title: 'Are you sure?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch(`/posts/${id}`, { 
-                        method: 'DELETE', 
-                        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') } 
-                    })
-                    .then(res => res.json()).then(data => { if (data.success) window.location.reload(); });
-                }
-            });
-        }
-
-        // 🔍 ৩. মডাল প্রিভিউ এবং ডাটা পাসিং (Facebook-Style Full Share System)
-        function openShareModal(postId) {
-            document.getElementById('targetSharePostId').value = postId;
-            document.getElementById('shareComment').value = '';
-
-            const postCard = document.getElementById(`postCard-${postId}`);
-            if(!postCard) return;
-
-            const authorName = postCard.querySelector('.author-name-zone')?.innerText || "User";
-            const avatarInner = postCard.querySelector('.author-avatar-zone')?.innerHTML || "U";
-            const isColored = postCard.getAttribute('data-bg-color');
+            const closeBtn = document.createElement('button');
+            closeBtn.type = 'button';
+            closeBtn.className = 'btn btn-dark btn-sm position-absolute top-0 end-0 m-1 rounded-circle';
+            closeBtn.style.cssText = 'background: rgba(0,0,0,0.7); border:none; width:22px; height:22px; display:flex; align-items:center; justify-content:center; z-index:10; padding:0;';
+            closeBtn.innerHTML = '<i class="bi bi-x-lg" style="font-size:10px; color:#fff;"></i>';
             
-            const mainCaption = postCard.querySelector('.dynamic-caption')?.innerHTML || '';
-            const mediaGrid = postCard.querySelector('.dynamic-media-container-zone');
+            closeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                selectedMediaFiles.splice(index, 1);
+                renderMediaPreviews();
+            });
 
-            let captionHtml = `<div class="p-0 text-start" style="font-size:13px;"><p>${mainCaption}</p></div>`;
-            if (isColored && isColored !== 'null' && isColored !== '') {
-                captionHtml = `<div class="p-3 rounded text-center text-white fw-bold ${isColored}" style="min-height:100px; font-size:16px;"><p class="mb-0">${mainCaption}</p></div>`;
-            }
+            col.appendChild(mediaElement);
+            col.appendChild(closeBtn);
+            previewContainer.appendChild(col);
+        });
+    }
 
-            let imageHtml = '';
-            if (mediaGrid) {
-                const firstImg = mediaGrid.querySelector('img');
-                const firstVid = mediaGrid.querySelector('video');
-                if (firstImg) {
-                    imageHtml = `<div class="mt-2 rounded border bg-black text-center"><img src="${firstImg.src}" class="img-fluid w-100" style="max-height:200px; object-fit:cover;"></div>`;
-                } else if (firstVid) {
-                    imageHtml = `<div class="mt-2 rounded border bg-black text-center"><video src="${firstVid.src}" class="img-fluid w-100" style="max-height:150px; background:#000;"></video></div>`;
+    // =========================================================================
+    // 🛠️ ৫. কাস্টম পোস্ট এডিট ম্যানেজার ইঞ্জিন (FIXED BOTH COATATION & VIDEO DATA)
+    // =========================================================================
+    function prepareEditModal(buttonEl) {
+        const id = buttonEl.getAttribute('data-id');
+        const content = buttonEl.getAttribute('data-content');
+        const images = buttonEl.getAttribute('data-images');
+        const video = buttonEl.getAttribute('data-video');
+        
+        openEditModal(id, content, images, video);
+    }
+
+    function openEditModal(id, content, imagesJson, videoData) {
+        document.getElementById('editPostId').value = id;
+        document.getElementById('editPostContent').value = content;
+
+        removedImages = [];
+        removedVideos = [];
+        editSelectedFiles = [];
+
+        const editMediaInput = document.getElementById('editMediaInput');
+        if (editMediaInput) editMediaInput.value = '';
+
+        const previewContainer = document.getElementById('editMediaPreviewContainer');
+        if (previewContainer) previewContainer.innerHTML = '';
+
+        // ক. ডাটাবেজের অলরেডি এক্সিস্টিং ইমেজ রেন্ডার
+        if (imagesJson && imagesJson !== 'null' && imagesJson !== '[]') {
+            try {
+                const images = typeof imagesJson === 'string' ? JSON.parse(imagesJson) : imagesJson;
+                if (Array.isArray(images)) {
+                    images.forEach(img => renderEditPreviewItem(img, 'image', false));
                 }
+            } catch (e) {
+                console.error("Images data parse error:", e);
             }
-
-            document.getElementById('modalPostPreview').innerHTML = `
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <div class="rounded-circle overflow-hidden border d-flex align-items-center justify-content-center bg-secondary text-white fw-bold" style="width:28px; height:28px; font-size:12px;">${avatarInner}</div>
-                    <h6 class="mb-0 fw-bold text-dark" style="font-size:13px;">${authorName}</h6>
-                </div>
-                ${captionHtml}
-                ${imageHtml}
-            `;
-            bootstrapShareModal.show();
         }
 
-        function closeShareModal() { bootstrapShareModal.hide(); }
+        // খ. ডাটাবেজের অলরেডি এক্সিস্টিং ভিডিও রেন্ডার
+        if (videoData && videoData !== 'null' && videoData !== '[]') {
+            try {
+                const videos = (typeof videoData === 'string' && (videoData.startsWith('[') || videoData.startsWith('{'))) 
+                    ? JSON.parse(videoData) 
+                    : [videoData];
+                videos.forEach(vid => {
+                    let cleanVid = vid.toString().replace(/["\[\]]/g, '').trim();
+                    if (cleanVid !== "") renderEditPreviewItem(cleanVid, 'video', false);
+                });
+            } catch (e) {
+                let cleanVid = videoData.toString().replace(/["\[\]]/g, '').trim();
+                if (cleanVid !== "") renderEditPreviewItem(cleanVid, 'video', false);
+            }
+        }
 
-        // Share Form Submit Logic with Top Smooth Scroll
-        document.getElementById('fbShareForm').addEventListener('submit', function(e) {
+        if (bootstrapEditModal) bootstrapEditModal.show();
+    }
+
+    function renderEditPreviewItem(pathOrFile, type, isNew = false, index = null) {
+        const container = document.getElementById('editMediaPreviewContainer');
+        if (!container) return;
+
+        const col = document.createElement('div');
+        col.className = 'col-4 position-relative mb-2';
+        col.style.height = '100px';
+
+        let src = isNew ? URL.createObjectURL(pathOrFile) : `/storage/${pathOrFile}`;
+
+        let mediaElement;
+        if (type === 'video' || (isNew && pathOrFile.type.startsWith('video/'))) {
+            mediaElement = document.createElement('video');
+            mediaElement.src = src;
+            mediaElement.className = 'w-100 h-100 object-fit-cover rounded border';
+            mediaElement.muted = true;
+            mediaElement.playsInline = true;
+        } else {
+            mediaElement = document.createElement('img');
+            mediaElement.src = src;
+            mediaElement.className = 'w-100 h-100 object-fit-cover rounded border';
+        }
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'btn btn-dark btn-sm position-absolute top-0 end-0 m-1 rounded-circle';
+        closeBtn.style.cssText = 'background: rgba(0,0,0,0.7); border:none; width:22px; height:22px; display:flex; align-items:center; justify-content:center; z-index:10; padding:0;';
+        closeBtn.innerHTML = '<i class="bi bi-x-lg" style="font-size:10px; color:#fff;"></i>';
+
+        closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (isNew) {
+                editSelectedFiles.splice(index, 1);
+                col.remove();
+            } else {
+                if (type === 'image') {
+                    removedImages.push(pathOrFile);
+                } else {
+                    removedVideos.push(pathOrFile);
+                }
+                col.remove();
+            }
+        });
+
+        col.appendChild(mediaElement);
+        col.appendChild(closeBtn);
+        container.appendChild(col);
+    }
+
+    // =========================================================================
+    // 🗑️ ৬. পোস্ট ডিলিশন লজিক (DELETE POST WITH SWEETALERT)
+    // =========================================================================
+    function deletePost(id) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this post!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/posts/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                }).then(res => res.json()).then(data => {
+                    if (data.success) {
+                        Swal.fire({ icon: 'success', title: 'Deleted!', text: 'পোস্টটি সফলভাবে ডিলিট হয়েছে।', timer: 1000 })
+                        .then(() => window.location.reload());
+                    }
+                });
+            }
+        });
+    }
+
+    // =========================================================================
+    // ❤️ ৭. ডাইনামিক লাইক এবং রিয়্যাকশন এনগেজমেন্ট সিস্টেম
+    // =========================================================================
+    function toggleLike(postId) {
+        const likeBtn = document.getElementById(`likeBtn-${postId}`);
+        const likeZone = document.getElementById(`like-zone-${postId}`);
+
+        fetch(`/posts/${postId}/like`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                if (data.liked) {
+                    likeBtn.className = "btn btn-link btn-sm text-decoration-none text-primary fw-bold";
+                    likeBtn.innerHTML = `<i class="bi bi-hand-thumbs-up-fill"></i> Like`;
+                } else {
+                    likeBtn.className = "btn btn-link btn-sm text-decoration-none text-muted";
+                    likeBtn.innerHTML = `<i class="bi bi-hand-thumbs-up"></i> Like`;
+                }
+                if (likeZone) {
+                    likeZone.innerHTML = data.like_count > 0 ? `<i class="bi bi-heart-fill text-danger"></i> <span class="like-count-text">${data.like_count} Likes</span>` : '';
+                }
+            }
+        });
+    }
+
+    // =========================================================================
+    // 💬 ৮. কমেন্ট সেকশন আর্কিটেকচার (ক্রিয়েট, এডিট ও ডিলিট কমেন্ট)
+    // =========================================================================
+    function toggleComments(postId) {
+        const zone = document.getElementById(`commentZone-${postId}`);
+        if (zone) zone.classList.toggle('d-none');
+    }
+
+    function submitComment(e, postId) {
+        e.preventDefault();
+        const input = document.getElementById(`commentInput-${postId}`);
+        const text = input.value.trim();
+        if (!text) return;
+
+        fetch(`/posts/${postId}/comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ content: text })
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                input.value = '';
+                const mainCounter = document.getElementById(`comment-count-${postId}`);
+                if (mainCounter) mainCounter.innerText = `${data.comment_count} Comments`;
+
+                const noCommentDiv = document.querySelector(`.dynamic-no-comment-${postId}`);
+                if (noCommentDiv) noCommentDiv.remove();
+
+                const newCommentHtml = `
+                <div class="bg-light p-2 px-3 rounded-4 mb-2 d-flex justify-content-between align-items-start comment-node-item" id="comment-container-${data.comment_id}">
+                    <div class="flex-grow-1">
+                        <strong class="small text-dark d-block" style="font-size: 12px;">${data.user_name}</strong>
+                        <span class="small text-dark-50" id="comment-text-${data.comment_id}" style="font-size: 13px;">${data.content}</span>
+                    </div>
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-link btn-sm text-muted p-0 border-0 shadow-none" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width: 100px;">
+                            <li><a class="dropdown-item py-1 fs-7" href="javascript:void(0)" onclick="editComment(event, ${data.comment_id})"><i class="bi bi-pencil me-1"></i> Edit</a></li>
+                            <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deleteComment(${data.comment_id}, ${postId})"><i class="bi bi-trash me-1"></i> Delete</a></li>
+                        </ul>
+                    </div>
+                </div>`;
+                document.getElementById(`commentList-${postId}`).insertAdjacentHTML('afterbegin', newCommentHtml);
+            }
+        });
+    }
+
+    function editComment(event, commentId) {
+        const commentText = document.getElementById(`comment-text-${commentId}`).innerText;
+        document.getElementById('editTargetCommentId').value = commentId;
+        if (bootstrapCommentEditModal) bootstrapCommentEditModal.show();
+        setTimeout(() => {
+            const inputField = document.getElementById('editCommentInput');
+            if (inputField) {
+                inputField.value = commentText;
+                inputField.focus();
+            }
+        }, 400);
+    }
+
+    function submitUpdateComment() {
+        const commentId = document.getElementById('editTargetCommentId').value;
+        const updatedText = document.getElementById('editCommentInput').value.trim();
+        if (!updatedText) return;
+
+        fetch(`/comments/${commentId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ content: updatedText })
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                const textNode = document.getElementById(`comment-text-${commentId}`);
+                if (textNode) textNode.innerText = updatedText;
+                if (bootstrapCommentEditModal) bootstrapCommentEditModal.hide();
+            }
+        });
+    }
+
+    function deleteComment(commentId, postId) {
+        Swal.fire({ title: 'Delete comment?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444' }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/comments/${commentId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' }
+                }).then(res => res.json()).then(data => {
+                    if (data.success) {
+                        const cEl = document.getElementById(`comment-container-${commentId}`);
+                        if (cEl) cEl.remove();
+                        const mainCounter = document.getElementById(`comment-count-${postId}`);
+                        if (mainCounter && data.comment_count !== undefined) mainCounter.innerText = `${data.comment_count} Comments`;
+                    }
+                });
+            }
+        });
+    }
+
+    // =========================================================================
+    // 🔄 ৯. ফেসবুক স্টাইল টাইমলাইন পোস্ট শেয়ার সিস্টেম লজিক
+    // =========================================================================
+    function openShareModal(postId) {
+        document.getElementById('targetSharePostId').value = postId;
+        document.getElementById('shareComment').value = '';
+        const postCard = document.getElementById(`postCard-${postId}`);
+        if (!postCard) return;
+
+        const authorName = postCard.querySelector('.author-name-zone')?.innerText || "User";
+        const avatarInner = postCard.querySelector('.author-avatar-zone')?.innerHTML || "U";
+        const isColored = postCard.getAttribute('data-bg-color');
+        const mainCaption = postCard.querySelector('.dynamic-caption')?.innerHTML || '';
+        const mediaGrid = postCard.querySelector('.dynamic-media-container-zone');
+
+        let captionHtml = `<div class="p-0 text-start" style="font-size:13px;"><p>${mainCaption}</p></div>`;
+        if (isColored && isColored !== 'null' && isColored !== '') {
+            captionHtml = `<div class="p-3 rounded text-center text-white fw-bold ${isColored}" style="min-height:100px; font-size:16px;"><p class="mb-0">${mainCaption}</p></div>`;
+        }
+
+        let imageHtml = '';
+        if (mediaGrid) {
+            const firstImg = mediaGrid.querySelector('img');
+            const firstVid = mediaGrid.querySelector('video');
+            if (firstImg) {
+                imageHtml = `<div class="mt-2 rounded border bg-black text-center"><img src="${firstImg.src}" class="img-fluid w-100" style="max-height:200px; object-fit:cover;"></div>`;
+            } else if (firstVid) {
+                imageHtml = `<div class="mt-2 rounded border bg-black text-center"><video src="${firstVid.src}" class="img-fluid w-100" style="max-height:150px; background:#000;"></video></div>`;
+            }
+        }
+
+        document.getElementById('modalPostPreview').innerHTML = `
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold small" style="width:30px; height:30px; font-size:12px;">${avatarInner}</div>
+                <div><h6 class="m-0 fw-bold text-dark" style="font-size:13px;">${authorName}</h6></div>
+            </div>
+            ${captionHtml}
+            ${imageHtml}
+        `;
+
+        if (bootstrapShareModal) bootstrapShareModal.show();
+    }
+
+    function closeShareModal() {
+        if (bootstrapShareModal) bootstrapShareModal.hide();
+    }
+
+    // শেয়ার সাবমিশন ইভেন্ট হ্যান্ডেলার
+    const fbShareForm = document.getElementById('fbShareForm');
+    if (fbShareForm) {
+        fbShareForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const postId = document.getElementById('targetSharePostId').value;
-            const shareSubmitBtn = document.getElementById('shareSubmitBtn');
-            shareSubmitBtn.disabled = true; shareSubmitBtn.innerHTML = 'Sharing...';
+            const comment = document.getElementById('shareComment').value.trim();
+            const submitBtn = document.getElementById('shareSubmitBtn');
 
-            const shareData = new FormData();
-            shareData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-            shareData.append('content', document.getElementById('shareComment').value.trim());
+            submitBtn.disabled = true;
 
             fetch(`/posts/${postId}/share`, {
-                method: 'POST', headers: { 'Accept': 'application/json' }, body: shareData
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ content: comment })
             }).then(res => res.json()).then(data => {
-                if(data.success) {
-                    bootstrapShareModal.hide();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    setTimeout(() => { window.location.reload(); }, 400);
+                if (data.success) {
+                    closeShareModal();
+                    Swal.fire({ icon: 'success', title: 'Shared successfully!', showConfirmButton: false, timer: 1000 }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    submitBtn.disabled = false;
+                    Swal.fire({ icon: 'error', title: 'Oops!', text: 'পোস্টটি শেয়ার করতে সমস্যা হয়েছে।' });
                 }
+            }).catch(() => {
+                submitBtn.disabled = false;
             });
         });
-    </script>
+    }
+</script>
+   {{-- script [updated 11.34 / 22.5.26 End] --}}
+
 </body>
 </html>

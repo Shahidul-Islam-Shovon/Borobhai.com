@@ -79,7 +79,7 @@ Route::post('/posts/{id}/share', [PostController::class, 'share'])->name('posts.
 
 Route::middleware(['auth'])->group(function () {
     // আগের অন্যান্য রাউটগুলোর সাথে নিচে এই দুটি বসিয়ে দিন
-    Route::put('/posts/{id}', [PostController::class, 'update'])->name('posts.update');
+    Route::post('/posts/{id}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/posts/{id}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/posts/{id}/share', [PostController::class, 'share'])
     ->name('posts.share');
