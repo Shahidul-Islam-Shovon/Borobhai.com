@@ -14,7 +14,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
 
-    <title>Borobhai.com News Feed</title>
+    <title>Borobhai.com</title>
 
     <style>
         /* --- Original Custom CSS --- */
@@ -236,282 +236,268 @@
 
                 {{-- Main Feed Middle Start --}}
                 <div id="postsFeedContainer">
-    @forelse($posts as $post)
-        <div class="card mb-3 fb-post-card shadow-sm border-0 rounded-3" id="postCard-{{ $post->id }}" data-bg-color="{{ $post->bg_color }}">
-            <div class="card-body p-3">
-                
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="author-avatar-zone bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:38px; height:38px;">
-                            {{ strtoupper(substr($post->user->name ?? 'U', 0, 1)) }}
-                        </div>
-                        <div>
-                            <h6 class="m-0 fw-bold text-dark author-name-zone" style="font-size: 14px;">{{ $post->user->name }}</h6>
-                            <small class="text-muted" style="font-size: 11px;">{{ $post->created_at->diffForHumans() }}</small>
-                        </div>
-                    </div>
-                    
-                    @if($post->user_id === Auth::id())
-                        <div class="dropdown">
-                            <button class="btn btn-link text-muted p-0 border-0 shadow-none" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow p-1">
-                                <li>
-                                    <a class="dropdown-item py-1 fs-7" href="javascript:void(0)" 
-                                    onclick="prepareEditModal(this)"
-                                    data-id="{{ $post->id }}"
-                                    data-content="{{ $post->content }}"
-                                    data-images="{{ json_encode($post->images) }}"
-                                    data-video="{{ is_array($post->video) ? json_encode($post->video) : $post->video }}">
-                                        <i class="bi bi-pencil me-1"></i> Edit Post
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deletePost({{ $post->id }})">
-                                        <i class="bi bi-trash me-1"></i> Delete
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    @endif
-                </div>
+                    @forelse($posts as $post)
+                        <div class="card mb-3 fb-post-card shadow-sm border-0 rounded-3" id="postCard-{{ $post->id }}" data-bg-color="{{ $post->bg_color }}">
+                            <div class="card-body p-3">
+                                
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="author-avatar-zone bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:38px; height:38px;">
+                                            {{ strtoupper(substr($post->user->name ?? 'U', 0, 1)) }}
+                                        </div>
+                                        <div>
+                                            <h6 class="m-0 fw-bold text-dark author-name-zone" style="font-size: 14px;">{{ $post->user->name }}</h6>
+                                            <small class="text-muted" style="font-size: 11px;">{{ $post->created_at->diffForHumans() }}</small>
+                                        </div>
+                                    </div>
+                                    
+                                    @if($post->user_id === Auth::id())
+                                        <div class="dropdown">
+                                            <button class="btn btn-link text-muted p-0 border-0 shadow-none" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow p-1">
+                                                <li>
+                                                    <a class="dropdown-item py-1 fs-7" href="javascript:void(0)" 
+                                                    onclick="prepareEditModal(this)"
+                                                    data-id="{{ $post->id }}"
+                                                    data-content="{{ $post->content }}"
+                                                    data-images="{{ json_encode($post->images) }}"
+                                                    data-video="{{ is_array($post->video) ? json_encode($post->video) : $post->video }}">
+                                                        <i class="bi bi-pencil me-1"></i> Edit Post
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deletePost({{ $post->id }})">
+                                                        <i class="bi bi-trash me-1"></i> Delete
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    @endif
+                                </div>
 
-                {{-- Feed Media part Start --}}
-                @php
-                $hasImages = is_array($post->images) && count($post->images) > 0;
-                
-                // ভিডিও ডাটাবেজে জেসন অ্যারে কি না তা চেক করা এবং ডিকোড করা
-                $videoItemsArray = [];
-                if (!empty($post->video) && $post->video !== 'null') {
-                    $decodedVideo = is_array($post->video) ? $post->video : json_decode($post->video, true);
-                    if (is_array($decodedVideo)) {
-                        $videoItemsArray = $decodedVideo;
-                    } else {
-                        $cleanSingleVid = trim($post->video, '"[]');
-                        if(!empty($cleanSingleVid)) {
-                            $videoItemsArray[] = $cleanSingleVid;
-                        }
-                    }
-                }
-                
-                $hasVideo = count($videoItemsArray) > 0;
-                $renderBg = !empty($post->bg_color) && !$hasImages && !$hasVideo;
-                @endphp
+                                {{-- Feed Media part Start --}}
+                                @php
+                                $hasImages = is_array($post->images) && count($post->images) > 0;
+                                
+                                // ভিডিও ডাটাবেজে জেসন অ্যারে কি না তা চেক করা এবং ডিকোড করা
+                                $videoItemsArray = [];
+                                if (!empty($post->video) && $post->video !== 'null') {
+                                    $decodedVideo = is_array($post->video) ? $post->video : json_decode($post->video, true);
+                                    if (is_array($decodedVideo)) {
+                                        $videoItemsArray = $decodedVideo;
+                                    } else {
+                                        $cleanSingleVid = trim($post->video, '"[]');
+                                        if(!empty($cleanSingleVid)) {
+                                            $videoItemsArray[] = $cleanSingleVid;
+                                        }
+                                    }
+                                }
+                                
+                                $hasVideo = count($videoItemsArray) > 0;
+                                $renderBg = !empty($post->bg_color) && !$hasImages && !$hasVideo;
+                                @endphp
 
-                <div id="postInputWrapper-{{ $post->id }}" class="{{ $renderBg ? 'p-4 rounded text-center text-white fw-bold d-flex align-items-center justify-content-center fb-colored-post-render ' . $post->bg_color : 'p-0 text-start' }}" style="{{ $renderBg ? 'min-height: 200px; font-size: 22px;' : 'font-size: 14px;' }}">
-                    <p class="mb-0 dynamic-caption" id="captionText-{{ $post->id }}">{!! nl2br(e($post->content)) !!}</p>
-                </div>
+                                <div id="postInputWrapper-{{ $post->id }}" class="{{ $renderBg ? 'p-4 rounded text-center text-white fw-bold d-flex align-items-center justify-content-center fb-colored-post-render ' . $post->bg_color : 'p-0 text-start' }}" style="{{ $renderBg ? 'min-height: 200px; font-size: 22px;' : 'font-size: 14px;' }}">
+                                    <p class="mb-0 dynamic-caption" id="captionText-{{ $post->id }}">{!! nl2br(e($post->content)) !!}</p>
+                                </div>
 
-                @php
-                    $mediaItems = [];
-                    
-                    // ১. ছবিগুলো পুশ করা হচ্ছে
-                    if($hasImages) {
-                        foreach($post->images as $img) { 
-                            $cleanImgPath = str_replace('//', '/', $img);
-                            $mediaItems[] = ['type' => 'image', 'url' => asset('storage/' . $cleanImgPath)]; 
-                        }
-                    }
-                    
-                    // ২. ভিডিওগুলো পুশ করা হচ্ছে
-                    if($hasVideo) {
-                        foreach($videoItemsArray as $vid) {
-                            $cleanVidPath = str_replace('//', '/', trim($vid, '"[] '));
-                            if(!empty($cleanVidPath)) {
-                                $mediaItems[] = ['type' => 'video', 'url' => asset('storage/' . $cleanVidPath)];
-                            }
-                        }
-                    }
-                    
-                    $mediaCount = count($mediaItems);
-                    $escapedImagesJson = json_encode($mediaItems, JSON_HEX_APOS | JSON_HEX_QUOT);
-                @endphp
+                                @php
+                                    $mediaItems = [];
+                                    
+                                    // ১. ছবিগুলো পুশ করা হচ্ছে
+                                    if($hasImages) {
+                                        foreach($post->images as $img) { 
+                                            $cleanImgPath = str_replace('//', '/', $img);
+                                            $mediaItems[] = ['type' => 'image', 'url' => asset('storage/' . $cleanImgPath)]; 
+                                        }
+                                    }
+                                    
+                                    // ২. ভিডিওগুলো পুশ করা হচ্ছে
+                                    if($hasVideo) {
+                                        foreach($videoItemsArray as $vid) {
+                                            $cleanVidPath = str_replace('//', '/', trim($vid, '"[] '));
+                                            if(!empty($cleanVidPath)) {
+                                                $mediaItems[] = ['type' => 'video', 'url' => asset('storage/' . $cleanVidPath)];
+                                            }
+                                        }
+                                    }
+                                    
+                                    $mediaCount = count($mediaItems);
+                                    $escapedImagesJson = json_encode($mediaItems, JSON_HEX_APOS | JSON_HEX_QUOT);
+                                @endphp
 
-                @if($mediaCount > 0)
-                    <div class="mt-2 dynamic-media-container-zone position-relative overflow-hidden rounded border border-light-subtle mb-3">
-                        <div class="row g-1">
-                            @foreach($mediaItems as $index => $media)
-                                @if($index < 4)
-                                    <div class="{{ $mediaCount == 1 ? 'col-12' : ($mediaCount == 2 ? 'col-6' : ($index == 0 && $mediaCount > 2 ? 'col-12' : 'col-4')) }} position-relative bg-black text-center d-flex align-items-center justify-content-center" style="max-height: 380px; min-height: {{ $mediaCount == 1 ? '260px' : '150px' }};">
-                                        @if($media['type'] == 'image')
-                                            <img src="{{ $media['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer" onclick="openLightbox(this.getAttribute('data-json'), {{ $index }})" data-json="{{ $escapedImagesJson }}">
-                                        @else
-                                            <video src="{{ $media['url'] }}" controls preload="metadata" class="w-100 h-100 object-fit-contain cursor-pointer" onclick="openLightbox(this.getAttribute('data-json'), {{ $index }})" data-json="{{ $escapedImagesJson }}"></video>
-                                        @endif
+                                @if($mediaCount > 0)
+                                    <div class="mt-2 dynamic-media-container-zone position-relative overflow-hidden rounded border border-light-subtle mb-3">
+                                        <div class="row g-1">
+                                            @foreach($mediaItems as $index => $media)
+                                                @if($index < 4)
+                                                    <div class="{{ $mediaCount == 1 ? 'col-12' : ($mediaCount == 2 ? 'col-6' : ($index == 0 && $mediaCount > 2 ? 'col-12' : 'col-4')) }} position-relative bg-black text-center d-flex align-items-center justify-content-center" style="max-height: 380px; min-height: {{ $mediaCount == 1 ? '260px' : '150px' }};">
+                                                        @if($media['type'] == 'image')
+                                                            <img src="{{ $media['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer" onclick="openLightbox(this.getAttribute('data-json'), {{ $index }})" data-json="{{ $escapedImagesJson }}">
+                                                        @else
+                                                            <video src="{{ $media['url'] }}" controls preload="metadata" class="w-100 h-100 object-fit-contain cursor-pointer" onclick="openLightbox(this.getAttribute('data-json'), {{ $index }})" data-json="{{ $escapedImagesJson }}"></video>
+                                                        @endif
 
-                                        @if($index == 3 && $mediaCount > 4)
-                                            <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center text-white fw-bold fs-4 cursor-pointer" onclick="openLightbox(this.getAttribute('data-json'), 3)" data-json="{{ $escapedImagesJson }}">
-                                                +{{ $mediaCount - 4 }}
+                                                        @if($index == 3 && $mediaCount > 4)
+                                                            <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center text-white fw-bold fs-4 cursor-pointer" onclick="openLightbox(this.getAttribute('data-json'), 3)" data-json="{{ $escapedImagesJson }}">
+                                                                +{{ $mediaCount - 4 }}
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                                {{-- Feed media End --}}
+
+                                @if($post->parentPost)
+                                    <div class="mt-3 p-3 border rounded bg-light border-light-subtle shared-post-root-node text-start">
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold small" style="width:28px; height:28px; font-size: 11px;">
+                                                {{ strtoupper(substr($post->parentPost->user->name ?? 'U', 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <h6 class="m-0 fw-bold text-dark" style="font-size: 12px;">{{ $post->parentPost->user->name }}</h6>
+                                                <small class="text-muted" style="font-size: 10px;">{{ $post->parentPost->created_at->diffForHumans() }}</small>
+                                            </div>
+                                        </div>
+
+                                        @php
+                                            $pHasImages = !empty($post->parentPost->images) && (is_array($post->parentPost->images) ? count($post->parentPost->images) > 0 : count(json_decode($post->parentPost->images, true) ?? []) > 0);
+                                            $pHasVideo = !empty($post->parentPost->video);
+                                            $pRenderBg = $post->parentPost->bg_color && !$pHasImages && !$pHasVideo;
+                                        @endphp
+
+                                        <div class="{{ $pRenderBg ? 'p-3 rounded text-center text-white fw-bold ' . $post->parentPost->bg_color : 'p-0 text-start' }}" style="{{ $pRenderBg ? 'min-height: 120px; font-size: 16px;' : 'font-size: 13px;' }}">
+                                            <p class="mb-0">{!! nl2br(e($post->parentPost->content)) !!}</p>
+                                        </div>
+
+                                        @php
+                                            $parentMedia = [];
+                                            if($post->parentPost->images) {
+                                                $pImg = is_array($post->parentPost->images) ? $post->parentPost->images : json_decode($post->parentPost->images, true);
+                                                if(is_array($pImg)) { 
+                                                    foreach($pImg as $img) { $parentMedia[] = ['type' => 'image', 'url' => asset('storage/' . $img)]; } 
+                                                }
+                                            }
+                                            if($post->parentPost->video) {
+                                                $pVid = json_decode($post->parentPost->video, true);
+                                                if(is_array($pVid)){ 
+                                                    foreach($pVid as $v){ $parentMedia[] = ['type' => 'video', 'url' => asset('storage/' . $v)]; } 
+                                                } else { 
+                                                    $parentMedia[] = ['type' => 'video', 'url' => asset('storage/' . $post->parentPost->video)]; 
+                                                }
+                                            }
+                                            $parentImagesJson = htmlspecialchars(json_encode($parentMedia), ENT_QUOTES, 'UTF-8');
+                                        @endphp
+
+                                        @if(count($parentMedia) > 0)
+                                            <div class="row g-1 mt-2 rounded overflow-hidden">
+                                                @foreach($parentMedia as $pIdx => $pm)
+                                                    @if($pIdx < 3)
+                                                        <div class="col-4 bg-black text-center" style="height: 100px;">
+                                                            @if($pm['type'] == 'image')
+                                                                <img src="{{ $pm['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer" onclick="openLightbox('{{ $parentImagesJson }}', {{ $pIdx }})">
+                                                            @else
+                                                                <video src="{{ $pm['url'] }}" class="w-100 h-100 object-fit-contain cursor-pointer" onclick="openLightbox('{{ $parentImagesJson }}', {{ $pIdx }})" muted preload="metadata"></video>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                @endforeach
                                             </div>
                                         @endif
                                     </div>
                                 @endif
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-                {{-- Feed media End --}}
 
-                @if($post->parentPost)
-                    <div class="mt-3 p-3 border rounded bg-light border-light-subtle shared-post-root-node text-start">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold small" style="width:28px; height:28px; font-size: 11px;">
-                                {{ strtoupper(substr($post->parentPost->user->name ?? 'U', 0, 1)) }}
-                            </div>
-                            <div>
-                                <h6 class="m-0 fw-bold text-dark" style="font-size: 12px;">{{ $post->parentPost->user->name }}</h6>
-                                <small class="text-muted" style="font-size: 10px;">{{ $post->parentPost->created_at->diffForHumans() }}</small>
-                            </div>
-                        </div>
-
-                        @php
-                            $pHasImages = !empty($post->parentPost->images) && (is_array($post->parentPost->images) ? count($post->parentPost->images) > 0 : count(json_decode($post->parentPost->images, true) ?? []) > 0);
-                            $pHasVideo = !empty($post->parentPost->video);
-                            $pRenderBg = $post->parentPost->bg_color && !$pHasImages && !$pHasVideo;
-                        @endphp
-
-                        <div class="{{ $pRenderBg ? 'p-3 rounded text-center text-white fw-bold ' . $post->parentPost->bg_color : 'p-0 text-start' }}" style="{{ $pRenderBg ? 'min-height: 120px; font-size: 16px;' : 'font-size: 13px;' }}">
-                            <p class="mb-0">{!! nl2br(e($post->parentPost->content)) !!}</p>
-                        </div>
-
-                        @php
-                            $parentMedia = [];
-                            if($post->parentPost->images) {
-                                $pImg = is_array($post->parentPost->images) ? $post->parentPost->images : json_decode($post->parentPost->images, true);
-                                if(is_array($pImg)) { 
-                                    foreach($pImg as $img) { $parentMedia[] = ['type' => 'image', 'url' => asset('storage/' . $img)]; } 
-                                }
-                            }
-                            if($post->parentPost->video) {
-                                $pVid = json_decode($post->parentPost->video, true);
-                                if(is_array($pVid)){ 
-                                    foreach($pVid as $v){ $parentMedia[] = ['type' => 'video', 'url' => asset('storage/' . $v)]; } 
-                                } else { 
-                                    $parentMedia[] = ['type' => 'video', 'url' => asset('storage/' . $post->parentPost->video)]; 
-                                }
-                            }
-                            $parentImagesJson = htmlspecialchars(json_encode($parentMedia), ENT_QUOTES, 'UTF-8');
-                        @endphp
-
-                        @if(count($parentMedia) > 0)
-                            <div class="row g-1 mt-2 rounded overflow-hidden">
-                                @foreach($parentMedia as $pIdx => $pm)
-                                    @if($pIdx < 3)
-                                        <div class="col-4 bg-black text-center" style="height: 100px;">
-                                            @if($pm['type'] == 'image')
-                                                <img src="{{ $pm['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer" onclick="openLightbox('{{ $parentImagesJson }}', {{ $pIdx }})">
-                                            @else
-                                                <video src="{{ $pm['url'] }}" class="w-100 h-100 object-fit-contain cursor-pointer" onclick="openLightbox('{{ $parentImagesJson }}', {{ $pIdx }})" muted preload="metadata"></video>
-                                            @endif
-                                        </div>
-                                    @endif
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-                @endif
-
-                <div class="d-flex justify-content-between text-muted small px-1 mt-3">
-                    <div id="like-zone-{{ $post->id }}">
-                        @if($post->likes->count() > 0)
-                            <i class="bi bi-heart-fill text-danger"></i> <span class="like-count-text">{{ $post->likes->count() }} Likes</span>
-                        @endif
-                    </div>
-                    <div>
-                        <span class="cursor-pointer" id="comment-count-{{ $post->id }}" onclick="toggleComments({{ $post->id }})">{{ $post->comments->count() }} Comments</span>
-                    </div>
-                </div>
-
-                <div class="mt-2 d-flex justify-content-between text-muted border-top border-bottom py-1 fs-7">
-                    <button type="button" class="btn btn-link btn-sm text-decoration-none {{ $post->likes->contains('user_id', Auth::id()) ? 'text-primary fw-bold' : 'text-muted' }}" id="likeBtn-{{ $post->id }}" onclick="toggleLike({{ $post->id }})">
-                        <i class="bi {{ $post->likes->contains('user_id', Auth::id()) ? 'bi-hand-thumbs-up-fill' : 'bi-hand-thumbs-up' }}"></i> Like
-                    </button>
-                    <button type="button" class="btn btn-link btn-sm text-decoration-none text-muted" onclick="toggleComments({{ $post->id }})">
-                        <i class="bi bi-chat-right-text"></i> Comment
-                    </button>
-                    <button type="button" class="btn btn-link btn-sm text-decoration-none text-muted" onclick="openShareModal({{ $post->id }})">
-                        <i class="bi bi-reply-all-fill" style="transform: scaleX(-1); display:inline-block;"></i> Share
-                    </button>
-                </div>
-                
-                {{-- comment section --}}
-                <div id="commentZone-{{ $post->id }}" class="mt-2 d-none">
-                    <form onsubmit="submitComment(event, {{ $post->id }})" class="d-flex align-items-center gap-2 pt-2 px-3 pb-3 border-top">
-                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold small flex-shrink-0" style="width: 32px; height: 32px; font-size: 12px;">
-                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
-                        </div>
-                        
-                        <div class="input-group align-items-center bg-light rounded-pill px-3 py-1 w-100 border">
-                            <input type="text" 
-                                id="commentInput-{{ $post->id }}" 
-                                class="form-control border-0 bg-transparent shadow-none py-1 fs-7" 
-                                placeholder="Write a comment..." 
-                                style="font-size: 13px;">
-                                
-                            <button type="submit" class="btn btn-link p-0 text-primary ms-2 shadow-none border-0 d-flex align-items-center">
-                                <i class="bi bi-send-fill" style="font-size: 16px;"></i>
-                            </button>
-                        </div>
-                    </form>
-
-                    <div id="commentList-{{ $post->id }}" class="mt-1">
-                        @forelse($post->comments as $comment)
-                            <div class="bg-light p-2 px-3 rounded-4 mb-2 d-flex justify-content-between align-items-start comment-node-item" id="comment-container-{{ $comment->id }}">
-                                <div class="flex-grow-1">
-                                    <strong class="small text-dark d-block" style="font-size: 12px;">{{ $comment->user->name }}</strong>
-                                    <span class="small text-dark-50" id="comment-text-{{ $comment->id }}" style="font-size: 13px;">{{ $comment->content }}</span>
-                                </div>
-                                @if($comment->user_id === Auth::id())
-                                    <div class="dropdown">
-                                        <button type="button" class="btn btn-link btn-sm text-muted p-0 border-0 shadow-none" data-bs-toggle="dropdown">
-                                            <i class="bi bi-three-dots"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width: 100px;">
-                                            <li><a class="dropdown-item py-1 fs-7" href="javascript:void(0)" onclick="editComment(event, {{ $comment->id }})"><i class="bi bi-pencil me-1"></i> Edit</a></li>
-                                            <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deleteComment({{ $comment->id }}, {{ $post->id }})"><i class="bi bi-trash me-1"></i> Delete</a></li>
-                                        </ul>
+                                <div class="d-flex justify-content-between text-muted small px-1 mt-3">
+                                    <div id="like-zone-{{ $post->id }}">
+                                        @if($post->likes->count() > 0)
+                                            <i class="bi bi-heart-fill text-danger"></i> <span class="like-count-text">{{ $post->likes->count() }} Likes</span>
+                                        @endif
                                     </div>
-                                @endif
+                                    <div>
+                                        <span class="cursor-pointer" id="comment-count-{{ $post->id }}" onclick="toggleComments({{ $post->id }})">{{ $post->comments->count() }} Comments</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2 d-flex justify-content-between text-muted border-top border-bottom py-1 fs-7">
+                                    <button type="button" class="btn btn-link btn-sm text-decoration-none {{ $post->likes->contains('user_id', Auth::id()) ? 'text-primary fw-bold' : 'text-muted' }}" id="likeBtn-{{ $post->id }}" onclick="toggleLike({{ $post->id }})">
+                                        <i class="bi {{ $post->likes->contains('user_id', Auth::id()) ? 'bi-hand-thumbs-up-fill' : 'bi-hand-thumbs-up' }}"></i> Like
+                                    </button>
+                                    <button type="button" class="btn btn-link btn-sm text-decoration-none text-muted" onclick="toggleComments({{ $post->id }})">
+                                        <i class="bi bi-chat-right-text"></i> Comment
+                                    </button>
+                                    <button type="button" class="btn btn-link btn-sm text-decoration-none text-muted" onclick="openShareModal({{ $post->id }})">
+                                        <i class="bi bi-reply-all-fill" style="transform: scaleX(-1); display:inline-block;"></i> Share
+                                    </button>
+                                </div>
+                                
+                                {{-- comment section --}}
+                                <div id="commentZone-{{ $post->id }}" class="mt-2 d-none">
+                                    <form onsubmit="submitComment(event, {{ $post->id }})" class="d-flex align-items-center gap-2 pt-2 px-3 pb-3 border-top">
+                                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold small flex-shrink-0" style="width: 32px; height: 32px; font-size: 12px;">
+                                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                                        </div>
+                                        
+                                        <div class="input-group align-items-center bg-light rounded-pill px-3 py-1 w-100 border">
+                                            <input type="text" 
+                                                id="commentInput-{{ $post->id }}" 
+                                                class="form-control border-0 bg-transparent shadow-none py-1 fs-7" 
+                                                placeholder="Write a comment..." 
+                                                style="font-size: 13px;">
+                                                
+                                            <button type="submit" class="btn btn-link p-0 text-primary ms-2 shadow-none border-0 d-flex align-items-center">
+                                                <i class="bi bi-send-fill" style="font-size: 16px;"></i>
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                    <div id="commentList-{{ $post->id }}" class="mt-1">
+                                        @forelse($post->comments as $comment)
+                                            <div class="bg-light p-2 px-3 rounded-4 mb-2 d-flex justify-content-between align-items-start comment-node-item" id="comment-container-{{ $comment->id }}">
+                                                <div class="flex-grow-1">
+                                                    <strong class="small text-dark d-block" style="font-size: 12px;">{{ $comment->user->name }}</strong>
+                                                    <span class="small text-dark-50" id="comment-text-{{ $comment->id }}" style="font-size: 13px;">{{ $comment->content }}</span>
+                                                </div>
+                                                @if($comment->user_id === Auth::id())
+                                                    <div class="dropdown">
+                                                        <button type="button" class="btn btn-link btn-sm text-muted p-0 border-0 shadow-none" data-bs-toggle="dropdown">
+                                                            <i class="bi bi-three-dots"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width: 100px;">
+                                                            <li><a class="dropdown-item py-1 fs-7" href="javascript:void(0)" onclick="editComment(event, {{ $comment->id }})"><i class="bi bi-pencil me-1"></i> Edit</a></li>
+                                                            <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deleteComment({{ $comment->id }}, {{ $post->id }})"><i class="bi bi-trash me-1"></i> Delete</a></li>
+                                                        </ul>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @empty
+                                            <div class="text-center text-muted py-2 small dynamic-no-comment-{{ $post->id }}">No comments yet.</div>
+                                        @endforelse
+                                    </div>
+                                </div>
+
                             </div>
-                        @empty
-                            <div class="text-center text-muted py-2 small dynamic-no-comment-{{ $post->id }}">No comments yet.</div>
-                        @endforelse
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    @empty
-        <div class="card p-5 text-center shadow-sm border-0 rounded-3 my-3 bg-white">
-            <div class="card-body">
-                <div class="mb-3 text-muted">
-                    <i class="bi bi-newspaper fs-1"></i>
-                </div>
-                <h5 class="fw-bold text-secondary">No Posts Yet</h5>
-                <p class="text-muted small mb-0">Share something to start the conversation!</p>
-            </div>
-        </div>
-    @endforelse
-</div>
-                {{-- Main Feed Middle End --}}
-            </div>
-
-            <div class="col-md-3 d-none d-md-block position-sticky" style="top: 70px; height: fit-content;">
-                <div class="card border-0 shadow-sm rounded-3 p-3">
-                    <h6 class="fw-bold text-muted mb-2">Sponsored</h6>
-                    <div class="d-flex gap-2 align-items-center">
-                        <div class="bg-secondary rounded" style="width:70px; height:70px;"></div>
-                        <div>
-                            <strong class="d-block small text-dark">Borobhai Tech</strong>
-                            <span class="text-muted fs-7">Upgrade your backend system architecture today.</span>
                         </div>
+                    @empty
+                        <div class="card p-5 text-center shadow-sm border-0 rounded-3 my-3 bg-white">
+                            <div class="card-body">
+                                <div class="mb-3 text-muted">
+                                    <i class="bi bi-newspaper fs-1"></i>
+                                </div>
+                                <h5 class="fw-bold text-secondary">No Posts Yet</h5>
+                                <p class="text-muted small mb-0">Share something to start the conversation!</p>
+                            </div>
+                        </div>
+                    @endforelse
+                </div>
+                {{-- Main Feed Middle End --}}
                     </div>
                 </div>
             </div>
-
-        </div>
-    </div>
 
     <div class="modal fade" id="createPostModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
