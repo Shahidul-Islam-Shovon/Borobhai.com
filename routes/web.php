@@ -81,6 +81,8 @@ Route::middleware(['auth'])->group(function () {
     // আগের অন্যান্য রাউটগুলোর সাথে নিচে এই দুটি বসিয়ে দিন
     Route::put('/posts/{id}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/posts/{id}', [PostController::class, 'destroy'])->name('posts.destroy');
+    Route::post('/posts/{id}/share', [PostController::class, 'share'])
+    ->name('posts.share');
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -92,3 +94,4 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/comments/{comment}', [App\Http\Controllers\CommentController::class, 'update'])->name('comments.update');
     Route::delete('/comments/{comment}', [App\Http\Controllers\CommentController::class, 'destroy'])->name('comments.destroy');
 });
+
