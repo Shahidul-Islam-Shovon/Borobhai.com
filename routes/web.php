@@ -75,8 +75,6 @@ Route::middleware('auth')->group(function () {
 });
 
 
-Route::post('/posts/{id}/share', [PostController::class, 'share'])->name('posts.share');
-
 Route::middleware(['auth'])->group(function () {
     // আগের অন্যান্য রাউটগুলোর সাথে নিচে এই দুটি বসিয়ে দিন
     Route::post('/posts/{id}', [PostController::class, 'update'])->name('posts.update');
