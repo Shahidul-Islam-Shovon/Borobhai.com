@@ -11,13 +11,50 @@ class PostController extends Controller
 {
     public function index()
     {
-        $posts = Post::with(['user', 'parentPost.user', 'likes', 'comments.user'])->latest()->get();
+        $posts = Post::with([
+                    'user',
+                    'parentPost.user',
+                    'likes',
+                    'comments' => function ($q) {
+                        $q->with('user')->latest()->limit(10);
+                    }
+                ])
+                ->withCount('comments')  // মোট কমেন্ট সংখ্যা
+                ->latest()
+                ->paginate(5);
+
         $user = Auth::user();
 
         if ($user->role === 'alumni') {
             return view('alumni.dashboard', compact('posts'));
         }
         return view('student.dashboard', compact('posts'));
+    }
+
+    public function loadMore(Request $request)
+    {
+        $posts = Post::with([
+                    'user',
+                    'parentPost.user',
+                    'likes',
+                    'comments' => function ($q) {
+                        $q->with('user')->latest()->limit(10);
+                    }
+                ])
+                ->withCount('comments')
+                ->latest()
+                ->paginate(5);
+
+        $html = '';
+        foreach ($posts as $post) {
+            $html .= view('partials.post-card', compact('post'))->render();
+        }
+
+        return response()->json([
+            'html'      => $html,
+            'has_more'  => $posts->hasMorePages(),
+            'next_page' => $posts->currentPage() + 1,
+        ]);
     }
 
     public function store(Request $request)
@@ -82,11 +119,11 @@ class PostController extends Controller
     public function share(Request $request, $id)
     {
         $targetPost = Post::findOrFail($id);
-        $actualParentId = $targetPost->parent_id ? $targetPost->parent_id : $targetPost->id;
+        $actualParentId = $targetPost->parent_id ?: $targetPost->id;
 
         $post = new Post();
         $post->user_id   = Auth::id();
-        $post->content   = $request->content;
+        $post->content   = $request->content ?? '';  // null এর বদলে খালি স্ট্রিং
         $post->parent_id = $actualParentId;
         $post->save();
 
@@ -94,7 +131,7 @@ class PostController extends Controller
     }
 
     public function update(Request $request, $id)
-{
+    {
     $post = Post::findOrFail($id);
 
     if ($post->user_id !== Auth::id()) {
@@ -176,11 +213,18 @@ class PostController extends Controller
 
     $post->save();
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Post updated successfully!',
-        'post' => $post
-    ]);
+        // আপডেটেড পোস্টের সব relation আবার লোড করো
+        $post->load(['user', 'parentPost.user', 'likes', 'comments.user']);
+
+        // নতুন করে এই পোস্টের card HTML বানাও
+        $html = view('partials.post-card', ['post' => $post])->render();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Post updated successfully!',
+            'html'    => $html,
+            'post'    => $post
+        ]);
 }
 
     public function destroy($id)

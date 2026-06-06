@@ -119,428 +119,38 @@
 
             {{-- Posts Feed --}}
             <div id="postsFeedContainer">
-                @forelse($posts as $post)
-                    <div class="card mb-3 fb-post-card shadow-sm border-0 rounded-3"
-                         id="postCard-{{ $post->id }}"
-                         data-bg-color="{{ $post->bg_color }}">
-                        <div class="card-body p-3">
-
-                            {{-- Post Header --}}
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="author-avatar-zone bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                                         style="width:38px;height:38px;">
-                                        {{ strtoupper(substr($post->user->name ?? 'U', 0, 1)) }}
-                                    </div>
-                                    <div>
-                                        <h6 class="m-0 fw-bold text-dark author-name-zone" style="font-size:14px;">{{ $post->user->name }}</h6>
-                                        <small class="text-muted" style="font-size:11px;">{{ $post->created_at->diffForHumans() }}</small>
-                                    </div>
-                                </div>
-                                @if($post->user_id === Auth::id())
-                                    <div class="dropdown">
-                                        <button class="btn btn-link text-muted p-0 border-0 shadow-none" data-bs-toggle="dropdown">
-                                            <i class="bi bi-three-dots"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end shadow p-1">
-                                            <li>
-                                                <a class="dropdown-item py-1 fs-7" href="javascript:void(0)"
-                                                    onclick="prepareEditModal(this)"
-                                                    data-id="{{ $post->id }}"
-                                                    data-content="{{ $post->content }}"
-                                                    data-bg-color="{{ $post->bg_color }}"
-                                                    data-images="{{ json_encode($post->images) }}"
-                                                    data-video="{{ is_array($post->video) ? json_encode($post->video) : $post->video }}">
-                                                    <i class="bi bi-pencil me-1"></i> Edit Post
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)"
-                                                    onclick="deletePost({{ $post->id }})">
-                                                    <i class="bi bi-trash me-1"></i> Delete
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                @endif
-                            </div>
-
-                            {{-- Post Caption --}}
-                            @php
-                                $hasImages      = is_array($post->images) && count($post->images) > 0;
-                                $videoItemsArray = [];
-                                if (!empty($post->video) && $post->video !== 'null') {
-                                    $decoded = is_array($post->video) ? $post->video : json_decode($post->video, true);
-                                    if (is_array($decoded)) {
-                                        $videoItemsArray = $decoded;
-                                    } else {
-                                        $clean = trim($post->video, '"[]');
-                                        if (!empty($clean)) $videoItemsArray[] = $clean;
-                                    }
-                                }
-                                $hasVideo = count($videoItemsArray) > 0;
-                                $renderBg = !empty($post->bg_color) && !$hasImages && !$hasVideo;
-                            @endphp
-
-                            <div class="{{ $renderBg ? 'p-4 rounded text-center text-white fw-bold d-flex align-items-center justify-content-center fb-colored-post-render '.$post->bg_color : 'p-0 text-start' }}"
-                                 style="{{ $renderBg ? 'min-height:200px;font-size:22px;' : 'font-size:14px;' }}">
-                                <p class="mb-0 dynamic-caption">{!! nl2br(e($post->content)) !!}</p>
-                            </div>
-
-                            {{-- Media Grid --}}
-                            @php
-                                $mediaItems = [];
-                                if ($hasImages) {
-                                    foreach ($post->images as $img) {
-                                        $mediaItems[] = ['type' => 'image', 'url' => asset('storage/'.str_replace('//', '/', $img))];
-                                    }
-                                }
-                                if ($hasVideo) {
-                                    foreach ($videoItemsArray as $vid) {
-                                        $cleanVid = str_replace('//', '/', trim($vid, '"[] '));
-                                        if (!empty($cleanVid)) $mediaItems[] = ['type' => 'video', 'url' => asset('storage/'.$cleanVid)];
-                                    }
-                                }
-                                $mediaCount        = count($mediaItems);
-                                $escapedImagesJson = json_encode($mediaItems, JSON_HEX_APOS | JSON_HEX_QUOT);
-                            @endphp
-
-                            @if($mediaCount > 0)
-                            <div class="mt-2 overflow-hidden rounded mb-3 dynamic-media-container-zone"
-                                 style="background:#000;"
-                                 data-media-json="{{ $escapedImagesJson }}">
-
-                                @if($mediaCount === 1)
-                                    <div class="position-relative bg-black d-flex align-items-center justify-content-center"
-                                         style="max-height:400px;min-height:260px;">
-                                        @if($mediaItems[0]['type'] === 'image')
-                                            <img src="{{ $mediaItems[0]['url'] }}" class="w-100 cursor-pointer"
-                                                 style="max-height:400px;object-fit:contain;"
-                                                 onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),0)">
-                                        @else
-                                            <video src="{{ $mediaItems[0]['url'] }}" preload="metadata" class="w-100 cursor-pointer"
-                                                   style="max-height:400px;object-fit:contain;"
-                                                   onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),0)"></video>
-                                            <div class="position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle"
-                                                 style="width:56px;height:56px;background:rgba(0,0,0,0.6);pointer-events:none;">
-                                                <i class="bi bi-play-fill text-white" style="font-size:1.8rem;margin-left:4px;"></i>
-                                            </div>
-                                        @endif
-                                    </div>
-
-                                @elseif($mediaCount === 2)
-                                    <div class="d-flex" style="height:280px;gap:2px;">
-                                        @foreach($mediaItems as $i => $media)
-                                            <div class="position-relative bg-black overflow-hidden" style="flex:1;">
-                                                @if($media['type'] === 'image')
-                                                    <img src="{{ $media['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer"
-                                                         onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $i }})">
-                                                @else
-                                                    <video src="{{ $media['url'] }}" preload="metadata" class="w-100 h-100 cursor-pointer"
-                                                           style="object-fit:cover;"
-                                                           onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $i }})"></video>
-                                                    <div class="position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle"
-                                                         style="width:48px;height:48px;background:rgba(0,0,0,0.6);pointer-events:none;">
-                                                        <i class="bi bi-play-fill text-white" style="font-size:1.5rem;margin-left:3px;"></i>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
-
-                                @elseif($mediaCount === 3)
-                                    <div class="d-flex" style="height:320px;gap:2px;">
-                                        <div class="position-relative bg-black overflow-hidden" style="flex:2;">
-                                            @if($mediaItems[0]['type'] === 'image')
-                                                <img src="{{ $mediaItems[0]['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer"
-                                                     onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),0)">
-                                            @else
-                                                <video src="{{ $mediaItems[0]['url'] }}" preload="metadata" class="w-100 h-100 cursor-pointer"
-                                                       style="object-fit:cover;"
-                                                       onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),0)"></video>
-                                                <div class="position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle"
-                                                     style="width:56px;height:56px;background:rgba(0,0,0,0.6);pointer-events:none;">
-                                                    <i class="bi bi-play-fill text-white" style="font-size:1.8rem;margin-left:4px;"></i>
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <div class="d-flex flex-column" style="flex:1;gap:2px;">
-                                            @foreach([1,2] as $i)
-                                                <div class="position-relative bg-black overflow-hidden" style="flex:1;">
-                                                    @if($mediaItems[$i]['type'] === 'image')
-                                                        <img src="{{ $mediaItems[$i]['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer"
-                                                             onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $i }})">
-                                                    @else
-                                                        <video src="{{ $mediaItems[$i]['url'] }}" preload="metadata" class="w-100 h-100 cursor-pointer"
-                                                               style="object-fit:cover;"
-                                                               onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $i }})"></video>
-                                                        <div class="position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle"
-                                                             style="width:40px;height:40px;background:rgba(0,0,0,0.6);pointer-events:none;">
-                                                            <i class="bi bi-play-fill text-white" style="font-size:1.2rem;margin-left:3px;"></i>
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-
-                                @elseif($mediaCount === 4)
-                                    <div class="d-flex flex-wrap" style="height:480px;gap:2px;">
-                                        @foreach($mediaItems as $i => $media)
-                                            <div class="position-relative bg-black overflow-hidden"
-                                                 style="width:calc(50% - 1px);height:calc(50% - 1px);">
-                                                @if($media['type'] === 'image')
-                                                    <img src="{{ $media['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer"
-                                                         onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $i }})">
-                                                @else
-                                                    <video src="{{ $media['url'] }}" preload="metadata" class="w-100 h-100 cursor-pointer"
-                                                           style="object-fit:cover;"
-                                                           onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $i }})"></video>
-                                                    <div class="position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle"
-                                                         style="width:44px;height:44px;background:rgba(0,0,0,0.6);pointer-events:none;">
-                                                        <i class="bi bi-play-fill text-white" style="font-size:1.4rem;margin-left:3px;"></i>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
-
-                                @else
-                                    @php $visibleItems = array_slice($mediaItems,0,4); $remaining = $mediaCount-4; @endphp
-                                    <div class="d-flex flex-wrap" style="height:480px;gap:2px;">
-                                        @foreach($visibleItems as $i => $media)
-                                            <div class="position-relative bg-black overflow-hidden"
-                                                 style="width:calc(50% - 1px);height:calc(50% - 1px);">
-                                                @if($media['type'] === 'image')
-                                                    <img src="{{ $media['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer"
-                                                         onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $i }})">
-                                                @else
-                                                    <video src="{{ $media['url'] }}" preload="metadata" class="w-100 h-100 cursor-pointer"
-                                                           style="object-fit:cover;"
-                                                           onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $i }})"></video>
-                                                    <div class="position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle"
-                                                         style="width:44px;height:44px;background:rgba(0,0,0,0.6);pointer-events:none;">
-                                                        <i class="bi bi-play-fill text-white" style="font-size:1.4rem;margin-left:3px;"></i>
-                                                    </div>
-                                                @endif
-                                                @if($i === 3 && $remaining > 0)
-                                                    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center text-white fw-bold cursor-pointer"
-                                                         style="background:rgba(0,0,0,0.55);font-size:2rem;"
-                                                         onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),3)">
-                                                        +{{ $remaining }}
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </div>
-                            @endif
-
-                            {{-- Shared / Parent Post --}}
-                            @if($post->parentPost)
-                                @php
-                                    $parentMedia = [];
-                                    if ($post->parentPost->images) {
-                                        $pImgs = is_array($post->parentPost->images) ? $post->parentPost->images : json_decode($post->parentPost->images, true);
-                                        if (is_array($pImgs)) foreach ($pImgs as $img) $parentMedia[] = ['type'=>'image','url'=>asset('storage/'.$img)];
-                                    }
-                                    if ($post->parentPost->video) {
-                                        $pVids = json_decode($post->parentPost->video, true);
-                                        if (is_array($pVids)) { foreach ($pVids as $v) $parentMedia[] = ['type'=>'video','url'=>asset('storage/'.$v)]; }
-                                        else { $parentMedia[] = ['type'=>'video','url'=>asset('storage/'.$post->parentPost->video)]; }
-                                    }
-                                    $pCount          = count($parentMedia);
-                                    $pHasImages      = !empty($post->parentPost->images);
-                                    $pHasVideo       = !empty($post->parentPost->video);
-                                    $pRenderBg       = $post->parentPost->bg_color && !$pHasImages && !$pHasVideo;
-                                    $parentMediaJson = json_encode($parentMedia, JSON_HEX_APOS | JSON_HEX_QUOT);
-                                @endphp
-                                <div class="mt-3 p-3 border rounded bg-light border-light-subtle text-start">
-                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                                             style="width:28px;height:28px;font-size:11px;">
-                                            {{ strtoupper(substr($post->parentPost->user->name ?? 'U', 0, 1)) }}
-                                        </div>
-                                        <div>
-                                            <h6 class="m-0 fw-bold text-dark" style="font-size:12px;">{{ $post->parentPost->user->name }}</h6>
-                                            <small class="text-muted" style="font-size:10px;">{{ $post->parentPost->created_at->diffForHumans() }}</small>
-                                        </div>
-                                    </div>
-
-                                    {{-- Parent Caption --}}
-                                    <div class="{{ $pRenderBg ? 'p-3 rounded text-center text-white fw-bold '.$post->parentPost->bg_color : 'p-0 text-start' }}"
-                                         style="{{ $pRenderBg ? 'min-height:120px;font-size:16px;' : 'font-size:13px;' }}">
-                                        <p class="mb-0">{!! nl2br(e($post->parentPost->content)) !!}</p>
-                                    </div>
-
-                                    {{-- Parent Media Grid (Facebook-style mini) --}}
-                                    @if($pCount > 0)
-                                    <div class="mt-2 overflow-hidden rounded" style="background:#000;" data-media-json="{{ $parentMediaJson }}">
-                                        @if($pCount === 1)
-                                            <div class="position-relative d-flex align-items-center justify-content-center bg-black" style="max-height:220px;min-height:120px;">
-                                                @if($parentMedia[0]['type'] === 'image')
-                                                    <img src="{{ $parentMedia[0]['url'] }}" class="w-100 cursor-pointer"
-                                                         style="max-height:220px;object-fit:contain;"
-                                                         onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),0)">
-                                                @else
-                                                    <video src="{{ $parentMedia[0]['url'] }}" preload="metadata" class="w-100 cursor-pointer"
-                                                           style="max-height:220px;object-fit:contain;"
-                                                           onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),0)"></video>
-                                                    <div class="position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle"
-                                                         style="width:44px;height:44px;background:rgba(0,0,0,0.6);pointer-events:none;">
-                                                        <i class="bi bi-play-fill text-white" style="font-size:1.3rem;margin-left:3px;"></i>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @elseif($pCount === 2)
-                                            <div class="d-flex" style="height:160px;gap:2px;">
-                                                @foreach($parentMedia as $pIdx => $pm)
-                                                    <div class="position-relative bg-black overflow-hidden" style="flex:1;">
-                                                        @if($pm['type'] === 'image')
-                                                            <img src="{{ $pm['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer"
-                                                                 onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $pIdx }})">
-                                                        @else
-                                                            <video src="{{ $pm['url'] }}" preload="metadata" class="w-100 h-100 cursor-pointer"
-                                                                   style="object-fit:cover;"
-                                                                   onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $pIdx }})"></video>
-                                                            <div class="position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle"
-                                                                 style="width:36px;height:36px;background:rgba(0,0,0,0.6);pointer-events:none;">
-                                                                <i class="bi bi-play-fill text-white" style="font-size:1rem;margin-left:2px;"></i>
-                                                            </div>
-                                                        @endif
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            @php $pShow = min($pCount,3); $pMore = $pCount - $pShow; @endphp
-                                            <div class="d-flex" style="height:160px;gap:2px;">
-                                                @for($pIdx = 0; $pIdx < $pShow; $pIdx++)
-                                                    @php $pm = $parentMedia[$pIdx]; @endphp
-                                                    <div class="position-relative bg-black overflow-hidden" style="flex:1;">
-                                                        @if($pm['type'] === 'image')
-                                                            <img src="{{ $pm['url'] }}" class="w-100 h-100 object-fit-cover cursor-pointer"
-                                                                 onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $pIdx }})">
-                                                        @else
-                                                            <video src="{{ $pm['url'] }}" preload="metadata" class="w-100 h-100 cursor-pointer"
-                                                                   style="object-fit:cover;"
-                                                                   onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $pIdx }})"></video>
-                                                            <div class="position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle"
-                                                                 style="width:32px;height:32px;background:rgba(0,0,0,0.6);pointer-events:none;">
-                                                                <i class="bi bi-play-fill text-white" style="font-size:.9rem;margin-left:2px;"></i>
-                                                            </div>
-                                                        @endif
-                                                        @if($pIdx === $pShow - 1 && $pMore > 0)
-                                                            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center text-white fw-bold cursor-pointer"
-                                                                 style="background:rgba(0,0,0,0.55);font-size:1.5rem;"
-                                                                 onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),{{ $pIdx }})">
-                                                                +{{ $pMore }}
-                                                            </div>
-                                                        @endif
-                                                    </div>
-                                                @endfor
-                                            </div>
-                                        @endif
-                                    </div>
-                                    @endif
-                                </div>
-                            @endif
-
-                            {{-- Like / Comment Counts --}}
-                            <div class="d-flex justify-content-between text-muted small px-1 mt-3">
-                                <div id="like-zone-{{ $post->id }}">
-                                    @if($post->likes->count() > 0)
-                                        <i class="bi bi-heart-fill text-danger"></i>
-                                        <span class="like-count-text">{{ $post->likes->count() }} Likes</span>
-                                    @endif
-                                </div>
-                                <div>
-                                    <span class="cursor-pointer" id="comment-count-{{ $post->id }}"
-                                          onclick="toggleComments({{ $post->id }})">{{ $post->comments->count() }} Comments</span>
-                                </div>
-                            </div>
-
-                            {{-- Action Buttons --}}
-                            <div class="mt-2 d-flex justify-content-between text-muted border-top border-bottom py-1 fs-7">
-                                <button type="button"
-                                        class="btn btn-link btn-sm text-decoration-none {{ $post->likes->contains('user_id', Auth::id()) ? 'text-primary fw-bold' : 'text-muted' }}"
-                                        id="likeBtn-{{ $post->id }}" onclick="toggleLike({{ $post->id }})">
-                                    <i class="bi {{ $post->likes->contains('user_id', Auth::id()) ? 'bi-hand-thumbs-up-fill' : 'bi-hand-thumbs-up' }}"></i> Like
-                                </button>
-                                <button type="button" class="btn btn-link btn-sm text-decoration-none text-muted"
-                                        onclick="toggleComments({{ $post->id }})">
-                                    <i class="bi bi-chat-right-text"></i> Comment
-                                </button>
-                                <button type="button" class="btn btn-link btn-sm text-decoration-none text-muted"
-                                        onclick="openShareModal({{ $post->id }})">
-                                    <i class="bi bi-reply-all-fill" style="transform:scaleX(-1);display:inline-block;"></i> Share
-                                </button>
-                            </div>
-
-                            {{-- Comments --}}
-                            <div id="commentZone-{{ $post->id }}" class="mt-2 d-none">
-                                <form onsubmit="submitComment(event, {{ $post->id }})"
-                                      class="d-flex align-items-center gap-2 pt-2 px-3 pb-3 border-top">
-                                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold small flex-shrink-0"
-                                         style="width:32px;height:32px;font-size:12px;">
-                                        {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
-                                    </div>
-                                    <div class="input-group align-items-center bg-light rounded-pill px-3 py-1 w-100 border">
-                                        <input type="text" id="commentInput-{{ $post->id }}"
-                                               class="form-control border-0 bg-transparent shadow-none py-1 fs-7"
-                                               placeholder="Write a comment..." style="font-size:13px;">
-                                        <button type="submit" class="btn btn-link p-0 text-primary ms-2 shadow-none border-0 d-flex align-items-center">
-                                            <i class="bi bi-send-fill" style="font-size:16px;"></i>
-                                        </button>
-                                    </div>
-                                </form>
-                                <div id="commentList-{{ $post->id }}" class="mt-1">
-                                    @forelse($post->comments as $comment)
-                                        <div class="bg-light p-2 px-3 rounded-4 mb-2 d-flex justify-content-between align-items-start"
-                                             id="comment-container-{{ $comment->id }}">
-                                            <div class="flex-grow-1">
-                                                <strong class="small text-dark d-block" style="font-size:12px;">{{ $comment->user->name }}</strong>
-                                                <span class="small" id="comment-text-{{ $comment->id }}" style="font-size:13px;">{{ $comment->content }}</span>
-                                            </div>
-                                            @if($comment->user_id === Auth::id())
-                                                <div class="dropdown">
-                                                    <button type="button" class="btn btn-link btn-sm text-muted p-0 border-0 shadow-none"
-                                                            data-bs-toggle="dropdown">
-                                                        <i class="bi bi-three-dots"></i>
-                                                    </button>
-                                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:100px;">
-                                                        <li><a class="dropdown-item py-1 fs-7" href="javascript:void(0)"
-                                                               onclick="editComment(event, {{ $comment->id }})">
-                                                            <i class="bi bi-pencil me-1"></i> Edit</a></li>
-                                                        <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)"
-                                                               onclick="deleteComment({{ $comment->id }}, {{ $post->id }})">
-                                                            <i class="bi bi-trash me-1"></i> Delete</a></li>
-                                                    </ul>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    @empty
-                                        <div class="text-center text-muted py-2 small dynamic-no-comment-{{ $post->id }}">No comments yet.</div>
-                                    @endforelse
-                                </div>
-                            </div>
-
-                        </div>
+            @forelse($posts as $post)
+                @include('partials.post-card', ['post' => $post])
+            @empty
+                <div id="emptyFeedState" class="card p-5 text-center shadow-sm border-0 rounded-3 my-3 bg-white">
+                    <div class="card-body">
+                        <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                        <h5 class="fw-bold text-secondary">No post available right now</h5>
+                        <p class="text-muted small mb-0">Be the first one to share something!</p>
                     </div>
-                @empty
-                    <div class="card p-5 text-center shadow-sm border-0 rounded-3 my-3 bg-white">
-                        <div class="card-body">
-                            <i class="bi bi-newspaper fs-1 text-muted d-block mb-3"></i>
-                            <h5 class="fw-bold text-secondary">No Posts Yet</h5>
-                            <p class="text-muted small mb-0">Share something to start the conversation!</p>
-                        </div>
-                    </div>
-                @endforelse
-            </div>
-
+                </div>
+            @endforelse
         </div>
-    </div>
-</div>
+
+        {{-- Infinite Scroll: Loader + Sentinel --}}
+        <div id="feedLoader" class="text-center py-4 d-none">
+            <div class="spinner-border text-primary" role="status" style="width:2rem;height:2rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <div id="feedEndMessage" class="text-center text-muted py-4 d-none">
+            <i class="bi bi-check2-circle me-1"></i> You're all caught up!
+        </div>
+
+        {{-- Pagination data holder --}}
+        <div id="feedMeta"
+            data-next-page="2"
+            data-has-more="{{ $posts->hasMorePages() ? '1' : '0' }}"></div>
+
+                </div>
+            </div>
+        </div>
 
 {{-- ==================== MODALS ==================== --}}
 
@@ -639,47 +249,32 @@
                             <span class="fb-color-circle fb-bg-gradient-5" onclick="selectEditPostBg('fb-bg-gradient-5')"></span>
                         </div>
                     </div>
-                    <div id="editMediaPreviewContainer" class="row g-1 mb-2"></div>
-                    <input type="file" id="editMediaInput" name="media[]" multiple class="d-none" accept="image/*,video/*">
-                    <div class="border rounded p-2 d-flex justify-content-between align-items-center mt-2">
-                        <span class="small fw-bold text-muted ps-1">Add to your post</span>
-                        <div class="d-flex gap-1">
-                            <button type="button" class="btn btn-light btn-sm rounded-circle p-2"
-                                    onclick="document.getElementById('editMediaInput').click()">
-                                <i class="bi bi-images text-success"></i>
-                            </button>
-                            <button type="button" class="btn btn-light btn-sm rounded-circle p-2"
-                                    onclick="toggleEditColorPlates()">
-                                <i class="bi bi-palette text-danger"></i>
-                            </button>
+
+                    <div id="editMediaSection">
+                        <div id="editMediaPreviewContainer" class="row g-1 mb-2"></div>
+                        <input type="file" id="editMediaInput" name="media[]" multiple class="d-none" accept="image/*,video/*">
+                        <div class="border rounded p-2 d-flex justify-content-between align-items-center mt-2">
+                            <span class="small fw-bold text-muted ps-1">Add to your post</span>
+                            <div class="d-flex gap-1">
+                                <button type="button" class="btn btn-light btn-sm rounded-circle p-2"
+                                        onclick="document.getElementById('editMediaInput').click()">
+                                    <i class="bi bi-images text-success"></i>
+                                </button>
+                                <button type="button" class="btn btn-light btn-sm rounded-circle p-2"
+                                        onclick="toggleEditColorPlates()">
+                                    <i class="bi bi-palette text-danger"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                    </div>
+
+
                 <div class="modal-footer border-top-0 pt-1">
                     <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" id="editSubmitBtn" class="btn btn-primary btn-sm px-4 fw-bold">Save Changes</button>
                 </div>
             </form>
-        </div>
-    </div>
-</div>
-
-{{-- Edit Comment Modal --}}
-<div class="modal fade" id="editCommentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content rounded-3 border-0 shadow">
-            <div class="modal-header pb-0 border-bottom-0">
-                <h6 class="modal-title fw-bold">Edit Comment</h6>
-                <button type="button" class="btn-close small" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body py-2">
-                <input type="hidden" id="editTargetCommentId">
-                <textarea id="editCommentInput" class="form-control form-control-sm" rows="2" style="resize:none;font-size:13px;"></textarea>
-            </div>
-            <div class="modal-footer pt-0 border-top-0 justify-content-end gap-1">
-                <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="submitUpdateComment()">Update</button>
-            </div>
         </div>
     </div>
 </div>
@@ -704,6 +299,60 @@
                     <button type="submit" id="shareSubmitBtn" class="btn btn-primary btn-sm px-4">Share Now</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+{{-- ==================== COMMENT MODAL (Premium) ==================== --}}
+<div class="modal fade" id="commentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow-lg" style="max-height:90vh;">
+
+            <div class="modal-header border-bottom py-2">
+                <h5 class="modal-title fw-bold mx-auto" style="font-size:17px;" id="commentModalTitle">Comments</h5>
+                <button type="button" class="btn-close ms-0" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body p-0">
+                <div id="commentModalPostPreview" class="p-3 border-bottom"></div>
+
+                <div class="px-3 pt-2 pb-1">
+                    <small class="text-muted fw-semibold" id="commentModalCount" style="font-size:12px;"></small>
+                </div>
+
+                <div id="commentModalList" class="px-3 pb-3">
+                    <div class="text-center text-muted py-4">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                        <div class="small mt-2">Loading comments...</div>
+                    </div>
+                </div>
+
+                <div id="commentModalViewMore" class="px-3 pb-3 d-none">
+                    <button type="button" class="btn btn-link btn-sm text-muted text-decoration-none p-0 fw-semibold"
+                            style="font-size:13px;" id="commentModalViewMoreBtn" data-offset="0">
+                        <i class="bi bi-arrow-down-circle me-1"></i> View more comments
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-footer border-top p-2">
+                <form id="commentModalForm" class="d-flex align-items-center gap-2 w-100">
+                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                         style="width:34px;height:34px;font-size:13px;">
+                        {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                    </div>
+                    <div class="input-group align-items-center bg-light rounded-pill px-3 py-1 w-100 border">
+                        <input type="hidden" id="commentModalPostId">
+                        <input type="text" id="commentModalInput"
+                               class="form-control border-0 bg-transparent shadow-none py-1"
+                               placeholder="Write a comment..." style="font-size:13px;" autocomplete="off">
+                        <button type="submit" class="btn btn-link p-0 text-primary ms-2 shadow-none border-0 d-flex align-items-center">
+                            <i class="bi bi-send-fill" style="font-size:17px;"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
         </div>
     </div>
 </div>
@@ -740,6 +389,7 @@
 {{-- ==================== SCRIPTS ==================== --}}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 // ==========================================
 // GLOBAL STATE
@@ -748,17 +398,22 @@ let selectedMediaFiles        = [];
 let bootstrapEditModal        = null;
 let bootstrapShareModal       = null;
 let bootstrapLightboxModal    = null;
-let bootstrapCommentEditModal = null;
+let bootstrapCommentModal     = null;
 let isUploading               = false;
 let removedImages             = [];
 let removedVideos             = [];
 let editSelectedFiles         = [];
+let lastSelectedBg            = '';
+let lastEditSelectedBg        = '';
+let commentEditState          = { editing: false, commentId: null };
 
 // ==========================================
 // INIT
 // ==========================================
 document.addEventListener("DOMContentLoaded", function () {
-    // Post/Share পরে reload হলে top এ scroll করো
+     if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
     if (sessionStorage.getItem('scrollToTop')) {
         sessionStorage.removeItem('scrollToTop');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -766,18 +421,15 @@ document.addEventListener("DOMContentLoaded", function () {
     bootstrapEditModal        = new bootstrap.Modal(document.getElementById('editPostModal'));
     bootstrapShareModal       = new bootstrap.Modal(document.getElementById('fbShareModal'));
     bootstrapLightboxModal    = new bootstrap.Modal(document.getElementById('imageLightboxModal'));
-    const ecEl = document.getElementById('editCommentModal');
-    if (ecEl) bootstrapCommentEditModal = new bootstrap.Modal(ecEl);
+    const cmEl = document.getElementById('commentModal');
+    if (cmEl) bootstrapCommentModal = new bootstrap.Modal(cmEl);
 
-    // Pause videos on slide — registered ONCE
     document.getElementById('lightboxCarousel').addEventListener('slide.bs.carousel', function () {
         document.querySelectorAll('#lightboxInner video').forEach(v => v.pause());
     });
-    // Pause videos on modal close — registered ONCE
     document.getElementById('imageLightboxModal').addEventListener('hidden.bs.modal', function () {
         document.querySelectorAll('#lightboxInner video').forEach(v => v.pause());
     });
-    // Update counter on slide — registered ONCE, reads total from data attr
     document.getElementById('lightboxCarousel').addEventListener('slid.bs.carousel', function (ev) {
         const counter = document.getElementById('lightboxCounter');
         if (counter && counter.dataset.total) {
@@ -785,11 +437,21 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // Facebook color: auto-remove if text is long (>80 chars)
     document.getElementById('postContent').addEventListener('input', function () {
         const bgInp = document.getElementById('bg_color_input');
-        if (bgInp && bgInp.value && this.value.length > 80) {
-            resetPostBg();
+        if (this.value.length > 80) {
+            if (bgInp && bgInp.value) { resetPostBg(false); }
+        } else {
+            if (lastSelectedBg && (!bgInp || !bgInp.value)) { selectPostBg(lastSelectedBg); }
+        }
+    });
+
+    document.getElementById('editPostContent').addEventListener('input', function () {
+        const bgInp = document.getElementById('edit_bg_color_input');
+        if (this.value.length > 80) {
+            if (bgInp && bgInp.value) { resetEditPostBg(false); }
+        } else {
+            if (lastEditSelectedBg && (!bgInp || !bgInp.value)) { selectEditPostBg(lastEditSelectedBg); }
         }
     });
 });
@@ -822,7 +484,6 @@ function openLightbox(mediaJson, index = 0) {
                 img.style.maxHeight = '82vh';
                 slide.appendChild(img);
             } else {
-                // video wrapper above any potential overlaps
                 const wrap = document.createElement('div');
                 wrap.style.cssText = 'position:relative;z-index:20;display:flex;justify-content:center;';
                 const video = document.createElement('video');
@@ -830,7 +491,6 @@ function openLightbox(mediaJson, index = 0) {
                 video.controls = true;
                 video.className = 'd-block w-100 object-fit-contain';
                 video.style.cssText = 'max-height:82vh;position:relative;z-index:20;';
-                // Stop ALL pointer events from reaching carousel
                 ['click','mousedown','mouseup','pointerdown','pointerup','touchstart','touchend']
                     .forEach(evt => video.addEventListener(evt, e => e.stopPropagation()));
                 wrap.appendChild(video);
@@ -839,13 +499,11 @@ function openLightbox(mediaJson, index = 0) {
             inner.appendChild(slide);
         });
 
-        // Reuse or init carousel
         const carouselEl = document.getElementById('lightboxCarousel');
         let ci = bootstrap.Carousel.getInstance(carouselEl);
         if (!ci) ci = new bootstrap.Carousel(carouselEl, { ride: false, touch: false, interval: false });
         if (index > 0) ci.to(index);
 
-        // Counter
         const navBar  = document.getElementById('lightboxNavBar');
         const counter = document.getElementById('lightboxCounter');
         if (mediaItems.length <= 1) {
@@ -891,16 +549,18 @@ function selectPostBg(cls) {
         t.placeholder = "What's on your mind?";
     }
     if (b) b.value = cls;
+    lastSelectedBg = cls;
     selectedMediaFiles = [];
     renderMediaPreviews();
 }
-function resetPostBg() {
+function resetPostBg(clearMemory = true) {
     const w = document.getElementById('postInputWrapper');
     const t = document.getElementById('postContent');
     const b = document.getElementById('bg_color_input');
     if (w) { w.className = 'p-1 rounded bg-transparent'; w.style.minHeight = 'auto'; }
     if (t) { t.style.cssText = 'font-size:14px;text-align:left;color:inherit;'; t.placeholder = 'Start a post...'; }
     if (b) b.value = '';
+    if (clearMemory) lastSelectedBg = '';
 }
 
 // ==========================================
@@ -975,7 +635,6 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
     }
     const captured = [...selectedMediaFiles];
 
-    // Close modal + reset
     if (modal) modal.hide();
     document.getElementById('postContent').value = '';
     resetPostBg();
@@ -983,7 +642,6 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
     renderMediaPreviews();
     submitBtn.disabled = false;
 
-    // Placeholder
     const pid     = 'opt-' + Date.now();
     const uName   = '{{ Auth::user()->name }}';
     const uInit   = '{{ strtoupper(substr(Auth::user()->name ?? "U", 0, 1)) }}';
@@ -1012,7 +670,6 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
     const feed = document.getElementById('postsFeedContainer');
     if (feed) feed.insertAdjacentHTML('afterbegin', html);
 
-    // Modal পুরো বন্ধ হওয়ার পরে scroll করো
     const createModalEl = document.getElementById('createPostModal');
     createModalEl.addEventListener('hidden.bs.modal', function () {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1043,30 +700,9 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
             const bar = document.getElementById(`bar-${pid}`);
             if (bar) { bar.style.width='100%'; bar.classList.replace('bg-primary','bg-success'); bar.classList.remove('progress-bar-animated'); }
             setTimeout(() => {
-            sessionStorage.setItem('scrollToTop', '1');
-            sessionStorage.setItem('showPostSuccess', '1');
-            window.location.reload();
-            // Post success toast
-            if (sessionStorage.getItem('showPostSuccess')) {
-            sessionStorage.removeItem('showPostSuccess');
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 4500,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer);
-                    toast.addEventListener('mouseleave', Swal.resumeTimer);
-                }
-            });
-            Toast.fire({
-                icon: 'success',
-                title: 'Post Published!',
-                text: 'Your post has been published successfully.'
-            });
-        }
-        }, 1000);
+                sessionStorage.setItem('scrollToTop', '1');
+                window.location.reload();
+            }, 1000);
         } else {
             document.getElementById(pid)?.remove();
             Swal.fire({ icon:'error', title:'Post not published!', text:'There was an issue uploading the post.' });
@@ -1089,64 +725,6 @@ function toggleLike(postId) {
         btn.className = d.liked ? 'btn btn-link btn-sm text-decoration-none text-primary fw-bold' : 'btn btn-link btn-sm text-decoration-none text-muted';
         btn.innerHTML = d.liked ? '<i class="bi bi-hand-thumbs-up-fill"></i> Like' : '<i class="bi bi-hand-thumbs-up"></i> Like';
         if (zone) zone.innerHTML = d.like_count > 0 ? `<i class="bi bi-heart-fill text-danger"></i> <span>${d.like_count} Likes</span>` : '';
-    });
-}
-
-// ==========================================
-// COMMENTS
-// ==========================================
-function toggleComments(postId) {
-    document.getElementById(`commentZone-${postId}`)?.classList.toggle('d-none');
-}
-function submitComment(event, postId) {
-    event.preventDefault();
-    const input = document.getElementById(`commentInput-${postId}`);
-    if (!input?.value.trim()) return;
-    const text = input.value.trim(); input.value = '';
-    fetch(`/posts/${postId}/comments`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},
-        body: JSON.stringify({content:text})
-    }).then(r=>r.json()).then(d=>{
-        if (!d.success) return;
-        const c = document.getElementById(`comment-count-${postId}`);
-        if (c) c.innerText = `${d.comment_count} Comments`;
-        document.querySelector(`.dynamic-no-comment-${postId}`)?.remove();
-        document.getElementById(`commentList-${postId}`)?.insertAdjacentHTML('afterbegin',`
-        <div class="bg-light p-2 px-3 rounded-4 mb-2 d-flex justify-content-between align-items-start" id="comment-container-${d.comment_id}">
-          <div class="flex-grow-1">
-            <strong class="small text-dark d-block" style="font-size:12px;">${d.user_name}</strong>
-            <span class="small" id="comment-text-${d.comment_id}" style="font-size:13px;">${d.content}</span>
-          </div>
-          <div class="dropdown">
-            <button type="button" class="btn btn-link btn-sm text-muted p-0 border-0 shadow-none" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
-            <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:100px;">
-              <li><a class="dropdown-item py-1 fs-7" href="javascript:void(0)" onclick="editComment(event,${d.comment_id})"><i class="bi bi-pencil me-1"></i>Edit</a></li>
-              <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deleteComment(${d.comment_id},${postId})"><i class="bi bi-trash me-1"></i>Delete</a></li>
-            </ul>
-          </div>
-        </div>`);
-    });
-}
-function editComment(event, cid) {
-    document.getElementById('editTargetCommentId').value = cid;
-    bootstrapCommentEditModal?.show();
-    setTimeout(()=>{ const f=document.getElementById('editCommentInput'); if(f){f.value=document.getElementById(`comment-text-${cid}`).innerText;f.focus();} },400);
-}
-function submitUpdateComment() {
-    const cid  = document.getElementById('editTargetCommentId').value;
-    const text = document.getElementById('editCommentInput').value.trim();
-    if (!text) return;
-    fetch(`/comments/${cid}`,{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},body:JSON.stringify({content:text})})
-    .then(r=>r.json()).then(d=>{ if(d.success){document.getElementById(`comment-text-${cid}`).innerText=text; bootstrapCommentEditModal?.hide();} });
-}
-function deleteComment(cid, postId) {
-    Swal.fire({title:'Delete comment?',icon:'warning',showCancelButton:true,confirmButtonColor:'#ef4444'}).then(r=>{
-        if (!r.isConfirmed) return;
-        fetch(`/comments/${cid}`,{method:'DELETE',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}})
-        .then(r=>r.json()).then(d=>{
-            if(d.success){ document.getElementById(`comment-container-${cid}`)?.remove(); const c=document.getElementById(`comment-count-${postId}`); if(c&&d.comment_count!==undefined) c.innerText=`${d.comment_count} Comments`; }
-        });
     });
 }
 
@@ -1209,13 +787,14 @@ document.getElementById('fbShareForm')?.addEventListener('submit', function (e) 
     Toast.fire({icon:'info',title:'Sharing...'});
     fetch(`/posts/${pId}/share`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},body:JSON.stringify({content:comment})})
     .then(r=>r.json()).then(d=>{
-
-        if(d.success){ bootstrapShareModal?.hide(); Toast.fire({icon:'success',title:'Shared!',timer:1200}); setTimeout(() => {
+        if(d.success){
+            bootstrapShareModal?.hide();
+            Toast.fire({icon:'success',title:'Shared!',timer:1200});
             sessionStorage.setItem('scrollToTop', '1');
-            window.location.reload();
-        }, 1300); }
+            window.scrollTo({ top: 0, behavior: 'auto' });
+            setTimeout(() => { window.location.reload(); }, 800);
+        }
         else { btn.disabled=false; Swal.fire({icon:'error',title:'Failed!',text:'There was an error sharing the post.'}); }
-
     }).catch(()=>{ btn.disabled=false; Swal.fire({icon:'error',title:'Network Error!'}); });
 });
 
@@ -1236,6 +815,7 @@ function selectEditPostBg(cls) {
         t.className = 'form-control border-0 bg-transparent shadow-none w-100';
     }
     if (b) b.value = cls;
+    lastEditSelectedBg = cls;
     document.querySelectorAll('#editMediaPreviewContainer [data-server-path]').forEach(el => {
         const p = el.getAttribute('data-server-path'), tp = el.getAttribute('data-type');
         if (tp==='image') removedImages.push(p); else removedVideos.push(p);
@@ -1244,13 +824,14 @@ function selectEditPostBg(cls) {
     const pc = document.getElementById('editMediaPreviewContainer');
     if (pc) pc.innerHTML = '';
 }
-function resetEditPostBg() {
+function resetEditPostBg(clearMemory = true) {
     const w = document.getElementById('editPostInputWrapper');
     const t = document.getElementById('editPostContent');
     const b = document.getElementById('edit_bg_color_input');
     if (w) { w.className='p-1 rounded bg-transparent'; w.style.minHeight='auto'; }
     if (t) { t.style.cssText='font-size:14px;text-align:left;color:inherit;'; }
     if (b) b.value='';
+    if (clearMemory) lastEditSelectedBg = '';
 }
 
 // ==========================================
@@ -1259,13 +840,28 @@ function resetEditPostBg() {
 function prepareEditModal(el) {
     const id=el.getAttribute('data-id'), content=el.getAttribute('data-content'),
           imgs=el.getAttribute('data-images'), vids=el.getAttribute('data-video'),
-          bg=el.getAttribute('data-bg-color');
+          bg=el.getAttribute('data-bg-color'),
+          isShared=el.getAttribute('data-is-shared')==='1';
     removedImages=[]; removedVideos=[]; editSelectedFiles=[];
+    lastEditSelectedBg = '';
     document.getElementById('editPostId').value      = id;
     document.getElementById('editPostContent').value = content||'';
     document.getElementById('editMediaInput').value  = '';
     const pc=document.getElementById('editMediaPreviewContainer');
     if(pc) pc.innerHTML='';
+
+    const mediaSection = document.getElementById('editMediaSection');
+    const colorZone    = document.getElementById('editColorPlatesZone');
+    if (isShared) {
+        if (mediaSection) mediaSection.classList.add('d-none');
+        if (colorZone)    colorZone.classList.add('d-none');
+        resetEditPostBg();
+        bootstrapEditModal?.show();
+        return;
+    } else {
+        if (mediaSection) mediaSection.classList.remove('d-none');
+    }
+
     bg && bg!=='null' && bg.trim() ? selectEditPostBg(bg) : resetEditPostBg();
 
     if(imgs && imgs!=='null' && imgs.trim()) {
@@ -1283,7 +879,6 @@ function prepareEditModal(el) {
 
 // ==========================================
 // EDIT PREVIEW RENDERER
-// Fix: videos play INLINE inside edit modal (no lightbox conflict)
 // ==========================================
 function renderEditPreviewItem(pathOrFile, type, isNew=false) {
     const container=document.getElementById('editMediaPreviewContainer');
@@ -1301,21 +896,17 @@ function renderEditPreviewItem(pathOrFile, type, isNew=false) {
         mediaEl.src=src;
         mediaEl.className='w-100 h-100 rounded border';
         mediaEl.style.cssText='object-fit:cover;cursor:pointer;';
-        // Image: open in lightbox (no conflict since it's not playing)
         mediaEl.addEventListener('click',()=>openLightbox(JSON.stringify([{type:'image',url:src}]),0));
     } else {
-        // Video: play INLINE inside edit modal thumbnail (avoids modal stacking conflict)
         mediaEl=document.createElement('video');
         mediaEl.src=src;
         mediaEl.muted=true;
         mediaEl.preload='metadata';
         mediaEl.className='w-100 h-100 rounded border';
         mediaEl.style.cssText='object-fit:cover;cursor:pointer;';
-
         mediaEl.addEventListener('click', function(e) {
             e.stopPropagation();
             if (!this.hasAttribute('data-expanded')) {
-                // First click: expand and show controls
                 this.setAttribute('data-expanded','1');
                 this.controls=true;
                 this.muted=false;
@@ -1326,8 +917,6 @@ function renderEditPreviewItem(pathOrFile, type, isNew=false) {
                 this.play().catch(()=>{});
             }
         });
-
-        // ▶ Play indicator
         const ov=document.createElement('div');
         ov.className='edit-play-overlay position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle';
         ov.style.cssText='width:36px;height:36px;background:rgba(0,0,0,0.65);pointer-events:none;z-index:5;';
@@ -1335,7 +924,6 @@ function renderEditPreviewItem(pathOrFile, type, isNew=false) {
         col.appendChild(ov);
     }
 
-    // × Remove button
     const xBtn=document.createElement('button');
     xBtn.type='button';
     xBtn.className='btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-0 d-flex align-items-center justify-content-center';
@@ -1383,17 +971,276 @@ document.getElementById('editPostForm')?.addEventListener('submit', function (e)
     const xhr=new XMLHttpRequest();
     xhr.open('POST',`/posts/${id}`,true);
     xhr.setRequestHeader('Accept','application/json');
+
     xhr.onreadystatechange=function(){
         if(xhr.readyState!==4) return;
         if(xhr.status===200||xhr.status===201){
-            Swal.fire({icon:'success',title:'Updated!',timer:1000}).then(()=>window.location.reload());
+            let res = {};
+            try { res = JSON.parse(xhr.responseText); } catch(e){}
+            const oldCard = document.getElementById(`postCard-${id}`);
+            if (oldCard && res.html) { oldCard.outerHTML = res.html; }
+            bootstrapEditModal?.hide();
+            const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1500 });
+            Toast.fire({ icon:'success', title:'Post updated!' });
+            if(btn) btn.disabled=false;
         } else {
             if(btn) btn.disabled=false;
             Swal.fire({icon:'error',title:'Update Failed!'});
         }
     };
+
     xhr.send(fd);
 });
+
+// ==========================================
+// INFINITE SCROLL
+// ==========================================
+let feedLoading  = false;
+
+function loadMorePosts() {
+    const meta = document.getElementById('feedMeta');
+    if (!meta) return;
+    if (feedLoading || meta.dataset.hasMore === '0') return;
+
+    feedLoading = true;
+    const nextPage = meta.dataset.nextPage;
+    const loader   = document.getElementById('feedLoader');
+    if (loader) loader.classList.remove('d-none');
+
+    fetch(`{{ route('feed.load') }}?page=${nextPage}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        const container = document.getElementById('postsFeedContainer');
+        if (container && data.html.trim()) {
+            container.insertAdjacentHTML('beforeend', data.html);
+        }
+        meta.dataset.nextPage = data.next_page;
+        meta.dataset.hasMore  = data.has_more ? '1' : '0';
+        if (loader) loader.classList.add('d-none');
+        if (!data.has_more) {
+            const endMsg = document.getElementById('feedEndMessage');
+            if (endMsg) endMsg.classList.remove('d-none');
+        }
+        feedLoading = false;
+    })
+    .catch(err => {
+        console.error('Feed load error:', err);
+        if (loader) loader.classList.add('d-none');
+        feedLoading = false;
+    });
+}
+
+window.addEventListener('scroll', function () {
+    const scrollPos = window.innerHeight + window.scrollY;
+    const threshold = document.body.offsetHeight - 300;
+    if (scrollPos >= threshold) { loadMorePosts(); }
+});
+
+// ==========================================
+// COMMENT MODAL (Premium) — সব কমেন্ট কাজ এখানে
+// ==========================================
+function openCommentModal(postId) {
+    const list    = document.getElementById('commentModalList');
+    const preview = document.getElementById('commentModalPostPreview');
+    const viewMore= document.getElementById('commentModalViewMore');
+    const countEl = document.getElementById('commentModalCount');
+
+    document.getElementById('commentModalPostId').value = postId;
+    commentEditState = { editing: false, commentId: null };
+    document.getElementById('commentModalInput').value = '';
+    document.getElementById('commentModalInput').placeholder = 'Write a comment...';
+
+    const card = document.getElementById(`postCard-${postId}`);
+    if (card && preview) {
+        const author  = card.querySelector('.author-name-zone')?.innerText || 'User';
+        const avatar  = card.querySelector('.author-avatar-zone')?.innerHTML || 'U';
+        const colored = card.getAttribute('data-bg-color');
+        const caption = card.querySelector('.dynamic-caption')?.innerHTML || '';
+
+        let capHtml = `<p class="mb-0" style="font-size:14px;">${caption}</p>`;
+        if (colored && colored !== 'null' && colored !== '')
+            capHtml = `<div class="p-3 rounded text-center text-white fw-bold ${colored}" style="min-height:80px;font-size:16px;"><p class="mb-0">${caption}</p></div>`;
+
+        preview.innerHTML = `
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:38px;height:38px;font-size:14px;">${avatar}</div>
+              <h6 class="m-0 fw-bold" style="font-size:14px;">${author}</h6>
+            </div>${capHtml}`;
+    }
+
+    if (list) list.innerHTML = `
+        <div class="text-center text-muted py-4">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <div class="small mt-2">Loading comments...</div>
+        </div>`;
+    if (viewMore) viewMore.classList.add('d-none');
+    if (countEl) countEl.innerText = '';
+
+    bootstrapCommentModal?.show();
+
+    fetch(`/posts/${postId}/comments/load?offset=0`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success) { if (list) list.innerHTML = '<div class="text-center text-muted py-4 small">Could not load comments.</div>'; return; }
+
+        if (list) {
+            list.innerHTML = data.html.trim()
+                ? data.html
+                : '<div class="text-center text-muted py-4 small" id="modalNoComment">No comments yet. Be the first!</div>';
+        }
+
+        if (countEl) {
+            const totalText = card?.querySelector(`#comment-count-${postId}`)?.innerText || '';
+            countEl.innerText = totalText;
+        }
+
+        if (viewMore) {
+            const btn = document.getElementById('commentModalViewMoreBtn');
+            if (data.has_more) {
+                btn.setAttribute('data-offset', data.next_offset);
+                btn.setAttribute('data-post-id', postId);
+                viewMore.classList.remove('d-none');
+            } else {
+                viewMore.classList.add('d-none');
+            }
+        }
+    })
+    .catch(() => { if (list) list.innerHTML = '<div class="text-center text-muted py-4 small">Network error.</div>'; });
+}
+
+document.getElementById('commentModalViewMoreBtn')?.addEventListener('click', function () {
+    const postId = this.getAttribute('data-post-id');
+    const offset = this.getAttribute('data-offset');
+    const original = this.innerHTML;
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width:12px;height:12px;"></span> Loading...';
+
+    fetch(`/posts/${postId}/comments/load?offset=${offset}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        const list = document.getElementById('commentModalList');
+        if (list && data.html.trim()) list.insertAdjacentHTML('beforeend', data.html);
+
+        if (data.has_more) {
+            this.setAttribute('data-offset', data.next_offset);
+            this.disabled = false;
+            this.innerHTML = original;
+        } else {
+            document.getElementById('commentModalViewMore').classList.add('d-none');
+        }
+    })
+    .catch(() => { this.disabled = false; this.innerHTML = original; });
+});
+
+document.getElementById('commentModalForm')?.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const postId = document.getElementById('commentModalPostId').value;
+    const input  = document.getElementById('commentModalInput');
+    const text   = input.value.trim();
+    if (!text) return;
+
+    if (commentEditState.editing && commentEditState.commentId) {
+        const cid = commentEditState.commentId;
+        fetch(`/comments/${cid}`, {
+            method:'PUT',
+            headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},
+            body: JSON.stringify({ content: text })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) return;
+            const span = document.getElementById(`comment-text-${cid}`);
+            if (span) span.innerText = text;
+            const meta = document.querySelector(`.comment-meta-${cid}`);
+            if (meta) meta.innerHTML = `${d.updated_at || 'just now'}<span class="comment-edited-tag-${cid}"> · Edited</span>`;
+            commentEditState = { editing: false, commentId: null };
+            input.value = '';
+            input.placeholder = 'Write a comment...';
+        });
+        return;
+    }
+
+    input.value = '';
+    fetch(`/posts/${postId}/comments`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},
+        body: JSON.stringify({ content: text })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) return;
+        document.getElementById('modalNoComment')?.remove();
+
+        const html = `
+        <div class="d-flex gap-2 mb-3 align-items-start comment-row" id="comment-container-${d.comment_id}">
+            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:32px;height:32px;font-size:13px;">${d.user_initial}</div>
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div class="bg-light px-3 py-2 rounded-4 d-inline-block" style="max-width:100%;">
+                        <strong class="d-block text-dark" style="font-size:12.5px;">${d.user_name}</strong>
+                        <span id="comment-text-${d.comment_id}" style="font-size:13px;word-break:break-word;">${d.content}</span>
+                    </div>
+                    <div class="dropdown flex-shrink-0">
+                        <button type="button" class="btn btn-link btn-sm text-muted p-0 border-0 shadow-none ms-1" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:100px;">
+                            <li><a class="dropdown-item py-1 fs-7" href="javascript:void(0)" onclick="editComment(event, ${d.comment_id})"><i class="bi bi-pencil me-1"></i> Edit</a></li>
+                            <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deleteComment(${d.comment_id}, ${postId})"><i class="bi bi-trash me-1"></i> Delete</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <small class="text-muted ms-2 comment-meta-${d.comment_id}" style="font-size:11px;">${d.created_at}<span class="comment-edited-tag-${d.comment_id}"></span></small>
+            </div>
+        </div>`;
+        document.getElementById('commentModalList')?.insertAdjacentHTML('afterbegin', html);
+
+        const feedCount = document.getElementById(`comment-count-${postId}`);
+        if (feedCount && d.comment_count !== undefined) feedCount.innerText = `${d.comment_count} Comments`;
+        const modalCount = document.getElementById('commentModalCount');
+        if (modalCount && d.comment_count !== undefined) modalCount.innerText = `${d.comment_count} Comments`;
+    });
+});
+
+function editComment(event, cid) {
+    const span = document.getElementById(`comment-text-${cid}`);
+    if (!span) return;
+    const input = document.getElementById('commentModalInput');
+    if (!input) return;
+    commentEditState = { editing: true, commentId: cid };
+    input.value = span.innerText;
+    input.placeholder = 'Editing comment...';
+    input.focus();
+}
+
+function deleteComment(cid, postId) {
+    Swal.fire({ title:'Delete comment?', icon:'warning', showCancelButton:true, confirmButtonColor:'#ef4444' }).then(r => {
+        if (!r.isConfirmed) return;
+        fetch(`/comments/${cid}`, {
+            method:'DELETE',
+            headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) return;
+            document.getElementById(`comment-container-${cid}`)?.remove();
+            const feedCount = document.getElementById(`comment-count-${postId}`);
+            if (feedCount && d.comment_count !== undefined) feedCount.innerText = `${d.comment_count} Comments`;
+            const modalCount = document.getElementById('commentModalCount');
+            if (modalCount && d.comment_count !== undefined) modalCount.innerText = `${d.comment_count} Comments`;
+            if (commentEditState.commentId == cid) {
+                commentEditState = { editing: false, commentId: null };
+                const input = document.getElementById('commentModalInput');
+                if (input) { input.value=''; input.placeholder='Write a comment...'; }
+            }
+        });
+    });
+}
+
 </script>
 
 </body>

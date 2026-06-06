@@ -22,7 +22,38 @@ class CommentController extends Controller
             'comment_id' => $comment->id,
             'user_name' => auth()->user()->name,
             'content' => e($comment->content),
-            'comment_count' => $post->comments()->count()
+            'comment_count' => $post->comments()->count(),
+            'created_at'    => $comment->created_at->diffForHumans(),  // নতুন
+            'user_initial'  => strtoupper(substr($comment->user->name, 0, 1)),  // নতুন
+
+        ]);
+    }
+
+    public function loadMore(Request $request, $postId)
+    {
+        $offset = (int) $request->query('offset', 0);
+
+        // সর্বশেষ থেকে পুরনোর দিকে, ১০টা করে
+        $comments = \App\Models\Comment::where('post_id', $postId)
+                        ->with('user')
+                        ->latest()
+                        ->skip($offset)
+                        ->take(10)
+                        ->get();
+
+        $totalComments = \App\Models\Comment::where('post_id', $postId)->count();
+        $loadedSoFar   = $offset + $comments->count();
+
+        $html = '';
+        foreach ($comments as $comment) {
+            $html .= view('partials.comment-item', compact('comment'))->render();
+        }
+
+        return response()->json([
+            'success'    => true,
+            'html'       => $html,
+            'has_more'   => $loadedSoFar < $totalComments,
+            'next_offset'=> $loadedSoFar,
         ]);
     }
 
@@ -35,7 +66,11 @@ class CommentController extends Controller
         $request->validate(['content' => 'required|string|max:1000']);
         $comment->update(['content' => $request->content]);
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'content' => e($comment->content),         // নতুন — নিরাপদ edit display
+            'updated_at' => $comment->updated_at->diffForHumans(),  // নতুন           
+        ]);
     }
 
     public function destroy(Comment $comment)

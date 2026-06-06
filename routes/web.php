@@ -81,6 +81,10 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/posts/{id}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/posts/{id}/share', [PostController::class, 'share'])
     ->name('posts.share');
+    Route::middleware(['auth'])->group(function () {
+    // Infinite scroll feed loader
+    Route::get('/feed/load', [PostController::class, 'loadMore'])->name('feed.load');
+});
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -91,5 +95,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/posts/{post}/comments', [App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
     Route::put('/comments/{comment}', [App\Http\Controllers\CommentController::class, 'update'])->name('comments.update');
     Route::delete('/comments/{comment}', [App\Http\Controllers\CommentController::class, 'destroy'])->name('comments.destroy');
+    Route::middleware(['auth'])->group(function () {
+    // একটা পোস্টের আরও কমেন্ট লোড করা (View more)
+    Route::get('/posts/{post}/comments/load', [App\Http\Controllers\CommentController::class, 'loadMore'])->name('comments.load');
+});
+
 });
 
