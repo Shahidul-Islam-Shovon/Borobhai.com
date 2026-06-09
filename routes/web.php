@@ -5,29 +5,31 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
+// ==========================================
+// হোম রাউট = ফিড (Facebook মডেল)
+// লগইন না থাকলে auth middleware লগইন পেজে পাঠাবে → লগইনের পর আবার "/" তে ফিরবে
+// ==========================================
 Route::get('/', function () {
-    return view('welcome');
-});
-
-// Role-Based Central Dispatcher Route
-Route::get('/dashboard', function () {
     $user = Auth::user();
-    
+
     if ($user->role === 'admin') {
         return redirect()->route('admin.dashboard');
-    } elseif ($user->role === 'alumni') {
-        return redirect()->route('alumni.dashboard');
-    } else {
-        return redirect()->route('student.dashboard');
     }
+    // student বা alumni — দুজনের ফিডই "/" তে; PostController@index role দেখে ঠিক view দেবে
+    return app(PostController::class)->index();
+})->middleware(['auth', 'verified'])->name('home');
+
+// পুরনো /dashboard রাউট — "/" তে redirect (backward compatibility)
+Route::get('/dashboard', function () {
+    return redirect()->route('home');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 // Group for Admin Protected Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    
+
     // মূল অ্যাডমিন ড্যাশবোর্ড ভিউ
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    
+
     // Chart.js এর জন্য ডাইনামিক ডাটা API
     Route::get('/dashboard/analytics-data', [AdminDashboardController::class, 'getAnalyticsData'])->name('dashboard.analytics');
 
@@ -57,11 +59,11 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->group(function (
 // Group for Alumni Protected Routes
 Route::middleware(['auth', 'role:alumni'])->prefix('alumni')->group(function () {
     // অ্যালামনাইদের জন্যও একই ইউনিফাইড নিউজফিড কন্ট্রোলার কাজ করবে
-    Route::get('/dashboard', [PostController::class, 'index'])->name('alumni.dashboard');  
+    Route::get('/dashboard', [PostController::class, 'index'])->name('alumni.dashboard');
 });
 
 
-// কোনো মিডলওয়্যার বা প্রিফিক্স গ্রুপের বাইরে একদম নিচে স্বাধীনভাবে দিন
+// কোনো মিডলওয়্যার বা প্রিফিক্স গ্রুপের বাইরে একদম নিচে স্বাধীনভাবে দিন
 Route::post('/admin/manage-authority', [App\Http\Controllers\Admin\AdminDashboardController::class, 'manageAuthority'])->name('admin.manage.authority')->middleware('auth');
 
 require __DIR__.'/auth.php';
@@ -76,7 +78,7 @@ Route::middleware('auth')->group(function () {
 
 
 Route::middleware(['auth'])->group(function () {
-    // আগের অন্যান্য রাউটগুলোর সাথে নিচে এই দুটি বসিয়ে দিন
+    // আগের অন্যান্য রাউটগুলোর সাথে নিচে এই দুটি বসিয়ে দিন
     Route::post('/posts/{id}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/posts/{id}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/posts/{id}/share', [PostController::class, 'share'])
@@ -96,7 +98,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     // Like Route
     Route::post('/posts/{post}/like', [App\Http\Controllers\LikeController::class, 'toggle'])->name('posts.like');
-    
+
     // Comment Routes
     Route::post('/posts/{post}/comments', [App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
     Route::put('/comments/{comment}', [App\Http\Controllers\CommentController::class, 'update'])->name('comments.update');

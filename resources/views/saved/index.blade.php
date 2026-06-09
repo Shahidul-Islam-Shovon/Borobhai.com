@@ -32,10 +32,10 @@
 <nav class="navbar navbar-expand-md sticky-top">
     <div class="container-fluid">
         <div class="d-flex align-items-center gap-2">
-            <a style="color:black;" class="navbar-brand m-0" href="{{ route('student.dashboard') }}">Borobhai.com</a>
+            <a style="color:black;" class="navbar-brand m-0" href="{{ route('home') }}">Borobhai.com</a>
         </div>
         <div class="d-flex align-items-center gap-2 ms-auto">
-            <a href="{{ route('student.dashboard') }}" class="nav-icon-btn"><i class="bi bi-house-door-fill"></i></a>
+            <a href="{{ route('home') }}" class="nav-icon-btn"><i class="bi bi-house-door-fill"></i></a>
         </div>
     </div>
 </nav>
@@ -77,7 +77,7 @@
             $savedAt = $post->pivot->created_at ?? null;
         @endphp
 
-        <a href="{{ route('student.dashboard') }}#postCard-{{ $post->id }}" class="saved-card p-3 mb-3">
+        <a href="{{ route('home') }}#postCard-{{ $post->id }}" class="saved-card p-3 mb-3">
             <div class="d-flex gap-3 align-items-center">
 
                 {{-- Thumbnail --}}

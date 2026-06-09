@@ -78,7 +78,7 @@ public function authenticate(): void
     }
 
     // ৩. ইউজার যদি একটিভ থাকে, তবেই কেবল ব্রিজের ডিফল্ট লগইন সাকসেস এটেম্পট রান হবে
-    if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+    if (! Auth::attempt($this->only('email', 'password'), true)) {
         RateLimiter::hit($this->throttleKey());
 
         throw ValidationException::withMessages([
