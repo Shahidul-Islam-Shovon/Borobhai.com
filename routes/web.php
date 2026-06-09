@@ -84,7 +84,13 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['auth'])->group(function () {
     // Infinite scroll feed loader
     Route::get('/feed/load', [PostController::class, 'loadMore'])->name('feed.load');
-});
+    });
+     // পোস্ট সেভ/আনসেভ টগল
+    Route::post('/posts/{post}/save', [App\Http\Controllers\SavedPostController::class, 'toggle'])->name('posts.save');
+
+    // Saved পেজ
+    Route::get('/saved', [App\Http\Controllers\SavedPostController::class, 'index'])->name('saved.index');
+
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -102,3 +108,18 @@ Route::middleware(['auth'])->group(function () {
 
 });
 
+
+// ভিডিও streaming (Range request সাপোর্ট সহ)
+Route::get('/stream/video/{path}', function ($path) {
+    $path = str_replace('..', '', $path); // নিরাপত্তা
+    $fullPath = storage_path('app/public/' . $path);
+
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+
+    return response()->file($fullPath, [
+        'Content-Type'  => 'video/mp4',
+        'Accept-Ranges' => 'bytes',
+    ]);
+})->where('path', '.*')->name('stream.video');

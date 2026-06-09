@@ -52,4 +52,17 @@ class Post extends Model
     {
         return $this->likes()->where('user_id', auth()->id())->exists();
     }
+
+    // এই পোস্ট যারা সেভ করেছে
+    public function savedByUsers()
+    {
+        return $this->belongsToMany(User::class, 'saved_posts')->withTimestamps();
+    }
+
+    // বর্তমান ইউজার এই পোস্ট সেভ করেছে কিনা (হেল্পার)
+    public function isSavedByCurrentUser()
+    {
+        if (!auth()->check()) return false;
+        return $this->savedByUsers()->where('user_id', auth()->id())->exists();
+    }
 }

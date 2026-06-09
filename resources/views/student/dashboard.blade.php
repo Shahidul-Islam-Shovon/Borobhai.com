@@ -40,6 +40,144 @@
         /* Lightbox always on top */
         #imageLightboxModal { z-index: 1090 !important; }
         .lightbox-backdrop { z-index: 1085 !important; }
+     
+        /* ==========================================
+   BOROBHAI PREMIUM FEED STYLES (reusable)
+   ========================================== */
+
+:root {
+    --bb-primary: #4f46e5;
+    --bb-primary-dark: #4338ca;
+    --bb-primary-soft: #eef2ff;
+    --bb-ink: #1e1f24;
+    --bb-muted: #6b7280;
+    --bb-line: #eceef1;
+    --bb-bg: #f3f4f8;
+    --bb-card: #ffffff;
+    --bb-radius: 16px;
+    --bb-shadow: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
+    --bb-shadow-hover: 0 8px 28px rgba(79,70,229,.10), 0 2px 6px rgba(16,24,40,.06);
+}
+
+/* ===== POST CARD ===== */
+.bb-post-card {
+    background: var(--bb-card);
+    border-radius: var(--bb-radius);
+    box-shadow: var(--bb-shadow);
+    margin-bottom: 18px;
+    overflow: hidden;
+    transition: box-shadow .25s ease;
+}
+.bb-post-card:hover { box-shadow: var(--bb-shadow-hover); }
+
+/* ===== HEADER ===== */
+.bb-post-head { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 8px; }
+.bb-head-left { display:flex; align-items:center; gap:10px; }
+.bb-avatar {
+    width:42px; height:42px; border-radius:50%;
+    background: linear-gradient(135deg, var(--bb-primary), #7c73f0);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:16px; flex-shrink:0;
+    box-shadow: 0 2px 6px rgba(79,70,229,.25);
+}
+.bb-avatar-sm { width:30px; height:30px; font-size:12px; box-shadow:none; }
+.bb-head-meta { line-height:1.25; }
+.bb-author { margin:0; font-weight:700; font-size:14.5px; color:var(--bb-ink); letter-spacing:-.2px; }
+.bb-time { font-size:11.5px; color:var(--bb-muted); display:flex; align-items:center; gap:4px; }
+.bb-time i { font-size:10px; }
+.bb-more-btn {
+    border:none; background:transparent; color:var(--bb-muted);
+    width:34px; height:34px; border-radius:50%; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:background .15s ease;
+}
+.bb-more-btn:hover { background:var(--bb-bg); color:var(--bb-ink); }
+
+/* ===== CAPTION ===== */
+.bb-caption { padding:2px 16px 12px; font-size:14.5px; line-height:1.55; color:var(--bb-ink); word-break:break-word; }
+.bb-color-caption {
+    margin:4px 16px 12px; border-radius:12px; min-height:200px;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    color:#fff; font-weight:700; font-size:22px; padding:24px; word-break:break-word;
+}
+.bb-color-caption-sm { min-height:120px; font-size:16px; margin:8px 14px; }
+
+/* ===== MEDIA ===== */
+.bb-media-zone { background:#000; overflow:hidden; line-height:0; }
+
+/* Single image/video — natural ratio, capped height */
+.bb-media-single { position:relative; display:flex; align-items:center; justify-content:center; background:#000; width:100%; }
+.bb-single-img { width:100%; max-height:560px; object-fit:contain; display:block; cursor:pointer; }
+
+.bb-video-wrap { position:relative; width:100%; display:flex; justify-content:center; background:#000; }
+.bb-inline-video { width:100%; max-height:560px; object-fit:contain; display:block; background:#000; }
+.bb-expand-btn {
+    position:absolute; top:10px; right:10px; z-index:5;
+    width:34px; height:34px; border-radius:8px; border:none;
+    background:rgba(0,0,0,.55); color:#fff; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity .2s ease; font-size:14px;
+}
+.bb-video-wrap:hover .bb-expand-btn { opacity:1; }
+
+/* Multi-media grids — FIXED heights, object-fit cover (no black gaps) */
+.bb-grid { display:flex; gap:3px; width:100%; }
+.bb-grid-2 { height:300px; }
+.bb-grid-3 { height:340px; }
+.bb-grid-3-side { display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
+.bb-grid-4 { flex-wrap:wrap; height:480px; }
+.bb-grid-4 .bb-tile { width:calc(50% - 1.5px); height:calc(50% - 1.5px); flex:none; }
+.bb-tile { position:relative; flex:1; min-width:0; overflow:hidden; background:#000; }
+.bb-tile-big { flex:2; }
+.bb-tile-media { width:100%; height:100%; object-fit:cover; cursor:pointer; display:block; }
+
+.bb-play-badge {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:54px; height:54px; border-radius:50%; background:rgba(0,0,0,.55);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    color:#fff; font-size:1.8rem; transition:transform .15s ease, background .15s ease;
+}
+.bb-play-badge:hover { transform:translate(-50%,-50%) scale(1.08); background:rgba(0,0,0,.7); }
+.bb-play-sm { width:40px; height:40px; font-size:1.2rem; }
+.bb-more-overlay {
+    position:absolute; inset:0; background:rgba(0,0,0,.55); color:#fff; font-weight:700;
+    display:flex; align-items:center; justify-content:center; font-size:2rem; cursor:pointer; line-height:1;
+}
+
+/* ===== SHARED POST ===== */
+.bb-shared { margin:0 16px 12px; border:1px solid var(--bb-line); border-radius:12px; overflow:hidden; }
+.bb-shared-head { display:flex; align-items:center; gap:8px; padding:12px 14px 6px; }
+
+/* ===== STATS ===== */
+.bb-stats { display:flex; align-items:center; justify-content:space-between; padding:10px 18px 8px; font-size:13px; color:var(--bb-muted); }
+.bb-like-stat { display:flex; align-items:center; gap:6px; }
+.bb-like-bubble {
+    width:20px; height:20px; border-radius:50%; background:var(--bb-primary);
+    color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:10px;
+}
+.bb-stat-link { cursor:pointer; transition:color .15s ease; }
+.bb-stat-link:hover { color:var(--bb-primary); text-decoration:underline; }
+
+/* ===== ACTION BUTTONS ===== */
+.bb-actions { display:flex; padding:4px 8px; border-top:1px solid var(--bb-line); }
+.bb-action-btn {
+    flex:1; border:none; background:transparent; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    padding:9px 4px; border-radius:8px; margin:4px 2px;
+    color:var(--bb-muted); font-weight:600; font-size:13.5px; transition:background .15s ease, color .15s ease;
+}
+.bb-action-btn i { font-size:17px; }
+.bb-action-btn:hover { background:var(--bb-bg); }
+.bb-action-btn.active-like { color:var(--bb-primary); }
+.bb-action-btn.active-save { color:#f59e0b; }
+
+@media (max-width:576px) {
+    .bb-action-btn span { display:none; }
+    .bb-action-btn i { font-size:19px; }
+    .bb-grid-2, .bb-grid-3 { height:220px; }
+    .bb-grid-4 { height:360px; }
+}
+
+
     </style>
 </head>
 <body>
@@ -86,7 +224,9 @@
             <div class="d-flex flex-column gap-1">
                 <a href="#" class="sidebar-link active"><i class="bi bi-house-door-fill text-primary"></i><span>Home</span></a>
                 <a href="#" class="sidebar-link"><i class="bi bi-people-fill text-info"></i><span>Friends</span></a>
-                <a href="#" class="sidebar-link"><i class="bi bi-bookmark-heart-fill text-warning"></i><span>Saved</span></a>
+
+                <a href="{{ route('saved.index') }}" class="sidebar-link"><i class="bi bi-bookmark-heart-fill text-warning"></i><span>Saved</span></a>
+
             </div>
         </div>
 
@@ -414,6 +554,34 @@ document.addEventListener("DOMContentLoaded", function () {
      if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
     }
+    // Saved পেজ থেকে এসে নির্দিষ্ট পোস্টে স্ক্রল + হাইলাইট
+    // Saved পেজ থেকে এসে নির্দিষ্ট পোস্টে স্ক্রল + হাইলাইট
+    if (window.location.hash && window.location.hash.startsWith('#postCard-')) {
+        const targetId = window.location.hash.substring(1);
+
+        // পোস্ট খুঁজে স্ক্রল + হাইলাইট করার ফাংশন
+        const tryHighlight = (attempt = 0) => {
+            const target = document.getElementById(targetId);
+
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // হাইলাইট (bb-post-card এর radius মাথায় রেখে)
+                target.style.transition = 'box-shadow .35s ease';
+                target.style.boxShadow = '0 0 0 3px #4f46e5';
+                setTimeout(() => { target.style.boxShadow = ''; }, 2500);
+                return; // পেয়ে গেছি, থামো
+            }
+
+            // পোস্ট এখনো লোড হয়নি → আরও পোস্ট লোড করে আবার চেষ্টা করো
+            if (attempt < 15) {
+                if (typeof loadMorePosts === 'function') loadMorePosts();
+                setTimeout(() => tryHighlight(attempt + 1), 600);
+            }
+        };
+
+        // পেজ পুরো লোড হওয়ার পর শুরু করো
+        setTimeout(() => tryHighlight(0), 500);
+    }
     if (sessionStorage.getItem('scrollToTop')) {
         sessionStorage.removeItem('scrollToTop');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -454,6 +622,25 @@ document.addEventListener("DOMContentLoaded", function () {
             if (lastEditSelectedBg && (!bgInp || !bgInp.value)) { selectEditPostBg(lastEditSelectedBg); }
         }
     });
+
+    // ফিডের সব inline ভিডিওর প্রথম ফ্রেম থাম্বনেইল হিসেবে দেখানো
+    function primeVideoThumbnails(scope = document) {
+        scope.querySelectorAll('video.bb-inline-video, video.bb-tile-media').forEach(v => {
+            if (v.dataset.primed) return;        // একবারই
+            v.dataset.primed = '1';
+            v.preload = 'metadata';
+            // metadata লোড হলে সামান্য এগিয়ে দাও → প্রথম ফ্রেম রেন্ডার হবে
+            v.addEventListener('loadedmetadata', () => {
+                try { if (v.currentTime === 0) v.currentTime = 0.1; } catch(e){}
+            }, { once: true });
+        });
+    }
+
+    // প্রথম লোডে
+    primeVideoThumbnails();
+
+    // infinite scroll এ নতুন পোস্ট এলে আবার চালাও
+    window.bbPrimeVideos = primeVideoThumbnails;
 });
 
 // ==========================================
@@ -710,6 +897,53 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
     };
     xhr.send(fd);
 });
+
+
+// ==========================================
+// SAVE / UNSAVE (Facebook-style toggle)
+// ==========================================
+function toggleSave(postId) {
+    const btn  = document.getElementById(`saveBtn-${postId}`);
+    const icon = document.getElementById(`saveIcon-${postId}`);
+    const text = document.getElementById(`saveText-${postId}`);
+
+    fetch(`/posts/${postId}/save`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        }
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) return;
+
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+        });
+
+        if (d.saved) {
+            // সেভ হলো → Unsave দেখাও
+            if (btn)  btn.className = 'btn btn-link btn-sm text-decoration-none text-warning fw-bold';
+            if (icon) icon.className = 'bi bi-bookmark-fill';
+            if (text) text.innerText = 'Unsave';
+            Toast.fire({ icon: 'success', title: d.message || 'Saved!' });
+        } else {
+            // আনসেভ হলো → Save দেখাও
+            if (btn)  btn.className = 'btn btn-link btn-sm text-decoration-none text-muted';
+            if (icon) icon.className = 'bi bi-bookmark';
+            if (text) text.innerText = 'Save';
+            Toast.fire({ icon: 'info', title: d.message || 'Removed from saved' });
+        }
+    })
+    .catch(() => {
+        Swal.fire({ icon: 'error', title: 'Something went wrong!' });
+    });
+}
 
 // ==========================================
 // LIKE
@@ -1012,10 +1246,14 @@ function loadMorePosts() {
     })
     .then(r => r.json())
     .then(data => {
+
         const container = document.getElementById('postsFeedContainer');
         if (container && data.html.trim()) {
             container.insertAdjacentHTML('beforeend', data.html);
+            // নতুন ভিডিওগুলোর থাম্বনেইল প্রাইম করো
+            if (window.bbPrimeVideos) window.bbPrimeVideos(container);
         }
+
         meta.dataset.nextPage = data.next_page;
         meta.dataset.hasMore  = data.has_more ? '1' : '0';
         if (loader) loader.classList.add('d-none');

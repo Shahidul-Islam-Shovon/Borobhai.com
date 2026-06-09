@@ -69,4 +69,11 @@ public function isSuperAdmin()
         return $this->hasMany(Post::class);
     }
 
+    public function savedPosts()
+    {
+        return $this->belongsToMany(Post::class, 'saved_posts')
+         ->withTimestamps()
+        ->orderByPivot('created_at', 'desc'); // সর্বশেষ সেভ আগে
+    }
+
 }
