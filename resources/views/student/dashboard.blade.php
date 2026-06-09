@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
     <title>Borobhai.com</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; }
@@ -177,6 +177,8 @@
     .bb-grid-2, .bb-grid-3 { height:220px; }
     .bb-grid-4 { height:360px; }
 }
+
+/* ===== ROLE BADGE (navbar) ===== */
 .bb-role-badge {
     display: inline-flex;
     align-items: center;
@@ -192,6 +194,98 @@
 .bb-role-badge i { font-size: 13px; }
 .bb-role-student { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
 .bb-role-alumni  { background: #fef3c7; color: #d97706; border-color: #fde68a; }
+
+/* ===== RIGHT SIDEBAR (reusable) ===== */
+.bb-side-card {
+    background: var(--bb-card);
+    border-radius: var(--bb-radius);
+    box-shadow: var(--bb-shadow);
+    overflow: hidden;
+}
+.bb-side-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px 8px;
+}
+.bb-side-title {
+    font-size: 14px; font-weight: 700; color: var(--bb-ink);
+    display: flex; align-items: center; gap: 7px; letter-spacing: -.2px;
+}
+.bb-side-link { font-size: 12px; color: var(--bb-primary); text-decoration: none; font-weight: 600; }
+.bb-side-link:hover { text-decoration: underline; }
+.bb-side-body { padding: 4px 10px 12px; }
+
+/* Job item */
+.bb-job-item {
+    display: flex; gap: 10px; padding: 8px 6px; border-radius: 10px;
+    cursor: pointer; transition: background .15s ease;
+}
+.bb-job-item:hover { background: var(--bb-bg); }
+.bb-job-logo {
+    width: 40px; height: 40px; border-radius: 9px; flex-shrink: 0;
+    background: var(--bb-primary-soft); color: var(--bb-primary);
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 17px;
+}
+.bb-job-info { min-width: 0; }
+.bb-job-title { font-size: 13.5px; font-weight: 700; color: var(--bb-ink); margin: 0 0 1px; }
+.bb-job-company { font-size: 12px; color: var(--bb-muted); margin: 0 0 3px; }
+.bb-job-tag {
+    font-size: 10.5px; color: #16a34a; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 3px;
+}
+.bb-job-tag i { font-size: 9px; }
+
+/* Active now */
+.bb-active-item {
+    display: flex; align-items: center; gap: 10px; padding: 6px;
+    border-radius: 10px; cursor: pointer; transition: background .15s ease;
+}
+.bb-active-item:hover { background: var(--bb-bg); }
+.bb-active-avatar {
+    position: relative; width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--bb-primary), #7c73f0);
+    color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;
+}
+.bb-active-avatar::after {
+    content: ''; position: absolute; bottom: 0; right: 0;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #22c55e; border: 2px solid #fff;
+}
+.bb-active-name { font-size: 13.5px; font-weight: 600; color: var(--bb-ink); }
+
+/* Suggested people */
+.bb-suggest-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 6px;
+    border-radius: 10px; transition: background .15s ease;
+}
+.bb-suggest-item:hover { background: var(--bb-bg); }
+.bb-suggest-avatar {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--bb-primary), #7c73f0);
+    color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;
+}
+.bb-suggest-info { flex-grow: 1; min-width: 0; }
+.bb-suggest-name { font-size: 13.5px; font-weight: 700; color: var(--bb-ink); margin: 0 0 1px; }
+.bb-suggest-role { font-size: 11.5px; color: var(--bb-muted); margin: 0; }
+.bb-connect-btn {
+    width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+    border: 1.5px solid var(--bb-primary); background: #fff; color: var(--bb-primary);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    font-size: 15px; transition: all .15s ease;
+}
+.bb-connect-btn:hover { background: var(--bb-primary); color: #fff; }
+.bb-right-sidebar {
+    position: sticky;
+    top: 70px;
+    max-height: calc(100vh - 85px);
+    overflow-y: auto;
+    padding-bottom: 10px;
+    /* স্ক্রলবার সরু ও সুন্দর */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+.bb-right-sidebar::-webkit-scrollbar { width: 6px; }
+.bb-right-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.bb-right-sidebar::-webkit-scrollbar-track { background: transparent; }
     </style>
 </head>
 <body>
@@ -206,7 +300,7 @@
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 ms-auto">
-             @php $role = Auth::user()->role; @endphp
+            @php $role = Auth::user()->role; @endphp
             <span class="bb-role-badge d-none d-sm-inline-flex {{ $role === 'alumni' ? 'bb-role-alumni' : 'bb-role-student' }}">
                 <i class="bi {{ $role === 'alumni' ? 'bi-mortarboard-fill' : 'bi-backpack-fill' }}"></i>
                 {{ ucfirst($role) }} Feed
@@ -307,9 +401,110 @@
             data-next-page="2"
             data-has-more="{{ $posts->hasMorePages() ? '1' : '0' }}"></div>
 
+        </div>{{-- /Feed column --}}
+
+        {{-- ==================== RIGHT SIDEBAR ==================== --}}
+        <div class="col-md-3 d-none d-md-block bb-right-sidebar">
+
+            {{-- Popular Jobs --}}
+            <div class="bb-side-card mb-3">
+                <div class="bb-side-head">
+                    <span class="bb-side-title"><i class="bi bi-briefcase-fill text-primary"></i> Popular Jobs</span>
+                    <a href="#" class="bb-side-link">See all</a>
+                </div>
+                <div class="bb-side-body" id="popularJobsZone">
+                    {{-- TODO: Backend — loop $popularJobs here --}}
+                    <div class="bb-job-item">
+                        <div class="bb-job-logo">L</div>
+                        <div class="bb-job-info">
+                            <h6 class="bb-job-title">Laravel Developer</h6>
+                            <p class="bb-job-company">Tech Soft BD · Dhaka</p>
+                            <span class="bb-job-tag"><i class="bi bi-broadcast"></i> Actively hiring</span>
+                        </div>
+                    </div>
+                    <div class="bb-job-item">
+                        <div class="bb-job-logo" style="background:#fef3c7;color:#d97706;">U</div>
+                        <div class="bb-job-info">
+                            <h6 class="bb-job-title">UI/UX Designer</h6>
+                            <p class="bb-job-company">Creative Labs · Remote</p>
+                            <span class="bb-job-tag"><i class="bi bi-broadcast"></i> Actively hiring</span>
+                        </div>
+                    </div>
+                    <div class="bb-job-item">
+                        <div class="bb-job-logo" style="background:#dcfce7;color:#16a34a;">S</div>
+                        <div class="bb-job-info">
+                            <h6 class="bb-job-title">Software Engineer</h6>
+                            <p class="bb-job-company">BrainStation · Sylhet</p>
+                            <span class="bb-job-tag"><i class="bi bi-broadcast"></i> Actively hiring</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            {{-- Active Now --}}
+            <div class="bb-side-card mb-3">
+                <div class="bb-side-head">
+                    <span class="bb-side-title"><i class="bi bi-circle-fill text-success" style="font-size:9px;"></i> Active Now</span>
+                </div>
+                <div class="bb-side-body" id="activeNowZone">
+                    {{-- TODO: Backend — loop $activeUsers here --}}
+                    <div class="bb-active-item">
+                        <div class="bb-active-avatar">A</div>
+                        <span class="bb-active-name">Ayesha Rahman</span>
+                    </div>
+                    <div class="bb-active-item">
+                        <div class="bb-active-avatar" style="background:linear-gradient(135deg,#f59e0b,#f97316);">R</div>
+                        <span class="bb-active-name">Rifat Hossain</span>
+                    </div>
+                    <div class="bb-active-item">
+                        <div class="bb-active-avatar" style="background:linear-gradient(135deg,#10b981,#059669);">N</div>
+                        <span class="bb-active-name">Nadia Islam</span>
+                    </div>
+                    <div class="bb-active-item">
+                        <div class="bb-active-avatar" style="background:linear-gradient(135deg,#ec4899,#be185d);">T</div>
+                        <span class="bb-active-name">Tanvir Ahmed</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Suggested People --}}
+            <div class="bb-side-card mb-3">
+                <div class="bb-side-head">
+                    <span class="bb-side-title"><i class="bi bi-person-plus-fill text-primary"></i> Suggested People</span>
+                </div>
+                <div class="bb-side-body" id="suggestedPeopleZone">
+                    {{-- TODO: Backend — loop $suggestedUsers here --}}
+                    <div class="bb-suggest-item">
+                        <div class="bb-suggest-avatar">M</div>
+                        <div class="bb-suggest-info">
+                            <h6 class="bb-suggest-name">Mahmudul Hasan</h6>
+                            <p class="bb-suggest-role">CSE · Batch 2019</p>
+                        </div>
+                        <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
+                    </div>
+                    <div class="bb-suggest-item">
+                        <div class="bb-suggest-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">F</div>
+                        <div class="bb-suggest-info">
+                            <h6 class="bb-suggest-name">Farhana Akter</h6>
+                            <p class="bb-suggest-role">EEE · Batch 2020</p>
+                        </div>
+                        <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
+                    </div>
+                    <div class="bb-suggest-item">
+                        <div class="bb-suggest-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">K</div>
+                        <div class="bb-suggest-info">
+                            <h6 class="bb-suggest-name">Kamrul Islam</h6>
+                            <p class="bb-suggest-role">BBA · Batch 2018</p>
+                        </div>
+                        <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+
+        </div>{{-- /Right sidebar --}}
+
+    </div>{{-- /row --}}
+</div>{{-- /container --}}
 
 {{-- ==================== MODALS ==================== --}}
 
