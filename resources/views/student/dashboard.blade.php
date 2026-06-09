@@ -273,19 +273,33 @@
     font-size: 15px; transition: all .15s ease;
 }
 .bb-connect-btn:hover { background: var(--bb-primary); color: #fff; }
+
+/* Right sidebar own scroll (so nothing gets cut off) */
 .bb-right-sidebar {
     position: sticky;
     top: 70px;
     max-height: calc(100vh - 85px);
     overflow-y: auto;
     padding-bottom: 10px;
-    /* স্ক্রলবার সরু ও সুন্দর */
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
 }
 .bb-right-sidebar::-webkit-scrollbar { width: 6px; }
 .bb-right-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 .bb-right-sidebar::-webkit-scrollbar-track { background: transparent; }
+
+/* Active Now — name + role stacked */
+.bb-active-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+/* Mini role badge (Alumni / Student) */
+.bb-mini-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 9.5px; font-weight: 700; letter-spacing: .2px;
+    padding: 1px 7px; border-radius: 12px; width: fit-content; text-transform: uppercase;
+}
+.bb-mini-badge i { font-size: 9px; }
+.bb-mini-alumni  { background: #fef3c7; color: #d97706; }
+.bb-mini-student { background: #eef2ff; color: #4f46e5; }
     </style>
 </head>
 <body>
@@ -450,19 +464,31 @@
                     {{-- TODO: Backend — loop $activeUsers here --}}
                     <div class="bb-active-item">
                         <div class="bb-active-avatar">A</div>
-                        <span class="bb-active-name">Ayesha Rahman</span>
+                        <div class="bb-active-meta">
+                            <span class="bb-active-name">Ayesha Rahman</span>
+                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
+                        </div>
                     </div>
                     <div class="bb-active-item">
                         <div class="bb-active-avatar" style="background:linear-gradient(135deg,#f59e0b,#f97316);">R</div>
-                        <span class="bb-active-name">Rifat Hossain</span>
+                        <div class="bb-active-meta">
+                            <span class="bb-active-name">Rifat Hossain</span>
+                            <span class="bb-mini-badge bb-mini-student"><i class="bi bi-backpack-fill"></i> Student</span>
+                        </div>
                     </div>
                     <div class="bb-active-item">
                         <div class="bb-active-avatar" style="background:linear-gradient(135deg,#10b981,#059669);">N</div>
-                        <span class="bb-active-name">Nadia Islam</span>
+                        <div class="bb-active-meta">
+                            <span class="bb-active-name">Nadia Islam</span>
+                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
+                        </div>
                     </div>
                     <div class="bb-active-item">
                         <div class="bb-active-avatar" style="background:linear-gradient(135deg,#ec4899,#be185d);">T</div>
-                        <span class="bb-active-name">Tanvir Ahmed</span>
+                        <div class="bb-active-meta">
+                            <span class="bb-active-name">Tanvir Ahmed</span>
+                            <span class="bb-mini-badge bb-mini-student"><i class="bi bi-backpack-fill"></i> Student</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -479,6 +505,7 @@
                         <div class="bb-suggest-info">
                             <h6 class="bb-suggest-name">Mahmudul Hasan</h6>
                             <p class="bb-suggest-role">CSE · Batch 2019</p>
+                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
                         </div>
                         <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
                     </div>
@@ -486,7 +513,8 @@
                         <div class="bb-suggest-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">F</div>
                         <div class="bb-suggest-info">
                             <h6 class="bb-suggest-name">Farhana Akter</h6>
-                            <p class="bb-suggest-role">EEE · Batch 2020</p>
+                            <p class="bb-suggest-role">EEE · Batch 2024</p>
+                            <span class="bb-mini-badge bb-mini-student"><i class="bi bi-backpack-fill"></i> Student</span>
                         </div>
                         <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
                     </div>
@@ -495,6 +523,7 @@
                         <div class="bb-suggest-info">
                             <h6 class="bb-suggest-name">Kamrul Islam</h6>
                             <p class="bb-suggest-role">BBA · Batch 2018</p>
+                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
                         </div>
                         <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
                     </div>
