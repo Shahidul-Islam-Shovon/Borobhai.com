@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -40,7 +41,7 @@
         /* Lightbox always on top */
         #imageLightboxModal { z-index: 1090 !important; }
         .lightbox-backdrop { z-index: 1085 !important; }
-     
+
         /* ==========================================
    BOROBHAI PREMIUM FEED STYLES (reusable)
    ========================================== */
@@ -176,8 +177,21 @@
     .bb-grid-2, .bb-grid-3 { height:220px; }
     .bb-grid-4 { height:360px; }
 }
-
-
+.bb-role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1.5px solid transparent;
+    transition: transform .15s ease;
+}
+.bb-role-badge i { font-size: 13px; }
+.bb-role-student { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
+.bb-role-alumni  { background: #fef3c7; color: #d97706; border-color: #fde68a; }
     </style>
 </head>
 <body>
@@ -185,13 +199,18 @@
 <nav class="navbar navbar-expand-md sticky-top">
     <div class="container-fluid">
         <div class="d-flex align-items-center gap-2">
-            <a style="color:black;" class="navbar-brand m-0" href="#">Borobhai.com</a>
+            <a style="color:black;" class="navbar-brand m-0" href="{{ route('home') }}">Borobhai.com</a>
             <div class="search-box d-none d-lg-flex">
                 <i class="bi bi-search text-muted"></i>
                 <input type="text" placeholder="Search In Borobhai">
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 ms-auto">
+             @php $role = Auth::user()->role; @endphp
+            <span class="bb-role-badge d-none d-sm-inline-flex {{ $role === 'alumni' ? 'bb-role-alumni' : 'bb-role-student' }}">
+                <i class="bi {{ $role === 'alumni' ? 'bi-mortarboard-fill' : 'bi-backpack-fill' }}"></i>
+                {{ ucfirst($role) }} Feed
+            </span>
             <a href="#" class="nav-icon-btn d-md-none"><i class="bi bi-search"></i></a>
             <a href="#" class="nav-icon-btn"><i class="bi bi-messenger"></i></a>
             <a href="#" class="nav-icon-btn"><i class="bi bi-bell-fill"></i></a>
@@ -222,7 +241,7 @@
         {{-- Sidebar --}}
         <div class="col-md-3 d-none d-md-block position-sticky" style="top:70px;height:fit-content;">
             <div class="d-flex flex-column gap-1">
-                <a href="#" class="sidebar-link active"><i class="bi bi-house-door-fill text-primary"></i><span>Home</span></a>
+                <a href="{{ route('home') }}" class="sidebar-link active"><i class="bi bi-house-door-fill text-primary"></i><span>Home</span></a>
                 <a href="#" class="sidebar-link"><i class="bi bi-people-fill text-info"></i><span>Friends</span></a>
 
                 <a href="{{ route('saved.index') }}" class="sidebar-link"><i class="bi bi-bookmark-heart-fill text-warning"></i><span>Saved</span></a>
@@ -555,31 +574,26 @@ document.addEventListener("DOMContentLoaded", function () {
         history.scrollRestoration = 'manual';
     }
     // Saved পেজ থেকে এসে নির্দিষ্ট পোস্টে স্ক্রল + হাইলাইট
-    // Saved পেজ থেকে এসে নির্দিষ্ট পোস্টে স্ক্রল + হাইলাইট
     if (window.location.hash && window.location.hash.startsWith('#postCard-')) {
         const targetId = window.location.hash.substring(1);
 
-        // পোস্ট খুঁজে স্ক্রল + হাইলাইট করার ফাংশন
         const tryHighlight = (attempt = 0) => {
             const target = document.getElementById(targetId);
 
             if (target) {
                 target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // হাইলাইট (bb-post-card এর radius মাথায় রেখে)
                 target.style.transition = 'box-shadow .35s ease';
                 target.style.boxShadow = '0 0 0 3px #4f46e5';
                 setTimeout(() => { target.style.boxShadow = ''; }, 2500);
-                return; // পেয়ে গেছি, থামো
+                return;
             }
 
-            // পোস্ট এখনো লোড হয়নি → আরও পোস্ট লোড করে আবার চেষ্টা করো
             if (attempt < 15) {
                 if (typeof loadMorePosts === 'function') loadMorePosts();
                 setTimeout(() => tryHighlight(attempt + 1), 600);
             }
         };
 
-        // পেজ পুরো লোড হওয়ার পর শুরু করো
         setTimeout(() => tryHighlight(0), 500);
     }
     if (sessionStorage.getItem('scrollToTop')) {
@@ -626,20 +640,15 @@ document.addEventListener("DOMContentLoaded", function () {
     // ফিডের সব inline ভিডিওর প্রথম ফ্রেম থাম্বনেইল হিসেবে দেখানো
     function primeVideoThumbnails(scope = document) {
         scope.querySelectorAll('video.bb-inline-video, video.bb-tile-media').forEach(v => {
-            if (v.dataset.primed) return;        // একবারই
+            if (v.dataset.primed) return;
             v.dataset.primed = '1';
             v.preload = 'metadata';
-            // metadata লোড হলে সামান্য এগিয়ে দাও → প্রথম ফ্রেম রেন্ডার হবে
             v.addEventListener('loadedmetadata', () => {
                 try { if (v.currentTime === 0) v.currentTime = 0.1; } catch(e){}
             }, { once: true });
         });
     }
-
-    // প্রথম লোডে
     primeVideoThumbnails();
-
-    // infinite scroll এ নতুন পোস্ট এলে আবার চালাও
     window.bbPrimeVideos = primeVideoThumbnails;
 });
 
@@ -927,14 +936,12 @@ function toggleSave(postId) {
         });
 
         if (d.saved) {
-            // সেভ হলো → Unsave দেখাও
-            if (btn)  btn.className = 'btn btn-link btn-sm text-decoration-none text-warning fw-bold';
+            if (btn)  btn.className = 'bb-action-btn active-save';
             if (icon) icon.className = 'bi bi-bookmark-fill';
-            if (text) text.innerText = 'Unsave';
+            if (text) text.innerText = 'Saved';
             Toast.fire({ icon: 'success', title: d.message || 'Saved!' });
         } else {
-            // আনসেভ হলো → Save দেখাও
-            if (btn)  btn.className = 'btn btn-link btn-sm text-decoration-none text-muted';
+            if (btn)  btn.className = 'bb-action-btn';
             if (icon) icon.className = 'bi bi-bookmark';
             if (text) text.innerText = 'Save';
             Toast.fire({ icon: 'info', title: d.message || 'Removed from saved' });
@@ -956,9 +963,9 @@ function toggleLike(postId) {
         if (!d.success) return;
         const btn  = document.getElementById(`likeBtn-${postId}`);
         const zone = document.getElementById(`like-zone-${postId}`);
-        btn.className = d.liked ? 'btn btn-link btn-sm text-decoration-none text-primary fw-bold' : 'btn btn-link btn-sm text-decoration-none text-muted';
-        btn.innerHTML = d.liked ? '<i class="bi bi-hand-thumbs-up-fill"></i> Like' : '<i class="bi bi-hand-thumbs-up"></i> Like';
-        if (zone) zone.innerHTML = d.like_count > 0 ? `<i class="bi bi-heart-fill text-danger"></i> <span>${d.like_count} Likes</span>` : '';
+        btn.className = d.liked ? 'bb-action-btn active-like' : 'bb-action-btn';
+        btn.innerHTML = d.liked ? '<i class="bi bi-hand-thumbs-up-fill"></i> <span>Like</span>' : '<i class="bi bi-hand-thumbs-up"></i> <span>Like</span>';
+        if (zone) zone.innerHTML = d.like_count > 0 ? `<span class="bb-like-bubble"><i class="bi bi-hand-thumbs-up-fill"></i></span> <span class="like-count-text">${d.like_count}</span>` : '';
     });
 }
 
@@ -1212,7 +1219,7 @@ document.getElementById('editPostForm')?.addEventListener('submit', function (e)
             let res = {};
             try { res = JSON.parse(xhr.responseText); } catch(e){}
             const oldCard = document.getElementById(`postCard-${id}`);
-            if (oldCard && res.html) { oldCard.outerHTML = res.html; }
+            if (oldCard && res.html) { oldCard.outerHTML = res.html; if (window.bbPrimeVideos) window.bbPrimeVideos(); }
             bootstrapEditModal?.hide();
             const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1500 });
             Toast.fire({ icon:'success', title:'Post updated!' });
@@ -1250,7 +1257,6 @@ function loadMorePosts() {
         const container = document.getElementById('postsFeedContainer');
         if (container && data.html.trim()) {
             container.insertAdjacentHTML('beforeend', data.html);
-            // নতুন ভিডিওগুলোর থাম্বনেইল প্রাইম করো
             if (window.bbPrimeVideos) window.bbPrimeVideos(container);
         }
 
@@ -1438,9 +1444,9 @@ document.getElementById('commentModalForm')?.addEventListener('submit', function
         document.getElementById('commentModalList')?.insertAdjacentHTML('afterbegin', html);
 
         const feedCount = document.getElementById(`comment-count-${postId}`);
-        if (feedCount && d.comment_count !== undefined) feedCount.innerText = `${d.comment_count} Comments`;
+        if (feedCount && d.comment_count !== undefined) feedCount.innerText = `${d.comment_count} comments`;
         const modalCount = document.getElementById('commentModalCount');
-        if (modalCount && d.comment_count !== undefined) modalCount.innerText = `${d.comment_count} Comments`;
+        if (modalCount && d.comment_count !== undefined) modalCount.innerText = `${d.comment_count} comments`;
     });
 });
 
@@ -1467,9 +1473,9 @@ function deleteComment(cid, postId) {
             if (!d.success) return;
             document.getElementById(`comment-container-${cid}`)?.remove();
             const feedCount = document.getElementById(`comment-count-${postId}`);
-            if (feedCount && d.comment_count !== undefined) feedCount.innerText = `${d.comment_count} Comments`;
+            if (feedCount && d.comment_count !== undefined) feedCount.innerText = `${d.comment_count} comments`;
             const modalCount = document.getElementById('commentModalCount');
-            if (modalCount && d.comment_count !== undefined) modalCount.innerText = `${d.comment_count} Comments`;
+            if (modalCount && d.comment_count !== undefined) modalCount.innerText = `${d.comment_count} comments`;
             if (commentEditState.commentId == cid) {
                 commentEditState = { editing: false, commentId: null };
                 const input = document.getElementById('commentModalInput');
