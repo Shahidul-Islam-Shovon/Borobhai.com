@@ -2,6 +2,7 @@
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProfileDetailController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -78,6 +79,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/{id}/tab/content', [ProfileController::class, 'tabContent'])->name('profile.tab.user'); // 🆕 অন্যের ট্যাব
     Route::post('/profile/update', [ProfileController::class, 'updateProfile'])->name('profile.update.info');  // AJAX তথ্য আপডেট
     Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.update.photo');    // AJAX ছবি আপডেট
+
+    // 🆕 Profile Details (Education / Experience / Certification)
+    Route::post('/profile/education', [ProfileDetailController::class, 'storeEducation'])->name('profile.education.store');
+    Route::delete('/profile/education/{id}', [ProfileDetailController::class, 'deleteEducation'])->name('profile.education.delete');
+
+    Route::post('/profile/experience', [ProfileDetailController::class, 'storeExperience'])->name('profile.experience.store');
+    Route::delete('/profile/experience/{id}', [ProfileDetailController::class, 'deleteExperience'])->name('profile.experience.delete');
+
+    Route::post('/profile/certification', [ProfileDetailController::class, 'storeCertification'])->name('profile.certification.store');
+    Route::delete('/profile/certification/{id}', [ProfileDetailController::class, 'deleteCertification'])->name('profile.certification.delete');
 
     // Breeze ডিফল্ট (অক্ষত)
     Route::get('/profile/edit/account', [ProfileController::class, 'edit'])->name('profile.edit');

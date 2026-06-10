@@ -109,10 +109,18 @@ class PostController extends Controller
 
         $post->save();
 
+        // নতুন পোস্টের সব relation লোড করো (post-card এর জন্য)
+        $post->load(['user', 'parentPost.user', 'likes', 'comments.user']);
+        $post->loadCount('comments');
+
+        // post-card HTML রেন্ডার করো
+        $html = view('partials.post-card', ['post' => $post])->render();
+
         return response()->json([
             'success' => true,
             'message' => 'Published successfully!',
-            'post'    => $post
+            'post'    => $post,
+            'html'    => $html,   // 🆕 reload ছাড়া ফিডে বসানোর জন্য
         ]);
     }
 
@@ -123,11 +131,16 @@ class PostController extends Controller
 
         $post = new Post();
         $post->user_id   = Auth::id();
-        $post->content   = $request->content ?? '';  // null এর বদলে খালি স্ট্রিং
+        $post->content   = $request->content ?? '';
         $post->parent_id = $actualParentId;
         $post->save();
 
-        return response()->json(['success' => true]);
+        // shared post এর post-card HTML (reload ছাড়া বসানোর জন্য)
+        $post->load(['user', 'parentPost.user', 'likes', 'comments.user']);
+        $post->loadCount('comments');
+        $html = view('partials.post-card', ['post' => $post])->render();
+
+        return response()->json(['success' => true, 'html' => $html]);
     }
 
     public function update(Request $request, $id)

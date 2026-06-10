@@ -24,7 +24,8 @@
         .sidebar-link.active { color: #1877f2; }
         .fb-post-card { background-color: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
         .create-post-box { background-color: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); padding: 1rem; }
-        .create-post-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: #65676b; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .create-post-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: #65676b; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow:hidden; flex-shrink:0; }
+        .cpa-img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
         .mock-input { background-color: #f0f2f5; border-radius: 20px; padding: .5rem 1rem; color: #65676b; cursor: pointer; flex-grow: 1; }
         .mock-input:hover { background-color: #e4e6eb; }
         .post-action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: .5rem; color: #65676b; text-decoration: none; font-weight: 600; font-size: .9rem; border-radius: 4px; }
@@ -82,8 +83,13 @@
     box-shadow: 0 2px 6px rgba(79,70,229,.25);
 }
 .bb-avatar-sm { width:30px; height:30px; font-size:12px; box-shadow:none; }
+.bb-avatar-img { width:100%; height:100%; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.bb-avatar { overflow:hidden; padding:0; }
+.bb-avatar:has(img) { background:none; }
 .bb-head-meta { line-height:1.25; }
 .bb-author { margin:0; font-weight:700; font-size:14.5px; color:var(--bb-ink); letter-spacing:-.2px; }
+.bb-author-link { text-decoration:none; display:inline-block; }
+.bb-author-link:hover { color:var(--bb-primary); text-decoration:underline; }
 .bb-time { font-size:11.5px; color:var(--bb-muted); display:flex; align-items:center; gap:4px; }
 .bb-time i { font-size:10px; }
 .bb-more-btn {
@@ -326,15 +332,8 @@
                 <button class="nav-icon-btn border-0" data-bs-toggle="dropdown">
                     <i class="bi bi-person-fill"></i>
                 </button>
-
                 <ul class="dropdown-menu dropdown-menu-end shadow">
                     <li><span class="dropdown-item-text fw-bold text-dark">{{ Auth::user()->name }}</span></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a href="{{ route('profile.show') }}" class="dropdown-item">
-                            <i class="bi bi-person-circle me-2"></i>View Profile
-                        </a>
-                    </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <form action="{{ route('logout') }}" method="POST">
@@ -345,7 +344,6 @@
                         </form>
                     </li>
                 </ul>
-
             </div>
         </div>
     </div>
@@ -371,7 +369,13 @@
             {{-- Create Post Box --}}
             <div class="create-post-box mb-3">
                 <div class="d-flex align-items-center gap-2 mb-3">
-                    <div class="create-post-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</div>
+                    <a href="{{ route('profile.show') }}" class="create-post-avatar" style="text-decoration:none;" title="Go to your profile">
+                        @if(Auth::user()->profile_picture)
+                            <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
+                        @else
+                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                        @endif
+                    </a>
                     <div class="mock-input" onclick="resetPostBg();" data-bs-toggle="modal" data-bs-target="#createPostModal">
                         What's on your mind, {{ explode(' ', Auth::user()->name)[0] }}?
                     </div>
@@ -557,7 +561,13 @@
                 @csrf
                 <div class="modal-body">
                     <div class="d-flex align-items-center gap-2 mb-3">
-                        <div class="create-post-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</div>
+                        <div class="create-post-avatar">
+                            @if(Auth::user()->profile_picture)
+                                <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
+                            @else
+                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                            @endif
+                        </div>
                         <div>
                             <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
                             <span class="badge bg-light text-muted border py-1 px-2" style="font-size:10px;">
@@ -617,7 +627,13 @@
                 <input type="hidden" id="edit_bg_color_input">
                 <div class="modal-body pb-1">
                     <div class="d-flex align-items-center gap-2 mb-3">
-                        <div class="create-post-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</div>
+                        <div class="create-post-avatar">
+                            @if(Auth::user()->profile_picture)
+                                <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
+                            @else
+                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                            @endif
+                        </div>
                         <div>
                             <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
                             <span class="badge bg-light text-muted border py-1 px-2" style="font-size:10px;">
@@ -734,9 +750,13 @@
                     </button>
                 </div>
                 <form id="commentModalForm" class="d-flex align-items-center gap-2 w-100">
-                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden"
                          style="width:34px;height:34px;font-size:13px;">
-                        {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                        @if(Auth::user()->profile_picture)
+                            <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" style="width:100%;height:100%;object-fit:cover;">
+                        @else
+                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                        @endif
                     </div>
                     <div class="input-group align-items-center bg-light rounded-pill px-3 py-1 w-100 border">
                         <input type="hidden" id="commentModalPostId">
@@ -1104,11 +1124,6 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
     const feed = document.getElementById('postsFeedContainer');
     if (feed) feed.insertAdjacentHTML('afterbegin', html);
 
-    const createModalEl = document.getElementById('createPostModal');
-    createModalEl.addEventListener('hidden.bs.modal', function () {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, { once: true });
-
     const fd = new FormData();
     fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
     fd.append('content', content);
@@ -1133,10 +1148,30 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
         if (xhr.status === 200 || xhr.status === 201) {
             const bar = document.getElementById(`bar-${pid}`);
             if (bar) { bar.style.width='100%'; bar.classList.replace('bg-primary','bg-success'); bar.classList.remove('progress-bar-animated'); }
+
+            let res = {};
+            try { res = JSON.parse(xhr.responseText); } catch(e){}
+
             setTimeout(() => {
-                sessionStorage.setItem('scrollToTop', '1');
-                window.location.reload();
-            }, 1000);
+                const optCard = document.getElementById(pid);
+                if (res.html) {
+                    // optimistic card কে আসল post-card দিয়ে রিপ্লেস (reload ছাড়া)
+                    if (optCard) {
+                        optCard.outerHTML = res.html;
+                    } else {
+                        const feedC = document.getElementById('postsFeedContainer');
+                        if (feedC) feedC.insertAdjacentHTML('afterbegin', res.html);
+                    }
+                    if (window.bbPrimeVideos) window.bbPrimeVideos();
+                } else {
+                    if (optCard) optCard.remove();
+                }
+                // empty state থাকলে সরাও
+                document.getElementById('emptyFeedState')?.remove();
+
+                const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1800, timerProgressBar:true });
+                Toast.fire({ icon:'success', title: res.message || 'Posted!' });
+            }, 600);
         } else {
             document.getElementById(pid)?.remove();
             Swal.fire({ icon:'error', title:'Post not published!', text:'There was an issue uploading the post.' });
@@ -1214,7 +1249,17 @@ function deletePost(id) {
     Swal.fire({title:'Are you sure?',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'}).then(r=>{
         if (!r.isConfirmed) return;
         fetch(`/posts/${id}`,{method:'DELETE',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content}})
-        .then(r=>r.json()).then(d=>{ if(d.success) window.location.reload(); });
+        .then(r=>r.json()).then(d=>{
+            if(!d.success) return;
+            const card = document.getElementById(`postCard-${id}`);
+            if (card) {
+                card.style.transition = 'opacity .3s ease';
+                card.style.opacity = '0';
+                setTimeout(() => card.remove(), 300);
+            }
+            const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1500 });
+            Toast.fire({ icon:'success', title:'Post deleted' });
+        });
     });
 }
 
@@ -1269,9 +1314,15 @@ document.getElementById('fbShareForm')?.addEventListener('submit', function (e) 
         if(d.success){
             bootstrapShareModal?.hide();
             Toast.fire({icon:'success',title:'Shared!',timer:1200});
-            sessionStorage.setItem('scrollToTop', '1');
-            window.scrollTo({ top: 0, behavior: 'auto' });
-            setTimeout(() => { window.location.reload(); }, 800);
+            if (d.html) {
+                const feedC = document.getElementById('postsFeedContainer');
+                if (feedC) {
+                    feedC.insertAdjacentHTML('afterbegin', d.html);
+                    if (window.bbPrimeVideos) window.bbPrimeVideos();
+                    document.getElementById('emptyFeedState')?.remove();
+                }
+            }
+            btn.disabled = false;
         }
         else { btn.disabled=false; Swal.fire({icon:'error',title:'Failed!',text:'There was an error sharing the post.'}); }
     }).catch(()=>{ btn.disabled=false; Swal.fire({icon:'error',title:'Network Error!'}); });
@@ -1663,7 +1714,7 @@ document.getElementById('commentModalForm')?.addEventListener('submit', function
 
         const html = `
         <div class="d-flex gap-2 mb-3 align-items-start comment-row" id="comment-container-${d.comment_id}">
-            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:32px;height:32px;font-size:13px;">${d.user_initial}</div>
+            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:32px;height:32px;font-size:13px;">${d.user_picture ? `<img src="${d.user_picture}" style="width:100%;height:100%;object-fit:cover;">` : d.user_initial}</div>
             <div class="flex-grow-1">
                 <div class="d-flex align-items-start justify-content-between">
                     <div class="bg-light px-3 py-2 rounded-4 d-inline-block" style="max-width:100%;">

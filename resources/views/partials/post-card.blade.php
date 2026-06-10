@@ -7,11 +7,15 @@
     {{-- Post Header --}}
     <div class="bb-post-head">
         <div class="bb-head-left">
-            <div class="bb-avatar author-avatar-zone">
-                {{ strtoupper(substr($post->user->name ?? 'U', 0, 1)) }}
-            </div>
+            <a href="{{ $post->user_id === Auth::id() ? route('profile.show') : route('profile.view', $post->user_id) }}" class="bb-avatar author-avatar-zone" style="text-decoration:none;" title="View profile">
+                @if($post->user->profile_picture)
+                    <img src="{{ asset('storage/'.$post->user->profile_picture) }}" alt="{{ $post->user->name }}" class="bb-avatar-img">
+                @else
+                    {{ strtoupper(substr($post->user->name ?? 'U', 0, 1)) }}
+                @endif
+            </a>
             <div class="bb-head-meta">
-                <h6 class="bb-author author-name-zone">{{ $post->user->name }}</h6>
+                <a href="{{ $post->user_id === Auth::id() ? route('profile.show') : route('profile.view', $post->user_id) }}" class="bb-author author-name-zone bb-author-link">{{ $post->user->name }}</a>
                 <span class="bb-time"><i class="bi bi-globe-americas"></i> {{ $post->updated_at->diffForHumans() }}</span>
             </div>
         </div>
@@ -211,7 +215,11 @@
         <div class="bb-shared">
             <div class="bb-shared-head">
                 <div class="bb-avatar bb-avatar-sm">
-                    {{ strtoupper(substr($post->parentPost->user->name ?? 'U', 0, 1)) }}
+                    @if($post->parentPost->user->profile_picture)
+                        <img src="{{ asset('storage/'.$post->parentPost->user->profile_picture) }}" alt="{{ $post->parentPost->user->name }}" class="bb-avatar-img">
+                    @else
+                        {{ strtoupper(substr($post->parentPost->user->name ?? 'U', 0, 1)) }}
+                    @endif
                 </div>
                 <div>
                     <h6 class="bb-author" style="font-size:13px;">{{ $post->parentPost->user->name }}</h6>

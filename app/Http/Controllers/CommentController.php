@@ -23,9 +23,9 @@ class CommentController extends Controller
             'user_name' => auth()->user()->name,
             'content' => e($comment->content),
             'comment_count' => $post->comments()->count(),
-            'created_at'    => $comment->created_at->diffForHumans(),  // নতুন
-            'user_initial'  => strtoupper(substr($comment->user->name, 0, 1)),  // নতুন
-
+            'created_at'    => $comment->created_at->diffForHumans(),
+            'user_initial'  => strtoupper(substr($comment->user->name, 0, 1)),
+            'user_picture'  => auth()->user()->profile_picture ? asset('storage/'.auth()->user()->profile_picture) : null,
         ]);
     }
 
@@ -33,7 +33,6 @@ class CommentController extends Controller
     {
         $offset = (int) $request->query('offset', 0);
 
-        // সর্বশেষ থেকে পুরনোর দিকে, ১০টা করে
         $comments = \App\Models\Comment::where('post_id', $postId)
                         ->with('user')
                         ->latest()
@@ -68,8 +67,8 @@ class CommentController extends Controller
 
         return response()->json([
             'success' => true,
-            'content' => e($comment->content),         // নতুন — নিরাপদ edit display
-            'updated_at' => $comment->updated_at->diffForHumans(),  // নতুন           
+            'content' => e($comment->content),
+            'updated_at' => $comment->updated_at->diffForHumans(),
         ]);
     }
 

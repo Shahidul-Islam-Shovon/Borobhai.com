@@ -19,7 +19,10 @@ class ProfileController extends Controller
     // ==========================================
     public function show($id = null)
     {
-        $user = $id ? User::findOrFail($id) : Auth::user();
+        $user = $id
+            ? User::with(['educations', 'experiences', 'certifications', 'latestEducation', 'currentJob'])->findOrFail($id)
+            : User::with(['educations', 'experiences', 'certifications', 'latestEducation', 'currentJob'])->find(Auth::id());
+
         $isOwner = Auth::id() === $user->id;
         $postCount = Post::where('user_id', $user->id)->count();
 
@@ -64,13 +67,16 @@ class ProfileController extends Controller
         // ----- PHOTOS & VIDEOS ট্যাব -----
         if ($tab === 'media') {
             $media = [];
+            $seen  = [];   // ডুপ্লিকেট এড়াতে URL ট্র্যাক
 
             // প্রোফাইল পিকচার + কভার ফটো (থাকলে আগে দেখাও)
             if (!empty($user->cover_photo)) {
-                $media[] = ['type' => 'image', 'url' => asset('storage/' . str_replace('//', '/', $user->cover_photo))];
+                $url = asset('storage/' . str_replace('//', '/', $user->cover_photo));
+                if (!isset($seen[$url])) { $seen[$url] = true; $media[] = ['type' => 'image', 'url' => $url]; }
             }
             if (!empty($user->profile_picture)) {
-                $media[] = ['type' => 'image', 'url' => asset('storage/' . str_replace('//', '/', $user->profile_picture))];
+                $url = asset('storage/' . str_replace('//', '/', $user->profile_picture));
+                if (!isset($seen[$url])) { $seen[$url] = true; $media[] = ['type' => 'image', 'url' => $url]; }
             }
 
             // সব পোস্টের মিডিয়া
@@ -80,9 +86,9 @@ class ProfileController extends Controller
                     ->get();
 
             foreach ($posts as $post) {
-                $this->collectMedia($post, $media);
+                $this->collectMedia($post, $media, $seen);
                 if ($post->parentPost) {
-                    $this->collectMedia($post->parentPost, $media);
+                    $this->collectMedia($post->parentPost, $media, $seen);
                 }
             }
 
@@ -99,7 +105,7 @@ class ProfileController extends Controller
     /**
      * একটি পোস্ট থেকে সব ছবি+ভিডিও সংগ্রহ করে $media array তে যোগ করো
      */
-    private function collectMedia($post, &$media)
+    private function collectMedia($post, &$media, &$seen = [])
     {
         // ছবি
         if (!empty($post->images)) {
@@ -107,10 +113,11 @@ class ProfileController extends Controller
             if (is_array($imgs)) {
                 foreach ($imgs as $img) {
                     $clean = str_replace('//', '/', $img);
-                    $media[] = [
-                        'type' => 'image',
-                        'url'  => asset('storage/' . $clean),
-                    ];
+                    $url = asset('storage/' . $clean);
+                    if (!isset($seen[$url])) {
+                        $seen[$url] = true;
+                        $media[] = ['type' => 'image', 'url' => $url];
+                    }
                 }
             }
         }
@@ -122,13 +129,21 @@ class ProfileController extends Controller
                 foreach ($decoded as $vid) {
                     $clean = str_replace('//', '/', trim($vid, '"[] '));
                     if (!empty($clean)) {
-                        $media[] = ['type' => 'video', 'url' => url('stream/video/' . $clean)];
+                        $url = url('stream/video/' . $clean);
+                        if (!isset($seen[$url])) {
+                            $seen[$url] = true;
+                            $media[] = ['type' => 'video', 'url' => $url];
+                        }
                     }
                 }
             } else {
                 $clean = str_replace('//', '/', trim($post->video, '"[] '));
                 if (!empty($clean)) {
-                    $media[] = ['type' => 'video', 'url' => url('stream/video/' . $clean)];
+                    $url = url('stream/video/' . $clean);
+                    if (!isset($seen[$url])) {
+                        $seen[$url] = true;
+                        $media[] = ['type' => 'video', 'url' => $url];
+                    }
                 }
             }
         }

@@ -7,9 +7,13 @@
 
 <div class="d-flex gap-2 mb-3 align-items-start comment-row" id="comment-container-{{ $comment->id }}">
     {{-- Avatar --}}
-    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden"
          style="width:32px;height:32px;font-size:13px;">
-        {{ strtoupper(substr($comment->user->name ?? 'U', 0, 1)) }}
+        @if($comment->user->profile_picture)
+            <img src="{{ asset('storage/'.$comment->user->profile_picture) }}" alt="{{ $comment->user->name }}" style="width:100%;height:100%;object-fit:cover;">
+        @else
+            {{ strtoupper(substr($comment->user->name ?? 'U', 0, 1)) }}
+        @endif
     </div>
 
     {{-- Bubble + meta --}}

@@ -90,4 +90,40 @@ public function isSuperAdmin()
         ->orderByPivot('created_at', 'desc'); // সর্বশেষ সেভ আগে
     }
 
+    // শিক্ষা ইতিহাস (latest আগে)
+    public function educations()
+    {
+        return $this->hasMany(Education::class)->orderByRaw('COALESCE(end_date, start_date) DESC');
+    }
+
+    // চাকরির অভিজ্ঞতা (running আগে, তারপর latest)
+    public function experiences()
+    {
+        return $this->hasMany(Experience::class)
+                    ->orderBy('is_current', 'desc')
+                    ->orderByRaw('COALESCE(end_date, start_date) DESC');
+    }
+
+    // সার্টিফিকেশন (latest আগে)
+    public function certifications()
+    {
+        return $this->hasMany(Certification::class)->orderBy('issue_date', 'desc');
+    }
+
+    // সর্বশেষ শিক্ষা (নামের নিচে দেখানোর জন্য)
+    public function latestEducation()
+    {
+        return $this->hasOne(Education::class)->latestOfMany();
+    }
+
+    
+    // is_current=true গুলোর মধ্যে latest (start_date বা id দিয়ে)
+    public function currentJob()
+    {
+        return $this->hasOne(Experience::class)
+                    ->where('is_current', true)
+                    ->orderByRaw('COALESCE(start_date, created_at) DESC')
+                    ->orderBy('id', 'desc');
+    }
+
 }

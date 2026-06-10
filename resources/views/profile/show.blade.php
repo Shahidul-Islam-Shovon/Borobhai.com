@@ -74,6 +74,40 @@
         .bb-name { font-size:28px; font-weight:800; letter-spacing:-.5px; margin:14px 0 2px; }
         .bb-headline { font-size:15px; color:var(--bb-muted); margin:0 0 10px; }
 
+        /* Profile detail sections (Education/Experience/Cert) */
+        .bb-headline-sub { font-size:13px; color:var(--bb-muted); margin:0 0 8px; display:flex; align-items:center; gap:5px; }
+        .bb-headline-sub i { font-size:13px; }
+        .bb-add-btn {
+            background:var(--bb-primary-soft); color:var(--bb-primary); border:none;
+            border-radius:9px; padding:7px 14px; font-size:13px; font-weight:600;
+            display:inline-flex; align-items:center; gap:5px; cursor:pointer; transition:all .15s;
+        }
+        .bb-add-btn:hover { background:var(--bb-primary); color:#fff; }
+        .bb-timeline-item {
+            display:flex; gap:14px; padding:14px 0; border-bottom:1px solid var(--bb-line); position:relative;
+        }
+        .bb-timeline-item:last-child { border-bottom:none; padding-bottom:0; }
+        .bb-timeline-item:first-child { padding-top:0; }
+        .bb-timeline-icon {
+            width:44px; height:44px; border-radius:11px; flex-shrink:0;
+            background:var(--bb-primary-soft); color:var(--bb-primary);
+            display:flex; align-items:center; justify-content:center; font-size:19px;
+        }
+        .bb-timeline-body { flex-grow:1; min-width:0; }
+        .bb-timeline-title { font-size:15px; font-weight:700; color:var(--bb-ink); margin:0 0 2px; }
+        .bb-timeline-sub { font-size:13.5px; font-weight:600; color:#374151; margin:0 0 2px; }
+        .bb-timeline-meta { font-size:12.5px; color:var(--bb-muted); margin:0; }
+        .bb-timeline-desc { font-size:13px; color:#4b5563; margin:6px 0 0; line-height:1.5; white-space:pre-line; }
+        .bb-cred-link { color:var(--bb-primary); text-decoration:none; font-weight:600; }
+        .bb-cred-link:hover { text-decoration:underline; }
+        .bb-timeline-actions { display:flex; gap:4px; flex-shrink:0; }
+        .bb-timeline-actions button {
+            width:32px; height:32px; border-radius:8px; border:none; background:transparent;
+            color:var(--bb-muted); cursor:pointer; font-size:14px; transition:all .15s;
+        }
+        .bb-timeline-actions button:hover { background:var(--bb-bg); color:var(--bb-ink); }
+        .bb-timeline-actions button.text-danger:hover { background:#fef2f2; color:#ef4444 !important; }
+
         .bb-role-pill {
             display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700;
             padding:5px 13px; border-radius:20px; letter-spacing:.3px; text-transform:uppercase;
@@ -170,7 +204,8 @@
         .sidebar-link.active { color: #1877f2; }
         .fb-post-card { background-color: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
         .create-post-box { background-color: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); padding: 1rem; }
-        .create-post-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: #65676b; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .create-post-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: #65676b; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow:hidden; flex-shrink:0; }
+        .cpa-img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
         .mock-input { background-color: #f0f2f5; border-radius: 20px; padding: .5rem 1rem; color: #65676b; cursor: pointer; flex-grow: 1; }
         .mock-input:hover { background-color: #e4e6eb; }
         .post-action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: .5rem; color: #65676b; text-decoration: none; font-weight: 600; font-size: .9rem; border-radius: 4px; }
@@ -215,8 +250,12 @@
     box-shadow: 0 2px 6px rgba(79,70,229,.25);
 }
 .bb-avatar-sm { width:30px; height:30px; font-size:12px; box-shadow:none; }
+.bb-avatar-img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+.bb-avatar { overflow:hidden; }
 .bb-head-meta { line-height:1.25; }
 .bb-author { margin:0; font-weight:700; font-size:14.5px; color:var(--bb-ink); letter-spacing:-.2px; }
+.bb-author-link { text-decoration:none; display:inline-block; }
+.bb-author-link:hover { color:var(--bb-primary); text-decoration:underline; }
 .bb-time { font-size:11.5px; color:var(--bb-muted); display:flex; align-items:center; gap:4px; }
 .bb-time i { font-size:10px; }
 .bb-more-btn {
@@ -423,15 +462,25 @@
                     @endif
                 </div>
                 <div class="pb-2">
-                    <span class="bb-role-pill {{ $isAlumni ? 'bb-role-alumni' : 'bb-role-student' }}">
-                        <i class="bi {{ $isAlumni ? 'bi-mortarboard-fill' : 'bi-backpack-fill' }}"></i>
-                        {{ $isAlumni ? 'Alumni · Senior' : 'Student' }}
-                    </span>
                     <h1 class="bb-name" id="displayName">{{ $user->name }}</h1>
+                    @php
+                        $latestEdu = $user->latestEducation;
+                        $curJob = $user->currentJob;
+                    @endphp
                     <p class="bb-headline">
-                        {{ $user->department ?? 'Department not set' }}
-                        @if($user->session) · Session {{ $user->session }} @endif
+                        @if($curJob)
+                            <span class="fw-semibold" style="color:var(--bb-ink);">{{ $curJob->designation }}</span> @ {{ $curJob->company }}
+                        @else
+                            {{ $isAlumni ? 'Alumni' : 'Currently a Student' }}
+                        @endif
                     </p>
+                    @if($latestEdu || $user->department || $user->session)
+                        <p class="bb-headline-sub">
+                            <i class="bi bi-mortarboard"></i>
+                            {{ $latestEdu ? $latestEdu->institution : ($user->department ?? '') }}
+                            @if($user->session) · Session {{ $user->session }} @endif
+                        </p>
+                    @endif
                 </div>
             </div>
             @if($isOwner)
@@ -548,6 +597,112 @@
         @endif
     </div>
 
+    {{-- ===== EDUCATION ===== --}}
+    <div class="bb-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="bb-card-title m-0"><i class="bi bi-mortarboard"></i> Education</h2>
+            @if($isOwner)
+                <button class="bb-add-btn" onclick="openEduModal()"><i class="bi bi-plus-lg"></i> Add</button>
+            @endif
+        </div>
+        <div id="eduList">
+            @forelse($user->educations as $edu)
+                <div class="bb-timeline-item" id="edu-{{ $edu->id }}">
+                    <div class="bb-timeline-icon"><i class="bi bi-mortarboard-fill"></i></div>
+                    <div class="bb-timeline-body">
+                        <h6 class="bb-timeline-title">{{ $edu->degree }}{{ $edu->field ? ' · '.$edu->field : '' }}</h6>
+                        <p class="bb-timeline-sub">{{ $edu->institution }}</p>
+                        <p class="bb-timeline-meta">
+                            {{ $edu->start_date ? $edu->start_date->format('M Y') : '' }}
+                            @if($edu->start_date) - {{ $edu->is_current ? 'Present' : ($edu->end_date ? $edu->end_date->format('M Y') : '') }} @endif
+                            {{ $edu->result ? ' · Result: '.$edu->result : '' }}
+                        </p>
+                    </div>
+                    @if($isOwner)
+                        <div class="bb-timeline-actions">
+                            <button onclick="editEdu({{ $edu->id }})" title="Edit"><i class="bi bi-pencil"></i></button>
+                            <button onclick="deleteDetail('education', {{ $edu->id }}, 'edu-{{ $edu->id }}')" title="Delete" class="text-danger"><i class="bi bi-trash3"></i></button>
+                        </div>
+                    @endif
+                </div>
+            @empty
+                <p class="bb-empty" id="eduEmpty">{{ $isOwner ? 'Add your education history (SSC, HSC, Bachelor...).' : 'No education added yet.' }}</p>
+            @endforelse
+        </div>
+    </div>
+
+    {{-- ===== EXPERIENCE ===== --}}
+    <div class="bb-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="bb-card-title m-0"><i class="bi bi-briefcase"></i> Experience</h2>
+            @if($isOwner)
+                <button class="bb-add-btn" onclick="openExpModal()"><i class="bi bi-plus-lg"></i> Add</button>
+            @endif
+        </div>
+        <div id="expList">
+            @forelse($user->experiences as $exp)
+                <div class="bb-timeline-item" id="exp-{{ $exp->id }}">
+                    <div class="bb-timeline-icon"><i class="bi bi-briefcase-fill"></i></div>
+                    <div class="bb-timeline-body">
+                        <h6 class="bb-timeline-title">{{ $exp->designation }}</h6>
+                        <p class="bb-timeline-sub">{{ $exp->company }}{{ $exp->employment_type ? ' · '.$exp->employment_type : '' }}</p>
+                        <p class="bb-timeline-meta">
+                            {{ $exp->start_date ? $exp->start_date->format('M Y') : '' }}
+                            @if($exp->start_date) - {{ $exp->is_current ? 'Present' : ($exp->end_date ? $exp->end_date->format('M Y') : '') }} @endif
+                            {{ $exp->location ? ' · '.$exp->location : '' }}
+                        </p>
+                        @if($exp->description)
+                            <p class="bb-timeline-desc">{{ $exp->description }}</p>
+                        @endif
+                    </div>
+                    @if($isOwner)
+                        <div class="bb-timeline-actions">
+                            <button onclick="editExp({{ $exp->id }})" title="Edit"><i class="bi bi-pencil"></i></button>
+                            <button onclick="deleteDetail('experience', {{ $exp->id }}, 'exp-{{ $exp->id }}')" title="Delete" class="text-danger"><i class="bi bi-trash3"></i></button>
+                        </div>
+                    @endif
+                </div>
+            @empty
+                <p class="bb-empty" id="expEmpty">{{ $isOwner ? 'Add your work experience or internships.' : 'No experience added yet.' }}</p>
+            @endforelse
+        </div>
+    </div>
+
+    {{-- ===== CERTIFICATIONS ===== --}}
+    <div class="bb-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="bb-card-title m-0"><i class="bi bi-patch-check"></i> Certifications & Training</h2>
+            @if($isOwner)
+                <button class="bb-add-btn" onclick="openCertModal()"><i class="bi bi-plus-lg"></i> Add</button>
+            @endif
+        </div>
+        <div id="certList">
+            @forelse($user->certifications as $cert)
+                <div class="bb-timeline-item" id="cert-{{ $cert->id }}">
+                    <div class="bb-timeline-icon"><i class="bi bi-patch-check-fill"></i></div>
+                    <div class="bb-timeline-body">
+                        <h6 class="bb-timeline-title">{{ $cert->title }}</h6>
+                        <p class="bb-timeline-sub">{{ $cert->organization ?? '' }}</p>
+                        <p class="bb-timeline-meta">
+                            {{ $cert->issue_date ? $cert->issue_date->format('M Y') : '' }}
+                            @if($cert->credential_url)
+                                · <a href="{{ $cert->credential_url }}" target="_blank" class="bb-cred-link">Show credential</a>
+                            @endif
+                        </p>
+                    </div>
+                    @if($isOwner)
+                        <div class="bb-timeline-actions">
+                            <button onclick="editCert({{ $cert->id }})" title="Edit"><i class="bi bi-pencil"></i></button>
+                            <button onclick="deleteDetail('certification', {{ $cert->id }}, 'cert-{{ $cert->id }}')" title="Delete" class="text-danger"><i class="bi bi-trash3"></i></button>
+                        </div>
+                    @endif
+                </div>
+            @empty
+                <p class="bb-empty" id="certEmpty">{{ $isOwner ? 'Add certifications or trainings you have completed.' : 'No certifications added yet.' }}</p>
+            @endforelse
+        </div>
+    </div>
+
     </div>{{-- /TAB 1: Student Details --}}
 
     {{-- ===== TAB 2: ALL POSTS ===== --}}
@@ -558,7 +713,13 @@
             @if($isOwner)
             <div class="create-post-box mb-3">
                 <div class="d-flex align-items-center gap-2 mb-3">
-                    <div class="create-post-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</div>
+                    <a href="{{ route('profile.show') }}" class="create-post-avatar" style="text-decoration:none;" title="Your profile">
+                        @if(Auth::user()->profile_picture)
+                            <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
+                        @else
+                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                        @endif
+                    </a>
                     <div class="mock-input" onclick="resetPostBg();" data-bs-toggle="modal" data-bs-target="#createPostModal">
                         What's on your mind, {{ explode(' ', Auth::user()->name)[0] }}?
                     </div>
@@ -677,6 +838,168 @@
     </div>
 </div>
 
+{{-- ==================== DETAIL MODALS (owner only) ==================== --}}
+@if($isOwner)
+
+{{-- Education Modal --}}
+<div class="modal fade" id="eduModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="eduModalTitle">Add Education</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="eduForm">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="id" id="edu_id">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Degree / Level *</label>
+                            <input type="text" name="degree" id="edu_degree" class="bb-modal-input" placeholder="e.g. SSC, HSC, BSc" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Field / Group</label>
+                            <input type="text" name="field" id="edu_field" class="bb-modal-input" placeholder="e.g. Science, CSE">
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-modal-label">Institution *</label>
+                            <input type="text" name="institution" id="edu_institution" class="bb-modal-input" placeholder="e.g. Dhaka College" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Result / CGPA</label>
+                            <input type="text" name="result" id="edu_result" class="bb-modal-input" placeholder="e.g. 5.00 / 3.75">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_current" id="edu_is_current" value="1" onchange="toggleEduEnd()">
+                                <label class="form-check-label" for="edu_is_current" style="font-size:13px;">Currently studying here</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Start Date</label>
+                            <input type="date" name="start_date" id="edu_start_date" class="bb-modal-input">
+                        </div>
+                        <div class="col-md-6" id="edu_end_wrap">
+                            <label class="bb-modal-label">End Date</label>
+                            <input type="date" name="end_date" id="edu_end_date" class="bb-modal-input">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="bb-edit-profile-btn" id="eduSaveBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Experience Modal --}}
+<div class="modal fade" id="expModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="expModalTitle">Add Experience</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="expForm">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="id" id="exp_id">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Designation *</label>
+                            <input type="text" name="designation" id="exp_designation" class="bb-modal-input" placeholder="e.g. Software Engineer" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Company *</label>
+                            <input type="text" name="company" id="exp_company" class="bb-modal-input" placeholder="e.g. Tech Soft BD" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Employment Type</label>
+                            <select name="employment_type" id="exp_employment_type" class="bb-modal-input">
+                                <option value="">Select...</option>
+                                <option>Full-time</option>
+                                <option>Part-time</option>
+                                <option>Internship</option>
+                                <option>Freelance</option>
+                                <option>Contract</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Location</label>
+                            <input type="text" name="location" id="exp_location" class="bb-modal-input" placeholder="e.g. Dhaka / Remote">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_current" id="exp_is_current" onchange="toggleExpEnd()">
+                                <label class="form-check-label" for="exp_is_current" style="font-size:13px;">I currently work here</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Start Date</label>
+                            <input type="date" name="start_date" id="exp_start_date" class="bb-modal-input">
+                        </div>
+                        <div class="col-md-6" id="exp_end_wrap">
+                            <label class="bb-modal-label">End Date</label>
+                            <input type="date" name="end_date" id="exp_end_date" class="bb-modal-input">
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-modal-label">Description</label>
+                            <textarea name="description" id="exp_description" class="bb-modal-input" rows="3" placeholder="What did you do there?"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="bb-edit-profile-btn" id="expSaveBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Certification Modal --}}
+<div class="modal fade" id="certModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="certModalTitle">Add Certification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="certForm">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="id" id="cert_id">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="bb-modal-label">Title *</label>
+                            <input type="text" name="title" id="cert_title" class="bb-modal-input" placeholder="e.g. Laravel Certified Developer" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Issuing Organization</label>
+                            <input type="text" name="organization" id="cert_organization" class="bb-modal-input" placeholder="e.g. Udemy">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Issue Date</label>
+                            <input type="date" name="issue_date" id="cert_issue_date" class="bb-modal-input">
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-modal-label">Credential URL</label>
+                            <input type="url" name="credential_url" id="cert_credential_url" class="bb-modal-input" placeholder="https://...">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="bb-edit-profile-btn" id="certSaveBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@endif
+
+
 {{-- ==================== CROP MODAL ==================== --}}
 <div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -718,7 +1041,13 @@
                 @csrf
                 <div class="modal-body">
                     <div class="d-flex align-items-center gap-2 mb-3">
-                        <div class="create-post-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</div>
+                        <div class="create-post-avatar">
+                            @if(Auth::user()->profile_picture)
+                                <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
+                            @else
+                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                            @endif
+                        </div>
                         <div>
                             <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
                             <span class="badge bg-light text-muted border py-1 px-2" style="font-size:10px;">
@@ -778,7 +1107,13 @@
                 <input type="hidden" id="edit_bg_color_input">
                 <div class="modal-body pb-1">
                     <div class="d-flex align-items-center gap-2 mb-3">
-                        <div class="create-post-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</div>
+                        <div class="create-post-avatar">
+                            @if(Auth::user()->profile_picture)
+                                <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
+                            @else
+                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                            @endif
+                        </div>
                         <div>
                             <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
                             <span class="badge bg-light text-muted border py-1 px-2" style="font-size:10px;">
@@ -895,9 +1230,13 @@
                     </button>
                 </div>
                 <form id="commentModalForm" class="d-flex align-items-center gap-2 w-100">
-                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden"
                          style="width:34px;height:34px;font-size:13px;">
-                        {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                        @if(Auth::user()->profile_picture)
+                            <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" style="width:100%;height:100%;object-fit:cover;">
+                        @else
+                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                        @endif
                     </div>
                     <div class="input-group align-items-center bg-light rounded-pill px-3 py-1 w-100 border">
                         <input type="hidden" id="commentModalPostId">
@@ -1497,13 +1836,13 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
       </div>
     </div>`;
 
-    const feed = document.getElementById('postsFeedContainer');
-    if (feed) feed.insertAdjacentHTML('afterbegin', html);
-
-    const createModalEl = document.getElementById('createPostModal');
-    createModalEl.addEventListener('hidden.bs.modal', function () {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, { once: true });
+    const feed = document.getElementById('postsFeedContainer') || document.getElementById('profilePostsContainer');
+    if (feed) {
+        // profile এ "No posts" placeholder থাকলে সরাও
+        const emptyState = feed.querySelector('.bb-posts-empty');
+        if (emptyState) emptyState.remove();
+        feed.insertAdjacentHTML('afterbegin', html);
+    }
 
     const fd = new FormData();
     fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
@@ -1529,10 +1868,26 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
         if (xhr.status === 200 || xhr.status === 201) {
             const bar = document.getElementById(`bar-${pid}`);
             if (bar) { bar.style.width='100%'; bar.classList.replace('bg-primary','bg-success'); bar.classList.remove('progress-bar-animated'); }
+
+            let res = {};
+            try { res = JSON.parse(xhr.responseText); } catch(e){}
+
             setTimeout(() => {
-                sessionStorage.setItem('scrollToTop', '1');
-                window.location.reload();
-            }, 1000);
+                const optCard = document.getElementById(pid);
+                if (res.html) {
+                    if (optCard) {
+                        optCard.outerHTML = res.html;
+                    } else {
+                        const feedC = document.getElementById('profilePostsContainer') || document.getElementById('postsFeedContainer');
+                        if (feedC) feedC.insertAdjacentHTML('afterbegin', res.html);
+                    }
+                    if (window.bbPrimeVideos) window.bbPrimeVideos();
+                } else {
+                    if (optCard) optCard.remove();
+                }
+                const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1800, timerProgressBar:true });
+                Toast.fire({ icon:'success', title: res.message || 'Posted!' });
+            }, 600);
         } else {
             document.getElementById(pid)?.remove();
             Swal.fire({ icon:'error', title:'Post not published!', text:'There was an issue uploading the post.' });
@@ -1610,7 +1965,17 @@ function deletePost(id) {
     Swal.fire({title:'Are you sure?',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'}).then(r=>{
         if (!r.isConfirmed) return;
         fetch(`/posts/${id}`,{method:'DELETE',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content}})
-        .then(r=>r.json()).then(d=>{ if(d.success) window.location.reload(); });
+        .then(r=>r.json()).then(d=>{
+            if(!d.success) return;
+            const card = document.getElementById(`postCard-${id}`);
+            if (card) {
+                card.style.transition = 'opacity .3s ease';
+                card.style.opacity = '0';
+                setTimeout(() => card.remove(), 300);
+            }
+            const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1500 });
+            Toast.fire({ icon:'success', title:'Post deleted' });
+        });
     });
 }
 
@@ -1665,9 +2030,15 @@ document.getElementById('fbShareForm')?.addEventListener('submit', function (e) 
         if(d.success){
             bootstrapShareModal?.hide();
             Toast.fire({icon:'success',title:'Shared!',timer:1200});
-            sessionStorage.setItem('scrollToTop', '1');
-            window.scrollTo({ top: 0, behavior: 'auto' });
-            setTimeout(() => { window.location.reload(); }, 800);
+            if (d.html) {
+                const feedC = document.getElementById('profilePostsContainer') || document.getElementById('postsFeedContainer');
+                if (feedC) {
+                    feedC.insertAdjacentHTML('afterbegin', d.html);
+                    if (window.bbPrimeVideos) window.bbPrimeVideos();
+                    feedC.querySelector('.bb-posts-empty')?.remove();
+                }
+            }
+            btn.disabled = false;
         }
         else { btn.disabled=false; Swal.fire({icon:'error',title:'Failed!',text:'There was an error sharing the post.'}); }
     }).catch(()=>{ btn.disabled=false; Swal.fire({icon:'error',title:'Network Error!'}); });
@@ -2015,7 +2386,7 @@ document.getElementById('commentModalForm')?.addEventListener('submit', function
 
         const html = `
         <div class="d-flex gap-2 mb-3 align-items-start comment-row" id="comment-container-${d.comment_id}">
-            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:32px;height:32px;font-size:13px;">${d.user_initial}</div>
+            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:32px;height:32px;font-size:13px;">${d.user_picture ? `<img src="${d.user_picture}" style="width:100%;height:100%;object-fit:cover;">` : d.user_initial}</div>
             <div class="flex-grow-1">
                 <div class="d-flex align-items-start justify-content-between">
                     <div class="bg-light px-3 py-2 rounded-4 d-inline-block" style="max-width:100%;">
@@ -2132,6 +2503,21 @@ function loadProfilePosts() {
         }
         container.innerHTML = d.html;
         if (window.bbPrimeVideos) window.bbPrimeVideos(container);
+
+        // মাত্র করা পোস্টে স্ক্রল + হাইলাইট
+        const newId = sessionStorage.getItem('profileNewPostId');
+        if (newId) {
+            sessionStorage.removeItem('profileNewPostId');
+            setTimeout(() => {
+                const card = document.getElementById('postCard-' + newId);
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    card.style.transition = 'box-shadow .35s ease';
+                    card.style.boxShadow = '0 0 0 3px var(--bb-primary)';
+                    setTimeout(() => { card.style.boxShadow = ''; }, 2500);
+                }
+            }, 300);
+        }
     })
     .catch(() => { postsLoaded = true; container.innerHTML = '<div class="bb-posts-empty">Network error.</div>'; });
 }
@@ -2180,6 +2566,205 @@ function openProfileMedia(index) {
 document.addEventListener('DOMContentLoaded', () => {
     loadProfilePosts();
 });
+
+
+// ==========================================
+// PROFILE DETAILS (Education/Experience/Cert) CRUD
+// ==========================================
+@if($isOwner)
+let eduModalObj=null, expModalObj=null, certModalObj=null;
+document.addEventListener('DOMContentLoaded', () => {
+    eduModalObj  = new bootstrap.Modal(document.getElementById('eduModal'));
+    expModalObj  = new bootstrap.Modal(document.getElementById('expModal'));
+    certModalObj = new bootstrap.Modal(document.getElementById('certModal'));
+});
+
+// সার্ভার থেকে আসা ডেটা (edit এর জন্য)
+const eduData  = @json($user->educations);
+const expData  = @json($user->experiences);
+const certData = @json($user->certifications);
+
+const DETAIL_CSRF = document.querySelector('meta[name="csrf-token"]').content;
+const detailToast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1800, timerProgressBar:true });
+
+function fmtDate(d){ return d ? d.substring(0,10) : ''; }
+function monthYear(d){ if(!d) return ''; const dt=new Date(d); return dt.toLocaleString('en',{month:'short',year:'numeric'}); }
+
+/* ---------- EDUCATION ---------- */
+function toggleEduEnd(){ document.getElementById('edu_end_wrap').style.display = document.getElementById('edu_is_current').checked ? 'none':''; }
+function openEduModal(){
+    document.getElementById('eduForm').reset();
+    document.getElementById('edu_id').value='';
+    document.getElementById('eduModalTitle').innerText='Add Education';
+    toggleEduEnd();
+    eduModalObj.show();
+}
+function editEdu(id){
+    const e = eduData.find(x=>x.id===id); if(!e) return;
+    document.getElementById('edu_id').value=e.id;
+    document.getElementById('edu_degree').value=e.degree||'';
+    document.getElementById('edu_field').value=e.field||'';
+    document.getElementById('edu_institution').value=e.institution||'';
+    document.getElementById('edu_result').value=e.result||'';
+    document.getElementById('edu_start_date').value=fmtDate(e.start_date);
+    document.getElementById('edu_end_date').value=fmtDate(e.end_date);
+    document.getElementById('edu_is_current').checked=!!e.is_current;
+    document.getElementById('eduModalTitle').innerText='Edit Education';
+    toggleEduEnd();
+    eduModalObj.show();
+}
+document.getElementById('eduForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    saveDetail(this, "{{ route('profile.education.store') }}", 'eduSaveBtn', eduModalObj, renderEdu, eduData);
+});
+function renderEdu(item){
+    document.getElementById('eduEmpty')?.remove();
+    const html = `
+    <div class="bb-timeline-item" id="edu-${item.id}">
+        <div class="bb-timeline-icon"><i class="bi bi-mortarboard-fill"></i></div>
+        <div class="bb-timeline-body">
+            <h6 class="bb-timeline-title">${item.degree}${item.field?' · '+item.field:''}</h6>
+            <p class="bb-timeline-sub">${item.institution}</p>
+            <p class="bb-timeline-meta">${item.duration||''}${item.result?' · Result: '+item.result:''}</p>
+        </div>
+        <div class="bb-timeline-actions">
+            <button onclick="editEdu(${item.id})" title="Edit"><i class="bi bi-pencil"></i></button>
+            <button onclick="deleteDetail('education',${item.id},'edu-${item.id}')" title="Delete" class="text-danger"><i class="bi bi-trash3"></i></button>
+        </div>
+    </div>`;
+    upsertItem('eduList','edu-'+item.id, html, eduData, item);
+}
+
+/* ---------- EXPERIENCE ---------- */
+function toggleExpEnd(){ document.getElementById('exp_end_wrap').style.display = document.getElementById('exp_is_current').checked ? 'none':''; }
+function openExpModal(){
+    document.getElementById('expForm').reset();
+    document.getElementById('exp_id').value='';
+    document.getElementById('expModalTitle').innerText='Add Experience';
+    toggleExpEnd();
+    expModalObj.show();
+}
+function editExp(id){
+    const e = expData.find(x=>x.id===id); if(!e) return;
+    document.getElementById('exp_id').value=e.id;
+    document.getElementById('exp_designation').value=e.designation||'';
+    document.getElementById('exp_company').value=e.company||'';
+    document.getElementById('exp_employment_type').value=e.employment_type||'';
+    document.getElementById('exp_location').value=e.location||'';
+    document.getElementById('exp_start_date').value=fmtDate(e.start_date);
+    document.getElementById('exp_end_date').value=fmtDate(e.end_date);
+    document.getElementById('exp_is_current').checked=!!e.is_current;
+    document.getElementById('exp_description').value=e.description||'';
+    document.getElementById('expModalTitle').innerText='Edit Experience';
+    toggleExpEnd();
+    expModalObj.show();
+}
+document.getElementById('expForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    saveDetail(this, "{{ route('profile.experience.store') }}", 'expSaveBtn', expModalObj, renderExp, expData);
+});
+function renderExp(item){
+    document.getElementById('expEmpty')?.remove();
+    const html = `
+    <div class="bb-timeline-item" id="exp-${item.id}">
+        <div class="bb-timeline-icon"><i class="bi bi-briefcase-fill"></i></div>
+        <div class="bb-timeline-body">
+            <h6 class="bb-timeline-title">${item.designation}</h6>
+            <p class="bb-timeline-sub">${item.company}${item.employment_type?' · '+item.employment_type:''}</p>
+            <p class="bb-timeline-meta">${item.duration||''}${item.location?' · '+item.location:''}</p>
+            ${item.description?`<p class="bb-timeline-desc">${item.description}</p>`:''}
+        </div>
+        <div class="bb-timeline-actions">
+            <button onclick="editExp(${item.id})" title="Edit"><i class="bi bi-pencil"></i></button>
+            <button onclick="deleteDetail('experience',${item.id},'exp-${item.id}')" title="Delete" class="text-danger"><i class="bi bi-trash3"></i></button>
+        </div>
+    </div>`;
+    upsertItem('expList','exp-'+item.id, html, expData, item);
+}
+
+/* ---------- CERTIFICATION ---------- */
+function openCertModal(){
+    document.getElementById('certForm').reset();
+    document.getElementById('cert_id').value='';
+    document.getElementById('certModalTitle').innerText='Add Certification';
+    certModalObj.show();
+}
+function editCert(id){
+    const e = certData.find(x=>x.id===id); if(!e) return;
+    document.getElementById('cert_id').value=e.id;
+    document.getElementById('cert_title').value=e.title||'';
+    document.getElementById('cert_organization').value=e.organization||'';
+    document.getElementById('cert_issue_date').value=fmtDate(e.issue_date);
+    document.getElementById('cert_credential_url').value=e.credential_url||'';
+    document.getElementById('certModalTitle').innerText='Edit Certification';
+    certModalObj.show();
+}
+document.getElementById('certForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    saveDetail(this, "{{ route('profile.certification.store') }}", 'certSaveBtn', certModalObj, renderCert, certData);
+});
+function renderCert(item){
+    document.getElementById('certEmpty')?.remove();
+    const html = `
+    <div class="bb-timeline-item" id="cert-${item.id}">
+        <div class="bb-timeline-icon"><i class="bi bi-patch-check-fill"></i></div>
+        <div class="bb-timeline-body">
+            <h6 class="bb-timeline-title">${item.title}</h6>
+            <p class="bb-timeline-sub">${item.organization||''}</p>
+            <p class="bb-timeline-meta">${item.issue_date?monthYear(item.issue_date):''}${item.credential_url?` · <a href="${item.credential_url}" target="_blank" class="bb-cred-link">Show credential</a>`:''}</p>
+        </div>
+        <div class="bb-timeline-actions">
+            <button onclick="editCert(${item.id})" title="Edit"><i class="bi bi-pencil"></i></button>
+            <button onclick="deleteDetail('certification',${item.id},'cert-${item.id}')" title="Delete" class="text-danger"><i class="bi bi-trash3"></i></button>
+        </div>
+    </div>`;
+    upsertItem('certList','cert-'+item.id, html, certData, item);
+}
+
+/* ---------- শেয়ার্ড হেল্পার ---------- */
+function saveDetail(form, url, btnId, modalObj, renderFn, dataArr){
+    const btn=document.getElementById(btnId);
+    btn.disabled=true; const orig=btn.innerText; btn.innerText='Saving...';
+    const fd=new FormData(form);
+    fetch(url,{ method:'POST', headers:{'X-CSRF-TOKEN':DETAIL_CSRF,'Accept':'application/json'}, body:fd })
+    .then(r=>r.json())
+    .then(d=>{
+        btn.disabled=false; btn.innerText=orig;
+        if(!d.success){ Swal.fire({icon:'error',title:'Save failed'}); return; }
+        modalObj.hide();
+        renderFn(d.item);
+        detailToast.fire({icon:'success', title:d.message||'Saved!'});
+    })
+    .catch(()=>{ btn.disabled=false; btn.innerText=orig; Swal.fire({icon:'error',title:'Network error'}); });
+}
+
+// নতুন হলে যোগ, এডিট হলে রিপ্লেস + ডেটা array আপডেট
+function upsertItem(listId, itemId, html, dataArr, item){
+    const existing = document.getElementById(itemId);
+    if(existing){
+        existing.outerHTML = html;
+        const i = dataArr.findIndex(x=>x.id===item.id);
+        if(i>-1) dataArr[i]=item; else dataArr.push(item);
+    } else {
+        document.getElementById(listId).insertAdjacentHTML('afterbegin', html);
+        dataArr.push(item);
+    }
+}
+
+function deleteDetail(type, id, elId){
+    Swal.fire({ title:'Delete this?', icon:'warning', showCancelButton:true, confirmButtonColor:'#ef4444', confirmButtonText:'Delete' })
+    .then(r=>{
+        if(!r.isConfirmed) return;
+        fetch(`/profile/${type}/${id}`, { method:'DELETE', headers:{'X-CSRF-TOKEN':DETAIL_CSRF,'Accept':'application/json'} })
+        .then(r=>r.json())
+        .then(d=>{
+            if(!d.success){ Swal.fire({icon:'error',title:'Delete failed'}); return; }
+            document.getElementById(elId)?.remove();
+            detailToast.fire({icon:'success', title:d.message||'Removed'});
+        });
+    });
+}
+@endif
 
 </script>
 
