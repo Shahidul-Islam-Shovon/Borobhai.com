@@ -36,19 +36,33 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        // 👑 বাগ ফিক্স: এই লাইনটি অবশ্যই যোগ করবেন
-        'suspended_until' => 'datetime', 
-        'is_super_admin' => 'boolean', // ডাটাবেজের ০ বা ১ কে লারাভেল true/false বানিয়ে দেবে
-        
+        'suspended_until' => 'datetime',
+        'is_super_admin' => 'boolean',
+        'skills' => 'array',   // 🆕 JSON ↔ PHP array অটো কনভার্ট
     ];
 
     protected $fillable = [
-    'name',
-    'email',
-    'password',
-    'role',
-    'status',
-    'is_super_admin',
+        'name',
+        'email',
+        'password',
+        'role',
+        'status',
+        'is_super_admin',
+        // Profile fields
+        'profile_picture',
+        'cover_photo',
+        'bio',
+        'phone',
+        'location',
+        'department',
+        'session',
+        'section',
+        'semester',
+        'skills',
+        'interests',
+        'linkedin_url',
+        'github_url',
+        'facebook_url',
     ];
 
 

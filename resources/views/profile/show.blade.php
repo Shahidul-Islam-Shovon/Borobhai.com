@@ -4,14 +4,160 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
-    <title>Borobhai.com</title>
+    {{-- Cropper.js for cover + avatar cropping --}}
+    <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" rel="stylesheet">
+    <title>{{ $user->name }} · Borobhai.com</title>
     <style>
+        :root {
+            --bb-primary: #4f46e5;
+            --bb-primary-dark: #4338ca;
+            --bb-primary-soft: #eef2ff;
+            --bb-ink: #1e1f24;
+            --bb-muted: #6b7280;
+            --bb-line: #eceef1;
+            --bb-bg: #f3f4f8;
+            --bb-card: #ffffff;
+            --bb-shadow: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
+            --bb-shadow-lg: 0 10px 35px rgba(16,24,40,.10);
+            --bb-radius: 16px;
+            --bb-shadow-hover: 0 8px 28px rgba(79,70,229,.10), 0 2px 6px rgba(16,24,40,.06);
+        }
+        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { background: var(--bb-bg); color: var(--bb-ink); }
+
+        .bb-nav { background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.06); padding:.5rem 1rem; position:sticky; top:0; z-index:1020; }
+        .bb-brand { font-weight:800; color:var(--bb-primary); font-size:1.4rem; letter-spacing:-.5px; text-decoration:none; }
+        .bb-nav-btn { width:40px; height:40px; border-radius:50%; background:#e4e6eb; display:flex; align-items:center; justify-content:center; color:#050505; text-decoration:none; font-size:1.1rem; border:none; }
+        .bb-nav-btn:hover { background:#d8dadf; }
+
+        .bb-profile-wrap { max-width: 940px; margin: 0 auto; padding: 20px 12px 60px; }
+
+        .bb-cover {
+            position: relative; height: 280px; border-radius: 18px; overflow: hidden;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c73f0 50%, #a78bfa 100%);
+            box-shadow: var(--bb-shadow);
+        }
+        .bb-cover img { width:100%; height:100%; object-fit:cover; display:block; }
+        .bb-cover-edit {
+            position:absolute; right:16px; bottom:16px; z-index:3;
+            background:rgba(255,255,255,.92); border:none; border-radius:10px;
+            padding:8px 14px; font-size:13px; font-weight:600; color:var(--bb-ink);
+            cursor:pointer; display:flex; align-items:center; gap:6px; transition:background .15s;
+            backdrop-filter: blur(4px);
+        }
+        .bb-cover-edit:hover { background:#fff; }
+
+        .bb-head-card {
+            background:var(--bb-card); border-radius:18px; box-shadow:var(--bb-shadow);
+            padding: 0 28px 24px; margin-top:-70px; position:relative; z-index:2;
+        }
+        .bb-avatar-wrap { position:relative; width:150px; height:150px; margin-top:-75px; }
+        .bb-avatar-lg {
+            width:150px; height:150px; border-radius:50%; border:5px solid #fff;
+            object-fit:cover; background:linear-gradient(135deg,var(--bb-primary),#7c73f0);
+            display:flex; align-items:center; justify-content:center; color:#fff; font-size:60px; font-weight:800;
+            box-shadow:0 4px 14px rgba(79,70,229,.3);
+        }
+        .bb-avatar-edit {
+            position:absolute; right:6px; bottom:6px; width:38px; height:38px; border-radius:50%;
+            background:var(--bb-primary); color:#fff; border:3px solid #fff; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; font-size:15px; transition:background .15s;
+        }
+        .bb-avatar-edit:hover { background:var(--bb-primary-dark); }
+
+        .bb-name { font-size:28px; font-weight:800; letter-spacing:-.5px; margin:14px 0 2px; }
+        .bb-headline { font-size:15px; color:var(--bb-muted); margin:0 0 10px; }
+
+        .bb-role-pill {
+            display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700;
+            padding:5px 13px; border-radius:20px; letter-spacing:.3px; text-transform:uppercase;
+        }
+        .bb-role-alumni  { background:#fef3c7; color:#d97706; }
+        .bb-role-student { background:#eef2ff; color:#4f46e5; }
+
+        .bb-edit-profile-btn {
+            background:var(--bb-primary); color:#fff; border:none; border-radius:10px;
+            padding:9px 20px; font-size:14px; font-weight:600; cursor:pointer;
+            display:inline-flex; align-items:center; gap:7px; transition:background .15s;
+        }
+        .bb-edit-profile-btn:hover { background:var(--bb-primary-dark); }
+
+        .bb-stat-row { display:flex; gap:26px; margin-top:14px; }
+        .bb-stat b { font-size:18px; font-weight:800; }
+        .bb-stat span { font-size:13px; color:var(--bb-muted); margin-left:5px; }
+
+        .bb-card { background:var(--bb-card); border-radius:16px; box-shadow:var(--bb-shadow); padding:22px 24px; margin-top:18px; }
+        .bb-card-title { font-size:17px; font-weight:700; letter-spacing:-.2px; margin:0 0 16px; display:flex; align-items:center; gap:9px; }
+        .bb-card-title i { color:var(--bb-primary); }
+
+        .bb-info-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px 24px; }
+        .bb-info-item { display:flex; gap:12px; align-items:flex-start; }
+        .bb-info-icon { width:38px; height:38px; border-radius:10px; background:var(--bb-primary-soft); color:var(--bb-primary); display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+        .bb-info-label { font-size:12px; color:var(--bb-muted); margin:0; }
+        .bb-info-value { font-size:14.5px; font-weight:600; margin:0; word-break:break-word; }
+
+        .bb-bio-text { font-size:15px; line-height:1.65; color:#374151; white-space:pre-line; }
+
+        .bb-chips { display:flex; flex-wrap:wrap; gap:9px; }
+        .bb-chip {
+            background:var(--bb-primary-soft); color:var(--bb-primary-dark);
+            font-size:13px; font-weight:600; padding:7px 15px; border-radius:20px;
+            border:1px solid #e0e7ff;
+        }
+
+        .bb-socials { display:flex; gap:12px; flex-wrap:wrap; }
+        .bb-social-link {
+            display:flex; align-items:center; gap:9px; padding:11px 18px; border-radius:12px;
+            text-decoration:none; font-size:14px; font-weight:600; border:1.5px solid var(--bb-line);
+            color:var(--bb-ink); transition:all .15s;
+        }
+        .bb-social-link:hover { border-color:var(--bb-primary); color:var(--bb-primary); transform:translateY(-2px); }
+        .bb-social-link i { font-size:18px; }
+        .bb-li i { color:#0a66c2; }
+        .bb-gh i { color:#181717; }
+        .bb-fb i { color:#1877f2; }
+
+        .bb-empty { color:var(--bb-muted); font-size:14px; font-style:italic; }
+
+        .bb-modal-input {
+            border:1.5px solid var(--bb-line); border-radius:10px; padding:10px 13px;
+            font-size:14px; width:100%; transition:border-color .15s; background:#fff;
+        }
+        .bb-modal-input:focus { outline:none; border-color:var(--bb-primary); }
+        .bb-modal-label { font-size:13px; font-weight:600; color:var(--bb-ink); margin-bottom:6px; display:block; }
+
+        /* Edit modal: scrollable body + sticky footer (Fix #3) */
+        #editProfileModal .modal-dialog { max-height: 92vh; }
+        #editProfileModal .modal-content { max-height: 92vh; background:#fff; border-radius:16px; }
+        #editProfileModal .modal-header { background:#fff; border-radius:16px 16px 0 0; }
+        #editProfileModal .modal-body { overflow-y: auto; background:#fff; }
+        #editProfileModal .modal-footer {
+            position: sticky; bottom: 0; background: #fff; z-index: 5;
+            border-top: 1px solid var(--bb-line); border-radius:0 0 16px 16px;
+        }
+
+        /* Cropper modal */
+        #cropModal .modal-body { background:#1e1f24; }
+        .bb-crop-stage { max-height:60vh; }
+        .bb-crop-stage img { max-width:100%; display:block; }
+
+        @media (max-width:768px) {
+            .bb-info-grid { grid-template-columns:1fr; }
+            .bb-cover { height:180px; }
+            .bb-head-card { padding:0 18px 20px; margin-top:-50px; }
+            .bb-avatar-wrap, .bb-avatar-lg { width:110px; height:110px; }
+            .bb-avatar-lg { font-size:42px; }
+            .bb-avatar-wrap { margin-top:-55px; }
+            .bb-name { font-size:22px; }
+        }
+
+/* ===== FEED + TABS CSS (reused from dashboard) ===== */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; }
         .navbar { background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.08); padding: .5rem 1rem; }
         .navbar-brand { font-weight: 700; color: #1877f2; font-size: 1.5rem; letter-spacing: -.5px; }
@@ -46,19 +192,6 @@
    BOROBHAI PREMIUM FEED STYLES (reusable)
    ========================================== */
 
-:root {
-    --bb-primary: #4f46e5;
-    --bb-primary-dark: #4338ca;
-    --bb-primary-soft: #eef2ff;
-    --bb-ink: #1e1f24;
-    --bb-muted: #6b7280;
-    --bb-line: #eceef1;
-    --bb-bg: #f3f4f8;
-    --bb-card: #ffffff;
-    --bb-radius: 16px;
-    --bb-shadow: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
-    --bb-shadow-hover: 0 8px 28px rgba(79,70,229,.10), 0 2px 6px rgba(16,24,40,.06);
-}
 
 /* ===== POST CARD ===== */
 .bb-post-card {
@@ -178,197 +311,251 @@
     .bb-grid-4 { height:360px; }
 }
 
-/* ===== ROLE BADGE (navbar) ===== */
-.bb-role-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .3px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    border: 1.5px solid transparent;
-    transition: transform .15s ease;
-}
-.bb-role-badge i { font-size: 13px; }
-.bb-role-student { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
-.bb-role-alumni  { background: #fef3c7; color: #d97706; border-color: #fde68a; }
 
-/* ===== RIGHT SIDEBAR (reusable) ===== */
-.bb-side-card {
-    background: var(--bb-card);
-    border-radius: var(--bb-radius);
-    box-shadow: var(--bb-shadow);
-    overflow: hidden;
+/* ==========================================
+   PROFILE TABS (Facebook-style)
+   ========================================== */
+.bb-tabs-bar {
+    background:#fff; border-radius:14px; box-shadow:var(--bb-shadow);
+    margin-top:18px; padding:4px; display:flex; gap:4px;
 }
-.bb-side-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 16px 8px;
+.bb-tab-btn {
+    flex:1; border:none; background:transparent; cursor:pointer;
+    padding:12px 10px; border-radius:10px; font-size:14.5px; font-weight:600;
+    color:var(--bb-muted); display:flex; align-items:center; justify-content:center; gap:7px;
+    transition:all .15s ease;
 }
-.bb-side-title {
-    font-size: 14px; font-weight: 700; color: var(--bb-ink);
-    display: flex; align-items: center; gap: 7px; letter-spacing: -.2px;
-}
-.bb-side-link { font-size: 12px; color: var(--bb-primary); text-decoration: none; font-weight: 600; }
-.bb-side-link:hover { text-decoration: underline; }
-.bb-side-body { padding: 4px 10px 12px; }
+.bb-tab-btn i { font-size:16px; }
+.bb-tab-btn:hover { background:var(--bb-bg); color:var(--bb-ink); }
+.bb-tab-btn.active { background:var(--bb-primary-soft); color:var(--bb-primary); }
 
-/* Job item */
-.bb-job-item {
-    display: flex; gap: 10px; padding: 8px 6px; border-radius: 10px;
-    cursor: pointer; transition: background .15s ease;
-}
-.bb-job-item:hover { background: var(--bb-bg); }
-.bb-job-logo {
-    width: 40px; height: 40px; border-radius: 9px; flex-shrink: 0;
-    background: var(--bb-primary-soft); color: var(--bb-primary);
-    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 17px;
-}
-.bb-job-info { min-width: 0; }
-.bb-job-title { font-size: 13.5px; font-weight: 700; color: var(--bb-ink); margin: 0 0 1px; }
-.bb-job-company { font-size: 12px; color: var(--bb-muted); margin: 0 0 3px; }
-.bb-job-tag {
-    font-size: 10.5px; color: #16a34a; font-weight: 600;
-    display: inline-flex; align-items: center; gap: 3px;
-}
-.bb-job-tag i { font-size: 9px; }
+.bb-tab-panel { display:none; }
+.bb-tab-panel.active { display:block; animation:bbFade .25s ease; }
+@keyframes bbFade { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
 
-/* Active now */
-.bb-active-item {
-    display: flex; align-items: center; gap: 10px; padding: 6px;
-    border-radius: 10px; cursor: pointer; transition: background .15s ease;
-}
-.bb-active-item:hover { background: var(--bb-bg); }
-.bb-active-avatar {
-    position: relative; width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
-    background: linear-gradient(135deg, var(--bb-primary), #7c73f0);
-    color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;
-}
-.bb-active-avatar::after {
-    content: ''; position: absolute; bottom: 0; right: 0;
-    width: 11px; height: 11px; border-radius: 50%;
-    background: #22c55e; border: 2px solid #fff;
-}
-.bb-active-name { font-size: 13.5px; font-weight: 600; color: var(--bb-ink); }
+.bb-tab-loader { text-align:center; padding:50px 0; color:var(--bb-muted); }
 
-/* Suggested people */
-.bb-suggest-item {
-    display: flex; align-items: center; gap: 10px; padding: 8px 6px;
-    border-radius: 10px; transition: background .15s ease;
-}
-.bb-suggest-item:hover { background: var(--bb-bg); }
-.bb-suggest-avatar {
-    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
-    background: linear-gradient(135deg, var(--bb-primary), #7c73f0);
-    color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;
-}
-.bb-suggest-info { flex-grow: 1; min-width: 0; }
-.bb-suggest-name { font-size: 13.5px; font-weight: 700; color: var(--bb-ink); margin: 0 0 1px; }
-.bb-suggest-role { font-size: 11.5px; color: var(--bb-muted); margin: 0; }
-.bb-connect-btn {
-    width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
-    border: 1.5px solid var(--bb-primary); background: #fff; color: var(--bb-primary);
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    font-size: 15px; transition: all .15s ease;
-}
-.bb-connect-btn:hover { background: var(--bb-primary); color: #fff; }
+/* Posts tab feed width fix */
+.bb-profile-feed { max-width:680px; margin:0 auto; }
 
-/* Right sidebar own scroll (so nothing gets cut off) */
-.bb-right-sidebar {
-    position: sticky;
-    top: 70px;
-    max-height: calc(100vh - 85px);
-    overflow-y: auto;
-    padding-bottom: 10px;
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
+/* Photos & Videos grid */
+.bb-media-grid {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:6px;
 }
-.bb-right-sidebar::-webkit-scrollbar { width: 6px; }
-.bb-right-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-.bb-right-sidebar::-webkit-scrollbar-track { background: transparent; }
-
-/* Active Now — name + role stacked */
-.bb-active-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-
-/* Mini role badge (Alumni / Student) */
-.bb-mini-badge {
-    display: inline-flex; align-items: center; gap: 3px;
-    font-size: 9.5px; font-weight: 700; letter-spacing: .2px;
-    padding: 1px 7px; border-radius: 12px; width: fit-content; text-transform: uppercase;
+.bb-media-grid-item {
+    position:relative; aspect-ratio:1/1; overflow:hidden; border-radius:10px;
+    cursor:pointer; background:#000;
 }
-.bb-mini-badge i { font-size: 9px; }
-.bb-mini-alumni  { background: #fef3c7; color: #d97706; }
-.bb-mini-student { background: #eef2ff; color: #4f46e5; }
+.bb-media-grid-item img, .bb-media-grid-item video {
+    width:100%; height:100%; object-fit:cover; display:block;
+    transition:transform .25s ease;
+}
+.bb-media-grid-item:hover img, .bb-media-grid-item:hover video { transform:scale(1.05); }
+.bb-media-grid-play {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:44px; height:44px; border-radius:50%; background:rgba(0,0,0,.6);
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px;
+    pointer-events:none;
+}
+.bb-media-empty, .bb-posts-empty {
+    text-align:center; padding:60px 20px; color:var(--bb-muted);
+    background:#fff; border-radius:16px; box-shadow:var(--bb-shadow); margin-top:18px;
+}
+.bb-media-empty i, .bb-posts-empty i { font-size:42px; display:block; margin-bottom:12px; opacity:.5; }
+
+@media (max-width:768px) {
+    .bb-tab-btn { font-size:13px; padding:10px 6px; }
+    .bb-tab-btn span { display:none; }
+    .bb-media-grid { grid-template-columns:repeat(3,1fr); gap:4px; }
+}
+
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-md sticky-top">
-    <div class="container-fluid">
+{{-- Navbar --}}
+<nav class="bb-nav">
+    <div class="d-flex align-items-center justify-content-between" style="max-width:940px;margin:0 auto;">
+        <a href="{{ route('home') }}" class="bb-brand">Borobhai.com</a>
         <div class="d-flex align-items-center gap-2">
-            <a style="color:black;" class="navbar-brand m-0" href="{{ route('home') }}">Borobhai.com</a>
-            <div class="search-box d-none d-lg-flex">
-                <i class="bi bi-search text-muted"></i>
-                <input type="text" placeholder="Search In Borobhai">
-            </div>
-        </div>
-        <div class="d-flex align-items-center gap-2 ms-auto">
-            @php $role = Auth::user()->role; @endphp
-            <span class="bb-role-badge d-none d-sm-inline-flex {{ $role === 'alumni' ? 'bb-role-alumni' : 'bb-role-student' }}">
-                <i class="bi {{ $role === 'alumni' ? 'bi-mortarboard-fill' : 'bi-backpack-fill' }}"></i>
-                {{ ucfirst($role) }} Feed
-            </span>
-            <a href="#" class="nav-icon-btn d-md-none"><i class="bi bi-search"></i></a>
-            <a href="#" class="nav-icon-btn"><i class="bi bi-messenger"></i></a>
-            <a href="#" class="nav-icon-btn"><i class="bi bi-bell-fill"></i></a>
-            <div class="dropdown">
-                <button class="nav-icon-btn border-0" data-bs-toggle="dropdown">
-                    <i class="bi bi-person-fill"></i>
-                </button>
-
-                <ul class="dropdown-menu dropdown-menu-end shadow">
-                    <li><span class="dropdown-item-text fw-bold text-dark">{{ Auth::user()->name }}</span></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a href="{{ route('profile.show') }}" class="dropdown-item">
-                            <i class="bi bi-person-circle me-2"></i>View Profile
-                        </a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <form action="{{ route('logout') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="dropdown-item text-danger">
-                                <i class="bi bi-box-arrow-right me-2"></i>Logout
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-
-            </div>
+            <a href="{{ route('home') }}" class="bb-nav-btn" title="Home"><i class="bi bi-house-door-fill"></i></a>
+            <a href="{{ route('home') }}" class="bb-nav-btn" title="Back"><i class="bi bi-arrow-left"></i></a>
         </div>
     </div>
 </nav>
 
-<div class="container-fluid mt-3">
-    <div class="row px-md-2">
+@php
+    $role = $user->role;
+    $isAlumni = $role === 'alumni';
+    $skillsList = is_array($user->skills) ? $user->skills : [];
+@endphp
 
-        {{-- Sidebar --}}
-        <div class="col-md-3 d-none d-md-block position-sticky" style="top:70px;height:fit-content;">
-            <div class="d-flex flex-column gap-1">
-                <a href="{{ route('home') }}" class="sidebar-link active"><i class="bi bi-house-door-fill text-primary"></i><span>Home</span></a>
-                <a href="#" class="sidebar-link"><i class="bi bi-people-fill text-info"></i><span>Friends</span></a>
+<div class="bb-profile-wrap">
 
-                <a href="{{ route('saved.index') }}" class="sidebar-link"><i class="bi bi-bookmark-heart-fill text-warning"></i><span>Saved</span></a>
+    {{-- Cover Photo --}}
+    <div class="bb-cover">
+        @if($user->cover_photo)
+            <img src="{{ asset('storage/'.$user->cover_photo) }}" alt="cover" id="coverImg" style="cursor:zoom-in;" onclick="openImageView(this.src)">
+        @endif
+        @if($isOwner)
+            <button class="bb-cover-edit" onclick="document.getElementById('coverInput').click()">
+                <i class="bi bi-camera-fill"></i> Edit cover
+            </button>
+            <input type="file" id="coverInput" class="d-none" accept="image/*">
+        @endif
+    </div>
 
+    {{-- Header Card --}}
+    <div class="bb-head-card">
+        <div class="d-flex flex-wrap justify-content-between align-items-end">
+            <div class="d-flex flex-wrap align-items-end gap-3">
+                <div class="bb-avatar-wrap">
+                    @if($user->profile_picture)
+                        <img src="{{ asset('storage/'.$user->profile_picture) }}" class="bb-avatar-lg" id="avatarImg" alt="avatar" style="cursor:zoom-in;" onclick="openImageView(this.src)">
+                    @else
+                        <div class="bb-avatar-lg" id="avatarImg">{{ strtoupper(substr($user->name,0,1)) }}</div>
+                    @endif
+                    @if($isOwner)
+                        <button class="bb-avatar-edit" onclick="document.getElementById('avatarInput').click()" title="Change photo">
+                            <i class="bi bi-camera-fill"></i>
+                        </button>
+                        <input type="file" id="avatarInput" class="d-none" accept="image/*">
+                    @endif
+                </div>
+                <div class="pb-2">
+                    <span class="bb-role-pill {{ $isAlumni ? 'bb-role-alumni' : 'bb-role-student' }}">
+                        <i class="bi {{ $isAlumni ? 'bi-mortarboard-fill' : 'bi-backpack-fill' }}"></i>
+                        {{ $isAlumni ? 'Alumni · Senior' : 'Student' }}
+                    </span>
+                    <h1 class="bb-name" id="displayName">{{ $user->name }}</h1>
+                    <p class="bb-headline">
+                        {{ $user->department ?? 'Department not set' }}
+                        @if($user->session) · Session {{ $user->session }} @endif
+                    </p>
+                </div>
             </div>
+            @if($isOwner)
+                <div class="pb-2">
+                    <button class="bb-edit-profile-btn" onclick="openEditModal()">
+                        <i class="bi bi-pencil-fill"></i> Edit Profile
+                    </button>
+                </div>
+            @endif
         </div>
 
-        {{-- Feed --}}
-        <div class="col-12 col-md-6">
+        <div class="bb-stat-row">
+            <div class="bb-stat"><b>{{ $postCount }}</b><span>Posts</span></div>
+            <div class="bb-stat"><b>0</b><span>Connections</span></div>
+        </div>
+    </div>
 
-            {{-- Create Post Box --}}
+    {{-- ==================== PROFILE TABS ==================== --}}
+    <div class="bb-tabs-bar">
+        <button class="bb-tab-btn" data-tab="details" onclick="switchTab('details')">
+            <i class="bi bi-person-vcard"></i> <span>Student Details</span>
+        </button>
+        <button class="bb-tab-btn active" data-tab="posts" onclick="switchTab('posts')">
+            <i class="bi bi-grid-1x2-fill"></i> <span>All Posts</span>
+        </button>
+        <button class="bb-tab-btn" data-tab="media" onclick="switchTab('media')">
+            <i class="bi bi-images"></i> <span>Photos & Videos</span>
+        </button>
+    </div>
+
+    {{-- ===== TAB 1: STUDENT DETAILS ===== --}}
+    <div class="bb-tab-panel" id="tab-details">
+
+    {{-- About --}}
+    <div class="bb-card">
+        <h2 class="bb-card-title"><i class="bi bi-person-lines-fill"></i> About</h2>
+        @if($user->bio)
+            <p class="bb-bio-text">{{ $user->bio }}</p>
+        @else
+            <p class="bb-empty">{{ $isOwner ? 'Add a short bio to tell people about yourself.' : 'No bio added yet.' }}</p>
+        @endif
+    </div>
+
+    {{-- Academic & Contact --}}
+    <div class="bb-card">
+        <h2 class="bb-card-title"><i class="bi bi-mortarboard-fill"></i> Academic & Contact</h2>
+        <div class="bb-info-grid">
+            <div class="bb-info-item">
+                <div class="bb-info-icon"><i class="bi bi-building"></i></div>
+                <div><p class="bb-info-label">Department</p><p class="bb-info-value">{{ $user->department ?? '—' }}</p></div>
+            </div>
+            <div class="bb-info-item">
+                <div class="bb-info-icon"><i class="bi bi-calendar3"></i></div>
+                <div><p class="bb-info-label">Session</p><p class="bb-info-value">{{ $user->session ?? '—' }}</p></div>
+            </div>
+            <div class="bb-info-item">
+                <div class="bb-info-icon"><i class="bi bi-grid-3x3-gap"></i></div>
+                <div><p class="bb-info-label">Section</p><p class="bb-info-value">{{ $user->section ?? '—' }}</p></div>
+            </div>
+            <div class="bb-info-item">
+                <div class="bb-info-icon"><i class="bi bi-bar-chart-steps"></i></div>
+                <div><p class="bb-info-label">Semester</p><p class="bb-info-value">{{ $user->semester ?? '—' }}</p></div>
+            </div>
+            <div class="bb-info-item">
+                <div class="bb-info-icon"><i class="bi bi-telephone-fill"></i></div>
+                <div><p class="bb-info-label">Phone</p><p class="bb-info-value">{{ $user->phone ?? '—' }}</p></div>
+            </div>
+            <div class="bb-info-item">
+                <div class="bb-info-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                <div><p class="bb-info-label">Location</p><p class="bb-info-value">{{ $user->location ?? '—' }}</p></div>
+            </div>
+            <div class="bb-info-item">
+                <div class="bb-info-icon"><i class="bi bi-envelope-fill"></i></div>
+                <div><p class="bb-info-label">Email</p><p class="bb-info-value">{{ $user->email }}</p></div>
+            </div>
+            <div class="bb-info-item">
+                <div class="bb-info-icon"><i class="bi bi-heart-fill"></i></div>
+                <div><p class="bb-info-label">Interests</p><p class="bb-info-value">{{ $user->interests ?? '—' }}</p></div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Skills --}}
+    <div class="bb-card">
+        <h2 class="bb-card-title"><i class="bi bi-stars"></i> Skills</h2>
+        @if(count($skillsList) > 0)
+            <div class="bb-chips">
+                @foreach($skillsList as $skill)
+                    <span class="bb-chip">{{ $skill }}</span>
+                @endforeach
+            </div>
+        @else
+            <p class="bb-empty">{{ $isOwner ? 'Add your skills (e.g. PHP, Laravel, Python).' : 'No skills added yet.' }}</p>
+        @endif
+    </div>
+
+    {{-- Social Links --}}
+    <div class="bb-card">
+        <h2 class="bb-card-title"><i class="bi bi-link-45deg"></i> Connect</h2>
+        @if($user->linkedin_url || $user->github_url || $user->facebook_url)
+            <div class="bb-socials">
+                @if($user->linkedin_url)
+                    <a href="{{ $user->linkedin_url }}" target="_blank" class="bb-social-link bb-li"><i class="bi bi-linkedin"></i> LinkedIn</a>
+                @endif
+                @if($user->github_url)
+                    <a href="{{ $user->github_url }}" target="_blank" class="bb-social-link bb-gh"><i class="bi bi-github"></i> GitHub</a>
+                @endif
+                @if($user->facebook_url)
+                    <a href="{{ $user->facebook_url }}" target="_blank" class="bb-social-link bb-fb"><i class="bi bi-facebook"></i> Facebook</a>
+                @endif
+            </div>
+        @else
+            <p class="bb-empty">{{ $isOwner ? 'Add your social links so people can connect with you.' : 'No links added yet.' }}</p>
+        @endif
+    </div>
+
+    </div>{{-- /TAB 1: Student Details --}}
+
+    {{-- ===== TAB 2: ALL POSTS ===== --}}
+    <div class="bb-tab-panel active" id="tab-posts">
+        <div class="bb-profile-feed mt-3">
+
+            {{-- Create Post Box (only owner) --}}
+            @if($isOwner)
             <div class="create-post-box mb-3">
                 <div class="d-flex align-items-center gap-2 mb-3">
                     <div class="create-post-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</div>
@@ -391,157 +578,131 @@
                     </button>
                 </div>
             </div>
+            @endif
 
-            {{-- Posts Feed --}}
-            <div id="postsFeedContainer">
-            @forelse($posts as $post)
-                @include('partials.post-card', ['post' => $post])
-            @empty
-                <div id="emptyFeedState" class="card p-5 text-center shadow-sm border-0 rounded-3 my-3 bg-white">
-                    <div class="card-body">
-                        <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-                        <h5 class="fw-bold text-secondary">No post available right now</h5>
-                        <p class="text-muted small mb-0">Be the first one to share something!</p>
-                    </div>
+            {{-- Posts load here (AJAX) --}}
+            <div id="profilePostsContainer">
+                <div class="bb-tab-loader" id="postsLoader">
+                    <div class="spinner-border text-primary"></div>
+                    <div class="small mt-2">Loading posts...</div>
                 </div>
-            @endforelse
-        </div>
-
-        {{-- Infinite Scroll: Loader + Sentinel --}}
-        <div id="feedLoader" class="text-center py-4 d-none">
-            <div class="spinner-border text-primary" role="status" style="width:2rem;height:2rem;">
-                <span class="visually-hidden">Loading...</span>
             </div>
         </div>
+    </div>{{-- /TAB 2 --}}
 
-        <div id="feedEndMessage" class="text-center text-muted py-4 d-none">
-            <i class="bi bi-check2-circle me-1"></i> You're all caught up!
+    {{-- ===== TAB 3: PHOTOS & VIDEOS ===== --}}
+    <div class="bb-tab-panel" id="tab-media">
+        <div id="profileMediaContainer">
+            <div class="bb-tab-loader" id="mediaLoader">
+                <div class="spinner-border text-primary"></div>
+                <div class="small mt-2">Loading media...</div>
+            </div>
         </div>
+    </div>{{-- /TAB 3 --}}
 
-        {{-- Pagination data holder --}}
-        <div id="feedMeta"
-            data-next-page="2"
-            data-has-more="{{ $posts->hasMorePages() ? '1' : '0' }}"></div>
+</div>
 
-        </div>{{-- /Feed column --}}
-
-        {{-- ==================== RIGHT SIDEBAR ==================== --}}
-        <div class="col-md-3 d-none d-md-block bb-right-sidebar">
-
-            {{-- Popular Jobs --}}
-            <div class="bb-side-card mb-3">
-                <div class="bb-side-head">
-                    <span class="bb-side-title"><i class="bi bi-briefcase-fill text-primary"></i> Popular Jobs</span>
-                    <a href="#" class="bb-side-link">See all</a>
+{{-- ==================== EDIT PROFILE MODAL ==================== --}}
+@if($isOwner)
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold">Edit Profile</h5>
+                <button type="button" class="btn-close" id="editModalCloseBtn"></button>
+            </div>
+            <form id="editProfileForm">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="bb-modal-label">Full Name *</label>
+                            <input type="text" name="name" class="bb-modal-input" value="{{ $user->name }}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-modal-label">Bio / About</label>
+                            <textarea name="bio" class="bb-modal-input" rows="3" placeholder="Tell people about yourself...">{{ $user->bio }}</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Department</label>
+                            <input type="text" name="department" class="bb-modal-input" value="{{ $user->department }}" placeholder="e.g. CSE">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Session</label>
+                            <input type="text" name="session" class="bb-modal-input" value="{{ $user->session }}" placeholder="e.g. 2020-21">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Section</label>
+                            <input type="text" name="section" class="bb-modal-input" value="{{ $user->section }}" placeholder="e.g. 27M1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Semester / Year</label>
+                            <input type="text" name="semester" class="bb-modal-input" value="{{ $user->semester }}" placeholder="e.g. 7th">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Phone</label>
+                            <input type="text" name="phone" class="bb-modal-input" value="{{ $user->phone }}" placeholder="e.g. 01XXXXXXXXX">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-modal-label">Location</label>
+                            <input type="text" name="location" class="bb-modal-input" value="{{ $user->location }}" placeholder="e.g. Dhaka, Bangladesh">
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-modal-label">Skills <span class="text-muted fw-normal">(comma separated)</span></label>
+                            <input type="text" name="skills" class="bb-modal-input" value="{{ is_array($user->skills) ? implode(', ', $user->skills) : '' }}" placeholder="e.g. PHP, Laravel, Python">
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-modal-label">Interests</label>
+                            <input type="text" name="interests" class="bb-modal-input" value="{{ $user->interests }}" placeholder="e.g. Web Development, AI, Football">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="bb-modal-label">LinkedIn URL</label>
+                            <input type="url" name="linkedin_url" class="bb-modal-input" value="{{ $user->linkedin_url }}" placeholder="https://...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="bb-modal-label">GitHub URL</label>
+                            <input type="url" name="github_url" class="bb-modal-input" value="{{ $user->github_url }}" placeholder="https://...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="bb-modal-label">Facebook URL</label>
+                            <input type="url" name="facebook_url" class="bb-modal-input" value="{{ $user->facebook_url }}" placeholder="https://...">
+                        </div>
+                    </div>
                 </div>
-                <div class="bb-side-body" id="popularJobsZone">
-                    {{-- TODO: Backend — loop $popularJobs here --}}
-                    <div class="bb-job-item">
-                        <div class="bb-job-logo">L</div>
-                        <div class="bb-job-info">
-                            <h6 class="bb-job-title">Laravel Developer</h6>
-                            <p class="bb-job-company">Tech Soft BD · Dhaka</p>
-                            <span class="bb-job-tag"><i class="bi bi-broadcast"></i> Actively hiring</span>
-                        </div>
-                    </div>
-                    <div class="bb-job-item">
-                        <div class="bb-job-logo" style="background:#fef3c7;color:#d97706;">U</div>
-                        <div class="bb-job-info">
-                            <h6 class="bb-job-title">UI/UX Designer</h6>
-                            <p class="bb-job-company">Creative Labs · Remote</p>
-                            <span class="bb-job-tag"><i class="bi bi-broadcast"></i> Actively hiring</span>
-                        </div>
-                    </div>
-                    <div class="bb-job-item">
-                        <div class="bb-job-logo" style="background:#dcfce7;color:#16a34a;">S</div>
-                        <div class="bb-job-info">
-                            <h6 class="bb-job-title">Software Engineer</h6>
-                            <p class="bb-job-company">BrainStation · Sylhet</p>
-                            <span class="bb-job-tag"><i class="bi bi-broadcast"></i> Actively hiring</span>
-                        </div>
-                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" id="editModalCancelBtn">Cancel</button>
+                    <button type="submit" id="saveProfileBtn" class="bb-edit-profile-btn">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ==================== CROP MODAL ==================== --}}
+<div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="cropTitle">Adjust photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="bb-crop-stage">
+                    <img id="cropImage" src="">
                 </div>
             </div>
-
-            {{-- Active Now --}}
-            <div class="bb-side-card mb-3">
-                <div class="bb-side-head">
-                    <span class="bb-side-title"><i class="bi bi-circle-fill text-success" style="font-size:9px;"></i> Active Now</span>
+            <div class="modal-footer">
+                <div class="me-auto d-flex gap-2">
+                    <button type="button" class="btn btn-light btn-sm" onclick="cropZoom(0.1)"><i class="bi bi-zoom-in"></i></button>
+                    <button type="button" class="btn btn-light btn-sm" onclick="cropZoom(-0.1)"><i class="bi bi-zoom-out"></i></button>
+                    <button type="button" class="btn btn-light btn-sm" onclick="cropRotate()"><i class="bi bi-arrow-clockwise"></i></button>
                 </div>
-                <div class="bb-side-body" id="activeNowZone">
-                    {{-- TODO: Backend — loop $activeUsers here --}}
-                    <div class="bb-active-item">
-                        <div class="bb-active-avatar">A</div>
-                        <div class="bb-active-meta">
-                            <span class="bb-active-name">Ayesha Rahman</span>
-                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
-                        </div>
-                    </div>
-                    <div class="bb-active-item">
-                        <div class="bb-active-avatar" style="background:linear-gradient(135deg,#f59e0b,#f97316);">R</div>
-                        <div class="bb-active-meta">
-                            <span class="bb-active-name">Rifat Hossain</span>
-                            <span class="bb-mini-badge bb-mini-student"><i class="bi bi-backpack-fill"></i> Student</span>
-                        </div>
-                    </div>
-                    <div class="bb-active-item">
-                        <div class="bb-active-avatar" style="background:linear-gradient(135deg,#10b981,#059669);">N</div>
-                        <div class="bb-active-meta">
-                            <span class="bb-active-name">Nadia Islam</span>
-                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
-                        </div>
-                    </div>
-                    <div class="bb-active-item">
-                        <div class="bb-active-avatar" style="background:linear-gradient(135deg,#ec4899,#be185d);">T</div>
-                        <div class="bb-active-meta">
-                            <span class="bb-active-name">Tanvir Ahmed</span>
-                            <span class="bb-mini-badge bb-mini-student"><i class="bi bi-backpack-fill"></i> Student</span>
-                        </div>
-                    </div>
-                </div>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="cropSaveBtn" class="bb-edit-profile-btn" onclick="applyCrop()">Apply & Upload</button>
             </div>
-
-            {{-- Suggested People --}}
-            <div class="bb-side-card mb-3">
-                <div class="bb-side-head">
-                    <span class="bb-side-title"><i class="bi bi-person-plus-fill text-primary"></i> Suggested People</span>
-                </div>
-                <div class="bb-side-body" id="suggestedPeopleZone">
-                    {{-- TODO: Backend — loop $suggestedUsers here --}}
-                    <div class="bb-suggest-item">
-                        <div class="bb-suggest-avatar">M</div>
-                        <div class="bb-suggest-info">
-                            <h6 class="bb-suggest-name">Mahmudul Hasan</h6>
-                            <p class="bb-suggest-role">CSE · Batch 2019</p>
-                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
-                        </div>
-                        <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
-                    </div>
-                    <div class="bb-suggest-item">
-                        <div class="bb-suggest-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">F</div>
-                        <div class="bb-suggest-info">
-                            <h6 class="bb-suggest-name">Farhana Akter</h6>
-                            <p class="bb-suggest-role">EEE · Batch 2024</p>
-                            <span class="bb-mini-badge bb-mini-student"><i class="bi bi-backpack-fill"></i> Student</span>
-                        </div>
-                        <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
-                    </div>
-                    <div class="bb-suggest-item">
-                        <div class="bb-suggest-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">K</div>
-                        <div class="bb-suggest-info">
-                            <h6 class="bb-suggest-name">Kamrul Islam</h6>
-                            <p class="bb-suggest-role">BBA · Batch 2018</p>
-                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
-                        </div>
-                        <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
-                    </div>
-                </div>
-            </div>
-
-        </div>{{-- /Right sidebar --}}
-
-    </div>{{-- /row --}}
-</div>{{-- /container --}}
+        </div>
+    </div>
+</div>
+@endif
 
 {{-- ==================== MODALS ==================== --}}
 
@@ -783,9 +944,244 @@
     </div>
 </div>
 
-{{-- ==================== SCRIPTS ==================== --}}
+{{-- ==================== IMAGE VIEW (Lightbox) — সবার জন্য ==================== --}}
+<div class="modal fade" id="imageViewModal" tabindex="-1" aria-hidden="true" style="background:rgba(0,0,0,.92);">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content bg-transparent border-0">
+            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" style="z-index:10;"></button>
+            <div class="modal-body p-0 text-center">
+                <img id="imageViewTarget" src="" style="max-width:100%; max-height:88vh; object-fit:contain; border-radius:8px;">
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
+<script>
+const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:2200, timerProgressBar:true });
+
+// ছবি বড় করে দেখা (cover + avatar) — সবার জন্য
+let imageViewModal = null;
+document.addEventListener('DOMContentLoaded', () => {
+    imageViewModal = new bootstrap.Modal(document.getElementById('imageViewModal'));
+});
+function openImageView(src) {
+    if (!src) return;
+    document.getElementById('imageViewTarget').src = src;
+    imageViewModal?.show();
+}
+
+@if($isOwner)
+let editModal = null, cropModal = null;
+let cropper = null, cropType = 'profile';
+let formInitialState = '';   // পরিবর্তন ট্র্যাক করতে
+let allowEditClose = false;  // warning bypass flag
+
+document.addEventListener('DOMContentLoaded', () => {
+    editModal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+    cropModal = new bootstrap.Modal(document.getElementById('cropModal'));
+
+    // Cancel / X — পরিবর্তন থাকলে warning (Fix #4)
+    document.getElementById('editModalCancelBtn').addEventListener('click', attemptCloseEdit);
+    document.getElementById('editModalCloseBtn').addEventListener('click', attemptCloseEdit);
+});
+
+function serializeForm() {
+    const fd = new FormData(document.getElementById('editProfileForm'));
+    let s = '';
+    for (const [k,v] of fd.entries()) s += k+'='+v+'&';
+    return s;
+}
+
+function openEditModal() {
+    allowEditClose = false;
+    editModal?.show();
+    // modal খোলার পর initial state ধরে রাখো
+    setTimeout(() => { formInitialState = serializeForm(); }, 200);
+}
+
+// পরিবর্তন আছে কিনা দেখে বন্ধ করার চেষ্টা (Fix #4)
+function attemptCloseEdit() {
+    const changed = serializeForm() !== formInitialState;
+    if (!changed) { editModal?.hide(); return; }
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'Your changes will not be saved.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'OK, discard',
+        cancelButtonText: 'Keep editing'
+    }).then(r => {
+        if (r.isConfirmed) { editModal?.hide(); }
+        // Cancel চাপলে কিছুই হবে না — এডিট চলমান থাকবে
+    });
+}
+
+// ---- Save profile info (AJAX) — Fix #1: reload ছাড়া, টোস্ট auto ----
+document.getElementById('editProfileForm')?.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('saveProfileBtn');
+    btn.disabled = true; btn.innerText = 'Saving...';
+
+    const fd = new FormData(this);
+    fetch("{{ route('profile.update.info') }}", {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+        body: fd
+    })
+    .then(r => r.json())
+    .then(d => {
+        btn.disabled = false; btn.innerText = 'Save changes';
+        if (!d.success) { Swal.fire({icon:'error', title:'Update failed'}); return; }
+
+        // initial state আপডেট করো (যাতে পরে warning না আসে)
+        formInitialState = serializeForm();
+        editModal?.hide();
+        Toast.fire({ icon:'success', title: d.message || 'Profile updated!' });
+
+        // পেজের তথ্য live আপডেট (reload ছাড়া)
+        applyProfileToPage(d.user);
+    })
+    .catch(() => {
+        btn.disabled = false; btn.innerText = 'Save changes';
+        Swal.fire({icon:'error', title:'Network error'});
+    });
+});
+
+// সেভ হওয়া তথ্য পেজে বসাও (reload ছাড়াই দেখা যাবে)
+function applyProfileToPage(u) {
+    if (!u) { return; }
+    const set = (sel, val) => { const el = document.querySelector(sel); if (el) el.textContent = val || '—'; };
+
+    document.getElementById('displayName').textContent = u.name;
+
+    // headline
+    const headline = document.querySelector('.bb-headline');
+    if (headline) {
+        let h = u.department || 'Department not set';
+        if (u.session) h += ' · Session ' + u.session;
+        headline.textContent = h;
+    }
+
+    // info grid (order: dept, session, section, semester, phone, location, email, interests)
+    const vals = document.querySelectorAll('.bb-info-value');
+    if (vals[0]) vals[0].textContent = u.department || '—';
+    if (vals[1]) vals[1].textContent = u.session || '—';
+    if (vals[2]) vals[2].textContent = u.section || '—';
+    if (vals[3]) vals[3].textContent = u.semester || '—';
+    if (vals[4]) vals[4].textContent = u.phone || '—';
+    if (vals[5]) vals[5].textContent = u.location || '—';
+    // vals[6] = email (বদলায় না)
+    if (vals[7]) vals[7].textContent = u.interests || '—';
+
+    // Bio
+    const bioCard = document.querySelectorAll('.bb-card')[1]; // About card
+    if (bioCard) {
+        const bioP = bioCard.querySelector('.bb-bio-text, .bb-empty');
+        if (bioP) {
+            if (u.bio) { bioP.textContent = u.bio; bioP.className = 'bb-bio-text'; }
+            else { bioP.textContent = 'Add a short bio to tell people about yourself.'; bioP.className = 'bb-empty'; }
+        }
+    }
+    // Note: skills + social links live-update করতে reload সহজ; কিন্তু এড়াতে ছোট রিফ্রেশ এড়িয়ে গেলাম।
+    // পরিবর্তন নিশ্চিত দেখাতে চাইলে নিচের লাইন আনকমেন্ট করুন:
+    // setTimeout(()=>location.reload(), 1200);
+}
+
+// ======== CROP + PHOTO UPLOAD (Fix #2) ========
+function startCrop(file, type) {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { Swal.fire({icon:'error', title:'File too large!', text:'Max 10MB.'}); return; }
+
+    cropType = type;
+    document.getElementById('cropTitle').textContent = type === 'cover' ? 'Adjust cover photo' : 'Adjust profile photo';
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const img = document.getElementById('cropImage');
+        img.src = ev.target.result;
+        cropModal.show();
+
+        // আগের cropper destroy
+        if (cropper) { cropper.destroy(); cropper = null; }
+        // modal পুরো খোলার পর cropper init
+        setTimeout(() => {
+            cropper = new Cropper(img, {
+                aspectRatio: type === 'cover' ? 3/1 : 1/1,   // cover 3:1, avatar 1:1
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 1,
+                background: false,
+                responsive: true,
+            });
+        }, 300);
+    };
+    reader.readAsDataURL(file);
+}
+
+function cropZoom(amt) { if (cropper) cropper.zoom(amt); }
+function cropRotate() { if (cropper) cropper.rotate(90); }
+
+function applyCrop() {
+    if (!cropper) return;
+    const btn = document.getElementById('cropSaveBtn');
+    btn.disabled = true; btn.innerText = 'Uploading...';
+
+    const w = cropType === 'cover' ? 1200 : 500;
+    const h = cropType === 'cover' ? 400 : 500;
+
+    cropper.getCroppedCanvas({ width:w, height:h, imageSmoothingQuality:'high' }).toBlob((blob) => {
+        const fd = new FormData();
+        fd.append('photo', blob, 'cropped.jpg');
+        fd.append('type', cropType);
+
+        fetch("{{ route('profile.update.photo') }}", {
+            method:'POST',
+            headers:{ 'X-CSRF-TOKEN': CSRF, 'Accept':'application/json' },
+            body: fd
+        })
+        .then(r => r.json())
+        .then(d => {
+            btn.disabled = false; btn.innerText = 'Apply & Upload';
+            if (!d.success) { Swal.fire({icon:'error', title:'Upload failed'}); return; }
+            cropModal.hide();
+
+            // live বদলাও (reload ছাড়া) — Fix #1
+            if (cropType === 'cover') {
+                const cover = document.querySelector('.bb-cover');
+                let im = document.getElementById('coverImg');
+                if (!im) { im = document.createElement('img'); im.id='coverImg'; cover.insertBefore(im, cover.firstChild); }
+                im.src = d.url + '?t=' + Date.now();
+            } else {
+                const av = document.getElementById('avatarImg');
+                if (av.tagName === 'IMG') { av.src = d.url + '?t=' + Date.now(); }
+                else {
+                    const im = document.createElement('img');
+                    im.id='avatarImg'; im.className='bb-avatar-lg'; im.src = d.url + '?t=' + Date.now();
+                    av.replaceWith(im);
+                }
+            }
+            Toast.fire({ icon:'success', title: d.message || 'Photo updated!' });
+        })
+        .catch(() => { btn.disabled = false; btn.innerText='Apply & Upload'; Swal.fire({icon:'error', title:'Network error'}); });
+    }, 'image/jpeg', 0.9);
+}
+
+document.getElementById('avatarInput')?.addEventListener('change', function(){ startCrop(this.files[0], 'profile'); this.value=''; });
+document.getElementById('coverInput')?.addEventListener('change', function(){ startCrop(this.files[0], 'cover'); this.value=''; });
+
+// crop modal বন্ধ হলে cropper destroy
+document.getElementById('cropModal')?.addEventListener('hidden.bs.modal', () => {
+    if (cropper) { cropper.destroy(); cropper = null; }
+});
+@endif
+</script>
 
 <script>
 // ==========================================
@@ -1472,53 +1868,9 @@ document.getElementById('editPostForm')?.addEventListener('submit', function (e)
 });
 
 // ==========================================
-// INFINITE SCROLL
+// INFINITE SCROLL (profile এ নিষ্ক্রিয় — no-op)
 // ==========================================
-let feedLoading  = false;
-
-function loadMorePosts() {
-    const meta = document.getElementById('feedMeta');
-    if (!meta) return;
-    if (feedLoading || meta.dataset.hasMore === '0') return;
-
-    feedLoading = true;
-    const nextPage = meta.dataset.nextPage;
-    const loader   = document.getElementById('feedLoader');
-    if (loader) loader.classList.remove('d-none');
-
-    fetch(`{{ route('feed.load') }}?page=${nextPage}`, {
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-    })
-    .then(r => r.json())
-    .then(data => {
-
-        const container = document.getElementById('postsFeedContainer');
-        if (container && data.html.trim()) {
-            container.insertAdjacentHTML('beforeend', data.html);
-            if (window.bbPrimeVideos) window.bbPrimeVideos(container);
-        }
-
-        meta.dataset.nextPage = data.next_page;
-        meta.dataset.hasMore  = data.has_more ? '1' : '0';
-        if (loader) loader.classList.add('d-none');
-        if (!data.has_more) {
-            const endMsg = document.getElementById('feedEndMessage');
-            if (endMsg) endMsg.classList.remove('d-none');
-        }
-        feedLoading = false;
-    })
-    .catch(err => {
-        console.error('Feed load error:', err);
-        if (loader) loader.classList.add('d-none');
-        feedLoading = false;
-    });
-}
-
-window.addEventListener('scroll', function () {
-    const scrollPos = window.innerHeight + window.scrollY;
-    const threshold = document.body.offsetHeight - 300;
-    if (scrollPos >= threshold) { loadMorePosts(); }
-});
+function loadMorePosts() { /* profile page: ট্যাবে সব পোস্ট একসাথে লোড হয়, infinite scroll লাগে না */ }
 
 // ==========================================
 // COMMENT MODAL (Premium) — সব কমেন্ট কাজ এখানে
@@ -1734,7 +2086,103 @@ function deleteComment(cid, postId) {
     });
 }
 
+// ==========================================
+// PROFILE TAB SWITCHING (AJAX, lazy load)
+// ==========================================
+const PROFILE_USER_ID = {{ $user->id }};
+const PROFILE_IS_OWNER = {{ $isOwner ? 'true' : 'false' }};
+let postsLoaded = false;
+let mediaLoaded = false;
+
+function switchTab(tab) {
+    // বাটন active
+    document.querySelectorAll('.bb-tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    // panel active
+    document.querySelectorAll('.bb-tab-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('tab-' + tab);
+    if (panel) panel.classList.add('active');
+
+    // lazy load
+    if (tab === 'posts' && !postsLoaded) { loadProfilePosts(); }
+    if (tab === 'media' && !mediaLoaded) { loadProfileMedia(); }
+}
+
+function profileTabUrl(tab) {
+    // নিজের হলে /profile/tab/content, অন্যের হলে /profile/{id}/tab/content
+    return PROFILE_IS_OWNER
+        ? `{{ route('profile.tab') }}?tab=${tab}`
+        : `/profile/${PROFILE_USER_ID}/tab/content?tab=${tab}`;
+}
+
+// ----- POSTS লোড -----
+function loadProfilePosts() {
+    const container = document.getElementById('profilePostsContainer');
+    fetch(profileTabUrl('posts'), {
+        headers: { 'X-Requested-With':'XMLHttpRequest', 'Accept':'application/json' }
+    })
+    .then(r => r.json())
+    .then(d => {
+        postsLoaded = true;
+        if (!d.success) { container.innerHTML = '<div class="bb-posts-empty">Could not load posts.</div>'; return; }
+        if (d.count === 0) {
+            container.innerHTML = `<div class="bb-posts-empty"><i class="bi bi-inbox"></i><h5 class="fw-bold text-secondary">No posts yet</h5><p class="small">${PROFILE_IS_OWNER ? 'Share your first post!' : 'This user has not posted anything.'}</p></div>`;
+            return;
+        }
+        container.innerHTML = d.html;
+        if (window.bbPrimeVideos) window.bbPrimeVideos(container);
+    })
+    .catch(() => { postsLoaded = true; container.innerHTML = '<div class="bb-posts-empty">Network error.</div>'; });
+}
+
+// ----- MEDIA লোড -----
+function loadProfileMedia() {
+    const container = document.getElementById('profileMediaContainer');
+    fetch(profileTabUrl('media'), {
+        headers: { 'X-Requested-With':'XMLHttpRequest', 'Accept':'application/json' }
+    })
+    .then(r => r.json())
+    .then(d => {
+        mediaLoaded = true;
+        if (!d.success) { container.innerHTML = '<div class="bb-media-empty">Could not load media.</div>'; return; }
+        if (d.count === 0) {
+            container.innerHTML = `<div class="bb-media-empty"><i class="bi bi-images"></i><h5 class="fw-bold text-secondary">No photos or videos yet</h5></div>`;
+            return;
+        }
+        // grid বানাও
+        let grid = '<div class="bb-media-grid">';
+        const mediaJson = JSON.stringify(d.media).replace(/"/g, '&quot;');
+        d.media.forEach((m, i) => {
+            if (m.type === 'image') {
+                grid += `<div class="bb-media-grid-item" onclick="openProfileMedia(${i})"><img src="${m.url}" loading="lazy"></div>`;
+            } else {
+                grid += `<div class="bb-media-grid-item" onclick="openProfileMedia(${i})"><video src="${m.url}" preload="metadata" muted></video><div class="bb-media-grid-play"><i class="bi bi-play-fill"></i></div></div>`;
+            }
+        });
+        grid += '</div>';
+        container.innerHTML = grid;
+        // media array global এ রাখি lightbox এর জন্য
+        window.profileMediaArr = d.media;
+        if (window.bbPrimeVideos) window.bbPrimeVideos(container);
+    })
+    .catch(() => { mediaLoaded = true; container.innerHTML = '<div class="bb-media-empty">Network error.</div>'; });
+}
+
+// media grid এ ক্লিক → feed এর lightbox (openLightbox) ব্যবহার
+function openProfileMedia(index) {
+    if (window.profileMediaArr && typeof openLightbox === 'function') {
+        openLightbox(JSON.stringify(window.profileMediaArr), index);
+    }
+}
+
+// পেজ লোডেই Posts ট্যাব ডিফল্ট — তাই পোস্ট লোড করো
+document.addEventListener('DOMContentLoaded', () => {
+    loadProfilePosts();
+});
+
 </script>
+
 
 </body>
 </html>

@@ -69,13 +69,21 @@ Route::post('/admin/manage-authority', [App\Http\Controllers\Admin\AdminDashboar
 require __DIR__.'/auth.php';
 
 
-// লারাভেল ব্রিজের ডিফল্ট রাউটগুলো এভাবে রাখা উচিত:
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy'); // এই লাইনটিই আপনার মিসিং ছিল!
-});
+    // 🆕 প্রিমিয়াম প্রোফাইল
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');           // নিজের প্রোফাইল
+    Route::get('/profile/{id}', [ProfileController::class, 'show'])->name('profile.view');       // অন্যের প্রোফাইল
+    Route::get('/profile/tab/content', [ProfileController::class, 'tabContent'])->name('profile.tab');
+    Route::get('/profile/{id}/tab/content', [ProfileController::class, 'tabContent'])->name('profile.tab.user');
+    Route::get('/profile/{id}/tab/content', [ProfileController::class, 'tabContent'])->name('profile.tab.user'); // 🆕 অন্যের ট্যাব
+    Route::post('/profile/update', [ProfileController::class, 'updateProfile'])->name('profile.update.info');  // AJAX তথ্য আপডেট
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.update.photo');    // AJAX ছবি আপডেট
 
+    // Breeze ডিফল্ট (অক্ষত)
+    Route::get('/profile/edit/account', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
 Route::middleware(['auth'])->group(function () {
     // আগের অন্যান্য রাউটগুলোর সাথে নিচে এই দুটি বসিয়ে দিন
