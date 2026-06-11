@@ -202,6 +202,43 @@
 .bb-role-student { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
 .bb-role-alumni  { background: #fef3c7; color: #d97706; border-color: #fde68a; }
 
+/* Post A Job button (navbar) */
+.bb-post-job-btn {
+    display:inline-flex; align-items:center; gap:7px;
+    background:linear-gradient(135deg, #4f46e5, #7c73f0); color:#fff;
+    border:none; border-radius:20px; padding:8px 16px;
+    font-size:13px; font-weight:700; letter-spacing:.2px;
+    box-shadow:0 2px 8px rgba(79,70,229,.3); transition:all .15s ease;
+}
+.bb-post-job-btn:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(79,70,229,.4); }
+.bb-post-job-btn i { font-size:14px; }
+@media (max-width:767px){ .bb-post-job-btn { padding:8px 11px; border-radius:50%; } }
+
+/* Post Job modal form */
+.bb-job-label { display:block; font-size:12.5px; font-weight:600; color:#374151; margin-bottom:5px; }
+.bb-job-input {
+    width:100%; border:1.5px solid #e4e6eb; border-radius:10px;
+    padding:9px 12px; font-size:13.5px; outline:none; transition:border-color .15s, box-shadow .15s;
+    background:#fff;
+}
+.bb-job-input:focus { border-color:#4f46e5; box-shadow:0 0 0 3px rgba(79,70,229,.12); }
+textarea.bb-job-input { resize:vertical; }
+.bb-job-submit-btn {
+    background:linear-gradient(135deg,#4f46e5,#7c73f0); color:#fff; border:none;
+    border-radius:10px; padding:9px 22px; font-size:14px; font-weight:700;
+    display:inline-flex; align-items:center; transition:all .15s;
+}
+.bb-job-submit-btn:hover { box-shadow:0 4px 14px rgba(79,70,229,.4); }
+.bb-job-submit-btn:disabled { opacity:.6; }
+
+/* Post Job modal — নির্ভরযোগ্য scroll (form flex column, body scrolls) */
+.postjob-dialog { height:calc(100vh - 3.5rem); }
+.postjob-content { max-height:100%; display:flex; flex-direction:column; overflow:hidden; }
+.postjob-form { display:flex; flex-direction:column; min-height:0; flex:1 1 auto; overflow:hidden; }
+.postjob-body { overflow-y:auto; flex:1 1 auto; min-height:0; }
+.postjob-footer { flex:0 0 auto; }
+@media (max-width:576px){ .postjob-dialog { height:calc(100vh - 1rem); } }
+
 /* ===== RIGHT SIDEBAR (reusable) ===== */
 .bb-side-card {
     background: var(--bb-card);
@@ -353,7 +390,46 @@
     display:inline-flex; align-items:center; background:#e0e7ff; color:#4f46e5;
     font-weight:600; font-size:11.5px; padding:2px 8px; border-radius:12px; white-space:nowrap;
 }
-    </style>
+
+/* ===== JOB CARD (in feed) ===== */
+.bb-jobcard {
+    background:#fff; border-radius:16px; box-shadow:0 1px 3px rgba(16,24,40,.06);
+    padding:16px 18px; margin-bottom:18px; border:1px solid var(--bb-line);
+    transition:box-shadow .2s;
+}
+.bb-jobcard:hover { box-shadow:0 8px 24px rgba(79,70,229,.10); }
+.bb-jobcard-top { display:flex; align-items:flex-start; gap:13px; }
+.bb-jobcard-logo {
+    width:52px; height:52px; border-radius:13px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:23px; font-weight:800;
+}
+.bb-jobcard-headinfo { flex-grow:1; min-width:0; }
+.bb-jobcard-title {
+    font-size:16.5px; font-weight:800; color:var(--bb-ink); text-decoration:none;
+    letter-spacing:-.3px; display:inline-block; line-height:1.25;
+}
+.bb-jobcard-title:hover { color:var(--bb-primary); }
+.bb-jobcard-company { font-size:13px; color:var(--bb-muted); margin:2px 0 0; font-weight:500; }
+.bb-job-expiring { display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:#ea580c; margin-top:5px; }
+.bb-job-expired  { display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:#dc2626; margin-top:5px; }
+.bb-jobcard-more { border:none; background:transparent; color:var(--bb-muted); width:32px; height:32px; border-radius:50%; cursor:pointer; flex-shrink:0; }
+.bb-jobcard-more:hover { background:var(--bb-bg); }
+.bb-jobcard-meta { display:flex; flex-wrap:wrap; gap:7px; margin:13px 0; }
+.bb-jobcard-tag, .bb-jobcard-pill {
+    display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600;
+    padding:5px 11px; border-radius:8px;
+}
+.bb-jobcard-tag i, .bb-jobcard-pill i { font-size:11px; }
+.bb-jobcard-pill { background:var(--bb-bg); color:#4b5563; }
+.bb-jobcard-btn {
+    display:flex; align-items:center; justify-content:center; width:100%;
+    background:var(--bb-primary-soft); color:var(--bb-primary); border:none;
+    border-radius:10px; padding:10px; font-size:13.5px; font-weight:700; text-decoration:none;
+    transition:all .15s;
+}
+.bb-jobcard-btn:hover { background:var(--bb-primary); color:#fff; }
+
+        </style>
 </head>
 <body>
 
@@ -368,6 +444,10 @@
         </div>
         <div class="d-flex align-items-center gap-2 ms-auto">
             @php $role = Auth::user()->role; @endphp
+            <button type="button" class="bb-post-job-btn" data-bs-toggle="modal" data-bs-target="#postJobModal">
+                <i class="bi bi-briefcase-fill"></i>
+                <span class="d-none d-md-inline">Post A Job</span>
+            </button>
             <span class="bb-role-badge d-none d-sm-inline-flex {{ $role === 'alumni' ? 'bb-role-alumni' : 'bb-role-student' }}">
                 <i class="bi {{ $role === 'alumni' ? 'bi-mortarboard-fill' : 'bi-backpack-fill' }}"></i>
                 {{ ucfirst($role) }} Feed
@@ -1975,6 +2055,93 @@ function highlightMentions(text) {
 
 </script>
 
+
+{{-- ==================== POST A JOB MODAL ==================== --}}
+<div class="modal fade" id="postJobModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg postjob-dialog">
+        <div class="modal-content border-0 shadow-lg rounded-4 postjob-content">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="postJobModalTitle"><i class="bi bi-briefcase-fill text-primary me-1"></i> Post A Job</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="postJobForm" class="postjob-form">
+                <div class="modal-body p-4 postjob-body">
+                    <input type="hidden" name="id" id="job_id">
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <label class="bb-job-label">Job Title *</label>
+                            <input type="text" name="title" id="job_title" class="bb-job-input" placeholder="e.g. Junior Laravel Developer" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="bb-job-label">Company *</label>
+                            <input type="text" name="company" id="job_company" class="bb-job-input" placeholder="e.g. Tech Soft BD" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-job-label">Location</label>
+                            <input type="text" name="location" id="job_location" class="bb-job-input" placeholder="e.g. Dhaka / Remote">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-job-label">Job Type *</label>
+                            <select name="job_type" id="job_type" class="bb-job-input" required>
+                                <option>Full-time</option>
+                                <option>Part-time</option>
+                                <option>Internship</option>
+                                <option>Remote</option>
+                                <option>Contract</option>
+                                <option>Freelance</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-job-label">Experience</label>
+                            <input type="text" name="experience" id="job_experience" class="bb-job-input" placeholder="e.g. 1-2 years / Fresher">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-job-label">Salary</label>
+                            <input type="text" name="salary" id="job_salary" class="bb-job-input" placeholder="e.g. 30k-50k BDT / Negotiable">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-job-label">Category</label>
+                            <input type="text" name="category" id="job_category" class="bb-job-input" placeholder="e.g. IT, Marketing, Design">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-job-label">Application Deadline</label>
+                            <input type="date" name="deadline" id="job_deadline" class="bb-job-input">
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-job-label">Job Description *</label>
+                            <textarea name="description" id="job_description" class="bb-job-input" rows="4" placeholder="Describe the role, responsibilities..." required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-job-label">Requirements</label>
+                            <textarea name="requirements" id="job_requirements" class="bb-job-input" rows="3" placeholder="Educational qualification, must-haves..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-job-label">Skills <span class="text-muted" style="font-weight:400;">(comma separated)</span></label>
+                            <input type="text" name="skills" id="job_skills" class="bb-job-input" placeholder="e.g. PHP, Laravel, MySQL, Git">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="bb-job-label">Apply Via</label>
+                            <select name="apply_type" id="job_apply_type" class="bb-job-input">
+                                <option value="link">Website Link</option>
+                                <option value="email">Email</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="bb-job-label">Apply Link / Email *</label>
+                            <input type="text" name="apply_value" id="job_apply_value" class="bb-job-input" placeholder="https://apply.example.com or hr@company.com" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer postjob-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="bb-job-submit-btn" id="jobSubmitBtn"><i class="bi bi-send-fill me-1"></i> Post Job</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 {{-- Global Emoji Popover --}}
 <div id="bbEmojiPopover"><emoji-picker class="light"></emoji-picker></div>
 
@@ -2042,6 +2209,82 @@ function highlightMentions(text) {
         }
     });
 })();
+</script>
+
+
+<script>
+// ==========================================
+// POST A JOB
+// ==========================================
+(function(){
+    const form = document.getElementById('postJobForm');
+    if (!form) return;
+    let jobModalObj = null;
+    document.addEventListener('DOMContentLoaded', () => {
+        const el = document.getElementById('postJobModal');
+        if (el) jobModalObj = bootstrap.Modal.getOrCreateInstance(el);
+    });
+
+    form.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        const btn = document.getElementById('jobSubmitBtn');
+        btn.disabled = true; const orig = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Posting...';
+
+        const fd = new FormData(form);
+        fetch("{{ route('jobs.store') }}", {
+            method:'POST',
+            headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},
+            body: fd
+        })
+        .then(r=>r.json())
+        .then(d=>{
+            btn.disabled=false; btn.innerHTML=orig;
+            if(!d.success){
+                let msg = d.message || 'Could not post job.';
+                if (d.errors) msg = Object.values(d.errors).flat().join('\n');
+                Swal.fire({icon:'error',title:'Failed',text:msg});
+                return;
+            }
+            jobModalObj?.hide();
+            form.reset();
+            const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:2200, timerProgressBar:true });
+            Toast.fire({ icon:'success', title:'Job posted successfully!' });
+
+            // নতুন job card ফিডের উপরে বসাও (reload ছাড়া)
+            if (d.html) {
+                const feedC = document.getElementById('postsFeedContainer');
+                if (feedC) {
+                    feedC.insertAdjacentHTML('afterbegin', d.html);
+                    document.getElementById('emptyFeedState')?.remove();
+                }
+            }
+        })
+        .catch(()=>{ btn.disabled=false; btn.innerHTML=orig; Swal.fire({icon:'error',title:'Network error'}); });
+    });
+})();
+</script>
+
+
+<script>
+// ==========================================
+// DELETE JOB (poster only)
+// ==========================================
+function deleteJob(id) {
+    Swal.fire({ title:'Delete this job?', icon:'warning', showCancelButton:true, confirmButtonColor:'#ef4444', confirmButtonText:'Delete' })
+    .then(r=>{
+        if(!r.isConfirmed) return;
+        fetch(`/jobs/${id}`, { method:'DELETE', headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'} })
+        .then(r=>r.json())
+        .then(d=>{
+            if(!d.success) return;
+            const card = document.getElementById(`jobCard-${id}`);
+            if(card){ card.style.transition='opacity .3s'; card.style.opacity='0'; setTimeout(()=>card.remove(),300); }
+            const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1500 });
+            Toast.fire({ icon:'success', title:'Job deleted' });
+        });
+    });
+}
 </script>
 
 </body>

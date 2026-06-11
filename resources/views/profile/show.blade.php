@@ -142,6 +142,25 @@
         .bb-doc-file:hover { background:var(--bb-primary); color:#fff; }
         .bb-doc-size { font-size:11.5px; color:var(--bb-muted); }
 
+        /* My Job Posts */
+        .bb-myjob-item { display:flex; gap:13px; padding:14px 0; border-bottom:1px solid var(--bb-line); }
+        .bb-myjob-item:last-child { border-bottom:none; padding-bottom:0; }
+        .bb-myjob-item:first-child { padding-top:0; }
+        .bb-myjob-logo { width:46px; height:46px; border-radius:11px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; }
+        .bb-myjob-body { flex-grow:1; min-width:0; }
+        .bb-myjob-title { font-size:15px; font-weight:700; color:var(--bb-ink); text-decoration:none; letter-spacing:-.2px; }
+        .bb-myjob-title:hover { color:var(--bb-primary); }
+        .bb-myjob-company { font-size:12.5px; color:var(--bb-muted); margin:1px 0 6px; }
+        .bb-myjob-meta { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; }
+        .bb-myjob-tag { font-size:11px; font-weight:700; color:var(--bb-primary); background:var(--bb-primary-soft); padding:2px 9px; border-radius:6px; }
+        .bb-myjob-date { font-size:11.5px; color:var(--bb-muted); display:inline-flex; align-items:center; gap:4px; }
+        .bb-myjob-date i { font-size:10px; }
+        .bb-myjob-status { font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px; padding:2px 9px; border-radius:6px; }
+        .bb-myjob-status i { font-size:9px; }
+        .bb-st-active { background:#dcfce7; color:#16a34a; }
+        .bb-st-soon   { background:#fff7ed; color:#ea580c; }
+        .bb-st-closed { background:#fef2f2; color:#dc2626; }
+
         .bb-role-pill {
             display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700;
             padding:5px 13px; border-radius:20px; letter-spacing:.3px; text-transform:uppercase;
@@ -824,6 +843,56 @@
             @endforelse
         </div>
     </div>
+
+    {{-- ===== MY JOB POSTS (alumni only) ===== --}}
+    @if($isAlumni)
+    <div class="bb-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="bb-card-title m-0"><i class="bi bi-briefcase"></i> Job Posts {{ $user->jobPosts->count() ? '· '.$user->jobPosts->count() : '' }}</h2>
+            @if($isOwner)
+                <a href="{{ route('jobs.all') }}" class="bb-side-link" style="font-size:13px;">View all jobs</a>
+            @endif
+        </div>
+        <div id="myJobList">
+            @forelse($user->jobPosts as $job)
+                @php
+                    $jt = strtolower($job->job_type);
+                    $logoColor = str_contains($jt,'intern') ? 'background:#fff7ed;color:#ea580c;'
+                               : (str_contains($jt,'part') ? 'background:#eff6ff;color:#2563eb;'
+                               : 'background:var(--bb-primary-soft);color:var(--bb-primary);');
+                @endphp
+                <div class="bb-myjob-item">
+                    <div class="bb-myjob-logo" style="{{ $logoColor }}">{{ strtoupper(substr($job->company,0,1)) }}</div>
+                    <div class="bb-myjob-body">
+                        <a href="{{ route('jobs.show', $job->id) }}" class="bb-myjob-title">{{ $job->title }}</a>
+                        <p class="bb-myjob-company">{{ $job->company }}@if($job->location) · {{ $job->location }}@endif</p>
+                        <div class="bb-myjob-meta">
+                            <span class="bb-myjob-tag">{{ $job->job_type }}</span>
+                            <span class="bb-myjob-date"><i class="bi bi-clock"></i> Posted {{ $job->created_at->diffForHumans() }}</span>
+                            @if($job->is_expired)
+                                <span class="bb-myjob-status bb-st-closed"><i class="bi bi-x-circle"></i> Closed</span>
+                            @elseif($job->is_expiring_soon)
+                                <span class="bb-myjob-status bb-st-soon"><i class="bi bi-alarm"></i> Expiring soon</span>
+                            @else
+                                <span class="bb-myjob-status bb-st-active"><i class="bi bi-broadcast"></i> Active</span>
+                            @endif
+                            @if($job->deadline)
+                                <span class="bb-myjob-date"><i class="bi bi-calendar-event"></i> Deadline {{ $job->deadline->format('d M Y') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    @if($isOwner)
+                        <div class="bb-timeline-actions">
+                            <button onclick="deleteMyJob({{ $job->id }})" title="Delete" class="text-danger"><i class="bi bi-trash3"></i></button>
+                        </div>
+                    @endif
+                </div>
+            @empty
+                <p class="bb-empty">{{ $isOwner ? 'You have not posted any jobs yet. Use “Post A Job” from your feed.' : 'No jobs posted yet.' }}</p>
+            @endforelse
+        </div>
+    </div>
+    @endif
 
     </div>{{-- /TAB 1: Student Details --}}
 
@@ -3089,6 +3158,25 @@ function deleteDoc(id, elId){
             if(!d.success){ Swal.fire({icon:'error',title:'Delete failed'}); return; }
             document.getElementById(elId)?.remove();
             detailToast.fire({icon:'success', title:d.message||'Removed'});
+        });
+    });
+}
+
+// নিজের পোস্ট করা job ডিলিট (profile থেকে)
+function deleteMyJob(id){
+    Swal.fire({ title:'Delete this job post?', icon:'warning', showCancelButton:true, confirmButtonColor:'#ef4444', confirmButtonText:'Delete' })
+    .then(r=>{
+        if(!r.isConfirmed) return;
+        fetch(`/jobs/${id}`, { method:'DELETE', headers:{'X-CSRF-TOKEN':DETAIL_CSRF,'Accept':'application/json'} })
+        .then(r=>r.json())
+        .then(d=>{
+            if(!d.success){ Swal.fire({icon:'error',title:'Delete failed'}); return; }
+            // পুরো item সরাও
+            const items = document.querySelectorAll('#myJobList .bb-myjob-item');
+            items.forEach(it => {
+                if (it.querySelector(`[onclick="deleteMyJob(${id})"]`)) it.remove();
+            });
+            detailToast.fire({icon:'success', title:'Job deleted'});
         });
     });
 }

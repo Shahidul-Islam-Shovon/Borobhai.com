@@ -116,6 +116,12 @@ public function isSuperAdmin()
         return $this->hasMany(Document::class)->latest();
     }
 
+    // এই user যেসব job পোস্ট করেছে
+    public function jobPosts()
+    {
+        return $this->hasMany(JobPost::class)->latest();
+    }
+
     // সর্বশেষ শিক্ষা (নামের নিচে দেখানোর জন্য)
     public function latestEducation()
     {

@@ -1,6 +1,7 @@
 <?php
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\JobController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileDetailController;
@@ -116,6 +117,11 @@ Route::middleware(['auth'])->group(function () {
 
     // Saved পেজ
     Route::get('/saved', [App\Http\Controllers\SavedPostController::class, 'index'])->name('saved.index');
+
+    Route::post('/jobs', [JobController::class, 'store'])->name('jobs.store');
+    Route::get('/jobs', [JobController::class, 'all'])->name('jobs.all');
+    Route::get('/jobs/{id}', [JobController::class, 'show'])->name('jobs.show');
+    Route::delete('/jobs/{id}', [JobController::class, 'destroy'])->name('jobs.delete');
 
 });
 

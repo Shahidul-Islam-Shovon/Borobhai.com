@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Models\JobPost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +12,9 @@ class PostController extends Controller
 {
     public function index()
     {
+        // মেয়াদোত্তীর্ণ (৫ দিন গ্রেস শেষ) job গুলো পরিষ্কার করো
+        JobController::cleanupExpired();
+
         $posts = Post::with([
                     'user',
                     'parentPost.user',
@@ -19,16 +23,27 @@ class PostController extends Controller
                         $q->with('user')->latest()->limit(10);
                     }
                 ])
-                ->withCount('comments')  // মোট কমেন্ট সংখ্যা
+                ->withCount('comments')
                 ->latest()
                 ->paginate(5);
 
         $user = Auth::user();
 
+        // সাইডবারের জন্য Recent Jobs (Internship/Part-time আগে, তারপর নতুন)
+        $recentJobs = JobPost::with('user')
+                ->visible()
+                ->orderByRaw("CASE
+                        WHEN LOWER(job_type) LIKE '%intern%' THEN 1
+                        WHEN LOWER(job_type) LIKE '%part%' THEN 2
+                        ELSE 3 END")
+                ->latest()
+                ->take(5)
+                ->get();
+
         if ($user->role === 'alumni') {
-            return view('alumni.dashboard', compact('posts'));
+            return view('alumni.dashboard', compact('posts', 'recentJobs'));
         }
-        return view('student.dashboard', compact('posts'));
+        return view('student.dashboard', compact('posts', 'recentJobs'));
     }
 
     public function loadMore(Request $request)
@@ -59,7 +74,6 @@ class PostController extends Controller
 
     public function store(Request $request)
     {
-        // ১. ভ্যালিডেশন (১০০ মেগা বাইট = ১০২৪০০ কিলোবাইট)
         $request->validate([
             'content' => 'nullable|string',
             'media.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,wmv|max:102400',
@@ -72,19 +86,17 @@ class PostController extends Controller
         $post->user_id = Auth::id();
         $post->content = $request->content ?? '';
 
-        // 🎨 কালার ব্যাকগ্রাউন্ড লজিক (মিডিয়া না থাকলেই কেবল এটি কাজ করবে)
         if ($request->filled('bg_color') && !$request->hasFile('media')) {
             $post->bg_color = $request->bg_color;
         }
 
-        // 📸 🎥 মাল্টিপল মিডিয়া (ইмеется এবং ভিডিও) প্রসেসিং লজিক
         if ($request->hasFile('media')) {
             $imagePaths = [];
             $videoPaths = [];
 
             foreach ($request->file('media') as $file) {
                 $mimeType = $file->getMimeType();
-                
+
                 if (str_starts_with($mimeType, 'video/')) {
                     $videoPaths[] = $file->store('posts/videos', 'public');
                 } else {
@@ -92,12 +104,10 @@ class PostController extends Controller
                 }
             }
 
-            // ইমেজ সেভ করা
             if (count($imagePaths) > 0) {
                 $post->images = $imagePaths;
             }
-            
-            // ভিডিও সেভ করা (সিঙ্গেল ভিডিও হলে ডিরেক্ট পাথ, মাল্টিপল হলে JSON অ্যারে স্ট্রিং)
+
             if (count($videoPaths) > 0) {
                 if (count($videoPaths) === 1) {
                     $post->video = $videoPaths[0];
@@ -109,18 +119,16 @@ class PostController extends Controller
 
         $post->save();
 
-        // নতুন পোস্টের সব relation লোড করো (post-card এর জন্য)
         $post->load(['user', 'parentPost.user', 'likes', 'comments.user']);
         $post->loadCount('comments');
 
-        // post-card HTML রেন্ডার করো
         $html = view('partials.post-card', ['post' => $post])->render();
 
         return response()->json([
             'success' => true,
             'message' => 'Published successfully!',
             'post'    => $post,
-            'html'    => $html,   // 🆕 reload ছাড়া ফিডে বসানোর জন্য
+            'html'    => $html,
         ]);
     }
 
@@ -135,7 +143,6 @@ class PostController extends Controller
         $post->parent_id = $actualParentId;
         $post->save();
 
-        // shared post এর post-card HTML (reload ছাড়া বসানোর জন্য)
         $post->load(['user', 'parentPost.user', 'likes', 'comments.user']);
         $post->loadCount('comments');
         $html = view('partials.post-card', ['post' => $post])->render();
@@ -145,91 +152,82 @@ class PostController extends Controller
 
     public function update(Request $request, $id)
     {
-    $post = Post::findOrFail($id);
+        $post = Post::findOrFail($id);
 
-    if ($post->user_id !== Auth::id()) {
-        return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-    }
+        if ($post->user_id !== Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
 
-    // ১. ভ্যালিডেশন
-    $request->validate([
-        'content' => 'nullable|string',
-        'media.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,wmv|max:102400',
-    ]);
+        $request->validate([
+            'content' => 'nullable|string',
+            'media.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,wmv|max:102400',
+        ]);
 
-    $post->content = $request->content ?? '';
-    
-    if ($request->has('bg_color')) {
-        $post->bg_color = $request->bg_color;
-    }
+        $post->content = $request->content ?? '';
 
-    // 🛠️ ২. এক্সিস্টিং ইমেজ রিমুভ করার লজিক (ফ্রন্টএন্ড থেকে বাদ দেওয়া ছবিগুলো)
-    $currentImages = $post->images ?? [];
-    if ($request->has('removed_images')) {
-        $removedImages = json_decode($request->removed_images, true) ?? [];
-        foreach ($removedImages as $img) {
-            // স্টোরেজ থেকে ডিলিট করা
-            if (Storage::disk('public')->exists($img)) {
-                Storage::disk('public')->delete($img);
+        if ($request->has('bg_color')) {
+            $post->bg_color = $request->bg_color;
+        }
+
+        $currentImages = $post->images ?? [];
+        if ($request->has('removed_images')) {
+            $removedImages = json_decode($request->removed_images, true) ?? [];
+            foreach ($removedImages as $img) {
+                if (Storage::disk('public')->exists($img)) {
+                    Storage::disk('public')->delete($img);
+                }
+                if (($key = array_search($img, $currentImages)) !== false) {
+                    unset($currentImages[$key]);
+                }
             }
-            // অ্যারে থেকে বাদ দেওয়া
-            if (($key = array_search($img, $currentImages)) !== false) {
-                unset($currentImages[$key]);
+            $currentImages = array_values($currentImages);
+        }
+
+        $currentVideos = [];
+        if (!empty($post->video) && $post->video !== 'null') {
+            $currentVideos = is_array($post->video) ? $post->video : (json_decode($post->video, true) ?: [$post->video]);
+        }
+
+        if ($request->has('removed_videos')) {
+            $removedVideos = json_decode($request->removed_videos, true) ?? [];
+            foreach ($removedVideos as $vid) {
+                if (Storage::disk('public')->exists($vid)) {
+                    Storage::disk('public')->delete($vid);
+                }
+                if (($key = array_search($vid, $currentVideos)) !== false) {
+                    unset($currentVideos[$key]);
+                }
+            }
+            $currentVideos = array_values($currentVideos);
+        }
+
+        if ($request->hasFile('media')) {
+            foreach ($request->file('media') as $file) {
+                $mimeType = $file->getMimeType();
+                if (str_starts_with($mimeType, 'video/')) {
+                    $currentVideos[] = $file->store('posts/videos', 'public');
+                } else {
+                    $currentImages[] = $file->store('posts/images', 'public');
+                }
             }
         }
-        $currentImages = array_values($currentImages); // ইনডেক্স রিসেট
-    }
 
-    // 🛠️ ৩. এক্সিস্টিং ভিডিও রিমুভ করার লজিক
-    $currentVideos = [];
-    if (!empty($post->video) && $post->video !== 'null') {
-        $currentVideos = is_array($post->video) ? $post->video : (json_decode($post->video, true) ?: [$post->video]);
-    }
+        $post->images = !empty($currentImages) ? $currentImages : null;
 
-    if ($request->has('removed_videos')) {
-        $removedVideos = json_decode($request->removed_videos, true) ?? [];
-        foreach ($removedVideos as $vid) {
-            if (Storage::disk('public')->exists($vid)) {
-                Storage::disk('public')->delete($vid);
-            }
-            if (($key = array_search($vid, $currentVideos)) !== false) {
-                unset($currentVideos[$key]);
-            }
-        }
-        $currentVideos = array_values($currentVideos);
-    }
-
-    // 🛠️ ৪. নতুন কোনো মিডিয়া (ছবি/ভিডিও) আপলোড দিলে তা যোগ করা
-    if ($request->hasFile('media')) {
-        foreach ($request->file('media') as $file) {
-            $mimeType = $file->getMimeType();
-            if (str_starts_with($mimeType, 'video/')) {
-                $currentVideos[] = $file->store('posts/videos', 'public');
+        if (!empty($currentVideos)) {
+            if (count($currentVideos) === 1) {
+                $post->video = $currentVideos[0];
             } else {
-                $currentImages[] = $file->store('posts/images', 'public');
+                $post->video = json_encode($currentVideos);
             }
-        }
-    }
-
-    // ডাটাবেজে অ্যাসাইন করা
-    $post->images = !empty($currentImages) ? $currentImages : null;
-
-    if (!empty($currentVideos)) {
-        if (count($currentVideos) === 1) {
-            $post->video = $currentVideos[0];
         } else {
-            $post->video = json_encode($currentVideos);
+            $post->video = null;
         }
-    } else {
-        $post->video = null;
-    }
 
-    $post->save();
+        $post->save();
 
-        // আপডেটেড পোস্টের সব relation আবার লোড করো
         $post->load(['user', 'parentPost.user', 'likes', 'comments.user']);
 
-        // নতুন করে এই পোস্টের card HTML বানাও
         $html = view('partials.post-card', ['post' => $post])->render();
 
         return response()->json([
@@ -238,7 +236,7 @@ class PostController extends Controller
             'html'    => $html,
             'post'    => $post
         ]);
-}
+    }
 
     public function destroy($id)
     {
@@ -254,9 +252,6 @@ class PostController extends Controller
         return response()->json(['success' => true]);
     }
 
-    /**
-     * 🛠️ হেল্পার ফাংশন: স্টোরেজ থেকে মিডিয়া ডিলিট করা
-     */
     private function deleteMediaFromStorage($post)
     {
         if ($post->video && Storage::disk('public')->exists($post->video)) {

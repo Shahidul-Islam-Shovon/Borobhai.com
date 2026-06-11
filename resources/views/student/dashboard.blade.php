@@ -353,7 +353,46 @@
     display:inline-flex; align-items:center; background:#e0e7ff; color:#4f46e5;
     font-weight:600; font-size:11.5px; padding:2px 8px; border-radius:12px; white-space:nowrap;
 }
-    </style>
+
+/* ===== JOB CARD (in feed) ===== */
+.bb-jobcard {
+    background:#fff; border-radius:16px; box-shadow:0 1px 3px rgba(16,24,40,.06);
+    padding:16px 18px; margin-bottom:18px; border:1px solid var(--bb-line);
+    transition:box-shadow .2s;
+}
+.bb-jobcard:hover { box-shadow:0 8px 24px rgba(79,70,229,.10); }
+.bb-jobcard-top { display:flex; align-items:flex-start; gap:13px; }
+.bb-jobcard-logo {
+    width:52px; height:52px; border-radius:13px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:23px; font-weight:800;
+}
+.bb-jobcard-headinfo { flex-grow:1; min-width:0; }
+.bb-jobcard-title {
+    font-size:16.5px; font-weight:800; color:var(--bb-ink); text-decoration:none;
+    letter-spacing:-.3px; display:inline-block; line-height:1.25;
+}
+.bb-jobcard-title:hover { color:var(--bb-primary); }
+.bb-jobcard-company { font-size:13px; color:var(--bb-muted); margin:2px 0 0; font-weight:500; }
+.bb-job-expiring { display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:#ea580c; margin-top:5px; }
+.bb-job-expired  { display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:#dc2626; margin-top:5px; }
+.bb-jobcard-more { border:none; background:transparent; color:var(--bb-muted); width:32px; height:32px; border-radius:50%; cursor:pointer; flex-shrink:0; }
+.bb-jobcard-more:hover { background:var(--bb-bg); }
+.bb-jobcard-meta { display:flex; flex-wrap:wrap; gap:7px; margin:13px 0; }
+.bb-jobcard-tag, .bb-jobcard-pill {
+    display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600;
+    padding:5px 11px; border-radius:8px;
+}
+.bb-jobcard-tag i, .bb-jobcard-pill i { font-size:11px; }
+.bb-jobcard-pill { background:var(--bb-bg); color:#4b5563; }
+.bb-jobcard-btn {
+    display:flex; align-items:center; justify-content:center; width:100%;
+    background:var(--bb-primary-soft); color:var(--bb-primary); border:none;
+    border-radius:10px; padding:10px; font-size:13.5px; font-weight:700; text-decoration:none;
+    transition:all .15s;
+}
+.bb-jobcard-btn:hover { background:var(--bb-primary); color:#fff; }
+
+        </style>
 </head>
 <body>
 
@@ -485,38 +524,37 @@
         {{-- ==================== RIGHT SIDEBAR ==================== --}}
         <div class="col-md-3 d-none d-md-block bb-right-sidebar">
 
-            {{-- Popular Jobs --}}
+            {{-- Recent Jobs --}}
             <div class="bb-side-card mb-3">
                 <div class="bb-side-head">
-                    <span class="bb-side-title"><i class="bi bi-briefcase-fill text-primary"></i> Popular Jobs</span>
-                    <a href="#" class="bb-side-link">See all</a>
+                    <span class="bb-side-title"><i class="bi bi-briefcase-fill text-primary"></i> Recent Jobs</span>
+                    <a href="{{ route('jobs.all') }}" class="bb-side-link">See all</a>
                 </div>
-                <div class="bb-side-body" id="popularJobsZone">
-                    {{-- TODO: Backend — loop $popularJobs here --}}
-                    <div class="bb-job-item">
-                        <div class="bb-job-logo">L</div>
-                        <div class="bb-job-info">
-                            <h6 class="bb-job-title">Laravel Developer</h6>
-                            <p class="bb-job-company">Tech Soft BD · Dhaka</p>
-                            <span class="bb-job-tag"><i class="bi bi-broadcast"></i> Actively hiring</span>
-                        </div>
-                    </div>
-                    <div class="bb-job-item">
-                        <div class="bb-job-logo" style="background:#fef3c7;color:#d97706;">U</div>
-                        <div class="bb-job-info">
-                            <h6 class="bb-job-title">UI/UX Designer</h6>
-                            <p class="bb-job-company">Creative Labs · Remote</p>
-                            <span class="bb-job-tag"><i class="bi bi-broadcast"></i> Actively hiring</span>
-                        </div>
-                    </div>
-                    <div class="bb-job-item">
-                        <div class="bb-job-logo" style="background:#dcfce7;color:#16a34a;">S</div>
-                        <div class="bb-job-info">
-                            <h6 class="bb-job-title">Software Engineer</h6>
-                            <p class="bb-job-company">BrainStation · Sylhet</p>
-                            <span class="bb-job-tag"><i class="bi bi-broadcast"></i> Actively hiring</span>
-                        </div>
-                    </div>
+                <div class="bb-side-body" id="recentJobsZone">
+                    @forelse($recentJobs ?? [] as $job)
+                        @php
+                            $jt = strtolower($job->job_type);
+                            $logoColor = str_contains($jt,'intern') ? 'background:#fff7ed;color:#ea580c;'
+                                       : (str_contains($jt,'part') ? 'background:#eff6ff;color:#2563eb;'
+                                       : 'background:var(--bb-primary-soft);color:var(--bb-primary);');
+                        @endphp
+                        <a href="{{ route('jobs.show', $job->id) }}" class="bb-job-item" style="text-decoration:none;">
+                            <div class="bb-job-logo" style="{{ $logoColor }}">{{ strtoupper(substr($job->company,0,1)) }}</div>
+                            <div class="bb-job-info">
+                                <h6 class="bb-job-title">{{ \Illuminate\Support\Str::limit($job->title, 28) }}</h6>
+                                <p class="bb-job-company">{{ \Illuminate\Support\Str::limit($job->company, 22) }}@if($job->location) · {{ \Illuminate\Support\Str::limit($job->location, 14) }}@endif</p>
+                                @if($job->is_expired)
+                                    <span class="bb-job-tag" style="color:#dc2626;"><i class="bi bi-x-circle"></i> Deadline over</span>
+                                @elseif($job->is_expiring_soon)
+                                    <span class="bb-job-tag" style="color:#ea580c;"><i class="bi bi-alarm"></i> Expiring soon</span>
+                                @else
+                                    <span class="bb-job-tag"><i class="bi bi-briefcase"></i> {{ $job->job_type }}</span>
+                                @endif
+                            </div>
+                        </a>
+                    @empty
+                        <p class="text-muted text-center small py-3 mb-0">No jobs posted yet.</p>
+                    @endforelse
                 </div>
             </div>
 
@@ -2077,6 +2115,28 @@ function highlightMentions(text) {
         }
     });
 })();
+</script>
+
+
+<script>
+// ==========================================
+// DELETE JOB (poster only)
+// ==========================================
+function deleteJob(id) {
+    Swal.fire({ title:'Delete this job?', icon:'warning', showCancelButton:true, confirmButtonColor:'#ef4444', confirmButtonText:'Delete' })
+    .then(r=>{
+        if(!r.isConfirmed) return;
+        fetch(`/jobs/${id}`, { method:'DELETE', headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'} })
+        .then(r=>r.json())
+        .then(d=>{
+            if(!d.success) return;
+            const card = document.getElementById(`jobCard-${id}`);
+            if(card){ card.style.transition='opacity .3s'; card.style.opacity='0'; setTimeout(()=>card.remove(),300); }
+            const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1500 });
+            Toast.fire({ icon:'success', title:'Job deleted' });
+        });
+    });
+}
 </script>
 
 </body>
