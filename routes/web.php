@@ -125,6 +125,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['auth'])->group(function () {
     // একটা পোস্টের আরও কমেন্ট লোড করা (View more)
     Route::get('/posts/{post}/comments/load', [App\Http\Controllers\CommentController::class, 'loadMore'])->name('comments.load');
+    Route::post('/comments/{comment}/like', [App\Http\Controllers\CommentController::class, 'toggleLike'])->name('comments.like');
 });
 
 });
