@@ -110,6 +110,12 @@ public function isSuperAdmin()
         return $this->hasMany(Certification::class)->orderBy('issue_date', 'desc');
     }
 
+    // Thesis / Project / Research documents (latest আগে)
+    public function documents()
+    {
+        return $this->hasMany(Document::class)->latest();
+    }
+
     // সর্বশেষ শিক্ষা (নামের নিচে দেখানোর জন্য)
     public function latestEducation()
     {

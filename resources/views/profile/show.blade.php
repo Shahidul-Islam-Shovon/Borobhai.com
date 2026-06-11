@@ -109,6 +109,39 @@
         .bb-timeline-actions button:hover { background:var(--bb-bg); color:var(--bb-ink); }
         .bb-timeline-actions button.text-danger:hover { background:#fef2f2; color:#ef4444 !important; }
 
+        /* Research & Publications (documents) */
+        .bb-doc-item { display:flex; gap:14px; padding:16px 0; border-bottom:1px solid var(--bb-line); }
+        .bb-doc-item:last-child { border-bottom:none; padding-bottom:0; }
+        .bb-doc-item:first-child { padding-top:0; }
+        .bb-doc-icon {
+            width:48px; height:48px; border-radius:12px; flex-shrink:0;
+            display:flex; align-items:center; justify-content:center; font-size:24px;
+            background:#f3f4f8; color:#6b7280;
+        }
+        .bb-doc-pdf { background:#fef2f2; color:#dc2626; }
+        .bb-doc-doc, .bb-doc-docx, .bb-doc-odt, .bb-doc-rtf { background:#eff6ff; color:#2563eb; }
+        .bb-doc-ppt, .bb-doc-pptx { background:#fff7ed; color:#ea580c; }
+        .bb-doc-body { flex-grow:1; min-width:0; }
+        .bb-doc-toprow { display:flex; align-items:center; gap:4px; margin-bottom:2px; }
+        .bb-doc-type {
+            font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.4px;
+            color:var(--bb-primary); background:var(--bb-primary-soft); padding:2px 8px; border-radius:6px;
+        }
+        .bb-doc-year { font-size:12px; color:var(--bb-muted); }
+        .bb-doc-title { font-size:15px; font-weight:700; color:var(--bb-ink); margin:3px 0 2px; }
+        .bb-doc-topic { font-size:12.5px; color:var(--bb-primary); margin:0 0 3px; font-weight:600; }
+        .bb-doc-topic i { font-size:11px; }
+        .bb-doc-desc { font-size:13px; color:#4b5563; margin:0 0 6px; line-height:1.5; white-space:pre-line; }
+        .bb-doc-filerow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .bb-doc-file {
+            display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:600;
+            color:var(--bb-primary); text-decoration:none; background:var(--bb-bg);
+            padding:4px 10px; border-radius:8px; transition:background .15s;
+            max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        }
+        .bb-doc-file:hover { background:var(--bb-primary); color:#fff; }
+        .bb-doc-size { font-size:11.5px; color:var(--bb-muted); }
+
         .bb-role-pill {
             display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700;
             padding:5px 13px; border-radius:20px; letter-spacing:.3px; text-transform:uppercase;
@@ -750,6 +783,48 @@
         </div>
     </div>
 
+    {{-- ===== RESEARCH & PUBLICATIONS (Thesis / Project / Research) ===== --}}
+    <div class="bb-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="bb-card-title m-0"><i class="bi bi-file-earmark-text"></i> Research & Publications</h2>
+            @if($isOwner)
+                <button class="bb-add-btn" onclick="openDocModal()"><i class="bi bi-plus-lg"></i> Add</button>
+            @endif
+        </div>
+        <div id="docList">
+            @forelse($user->documents as $doc)
+                <div class="bb-doc-item" id="doc-{{ $doc->id }}">
+                    <div class="bb-doc-icon bb-doc-{{ $doc->file_type }}">
+                        <i class="bi {{ in_array($doc->file_type, ['pdf']) ? 'bi-file-earmark-pdf' : (in_array($doc->file_type, ['doc','docx','odt','rtf']) ? 'bi-file-earmark-word' : (in_array($doc->file_type, ['ppt','pptx']) ? 'bi-file-earmark-slides' : 'bi-file-earmark-text')) }}"></i>
+                    </div>
+                    <div class="bb-doc-body">
+                        <div class="bb-doc-toprow">
+                            <span class="bb-doc-type">{{ $doc->type }}</span>
+                            @if($doc->publication_year)<span class="bb-doc-year">· {{ $doc->publication_year }}</span>@endif
+                        </div>
+                        <h6 class="bb-doc-title">{{ $doc->title }}</h6>
+                        @if($doc->topic)<p class="bb-doc-topic"><i class="bi bi-tag"></i> {{ $doc->topic }}</p>@endif
+                        @if($doc->description)<p class="bb-doc-desc">{{ $doc->description }}</p>@endif
+                        <div class="bb-doc-filerow">
+                            <a href="{{ asset('storage/'.$doc->file_path) }}" target="_blank" class="bb-doc-file">
+                                <i class="bi bi-paperclip"></i> {{ $doc->file_name }}
+                            </a>
+                            <span class="bb-doc-size">{{ $doc->readable_size }}</span>
+                        </div>
+                    </div>
+                    @if($isOwner)
+                        <div class="bb-timeline-actions">
+                            <button onclick="editDoc({{ $doc->id }})" title="Edit"><i class="bi bi-pencil"></i></button>
+                            <button onclick="deleteDoc({{ $doc->id }}, 'doc-{{ $doc->id }}')" title="Delete" class="text-danger"><i class="bi bi-trash3"></i></button>
+                        </div>
+                    @endif
+                </div>
+            @empty
+                <p class="bb-empty" id="docEmpty">{{ $isOwner ? 'Upload your thesis, project, or research papers (PDF, Word, PPT).' : 'No research or publications added yet.' }}</p>
+            @endforelse
+        </div>
+    </div>
+
     </div>{{-- /TAB 1: Student Details --}}
 
     {{-- ===== TAB 2: ALL POSTS ===== --}}
@@ -1038,6 +1113,66 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="bb-edit-profile-btn" id="certSaveBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{{-- Document Modal (Thesis/Project/Research) --}}
+<div class="modal fade" id="docModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="docModalTitle">Add Research / Publication</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="docForm">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="id" id="doc_id">
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <label class="bb-modal-label">Title *</label>
+                            <input type="text" name="title" id="doc_title" class="bb-modal-input" placeholder="e.g. Smart Attendance System using Face Recognition" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="bb-modal-label">Type *</label>
+                            <select name="type" id="doc_type" class="bb-modal-input" required>
+                                <option>Thesis</option>
+                                <option>Project</option>
+                                <option>Research Paper</option>
+                                <option>Conference Paper</option>
+                                <option>Journal Article</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="bb-modal-label">Topic / Subject <span class="text-muted" style="font-weight:400;">(helps search)</span></label>
+                            <input type="text" name="topic" id="doc_topic" class="bb-modal-input" placeholder="e.g. Machine Learning, IoT, Cybersecurity">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="bb-modal-label">Year</label>
+                            <input type="number" name="publication_year" id="doc_year" class="bb-modal-input" placeholder="2024" min="1950" max="2099">
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-modal-label">Description</label>
+                            <textarea name="description" id="doc_description" class="bb-modal-input" rows="3" placeholder="Short summary of the work..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-modal-label">Document File <span id="doc_file_req">*</span></label>
+                            <input type="file" name="file" id="doc_file" class="bb-modal-input" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.odt,.rtf">
+                            <small class="text-muted" style="font-size:11.5px;">PDF, Word, PowerPoint, or text · max 20MB</small>
+                            <div id="doc_current_file" class="mt-2" style="display:none;font-size:12.5px;">
+                                <i class="bi bi-paperclip"></i> <span id="doc_current_file_name" class="fw-semibold"></span>
+                                <span class="text-muted">(keep current file if no new one chosen)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="bb-edit-profile-btn" id="docSaveBtn">Save</button>
                 </div>
             </form>
         </div>
@@ -2788,6 +2923,18 @@ function saveDetail(form, url, btnId, modalObj, renderFn, dataArr){
     const btn=document.getElementById(btnId);
     btn.disabled=true; const orig=btn.innerText; btn.innerText='Saving...';
     const fd=new FormData(form);
+
+    // checkbox স্পষ্টভাবে 1/0 (unchecked হলে FormData তে থাকেই না)
+    const chk = form.querySelector('input[type="checkbox"][name="is_current"]');
+    if (chk) {
+        fd.set('is_current', chk.checked ? '1' : '0');
+        if (chk.checked) fd.set('end_date', '');  // currently হলে end_date খালি
+    }
+    // খালি date string পরিষ্কার (validation এ যেন না আটকায়)
+    ['start_date','end_date','issue_date'].forEach(k => {
+        if (fd.has(k) && fd.get(k) === '') fd.delete(k);
+    });
+
     fetch(url,{ method:'POST', headers:{'X-CSRF-TOKEN':DETAIL_CSRF,'Accept':'application/json'}, body:fd })
     .then(r=>r.json())
     .then(d=>{
@@ -2827,6 +2974,126 @@ function deleteDetail(type, id, elId){
     });
 }
 @endif
+
+// ==========================================
+// DOCUMENTS (Thesis/Project/Research) CRUD
+// ==========================================
+@if($isOwner)
+let docModalObj = null;
+document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('docModal');
+    if (el) docModalObj = new bootstrap.Modal(el);
+});
+
+const docData = @json($user->documents);
+
+function docIcon(ft){
+    if(ft === 'pdf') return 'bi-file-earmark-pdf';
+    if(['doc','docx','odt','rtf'].includes(ft)) return 'bi-file-earmark-word';
+    if(['ppt','pptx'].includes(ft)) return 'bi-file-earmark-slides';
+    return 'bi-file-earmark-text';
+}
+
+function openDocModal(){
+    document.getElementById('docForm').reset();
+    document.getElementById('doc_id').value = '';
+    document.getElementById('doc_file_req').style.display = '';
+    document.getElementById('doc_file').required = true;
+    document.getElementById('doc_current_file').style.display = 'none';
+    document.getElementById('docModalTitle').innerText = 'Add Research / Publication';
+    docModalObj.show();
+}
+
+function editDoc(id){
+    const e = docData.find(x=>x.id===id); if(!e) return;
+    document.getElementById('docForm').reset();
+    document.getElementById('doc_id').value = e.id;
+    document.getElementById('doc_title').value = e.title || '';
+    document.getElementById('doc_type').value = e.type || 'Thesis';
+    document.getElementById('doc_topic').value = e.topic || '';
+    document.getElementById('doc_year').value = e.publication_year || '';
+    document.getElementById('doc_description').value = e.description || '';
+    // এডিটে ফাইল ঐচ্ছিক
+    document.getElementById('doc_file_req').style.display = 'none';
+    document.getElementById('doc_file').required = false;
+    document.getElementById('doc_current_file').style.display = '';
+    document.getElementById('doc_current_file_name').innerText = e.file_name || '';
+    document.getElementById('docModalTitle').innerText = 'Edit Research / Publication';
+    docModalObj.show();
+}
+
+document.getElementById('docForm')?.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    const btn = document.getElementById('docSaveBtn');
+    btn.disabled = true; const orig = btn.innerText; btn.innerText = 'Saving...';
+    const fd = new FormData(this);
+    // খালি ফাইল ইনপুট পাঠাব না
+    if (!document.getElementById('doc_file').files.length) fd.delete('file');
+
+    fetch("{{ route('profile.document.store') }}", {
+        method:'POST', headers:{'X-CSRF-TOKEN':DETAIL_CSRF,'Accept':'application/json'}, body:fd
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        btn.disabled=false; btn.innerText=orig;
+        if(!d.success){ Swal.fire({icon:'error',title:'Save failed'}); return; }
+        docModalObj.hide();
+        renderDoc(d.item);
+        detailToast.fire({icon:'success', title:d.message||'Saved!'});
+    })
+    .catch(()=>{ btn.disabled=false; btn.innerText=orig; Swal.fire({icon:'error',title:'Upload error',text:'File may be too large or invalid type.'}); });
+});
+
+function renderDoc(item){
+    document.getElementById('docEmpty')?.remove();
+    const ic = docIcon(item.file_type);
+    const html = `
+    <div class="bb-doc-item" id="doc-${item.id}">
+        <div class="bb-doc-icon bb-doc-${item.file_type}"><i class="bi ${ic}"></i></div>
+        <div class="bb-doc-body">
+            <div class="bb-doc-toprow">
+                <span class="bb-doc-type">${item.type}</span>
+                ${item.publication_year ? `<span class="bb-doc-year">· ${item.publication_year}</span>` : ''}
+            </div>
+            <h6 class="bb-doc-title">${item.title}</h6>
+            ${item.topic ? `<p class="bb-doc-topic"><i class="bi bi-tag"></i> ${item.topic}</p>` : ''}
+            ${item.description ? `<p class="bb-doc-desc">${item.description}</p>` : ''}
+            <div class="bb-doc-filerow">
+                <a href="${item.file_url}" target="_blank" class="bb-doc-file"><i class="bi bi-paperclip"></i> ${item.file_name}</a>
+                <span class="bb-doc-size">${item.readable_size}</span>
+            </div>
+        </div>
+        <div class="bb-timeline-actions">
+            <button onclick="editDoc(${item.id})" title="Edit"><i class="bi bi-pencil"></i></button>
+            <button onclick="deleteDoc(${item.id}, 'doc-${item.id}')" title="Delete" class="text-danger"><i class="bi bi-trash3"></i></button>
+        </div>
+    </div>`;
+    const existing = document.getElementById('doc-'+item.id);
+    if(existing){
+        existing.outerHTML = html;
+        const i = docData.findIndex(x=>x.id===item.id);
+        if(i>-1) docData[i]=item; else docData.push(item);
+    } else {
+        document.getElementById('docList').insertAdjacentHTML('afterbegin', html);
+        docData.push(item);
+    }
+}
+
+function deleteDoc(id, elId){
+    Swal.fire({ title:'Delete this document?', icon:'warning', showCancelButton:true, confirmButtonColor:'#ef4444', confirmButtonText:'Delete' })
+    .then(r=>{
+        if(!r.isConfirmed) return;
+        fetch(`/profile/document/${id}`, { method:'DELETE', headers:{'X-CSRF-TOKEN':DETAIL_CSRF,'Accept':'application/json'} })
+        .then(r=>r.json())
+        .then(d=>{
+            if(!d.success){ Swal.fire({icon:'error',title:'Delete failed'}); return; }
+            document.getElementById(elId)?.remove();
+            detailToast.fire({icon:'success', title:d.message||'Removed'});
+        });
+    });
+}
+@endif
+
 
 
 

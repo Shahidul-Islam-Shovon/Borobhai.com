@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
     <title>Borobhai.com</title>
     <style>
@@ -24,7 +25,8 @@
         .sidebar-link.active { color: #1877f2; }
         .fb-post-card { background-color: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
         .create-post-box { background-color: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); padding: 1rem; }
-        .create-post-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: #65676b; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .create-post-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: #65676b; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow:hidden; flex-shrink:0; }
+        .cpa-img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
         .mock-input { background-color: #f0f2f5; border-radius: 20px; padding: .5rem 1rem; color: #65676b; cursor: pointer; flex-grow: 1; }
         .mock-input:hover { background-color: #e4e6eb; }
         .post-action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: .5rem; color: #65676b; text-decoration: none; font-weight: 600; font-size: .9rem; border-radius: 4px; }
@@ -82,8 +84,13 @@
     box-shadow: 0 2px 6px rgba(79,70,229,.25);
 }
 .bb-avatar-sm { width:30px; height:30px; font-size:12px; box-shadow:none; }
+.bb-avatar-img { width:100%; height:100%; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.bb-avatar { overflow:hidden; padding:0; }
+.bb-avatar:has(img) { background:none; }
 .bb-head-meta { line-height:1.25; }
 .bb-author { margin:0; font-weight:700; font-size:14.5px; color:var(--bb-ink); letter-spacing:-.2px; }
+.bb-author-link { text-decoration:none; display:inline-block; }
+.bb-author-link:hover { color:var(--bb-primary); text-decoration:underline; }
 .bb-time { font-size:11.5px; color:var(--bb-muted); display:flex; align-items:center; gap:4px; }
 .bb-time i { font-size:10px; }
 .bb-more-btn {
@@ -273,6 +280,79 @@
     font-size: 15px; transition: all .15s ease;
 }
 .bb-connect-btn:hover { background: var(--bb-primary); color: #fff; }
+
+/* Right sidebar own scroll (so nothing gets cut off) */
+.bb-right-sidebar {
+    position: sticky;
+    top: 70px;
+    max-height: calc(100vh - 85px);
+    overflow-y: auto;
+    padding-bottom: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+.bb-right-sidebar::-webkit-scrollbar { width: 6px; }
+.bb-right-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.bb-right-sidebar::-webkit-scrollbar-track { background: transparent; }
+
+/* Active Now — name + role stacked */
+.bb-active-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+/* Mini role badge (Alumni / Student) */
+.bb-mini-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 9.5px; font-weight: 700; letter-spacing: .2px;
+    padding: 1px 7px; border-radius: 12px; width: fit-content; text-transform: uppercase;
+}
+.bb-mini-badge i { font-size: 9px; }
+.bb-mini-alumni  { background: #fef3c7; color: #d97706; }
+.bb-mini-student { background: #eef2ff; color: #4f46e5; }
+
+/* ===== EMOJI PICKER ===== */
+.bb-emoji-btn {
+    border:none; background:transparent; cursor:pointer; color:#65676b;
+    font-size:20px; padding:4px 8px; border-radius:8px; transition:background .15s, color .15s;
+    display:inline-flex; align-items:center;
+}
+.bb-emoji-btn:hover { background:#f0f2f5; color:#f59e0b; }
+#bbEmojiPopover {
+    position:absolute; z-index:3000; display:none;
+    box-shadow:0 8px 30px rgba(0,0,0,.18); border-radius:12px; overflow:hidden;
+}
+#bbEmojiPopover emoji-picker {
+    --background:#fff;
+    --border-color:#e4e6eb;
+    --indicator-color:#4f46e5;
+    --num-columns:8;
+    --emoji-size:1.3rem;
+    height:340px;
+}
+
+/* ===== COMMENT LIKE + REPLY ===== */
+.comment-like-btn { color:#65676b; }
+.comment-like-btn:hover { text-decoration:underline; }
+.comment-like-btn.liked { color:#4f46e5; }
+.comment-reply-btn:hover { text-decoration:underline; }
+.comment-like-count { font-size:11px; }
+.reply-row { padding-left:6px; }
+.replies-zone { border-left:2px solid #eceef1; padding-left:10px; margin-left:6px; }
+.reply-input-wrap { display:flex; align-items:center; gap:8px; }
+.reply-input-box {
+    flex-grow:1; border:1px solid #e4e6eb; border-radius:20px; background:#f0f2f5;
+    padding:6px 14px; font-size:12.5px; outline:none;
+}
+.reply-input-box:focus { border-color:#4f46e5; background:#fff; }
+.reply-send-btn { border:none; background:transparent; color:#4f46e5; cursor:pointer; font-size:16px; padding:2px 6px; }
+.reply-send-btn:disabled { opacity:.4; cursor:default; }
+.comment-mention { color:#4f46e5; font-weight:600; }
+.reply-field { display:flex; align-items:center; gap:6px; flex-grow:1; background:#f0f2f5; border:1px solid #e4e6eb; border-radius:20px; padding:2px 6px 2px 12px; }
+.reply-field:focus-within { border-color:#4f46e5; background:#fff; }
+.reply-field .reply-input-box { border:none; background:transparent; padding:5px 4px; }
+.reply-field .reply-input-box:focus { border:none; background:transparent; }
+.reply-mention-tag {
+    display:inline-flex; align-items:center; background:#e0e7ff; color:#4f46e5;
+    font-weight:600; font-size:11.5px; padding:2px 8px; border-radius:12px; white-space:nowrap;
+}
     </style>
 </head>
 <body>
@@ -301,6 +381,12 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow">
                     <li><span class="dropdown-item-text fw-bold text-dark">{{ Auth::user()->name }}</span></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a href="{{ route('profile.show') }}" class="dropdown-item">
+                            <i class="bi bi-person-circle me-2"></i>View Profile
+                        </a>
+                    </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <form action="{{ route('logout') }}" method="POST">
@@ -336,7 +422,13 @@
             {{-- Create Post Box --}}
             <div class="create-post-box mb-3">
                 <div class="d-flex align-items-center gap-2 mb-3">
-                    <div class="create-post-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</div>
+                    <a href="{{ route('profile.show') }}" class="create-post-avatar" style="text-decoration:none;" title="Go to your profile">
+                        @if(Auth::user()->profile_picture)
+                            <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
+                        @else
+                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                        @endif
+                    </a>
                     <div class="mock-input" onclick="resetPostBg();" data-bs-toggle="modal" data-bs-target="#createPostModal">
                         What's on your mind, {{ explode(' ', Auth::user()->name)[0] }}?
                     </div>
@@ -391,42 +483,7 @@
         </div>{{-- /Feed column --}}
 
         {{-- ==================== RIGHT SIDEBAR ==================== --}}
-        <div class="col-md-3 d-none d-md-block position-sticky" style="top:70px;height:fit-content;">
-
-            {{-- Popular Jobs --}}
-            <div class="bb-side-card mb-3">
-                <div class="bb-side-head">
-                    <span class="bb-side-title"><i class="bi bi-briefcase-fill text-primary"></i> Popular Jobs</span>
-                    <a href="#" class="bb-side-link">See all</a>
-                </div>
-                <div class="bb-side-body" id="popularJobsZone">
-                    {{-- TODO: Backend — loop $popularJobs here --}}
-                    <div class="bb-job-item">
-                        <div class="bb-job-logo">L</div>
-                        <div class="bb-job-info">
-                            <h6 class="bb-job-title">Laravel Developer</h6>
-                            <p class="bb-job-company">Tech Soft BD · Dhaka</p>
-                            <span class="bb-job-tag"><i class="bi bi-broadcast"></i> Actively hiring</span>
-                        </div>
-                    </div>
-                    <div class="bb-job-item">
-                        <div class="bb-job-logo" style="background:#fef3c7;color:#d97706;">U</div>
-                        <div class="bb-job-info">
-                            <h6 class="bb-job-title">UI/UX Designer</h6>
-                            <p class="bb-job-company">Creative Labs · Remote</p>
-                            <span class="bb-job-tag"><i class="bi bi-broadcast"></i> Actively hiring</span>
-                        </div>
-                    </div>
-                    <div class="bb-job-item">
-                        <div class="bb-job-logo" style="background:#dcfce7;color:#16a34a;">S</div>
-                        <div class="bb-job-info">
-                            <h6 class="bb-job-title">Software Engineer</h6>
-                            <p class="bb-job-company">BrainStation · Sylhet</p>
-                            <span class="bb-job-tag"><i class="bi bi-broadcast"></i> Actively hiring</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="col-md-3 d-none d-md-block bb-right-sidebar">
 
             {{-- Active Now --}}
             <div class="bb-side-card mb-3">
@@ -437,19 +494,31 @@
                     {{-- TODO: Backend — loop $activeUsers here --}}
                     <div class="bb-active-item">
                         <div class="bb-active-avatar">A</div>
-                        <span class="bb-active-name">Ayesha Rahman</span>
+                        <div class="bb-active-meta">
+                            <span class="bb-active-name">Ayesha Rahman</span>
+                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
+                        </div>
                     </div>
                     <div class="bb-active-item">
                         <div class="bb-active-avatar" style="background:linear-gradient(135deg,#f59e0b,#f97316);">R</div>
-                        <span class="bb-active-name">Rifat Hossain</span>
+                        <div class="bb-active-meta">
+                            <span class="bb-active-name">Rifat Hossain</span>
+                            <span class="bb-mini-badge bb-mini-student"><i class="bi bi-backpack-fill"></i> Student</span>
+                        </div>
                     </div>
                     <div class="bb-active-item">
                         <div class="bb-active-avatar" style="background:linear-gradient(135deg,#10b981,#059669);">N</div>
-                        <span class="bb-active-name">Nadia Islam</span>
+                        <div class="bb-active-meta">
+                            <span class="bb-active-name">Nadia Islam</span>
+                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
+                        </div>
                     </div>
                     <div class="bb-active-item">
                         <div class="bb-active-avatar" style="background:linear-gradient(135deg,#ec4899,#be185d);">T</div>
-                        <span class="bb-active-name">Tanvir Ahmed</span>
+                        <div class="bb-active-meta">
+                            <span class="bb-active-name">Tanvir Ahmed</span>
+                            <span class="bb-mini-badge bb-mini-student"><i class="bi bi-backpack-fill"></i> Student</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -457,7 +526,7 @@
             {{-- Suggested People --}}
             <div class="bb-side-card mb-3">
                 <div class="bb-side-head">
-                    <span class="bb-side-title"><i class="bi bi-person-plus-fill text-primary"></i> Suggested People</span>
+                    <span class="bb-side-title"><i class="bi bi-person-plus-fill text-primary"></i> Suggested Contact</span>
                 </div>
                 <div class="bb-side-body" id="suggestedPeopleZone">
                     {{-- TODO: Backend — loop $suggestedUsers here --}}
@@ -466,6 +535,7 @@
                         <div class="bb-suggest-info">
                             <h6 class="bb-suggest-name">Mahmudul Hasan</h6>
                             <p class="bb-suggest-role">CSE · Batch 2019</p>
+                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
                         </div>
                         <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
                     </div>
@@ -473,7 +543,8 @@
                         <div class="bb-suggest-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">F</div>
                         <div class="bb-suggest-info">
                             <h6 class="bb-suggest-name">Farhana Akter</h6>
-                            <p class="bb-suggest-role">EEE · Batch 2020</p>
+                            <p class="bb-suggest-role">EEE · Batch 2024</p>
+                            <span class="bb-mini-badge bb-mini-student"><i class="bi bi-backpack-fill"></i> Student</span>
                         </div>
                         <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
                     </div>
@@ -482,6 +553,7 @@
                         <div class="bb-suggest-info">
                             <h6 class="bb-suggest-name">Kamrul Islam</h6>
                             <p class="bb-suggest-role">BBA · Batch 2018</p>
+                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
                         </div>
                         <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
                     </div>
@@ -507,7 +579,13 @@
                 @csrf
                 <div class="modal-body">
                     <div class="d-flex align-items-center gap-2 mb-3">
-                        <div class="create-post-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</div>
+                        <div class="create-post-avatar">
+                            @if(Auth::user()->profile_picture)
+                                <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
+                            @else
+                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                            @endif
+                        </div>
                         <div>
                             <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
                             <span class="badge bg-light text-muted border py-1 px-2" style="font-size:10px;">
@@ -542,6 +620,9 @@
                             <button type="button" class="btn btn-light btn-sm rounded-circle p-2" onclick="toggleColorPlates();">
                                 <i class="bi bi-palette text-danger"></i>
                             </button>
+                            <button type="button" class="bb-emoji-btn" data-target="#postContent" title="Emoji">
+                                <i class="bi bi-emoji-smile text-warning"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -567,7 +648,13 @@
                 <input type="hidden" id="edit_bg_color_input">
                 <div class="modal-body pb-1">
                     <div class="d-flex align-items-center gap-2 mb-3">
-                        <div class="create-post-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</div>
+                        <div class="create-post-avatar">
+                            @if(Auth::user()->profile_picture)
+                                <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
+                            @else
+                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                            @endif
+                        </div>
                         <div>
                             <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
                             <span class="badge bg-light text-muted border py-1 px-2" style="font-size:10px;">
@@ -676,18 +763,31 @@
                 </div>
             </div>
 
-            <div class="modal-footer border-top p-2">
+            <div class="modal-footer border-top p-2 flex-column align-items-stretch">
+                <div id="commentEditNotice" class="d-none d-flex align-items-center justify-content-between px-2 py-1 mb-2 rounded" style="background:#eef2ff;font-size:12px;">
+                    <span class="text-primary fw-semibold"><i class="bi bi-pencil-square me-1"></i> Editing comment</span>
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none fw-semibold" onclick="cancelCommentEdit()">
+                        <i class="bi bi-x-lg"></i> Cancel
+                    </button>
+                </div>
                 <form id="commentModalForm" class="d-flex align-items-center gap-2 w-100">
-                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden"
                          style="width:34px;height:34px;font-size:13px;">
-                        {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                        @if(Auth::user()->profile_picture)
+                            <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" style="width:100%;height:100%;object-fit:cover;">
+                        @else
+                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                        @endif
                     </div>
                     <div class="input-group align-items-center bg-light rounded-pill px-3 py-1 w-100 border">
                         <input type="hidden" id="commentModalPostId">
                         <input type="text" id="commentModalInput"
                                class="form-control border-0 bg-transparent shadow-none py-1"
                                placeholder="Write a comment..." style="font-size:13px;" autocomplete="off">
-                        <button type="submit" class="btn btn-link p-0 text-primary ms-2 shadow-none border-0 d-flex align-items-center">
+                        <button type="button" class="bb-emoji-btn p-0 me-1" data-target="#commentModalInput" title="Emoji" style="font-size:17px;">
+                            <i class="bi bi-emoji-smile"></i>
+                        </button>
+                        <button type="submit" class="btn btn-link p-0 text-primary ms-1 shadow-none border-0 d-flex align-items-center">
                             <i class="bi bi-send-fill" style="font-size:17px;"></i>
                         </button>
                     </div>
@@ -1048,11 +1148,6 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
     const feed = document.getElementById('postsFeedContainer');
     if (feed) feed.insertAdjacentHTML('afterbegin', html);
 
-    const createModalEl = document.getElementById('createPostModal');
-    createModalEl.addEventListener('hidden.bs.modal', function () {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, { once: true });
-
     const fd = new FormData();
     fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
     fd.append('content', content);
@@ -1077,10 +1172,30 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
         if (xhr.status === 200 || xhr.status === 201) {
             const bar = document.getElementById(`bar-${pid}`);
             if (bar) { bar.style.width='100%'; bar.classList.replace('bg-primary','bg-success'); bar.classList.remove('progress-bar-animated'); }
+
+            let res = {};
+            try { res = JSON.parse(xhr.responseText); } catch(e){}
+
             setTimeout(() => {
-                sessionStorage.setItem('scrollToTop', '1');
-                window.location.reload();
-            }, 1000);
+                const optCard = document.getElementById(pid);
+                if (res.html) {
+                    // optimistic card কে আসল post-card দিয়ে রিপ্লেস (reload ছাড়া)
+                    if (optCard) {
+                        optCard.outerHTML = res.html;
+                    } else {
+                        const feedC = document.getElementById('postsFeedContainer');
+                        if (feedC) feedC.insertAdjacentHTML('afterbegin', res.html);
+                    }
+                    if (window.bbPrimeVideos) window.bbPrimeVideos();
+                } else {
+                    if (optCard) optCard.remove();
+                }
+                // empty state থাকলে সরাও
+                document.getElementById('emptyFeedState')?.remove();
+
+                const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1800, timerProgressBar:true });
+                Toast.fire({ icon:'success', title: res.message || 'Posted!' });
+            }, 600);
         } else {
             document.getElementById(pid)?.remove();
             Swal.fire({ icon:'error', title:'Post not published!', text:'There was an issue uploading the post.' });
@@ -1158,7 +1273,17 @@ function deletePost(id) {
     Swal.fire({title:'Are you sure?',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'}).then(r=>{
         if (!r.isConfirmed) return;
         fetch(`/posts/${id}`,{method:'DELETE',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content}})
-        .then(r=>r.json()).then(d=>{ if(d.success) window.location.reload(); });
+        .then(r=>r.json()).then(d=>{
+            if(!d.success) return;
+            const card = document.getElementById(`postCard-${id}`);
+            if (card) {
+                card.style.transition = 'opacity .3s ease';
+                card.style.opacity = '0';
+                setTimeout(() => card.remove(), 300);
+            }
+            const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1500 });
+            Toast.fire({ icon:'success', title:'Post deleted' });
+        });
     });
 }
 
@@ -1213,9 +1338,15 @@ document.getElementById('fbShareForm')?.addEventListener('submit', function (e) 
         if(d.success){
             bootstrapShareModal?.hide();
             Toast.fire({icon:'success',title:'Shared!',timer:1200});
-            sessionStorage.setItem('scrollToTop', '1');
-            window.scrollTo({ top: 0, behavior: 'auto' });
-            setTimeout(() => { window.location.reload(); }, 800);
+            if (d.html) {
+                const feedC = document.getElementById('postsFeedContainer');
+                if (feedC) {
+                    feedC.insertAdjacentHTML('afterbegin', d.html);
+                    if (window.bbPrimeVideos) window.bbPrimeVideos();
+                    document.getElementById('emptyFeedState')?.remove();
+                }
+            }
+            btn.disabled = false;
         }
         else { btn.disabled=false; Swal.fire({icon:'error',title:'Failed!',text:'There was an error sharing the post.'}); }
     }).catch(()=>{ btn.disabled=false; Swal.fire({icon:'error',title:'Network Error!'}); });
@@ -1477,6 +1608,7 @@ function openCommentModal(postId) {
     commentEditState = { editing: false, commentId: null };
     document.getElementById('commentModalInput').value = '';
     document.getElementById('commentModalInput').placeholder = 'Write a comment...';
+    document.getElementById('commentEditNotice')?.classList.add('d-none');
 
     const card = document.getElementById(`postCard-${postId}`);
     if (card && preview) {
@@ -1588,6 +1720,7 @@ document.getElementById('commentModalForm')?.addEventListener('submit', function
             commentEditState = { editing: false, commentId: null };
             input.value = '';
             input.placeholder = 'Write a comment...';
+            document.getElementById('commentEditNotice')?.classList.add('d-none');
         });
         return;
     }
@@ -1604,11 +1737,12 @@ document.getElementById('commentModalForm')?.addEventListener('submit', function
         document.getElementById('modalNoComment')?.remove();
 
         const html = `
-        <div class="d-flex gap-2 mb-3 align-items-start comment-row" id="comment-container-${d.comment_id}">
-            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:32px;height:32px;font-size:13px;">${d.user_initial}</div>
+        <div class="comment-thread" id="comment-thread-${d.comment_id}">
+        <div class="d-flex gap-2 mb-2 align-items-start comment-row" id="comment-container-${d.comment_id}">
+            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:32px;height:32px;font-size:13px;">${d.user_picture ? `<img src="${d.user_picture}" style="width:100%;height:100%;object-fit:cover;">` : d.user_initial}</div>
             <div class="flex-grow-1">
                 <div class="d-flex align-items-start justify-content-between">
-                    <div class="bg-light px-3 py-2 rounded-4 d-inline-block" style="max-width:100%;">
+                    <div class="bg-light px-3 py-2 rounded-4 d-inline-block border" style="max-width:100%;">
                         <strong class="d-block text-dark" style="font-size:12.5px;">${d.user_name}</strong>
                         <span id="comment-text-${d.comment_id}" style="font-size:13px;word-break:break-word;">${d.content}</span>
                     </div>
@@ -1620,8 +1754,16 @@ document.getElementById('commentModalForm')?.addEventListener('submit', function
                         </ul>
                     </div>
                 </div>
-                <small class="text-muted ms-2 comment-meta-${d.comment_id}" style="font-size:11px;">${d.created_at}<span class="comment-edited-tag-${d.comment_id}"></span></small>
+                <div class="d-flex align-items-center gap-3 ms-2 mt-1" style="font-size:11.5px;">
+                    <span class="comment-like-btn" id="comment-like-${d.comment_id}" onclick="toggleCommentLike(${d.comment_id})" style="cursor:pointer;font-weight:600;">Like</span>
+                    <span class="comment-reply-btn" onclick="openReplyBox(${d.comment_id})" style="cursor:pointer;font-weight:600;color:#65676b;">Reply</span>
+                    <span class="text-muted comment-meta-${d.comment_id}">${d.created_at}<span class="comment-edited-tag-${d.comment_id}"></span></span>
+                    <span class="comment-like-count text-muted" id="comment-like-count-${d.comment_id}" style="display:none;"><i class="bi bi-hand-thumbs-up-fill text-primary"></i> <span class="clc-num">0</span></span>
+                </div>
+                <div class="reply-box-zone mt-2 d-none" id="reply-box-${d.comment_id}"></div>
+                <div class="replies-zone mt-2" id="replies-zone-${d.comment_id}"></div>
             </div>
+        </div>
         </div>`;
         document.getElementById('commentModalList')?.insertAdjacentHTML('afterbegin', html);
 
@@ -1641,6 +1783,14 @@ function editComment(event, cid) {
     input.value = span.innerText;
     input.placeholder = 'Editing comment...';
     input.focus();
+    document.getElementById('commentEditNotice')?.classList.remove('d-none');
+}
+
+function cancelCommentEdit() {
+    commentEditState = { editing: false, commentId: null };
+    const input = document.getElementById('commentModalInput');
+    if (input) { input.value = ''; input.placeholder = 'Write a comment...'; }
+    document.getElementById('commentEditNotice')?.classList.add('d-none');
 }
 
 function deleteComment(cid, postId) {
@@ -1662,11 +1812,236 @@ function deleteComment(cid, postId) {
                 commentEditState = { editing: false, commentId: null };
                 const input = document.getElementById('commentModalInput');
                 if (input) { input.value=''; input.placeholder='Write a comment...'; }
+                document.getElementById('commentEditNotice')?.classList.add('d-none');
             }
         });
     });
 }
 
+
+// আমার profile pic (reply box এর জন্য)
+window.MY_PROFILE_PIC = @json(Auth::user()->profile_picture ? asset('storage/'.Auth::user()->profile_picture) : null);
+window.MY_INITIAL = @json(strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)));
+
+// ==========================================
+// COMMENT LIKE
+// ==========================================
+function toggleCommentLike(commentId) {
+    fetch(`/comments/${commentId}/like`, {
+        method:'POST',
+        headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if(!d.success) return;
+        const btn = document.getElementById(`comment-like-${commentId}`);
+        const countWrap = document.getElementById(`comment-like-count-${commentId}`);
+        if (btn) {
+            btn.classList.toggle('liked', d.liked);
+            btn.innerText = d.liked ? 'Liked' : 'Like';
+        }
+        if (countWrap) {
+            const num = countWrap.querySelector('.clc-num');
+            if (num) num.innerText = d.like_count;
+            countWrap.style.display = d.like_count > 0 ? '' : 'none';
+        }
+    });
+}
+
+// ==========================================
+// COMMENT REPLY
+// ==========================================
+function openReplyBox(parentId, mentionName) {
+    const zone = document.getElementById(`reply-box-${parentId}`);
+    if (!zone) return;
+
+    // আগে খোলা থাকলে — শুধু mention আপডেট করো (বন্ধ করব না, যদি নতুন কাউকে reply করে)
+    let input = document.getElementById(`reply-input-${parentId}`);
+
+    const myPic = window.MY_PROFILE_PIC;
+    const myInit = window.MY_INITIAL || 'U';
+    const avatar = myPic
+        ? `<img src="${myPic}" style="width:100%;height:100%;object-fit:cover;">`
+        : myInit;
+
+    // box বন্ধ থাকলে বানাও
+    if (zone.classList.contains('d-none') || zone.dataset.open !== '1') {
+        zone.innerHTML = `
+            <div class="reply-input-wrap">
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:28px;height:28px;font-size:12px;">${avatar}</div>
+                <div class="reply-field flex-grow-1">
+                    <span class="reply-mention-tag" id="reply-mention-${parentId}" style="display:none;"></span>
+                    <input type="text" class="reply-input-box" id="reply-input-${parentId}" placeholder="Write a reply..." autocomplete="off"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();submitReply(${parentId});} else if(event.key==='Backspace' && this.value==='' ){clearReplyMention(${parentId});}">
+                </div>
+                <button type="button" class="bb-emoji-btn p-0" data-target="#reply-input-${parentId}" title="Emoji" style="font-size:15px;"><i class="bi bi-emoji-smile"></i></button>
+                <button type="button" class="reply-send-btn" onclick="submitReply(${parentId})" title="Send"><i class="bi bi-send-fill"></i></button>
+            </div>`;
+        zone.classList.remove('d-none');
+        zone.dataset.open = '1';
+        input = document.getElementById(`reply-input-${parentId}`);
+    }
+
+    // mention সেট করো (কাকে reply)
+    const tag = document.getElementById(`reply-mention-${parentId}`);
+    if (mentionName && tag) {
+        tag.textContent = '@' + mentionName;
+        tag.style.display = 'inline-flex';
+        tag.dataset.mention = mentionName;
+    }
+
+    setTimeout(() => input?.focus(), 50);
+}
+
+function clearReplyMention(parentId) {
+    const tag = document.getElementById(`reply-mention-${parentId}`);
+    if (tag) { tag.style.display = 'none'; tag.textContent = ''; tag.dataset.mention = ''; }
+}
+
+function submitReply(parentId) {
+    const input = document.getElementById(`reply-input-${parentId}`);
+    if (!input) return;
+    let text = input.value.trim();
+    const tag = document.getElementById(`reply-mention-${parentId}`);
+    const mention = tag && tag.dataset.mention ? tag.dataset.mention : '';
+    if (!text && !mention) return;
+
+    // মেনশন থাকলে টেক্সটের আগে @নাম যোগ
+    const finalText = mention ? `@${mention} ${text}` : text;
+
+    const postId = document.getElementById('commentModalPostId').value;
+    input.disabled = true;
+
+    fetch(`/posts/${postId}/comments`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},
+        body: JSON.stringify({ content: finalText, parent_id: parentId })
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if(!d.success) { input.disabled=false; return; }
+
+        const repliesZone = document.getElementById(`replies-zone-${parentId}`);
+        const avatar = d.user_picture
+            ? `<img src="${d.user_picture}" style="width:100%;height:100%;object-fit:cover;">`
+            : d.user_initial;
+
+        // @মেনশন হাইলাইট করে দেখাও
+        const displayContent = highlightMentions(d.content);
+
+        const html = `
+        <div class="d-flex gap-2 mb-2 align-items-start comment-row reply-row" id="comment-container-${d.comment_id}">
+            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:28px;height:28px;font-size:12px;">${avatar}</div>
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div class="bg-light px-3 py-2 rounded-4 d-inline-block border" style="max-width:100%;">
+                        <strong class="d-block text-dark" style="font-size:12px;">${d.user_name}</strong>
+                        <span id="comment-text-${d.comment_id}" style="font-size:12.5px;word-break:break-word;">${displayContent}</span>
+                    </div>
+                    <div class="dropdown flex-shrink-0">
+                        <button type="button" class="btn btn-link btn-sm text-muted p-0 border-0 shadow-none ms-1" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:100px;">
+                            <li><a class="dropdown-item py-1 fs-7" href="javascript:void(0)" onclick="editComment(event, ${d.comment_id})"><i class="bi bi-pencil me-1"></i> Edit</a></li>
+                            <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deleteComment(${d.comment_id}, ${postId})"><i class="bi bi-trash me-1"></i> Delete</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3 ms-2 mt-1" style="font-size:11px;">
+                    <span class="comment-like-btn" id="comment-like-${d.comment_id}" onclick="toggleCommentLike(${d.comment_id})" style="cursor:pointer;font-weight:600;">Like</span>
+                    <span class="comment-reply-btn" onclick="openReplyBox(${parentId}, '${d.user_name.replace(/'/g, "\\'")}')" style="cursor:pointer;font-weight:600;color:#65676b;">Reply</span>
+                    <span class="text-muted comment-meta-${d.comment_id}">${d.created_at}<span class="comment-edited-tag-${d.comment_id}"></span></span>
+                    <span class="comment-like-count text-muted" id="comment-like-count-${d.comment_id}" style="display:none;"><i class="bi bi-hand-thumbs-up-fill text-primary"></i> <span class="clc-num">0</span></span>
+                </div>
+            </div>
+        </div>`;
+        repliesZone?.insertAdjacentHTML('beforeend', html);
+
+        const zone = document.getElementById(`reply-box-${parentId}`);
+        if (zone) { zone.classList.add('d-none'); zone.dataset.open='0'; zone.innerHTML=''; }
+
+        const feedCount = document.getElementById(`comment-count-${postId}`);
+        if (feedCount && d.comment_count !== undefined) feedCount.innerText = `${d.comment_count} comments`;
+        const modalCount = document.getElementById('commentModalCount');
+        if (modalCount && d.comment_count !== undefined) modalCount.innerText = `${d.comment_count} comments`;
+    })
+    .catch(()=>{ input.disabled=false; });
+}
+
+// @নাম হাইলাইট করো
+function highlightMentions(text) {
+    return text.replace(/@([\w\u0980-\u09FF.]+(?:\s[\w\u0980-\u09FF.]+)?)/g, '<span class="comment-mention">@$1</span>');
+}
+
+
+</script>
+
+{{-- Global Emoji Popover --}}
+<div id="bbEmojiPopover"><emoji-picker class="light"></emoji-picker></div>
+
+<script>
+// ==========================================
+// EMOJI PICKER (shared — post + comment)
+// ==========================================
+(function(){
+    const popover = document.getElementById('bbEmojiPopover');
+    const picker  = popover.querySelector('emoji-picker');
+    let currentTarget = null;   // যে input/textarea এ emoji যাবে
+
+    // emoji সিলেক্ট হলে target এ যোগ করো
+    picker.addEventListener('emoji-click', e => {
+        const emoji = e.detail.unicode;
+        if (!currentTarget) return;
+        const el = currentTarget;
+        const start = el.selectionStart ?? el.value.length;
+        const end   = el.selectionEnd ?? el.value.length;
+        el.value = el.value.slice(0, start) + emoji + el.value.slice(end);
+        // cursor emoji এর পরে
+        const pos = start + emoji.length;
+        el.focus();
+        try { el.setSelectionRange(pos, pos); } catch(err){}
+        // input ইভেন্ট ট্রিগার (bg color logic এর জন্য)
+        el.dispatchEvent(new Event('input', { bubbles:true }));
+    });
+
+    // কোনো emoji বাটনে ক্লিক → popover টগল, target সেট
+    document.addEventListener('click', function(ev){
+        const btn = ev.target.closest('.bb-emoji-btn');
+        if (btn) {
+            ev.preventDefault();
+            const targetSel = btn.getAttribute('data-target');
+            const target = document.querySelector(targetSel);
+            if (!target) return;
+
+            // একই বাটনে আবার ক্লিক → বন্ধ
+            if (popover.style.display === 'block' && currentTarget === target) {
+                popover.style.display = 'none';
+                currentTarget = null;
+                return;
+            }
+            currentTarget = target;
+            // অবস্থান ঠিক করো (বাটনের নিচে/উপরে)
+            const r = btn.getBoundingClientRect();
+            popover.style.display = 'block';
+            const pop = popover.getBoundingClientRect();
+            let top = r.bottom + window.scrollY + 6;
+            // নিচে জায়গা না থাকলে উপরে
+            if (r.bottom + 350 > window.innerHeight) {
+                top = r.top + window.scrollY - 350 - 6;
+            }
+            let left = r.left + window.scrollX - 150;
+            if (left < 8) left = 8;
+            if (left + 320 > window.innerWidth) left = window.innerWidth - 328;
+            popover.style.top = top + 'px';
+            popover.style.left = left + 'px';
+            return;
+        }
+        // বাইরে ক্লিক → বন্ধ
+        if (popover.style.display === 'block' && !popover.contains(ev.target)) {
+            popover.style.display = 'none';
+            currentTarget = null;
+        }
+    });
+})();
 </script>
 
 </body>

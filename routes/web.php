@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileDetailController;
@@ -89,6 +90,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/profile/certification', [ProfileDetailController::class, 'storeCertification'])->name('profile.certification.store');
     Route::delete('/profile/certification/{id}', [ProfileDetailController::class, 'deleteCertification'])->name('profile.certification.delete');
+
+    // 🆕 Documents (Thesis / Project / Research)
+    Route::post('/profile/document', [DocumentController::class, 'store'])->name('profile.document.store');
+    Route::delete('/profile/document/{id}', [DocumentController::class, 'destroy'])->name('profile.document.delete');
 
     // Breeze ডিফল্ট (অক্ষত)
     Route::get('/profile/edit/account', [ProfileController::class, 'edit'])->name('profile.edit');
