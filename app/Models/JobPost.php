@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 
 class JobPost extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'job_posts';
 
     protected $fillable = [
@@ -29,6 +32,12 @@ class JobPost extends Model
     public function savedByUsers()
     {
         return $this->belongsToMany(User::class, 'saved_jobs', 'job_post_id', 'user_id')->withTimestamps();
+    }
+
+    // এই job এ যত আবেদন এসেছে
+    public function applications()
+    {
+        return $this->hasMany(JobApplication::class, 'job_post_id')->latest('applied_at');
     }
 
     // ===== Helper / Accessor =====

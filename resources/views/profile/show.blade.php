@@ -161,6 +161,11 @@
         .bb-st-soon   { background:#fff7ed; color:#ea580c; }
         .bb-st-closed { background:#fef2f2; color:#dc2626; }
 
+        /* View Applicants link (profile job posts) */
+        .bb-myjob-applicants { display:inline-flex; align-items:center; gap:6px; margin-top:9px; font-size:12.5px; font-weight:600; color:var(--bb-primary); background:var(--bb-primary-soft); padding:6px 13px; border-radius:8px; text-decoration:none; transition:all .15s; }
+        .bb-myjob-applicants:hover { background:var(--bb-primary); color:#fff; }
+        .bb-myjob-applicants i { font-size:12px; }
+
         /* Post Job modal (profile edit) */
         .bb-job-label { display:block; font-size:12.5px; font-weight:600; color:#374151; margin-bottom:5px; }
         .bb-job-input { width:100%; border:1.5px solid #e4e6eb; border-radius:10px; padding:9px 12px; font-size:13.5px; outline:none; transition:border-color .15s, box-shadow .15s; background:#fff; }

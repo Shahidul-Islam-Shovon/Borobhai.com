@@ -16,6 +16,8 @@
         .nav-icon-btn:hover { background-color: #d8dadf; }
         .saved-card { background:#fff; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,.1); transition:transform .15s ease, box-shadow .15s ease; cursor:pointer; text-decoration:none; color:inherit; display:block; }
         .saved-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.12); color:inherit; }
+        .saved-archived { background:#fafafa; }
+        .saved-archived:hover { transform:none; box-shadow:0 1px 2px rgba(0,0,0,.1); }
         .saved-thumb { width:90px; height:90px; border-radius:8px; object-fit:cover; flex-shrink:0; background:#000; }
         .saved-thumb-placeholder { width:90px; height:90px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
         .fs-7 { font-size:.85rem !important; }
@@ -59,21 +61,28 @@
                 $logoColor = str_contains($jt,'intern') ? 'background:#fff7ed;color:#ea580c;'
                            : (str_contains($jt,'part') ? 'background:#eff6ff;color:#2563eb;'
                            : 'background:#eef2ff;color:#4f46e5;');
+                $archived = $job->trashed();
                 $expired = $job->is_expired;
                 $expiringSoon = $job->is_expiring_soon;
                 $jobSavedAt = $job->pivot->created_at ?? null;
             @endphp
-            <div class="saved-card p-3 mb-3" id="savedJob-{{ $job->id }}">
+            <div class="saved-card p-3 mb-3 {{ $archived ? 'saved-archived' : '' }}" id="savedJob-{{ $job->id }}">
                 <div class="d-flex gap-3 align-items-center">
-                    <div class="saved-thumb-placeholder" style="{{ $logoColor }} font-weight:800;font-size:30px;">
+                    <div class="saved-thumb-placeholder" style="{{ $logoColor }} font-weight:800;font-size:30px;{{ $archived ? 'opacity:.55;' : '' }}">
                         {{ strtoupper(substr($job->company, 0, 1)) }}
                     </div>
                     <div class="flex-grow-1 overflow-hidden">
-                        <a href="{{ route('jobs.show', $job->id) }}" class="fw-bold mb-1 d-block text-dark text-decoration-none" style="font-size:14px;">{{ $job->title }}</a>
+                        @if($archived)
+                            <span class="fw-bold mb-1 d-block text-dark" style="font-size:14px;">{{ $job->title }}</span>
+                        @else
+                            <a href="{{ route('jobs.show', $job->id) }}" class="fw-bold mb-1 d-block text-dark text-decoration-none" style="font-size:14px;">{{ $job->title }}</a>
+                        @endif
                         <p class="text-muted mb-1" style="font-size:13px;">{{ $job->company }}@if($job->location) · {{ $job->location }}@endif</p>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
                             <span class="badge rounded-pill" style="background:#eef2ff;color:#4f46e5;font-size:10.5px;">{{ $job->job_type }}</span>
-                            @if($expired)
+                            @if($archived)
+                                <small style="font-size:11px;color:#9ca3af;font-weight:600;"><i class="bi bi-archive"></i> No longer available</small>
+                            @elseif($expired)
                                 <small style="font-size:11px;color:#dc2626;font-weight:600;"><i class="bi bi-x-circle"></i> Deadline over</small>
                             @elseif($expiringSoon)
                                 <small style="font-size:11px;color:#ea580c;font-weight:600;"><i class="bi bi-alarm"></i> Expiring soon</small>

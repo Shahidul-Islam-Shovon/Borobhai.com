@@ -42,8 +42,9 @@ class SavedPostController extends Controller
             ->withCount('comments')
             ->paginate(10);
 
-        // সেভ করা job গুলো (latest আগে)
+        // সেভ করা job গুলো (archived/expired সহ — LinkedIn স্টাইল)
         $savedJobs = $user->savedJobs()
+            ->withTrashed()
             ->with('user')
             ->orderByPivot('created_at', 'desc')
             ->get();

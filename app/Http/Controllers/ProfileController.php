@@ -20,8 +20,8 @@ class ProfileController extends Controller
     public function show($id = null)
     {
         $user = $id
-            ? User::with(['educations', 'experiences', 'certifications', 'latestEducation', 'currentJob', 'documents', 'jobPosts'])->findOrFail($id)
-            : User::with(['educations', 'experiences', 'certifications', 'latestEducation', 'currentJob', 'documents', 'jobPosts'])->find(Auth::id());
+            ? User::with(['educations', 'experiences', 'certifications', 'latestEducation', 'currentJob', 'documents', 'jobPosts' => fn($q) => $q->withTrashed()->withCount('applications')])->findOrFail($id)
+            : User::with(['educations', 'experiences', 'certifications', 'latestEducation', 'currentJob', 'documents', 'jobPosts' => fn($q) => $q->withTrashed()->withCount('applications')])->find(Auth::id());
 
         $isOwner = Auth::id() === $user->id;
         $postCount = Post::where('user_id', $user->id)->count();

@@ -503,6 +503,8 @@ textarea.bb-job-input { resize:vertical; }
 
                 <a href="{{ route('saved.index') }}" class="sidebar-link"><i class="bi bi-bookmark-heart-fill text-warning"></i><span>Saved</span></a>
 
+                <a href="{{ route('jobs.myApplications') }}" class="sidebar-link"><i class="bi bi-briefcase-fill text-primary"></i><span>Job History</span></a>
+
             </div>
         </div>
 
@@ -543,7 +545,7 @@ textarea.bb-job-input { resize:vertical; }
             <div id="postsFeedContainer">
             @if(isset($feedJobs) && $feedJobs->count())
                 @foreach($feedJobs as $job)
-                    @include('partials.job-card', ['job' => $job])
+                    @include('partials.job-card', ['job' => $job, 'appliedJobIds' => $appliedJobIds ?? []])
                 @endforeach
             @endif
             @forelse($posts as $post)

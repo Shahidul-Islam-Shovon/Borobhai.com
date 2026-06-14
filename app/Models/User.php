@@ -99,6 +99,12 @@ public function isSuperAdmin()
                     ->withTimestamps();
     }
 
+    // এই user (student) যেসব job এ আবেদন করেছে
+    public function jobApplications()
+    {
+        return $this->hasMany(JobApplication::class)->latest('applied_at');
+    }
+
     // শিক্ষা ইতিহাস (latest আগে)
     public function educations()
     {

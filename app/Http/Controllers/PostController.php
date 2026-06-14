@@ -29,6 +29,10 @@ class PostController extends Controller
 
         $user = Auth::user();
 
+        // user যেসব job এ আবেদন করেছে (Already Applied দেখাতে)
+        $appliedJobIds = \App\Models\JobApplication::where('user_id', $user->id)
+            ->pluck('job_post_id')->toArray();
+
         // ফিডে দেখানোর জন্য দৃশ্যমান job (সীমিত — পারফরম্যান্স)
         $feedJobs = JobPost::with('user')
                 ->withCount(['savedByUsers as is_saved_by_me' => function ($q) {
@@ -51,9 +55,9 @@ class PostController extends Controller
                 ->get();
 
         if ($user->role === 'alumni') {
-            return view('alumni.dashboard', compact('posts', 'recentJobs', 'feedJobs'));
+            return view('alumni.dashboard', compact('posts', 'recentJobs', 'feedJobs', 'appliedJobIds'));
         }
-        return view('student.dashboard', compact('posts', 'recentJobs', 'feedJobs'));
+        return view('student.dashboard', compact('posts', 'recentJobs', 'feedJobs', 'appliedJobIds'));
     }
 
     public function loadMore(Request $request)

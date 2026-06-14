@@ -104,7 +104,13 @@ class JobController extends Controller
             abort(404);
         }
 
-        return view('jobs.show', compact('job'));
+        // user আগে আবেদন করেছে কিনা + status
+        $myApplication = \App\Models\JobApplication::where('user_id', Auth::id())
+            ->where('job_post_id', $job->id)->first();
+        $hasApplied = (bool) $myApplication;
+        $myAppStatus = $myApplication->status ?? null;
+
+        return view('jobs.show', compact('job', 'hasApplied', 'myAppStatus'));
     }
 
     // ==========================================
@@ -131,7 +137,7 @@ class JobController extends Controller
     // ==========================================
     public function toggleSave($id)
     {
-        $job = JobPost::findOrFail($id);
+        $job = JobPost::withTrashed()->findOrFail($id);
         $user = Auth::user();
 
         $existing = $job->savedByUsers()->where('user_id', $user->id)->exists();

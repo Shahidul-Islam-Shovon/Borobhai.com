@@ -12,6 +12,7 @@
     ];
     $tc = $typeColors[$job->job_type] ?? ['#eef2ff', '#4f46e5', 'bi-briefcase'];
     $isSaved = isset($job->is_saved_by_me) ? ($job->is_saved_by_me > 0) : false;
+    $hasApplied = isset($appliedJobIds) && in_array($job->id, $appliedJobIds);
 @endphp
 
 <div class="bb-jobcard" id="jobCard-{{ $job->id }}">
@@ -48,9 +49,15 @@
         @if($job->deadline)<span class="bb-jobcard-pill"><i class="bi bi-calendar-event"></i> {{ $job->deadline->format('d M Y') }}</span>@endif
     </div>
 
-    <a href="{{ route('jobs.show', $job->id) }}" class="bb-jobcard-btn">
-        <i class="bi bi-box-arrow-up-right me-1"></i> View Details & Apply
-    </a>
+    @if($hasApplied)
+        <a href="{{ route('jobs.show', $job->id) }}" class="bb-jobcard-btn" style="background:#dcfce7;color:#16a34a;">
+            <i class="bi bi-check-circle-fill me-1"></i> Already Applied · View
+        </a>
+    @else
+        <a href="{{ route('jobs.show', $job->id) }}" class="bb-jobcard-btn">
+            <i class="bi bi-box-arrow-up-right me-1"></i> View Details & Apply
+        </a>
+    @endif
 
     @if($expired)
         <div class="bb-jobcard-foot bb-foot-expired"><i class="bi bi-x-circle"></i> Deadline over</div>
