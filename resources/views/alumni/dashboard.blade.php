@@ -428,6 +428,16 @@ textarea.bb-job-input { resize:vertical; }
     transition:all .15s;
 }
 .bb-jobcard-btn:hover { background:var(--bb-primary); color:#fff; }
+/* job card — posted time, save btn, footer */
+.bb-jobcard-posted { font-size:11.5px; color:var(--bb-muted); margin:3px 0 0; display:flex; align-items:center; gap:5px; }
+.bb-jobcard-posted i { font-size:10px; }
+.bb-job-save-btn { border:none; background:transparent; color:var(--bb-muted); width:34px; height:34px; border-radius:50%; cursor:pointer; flex-shrink:0; font-size:17px; transition:all .15s; }
+.bb-job-save-btn:hover { background:var(--bb-bg); color:#f59e0b; }
+.bb-job-save-btn.saved { color:#f59e0b; }
+.bb-jobcard-foot { margin-top:12px; padding-top:11px; border-top:1px solid var(--bb-line); font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:6px; }
+.bb-foot-expiring { color:#ea580c; }
+.bb-foot-expired { color:#dc2626; }
+
 
         </style>
 </head>
@@ -444,7 +454,7 @@ textarea.bb-job-input { resize:vertical; }
         </div>
         <div class="d-flex align-items-center gap-2 ms-auto">
             @php $role = Auth::user()->role; @endphp
-            <button type="button" class="bb-post-job-btn" data-bs-toggle="modal" data-bs-target="#postJobModal">
+            <button type="button" class="bb-post-job-btn" onclick="openPostJobModal()">
                 <i class="bi bi-briefcase-fill"></i>
                 <span class="d-none d-md-inline">Post A Job</span>
             </button>
@@ -531,6 +541,11 @@ textarea.bb-job-input { resize:vertical; }
 
             {{-- Posts Feed --}}
             <div id="postsFeedContainer">
+            @if(isset($feedJobs) && $feedJobs->count())
+                @foreach($feedJobs as $job)
+                    @include('partials.job-card', ['job' => $job])
+                @endforeach
+            @endif
             @forelse($posts as $post)
                 @include('partials.post-card', ['post' => $post])
             @empty
@@ -2214,22 +2229,67 @@ function highlightMentions(text) {
 
 <script>
 // ==========================================
-// POST A JOB
+// POST / EDIT A JOB
 // ==========================================
+let jobModalObj = null;
+document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('postJobModal');
+    if (el) jobModalObj = bootstrap.Modal.getOrCreateInstance(el);
+});
+
+// নতুন job — modal রিসেট করে খোলো
+function openPostJobModal(){
+    const form = document.getElementById('postJobForm');
+    form.reset();
+    document.getElementById('job_id').value = '';
+    document.getElementById('postJobModalTitle').innerHTML = '<i class="bi bi-briefcase-fill text-primary me-1"></i> Post A Job';
+    document.getElementById('jobSubmitBtn').innerHTML = '<i class="bi bi-send-fill me-1"></i> Post Job';
+    jobModalObj?.show();
+}
+
+// edit — server থেকে data এনে modal ভরো
+function editJobById(id){
+    fetch(`/jobs/${id}/data`, { headers:{'Accept':'application/json'} })
+    .then(r=>r.json())
+    .then(d=>{
+        if(!d.success){ Swal.fire({icon:'error',title:'Could not load job'}); return; }
+        fillJobModal(d.job);
+    })
+    .catch(()=>Swal.fire({icon:'error',title:'Network error'}));
+}
+
+function fillJobModal(job){
+    const form = document.getElementById('postJobForm');
+    form.reset();
+    document.getElementById('job_id').value = job.id;
+    document.getElementById('job_title').value = job.title || '';
+    document.getElementById('job_company').value = job.company || '';
+    document.getElementById('job_location').value = job.location || '';
+    document.getElementById('job_type').value = job.job_type || 'Full-time';
+    document.getElementById('job_experience').value = job.experience || '';
+    document.getElementById('job_salary').value = job.salary || '';
+    document.getElementById('job_category').value = job.category || '';
+    document.getElementById('job_deadline').value = job.deadline || '';
+    document.getElementById('job_description').value = job.description || '';
+    document.getElementById('job_requirements').value = job.requirements || '';
+    document.getElementById('job_skills').value = job.skills || '';
+    document.getElementById('job_apply_type').value = job.apply_type || 'link';
+    document.getElementById('job_apply_value').value = job.apply_value || '';
+    document.getElementById('postJobModalTitle').innerHTML = '<i class="bi bi-pencil-square text-primary me-1"></i> Edit Job';
+    document.getElementById('jobSubmitBtn').innerHTML = '<i class="bi bi-check2 me-1"></i> Update Job';
+    jobModalObj?.show();
+}
+
 (function(){
     const form = document.getElementById('postJobForm');
     if (!form) return;
-    let jobModalObj = null;
-    document.addEventListener('DOMContentLoaded', () => {
-        const el = document.getElementById('postJobModal');
-        if (el) jobModalObj = bootstrap.Modal.getOrCreateInstance(el);
-    });
 
     form.addEventListener('submit', function(ev){
         ev.preventDefault();
         const btn = document.getElementById('jobSubmitBtn');
+        const isEdit = !!document.getElementById('job_id').value;
         btn.disabled = true; const orig = btn.innerHTML;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Posting...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> ' + (isEdit ? 'Updating...' : 'Posting...');
 
         const fd = new FormData(form);
         fetch("{{ route('jobs.store') }}", {
@@ -2241,22 +2301,29 @@ function highlightMentions(text) {
         .then(d=>{
             btn.disabled=false; btn.innerHTML=orig;
             if(!d.success){
-                let msg = d.message || 'Could not post job.';
+                let msg = d.message || 'Could not save job.';
                 if (d.errors) msg = Object.values(d.errors).flat().join('\n');
                 Swal.fire({icon:'error',title:'Failed',text:msg});
                 return;
             }
             jobModalObj?.hide();
             form.reset();
+            document.getElementById('job_id').value = '';
             const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:2200, timerProgressBar:true });
-            Toast.fire({ icon:'success', title:'Job posted successfully!' });
+            Toast.fire({ icon:'success', title: isEdit ? 'Job updated!' : 'Job posted successfully!' });
 
-            // নতুন job card ফিডের উপরে বসাও (reload ছাড়া)
             if (d.html) {
-                const feedC = document.getElementById('postsFeedContainer');
-                if (feedC) {
-                    feedC.insertAdjacentHTML('afterbegin', d.html);
-                    document.getElementById('emptyFeedState')?.remove();
+                if (isEdit) {
+                    // পুরনো card রিপ্লেস
+                    const old = document.getElementById(`jobCard-${d.job_id}`);
+                    if (old) old.outerHTML = d.html;
+                } else {
+                    // নতুন card উপরে
+                    const feedC = document.getElementById('postsFeedContainer');
+                    if (feedC) {
+                        feedC.insertAdjacentHTML('afterbegin', d.html);
+                        document.getElementById('emptyFeedState')?.remove();
+                    }
                 }
             }
         })
@@ -2284,6 +2351,36 @@ function deleteJob(id) {
             Toast.fire({ icon:'success', title:'Job deleted' });
         });
     });
+}
+</script>
+
+
+<script>
+// ==========================================
+// JOB SAVE / UNSAVE
+// ==========================================
+function toggleJobSave(id){
+    const btn = document.getElementById(`jobSaveBtn-${id}`);
+    if (btn && btn.dataset.busy === '1') return;  // double-click রোধ
+    if (btn) btn.dataset.busy = '1';
+    fetch(`/jobs/${id}/save`, {
+        method:'POST',
+        headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if (btn) btn.dataset.busy = '0';
+        if(!d.success) return;
+        if (btn) {
+            btn.classList.toggle('saved', d.saved);
+            const ic = btn.querySelector('i');
+            if (ic) ic.className = d.saved ? 'bi bi-bookmark-fill' : 'bi bi-bookmark';
+            btn.title = d.saved ? 'Saved' : 'Save job';
+        }
+        const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1600, timerProgressBar:true });
+        Toast.fire({ icon: d.saved ? 'success' : 'info', title: d.message });
+    })
+    .catch(()=>{ const b=document.getElementById(`jobSaveBtn-${id}`); if(b) b.dataset.busy='0'; Swal.fire({icon:'error',title:'Something went wrong'}); });
 }
 </script>
 

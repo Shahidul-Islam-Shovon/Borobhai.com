@@ -22,6 +22,19 @@ class JobController extends Controller
             'deadline' => $request->deadline ?: null,
         ]);
 
+        // apply_value কে type অনুযায়ী যাচাই (email হলে valid email, link হলে valid URL)
+        $applyRule = $request->apply_type === 'email'
+            ? 'required|email:rfc|max:255'
+            : 'required|url|max:255';
+
+        // link হলে http(s) না থাকলে যোগ করি (যাতে url validation পাস করে)
+        if ($request->apply_type === 'link' && $request->filled('apply_value')) {
+            $val = trim($request->apply_value);
+            if (!preg_match('#^https?://#i', $val)) {
+                $request->merge(['apply_value' => 'https://' . $val]);
+            }
+        }
+
         try {
             $data = $request->validate([
                 'id'           => 'nullable|integer',
@@ -35,9 +48,13 @@ class JobController extends Controller
                 'requirements' => 'nullable|string|max:5000',
                 'skills'       => 'nullable|string|max:500',
                 'apply_type'   => 'required|in:link,email',
-                'apply_value'  => 'required|string|max:255',
+                'apply_value'  => $applyRule,
                 'deadline'     => 'nullable|date|after_or_equal:today',
                 'category'     => 'nullable|string|max:100',
+            ], [
+                'apply_value.email' => 'Please enter a valid email address.',
+                'apply_value.url'   => 'Please enter a valid website link (e.g. https://...).',
+                'deadline.after_or_equal' => 'Deadline must be today or a future date.',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['success' => false, 'errors' => $e->errors()], 422);
@@ -55,14 +72,21 @@ class JobController extends Controller
         $job->status = 'active';
         $job->save();
 
+        $fresh = $job->fresh();
+        $fresh->load('user');
+
         // ফিডের জন্য job card HTML
-        $html = view('partials.job-card', ['job' => $job->fresh()])->render();
+        $html = view('partials.job-card', ['job' => $fresh])->render();
+
+        // profile Job Posts সেকশনের item HTML
+        $profileHtml = view('partials.myjob-item', ['job' => $fresh])->render();
 
         return response()->json([
-            'success' => true,
-            'message' => 'Job posted successfully!',
-            'job_id'  => $job->id,
-            'html'    => $html,
+            'success'      => true,
+            'message'      => 'Job posted successfully!',
+            'job_id'       => $job->id,
+            'html'         => $html,
+            'profile_html' => $profileHtml,
         ]);
     }
 
@@ -100,6 +124,58 @@ class JobController extends Controller
                 ->paginate(12);
 
         return view('jobs.all', compact('jobs'));
+    }
+
+    // ==========================================
+    // job save/unsave টগল
+    // ==========================================
+    public function toggleSave($id)
+    {
+        $job = JobPost::findOrFail($id);
+        $user = Auth::user();
+
+        $existing = $job->savedByUsers()->where('user_id', $user->id)->exists();
+
+        if ($existing) {
+            $job->savedByUsers()->detach($user->id);
+            $saved = false;
+        } else {
+            $job->savedByUsers()->attach($user->id);
+            $saved = true;
+        }
+
+        return response()->json([
+            'success' => true,
+            'saved'   => $saved,
+            'message' => $saved ? 'Job saved!' : 'Removed from saved',
+        ]);
+    }
+
+    // ==========================================
+    // edit এর জন্য job data (JSON)
+    // ==========================================
+    public function getJob($id)
+    {
+        $job = JobPost::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        return response()->json([
+            'success' => true,
+            'job' => [
+                'id'           => $job->id,
+                'title'        => $job->title,
+                'company'      => $job->company,
+                'location'     => $job->location,
+                'job_type'     => $job->job_type,
+                'experience'   => $job->experience,
+                'salary'       => $job->salary,
+                'category'     => $job->category,
+                'deadline'     => $job->deadline ? $job->deadline->format('Y-m-d') : '',
+                'description'  => $job->description,
+                'requirements' => $job->requirements,
+                'skills'       => $job->skills,
+                'apply_type'   => $job->apply_type,
+                'apply_value'  => $job->apply_value,
+            ],
+        ]);
     }
 
     // ==========================================

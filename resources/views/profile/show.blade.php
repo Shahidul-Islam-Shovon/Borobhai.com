@@ -161,6 +161,21 @@
         .bb-st-soon   { background:#fff7ed; color:#ea580c; }
         .bb-st-closed { background:#fef2f2; color:#dc2626; }
 
+        /* Post Job modal (profile edit) */
+        .bb-job-label { display:block; font-size:12.5px; font-weight:600; color:#374151; margin-bottom:5px; }
+        .bb-job-input { width:100%; border:1.5px solid #e4e6eb; border-radius:10px; padding:9px 12px; font-size:13.5px; outline:none; transition:border-color .15s, box-shadow .15s; background:#fff; }
+        .bb-job-input:focus { border-color:#4f46e5; box-shadow:0 0 0 3px rgba(79,70,229,.12); }
+        textarea.bb-job-input { resize:vertical; }
+        .bb-job-submit-btn { background:linear-gradient(135deg,#4f46e5,#7c73f0); color:#fff; border:none; border-radius:10px; padding:9px 22px; font-size:14px; font-weight:700; display:inline-flex; align-items:center; transition:all .15s; }
+        .bb-job-submit-btn:hover { box-shadow:0 4px 14px rgba(79,70,229,.4); }
+        .bb-job-submit-btn:disabled { opacity:.6; }
+        .postjob-dialog { height:calc(100vh - 3.5rem); }
+        .postjob-content { max-height:100%; display:flex; flex-direction:column; overflow:hidden; }
+        .postjob-form { display:flex; flex-direction:column; min-height:0; flex:1 1 auto; overflow:hidden; }
+        .postjob-body { overflow-y:auto; flex:1 1 auto; min-height:0; }
+        .postjob-footer { flex:0 0 auto; }
+        @media (max-width:576px){ .postjob-dialog { height:calc(100vh - 1rem); } }
+
         .bb-role-pill {
             display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700;
             padding:5px 13px; border-radius:20px; letter-spacing:.3px; text-transform:uppercase;
@@ -855,40 +870,9 @@
         </div>
         <div id="myJobList">
             @forelse($user->jobPosts as $job)
-                @php
-                    $jt = strtolower($job->job_type);
-                    $logoColor = str_contains($jt,'intern') ? 'background:#fff7ed;color:#ea580c;'
-                               : (str_contains($jt,'part') ? 'background:#eff6ff;color:#2563eb;'
-                               : 'background:var(--bb-primary-soft);color:var(--bb-primary);');
-                @endphp
-                <div class="bb-myjob-item">
-                    <div class="bb-myjob-logo" style="{{ $logoColor }}">{{ strtoupper(substr($job->company,0,1)) }}</div>
-                    <div class="bb-myjob-body">
-                        <a href="{{ route('jobs.show', $job->id) }}" class="bb-myjob-title">{{ $job->title }}</a>
-                        <p class="bb-myjob-company">{{ $job->company }}@if($job->location) · {{ $job->location }}@endif</p>
-                        <div class="bb-myjob-meta">
-                            <span class="bb-myjob-tag">{{ $job->job_type }}</span>
-                            <span class="bb-myjob-date"><i class="bi bi-clock"></i> Posted {{ $job->created_at->diffForHumans() }}</span>
-                            @if($job->is_expired)
-                                <span class="bb-myjob-status bb-st-closed"><i class="bi bi-x-circle"></i> Closed</span>
-                            @elseif($job->is_expiring_soon)
-                                <span class="bb-myjob-status bb-st-soon"><i class="bi bi-alarm"></i> Expiring soon</span>
-                            @else
-                                <span class="bb-myjob-status bb-st-active"><i class="bi bi-broadcast"></i> Active</span>
-                            @endif
-                            @if($job->deadline)
-                                <span class="bb-myjob-date"><i class="bi bi-calendar-event"></i> Deadline {{ $job->deadline->format('d M Y') }}</span>
-                            @endif
-                        </div>
-                    </div>
-                    @if($isOwner)
-                        <div class="bb-timeline-actions">
-                            <button onclick="deleteMyJob({{ $job->id }})" title="Delete" class="text-danger"><i class="bi bi-trash3"></i></button>
-                        </div>
-                    @endif
-                </div>
+                @include('partials.myjob-item', ['job' => $job])
             @empty
-                <p class="bb-empty">{{ $isOwner ? 'You have not posted any jobs yet. Use “Post A Job” from your feed.' : 'No jobs posted yet.' }}</p>
+                <p class="bb-empty" id="myJobEmpty">{{ $isOwner ? 'You have not posted any jobs yet. Use “Post A Job” from your feed.' : 'No jobs posted yet.' }}</p>
             @endforelse
         </div>
     </div>
@@ -3171,14 +3155,87 @@ function deleteMyJob(id){
         .then(r=>r.json())
         .then(d=>{
             if(!d.success){ Swal.fire({icon:'error',title:'Delete failed'}); return; }
-            // পুরো item সরাও
-            const items = document.querySelectorAll('#myJobList .bb-myjob-item');
-            items.forEach(it => {
-                if (it.querySelector(`[onclick="deleteMyJob(${id})"]`)) it.remove();
-            });
+            document.getElementById(`myjob-${id}`)?.remove();
             detailToast.fire({icon:'success', title:'Job deleted'});
         });
     });
+}
+
+// ===== Job Edit (profile থেকে) =====
+let pjModalObj = null;
+document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('postJobModal');
+    if (el) pjModalObj = bootstrap.Modal.getOrCreateInstance(el);
+});
+
+function editJobById(id){
+    fetch(`/jobs/${id}/data`, { headers:{'Accept':'application/json'} })
+    .then(r=>r.json())
+    .then(d=>{
+        if(!d.success){ Swal.fire({icon:'error',title:'Could not load job'}); return; }
+        const job = d.job;
+        const f = document.getElementById('postJobForm');
+        if (!f) return;
+        f.reset();
+        document.getElementById('job_id').value = job.id;
+        document.getElementById('job_title').value = job.title || '';
+        document.getElementById('job_company').value = job.company || '';
+        document.getElementById('job_location').value = job.location || '';
+        document.getElementById('job_type').value = job.job_type || 'Full-time';
+        document.getElementById('job_experience').value = job.experience || '';
+        document.getElementById('job_salary').value = job.salary || '';
+        document.getElementById('job_category').value = job.category || '';
+        document.getElementById('job_deadline').value = job.deadline || '';
+        document.getElementById('job_description').value = job.description || '';
+        document.getElementById('job_requirements').value = job.requirements || '';
+        document.getElementById('job_skills').value = job.skills || '';
+        document.getElementById('job_apply_type').value = job.apply_type || 'link';
+        document.getElementById('job_apply_value').value = job.apply_value || '';
+        document.getElementById('postJobModalTitle').innerHTML = '<i class="bi bi-pencil-square text-primary me-1"></i> Edit Job';
+        document.getElementById('jobSubmitBtn').innerHTML = '<i class="bi bi-check2 me-1"></i> Update Job';
+        pjModalObj?.show();
+    })
+    .catch(()=>Swal.fire({icon:'error',title:'Network error'}));
+}
+
+function submitJobForm(){
+    const form = document.getElementById('postJobForm');
+    const btn = document.getElementById('jobSubmitBtn');
+    btn.disabled = true; const orig = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+    const fd = new FormData(form);
+
+    fetch("{{ route('jobs.store') }}", {
+        method:'POST', headers:{'X-CSRF-TOKEN':DETAIL_CSRF,'Accept':'application/json'}, body:fd
+    })
+    .then(r=>{
+        if (!r.ok && r.status !== 422) throw new Error('Server error ' + r.status);
+        return r.json();
+    })
+    .then(d=>{
+        btn.disabled=false; btn.innerHTML=orig;
+        if(!d.success){
+            let msg = d.message || 'Could not save job.';
+            if (d.errors) msg = Object.values(d.errors).flat().join('\n');
+            Swal.fire({icon:'error',title:'Failed',text:msg});
+            return;
+        }
+        pjModalObj?.hide();
+        const isEdit = !!document.getElementById('job_id').value;
+        detailToast.fire({icon:'success', title: isEdit ? 'Job updated!' : 'Job posted!'});
+
+        if (d.profile_html) {
+            const existing = document.getElementById(`myjob-${d.job_id}`);
+            if (existing) {
+                existing.outerHTML = d.profile_html;   // edit — রিপ্লেস
+            } else {
+                document.getElementById('myJobEmpty')?.remove();
+                document.getElementById('myJobList')?.insertAdjacentHTML('afterbegin', d.profile_html); // নতুন
+            }
+        }
+        document.getElementById('job_id').value = '';
+    })
+    .catch(()=>{ btn.disabled=false; btn.innerHTML=orig; Swal.fire({icon:'error',title:'Network error'}); });
 }
 @endif
 
@@ -3338,6 +3395,94 @@ function highlightMentions(text) {
 }
 
 </script>
+
+
+@if($isAlumni)
+{{-- ==================== POST A JOB MODAL (profile edit) ==================== --}}
+<div class="modal fade" id="postJobModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg postjob-dialog">
+        <div class="modal-content border-0 shadow-lg rounded-4 postjob-content">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="postJobModalTitle"><i class="bi bi-briefcase-fill text-primary me-1"></i> Post A Job</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="postJobForm" class="postjob-form">
+                <div class="modal-body p-4 postjob-body">
+                    <input type="hidden" name="id" id="job_id">
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <label class="bb-job-label">Job Title *</label>
+                            <input type="text" name="title" id="job_title" class="bb-job-input" placeholder="e.g. Junior Laravel Developer" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="bb-job-label">Company *</label>
+                            <input type="text" name="company" id="job_company" class="bb-job-input" placeholder="e.g. Tech Soft BD" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-job-label">Location</label>
+                            <input type="text" name="location" id="job_location" class="bb-job-input" placeholder="e.g. Dhaka / Remote">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-job-label">Job Type *</label>
+                            <select name="job_type" id="job_type" class="bb-job-input" required>
+                                <option>Full-time</option>
+                                <option>Part-time</option>
+                                <option>Internship</option>
+                                <option>Remote</option>
+                                <option>Contract</option>
+                                <option>Freelance</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-job-label">Experience</label>
+                            <input type="text" name="experience" id="job_experience" class="bb-job-input" placeholder="e.g. 1-2 years / Fresher">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-job-label">Salary</label>
+                            <input type="text" name="salary" id="job_salary" class="bb-job-input" placeholder="e.g. 30k-50k BDT / Negotiable">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-job-label">Category</label>
+                            <input type="text" name="category" id="job_category" class="bb-job-input" placeholder="e.g. IT, Marketing, Design">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="bb-job-label">Application Deadline</label>
+                            <input type="date" name="deadline" id="job_deadline" class="bb-job-input">
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-job-label">Job Description *</label>
+                            <textarea name="description" id="job_description" class="bb-job-input" rows="4" placeholder="Describe the role, responsibilities..." required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-job-label">Requirements</label>
+                            <textarea name="requirements" id="job_requirements" class="bb-job-input" rows="3" placeholder="Educational qualification, must-haves..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="bb-job-label">Skills <span class="text-muted" style="font-weight:400;">(comma separated)</span></label>
+                            <input type="text" name="skills" id="job_skills" class="bb-job-input" placeholder="e.g. PHP, Laravel, MySQL, Git">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="bb-job-label">Apply Via</label>
+                            <select name="apply_type" id="job_apply_type" class="bb-job-input">
+                                <option value="link">Website Link</option>
+                                <option value="email">Email</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="bb-job-label">Apply Link / Email *</label>
+                            <input type="text" name="apply_value" id="job_apply_value" class="bb-job-input" placeholder="https://apply.example.com or hr@company.com" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer postjob-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="bb-job-submit-btn" id="jobSubmitBtn" onclick="submitJobForm()"><i class="bi bi-send-fill me-1"></i> Post Job</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
 
 {{-- Global Emoji Popover --}}
 <div id="bbEmojiPopover"><emoji-picker class="light"></emoji-picker></div>

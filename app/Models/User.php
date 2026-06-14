@@ -90,6 +90,15 @@ public function isSuperAdmin()
         ->orderByPivot('created_at', 'desc'); // সর্বশেষ সেভ আগে
     }
 
+    // এই user যেসব job সেভ করেছে
+    // এই user যেসব job সেভ করেছে
+    public function savedJobs()
+    {
+        return $this->belongsToMany(\App\Models\JobPost::class, 'saved_jobs', 'user_id', 'job_post_id')
+                    ->withPivot('created_at')
+                    ->withTimestamps();
+    }
+
     // শিক্ষা ইতিহাস (latest আগে)
     public function educations()
     {

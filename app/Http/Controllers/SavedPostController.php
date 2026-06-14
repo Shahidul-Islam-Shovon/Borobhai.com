@@ -13,11 +13,9 @@ class SavedPostController extends Controller
     {
         $user = Auth::user();
 
-        // ইতিমধ্যে সেভ করা আছে কিনা চেক
         $alreadySaved = $user->savedPosts()->where('post_id', $post->id)->exists();
 
         if ($alreadySaved) {
-            // আনসেভ
             $user->savedPosts()->detach($post->id);
             return response()->json([
                 'success' => true,
@@ -25,7 +23,6 @@ class SavedPostController extends Controller
                 'message' => 'Removed from saved',
             ]);
         } else {
-            // সেভ
             $user->savedPosts()->attach($post->id);
             return response()->json([
                 'success' => true,
@@ -35,14 +32,22 @@ class SavedPostController extends Controller
         }
     }
 
-    // Saved পেজ
+    // Saved পেজ — saved posts + saved jobs দুটোই
     public function index()
     {
-        $savedPosts = Auth::user()->savedPosts()
+        $user = Auth::user();
+
+        $savedPosts = $user->savedPosts()
             ->with(['user', 'parentPost.user', 'likes', 'comments.user'])
             ->withCount('comments')
             ->paginate(10);
 
-        return view('saved.index', compact('savedPosts'));
+        // সেভ করা job গুলো (latest আগে)
+        $savedJobs = $user->savedJobs()
+            ->with('user')
+            ->orderByPivot('created_at', 'desc')
+            ->get();
+
+        return view('saved.index', compact('savedPosts', 'savedJobs'));
     }
 }

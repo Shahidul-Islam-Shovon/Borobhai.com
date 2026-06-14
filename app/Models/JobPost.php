@@ -25,6 +25,12 @@ class JobPost extends Model
         return $this->belongsTo(User::class);
     }
 
+    // যারা এই job সেভ করেছে
+    public function savedByUsers()
+    {
+        return $this->belongsToMany(User::class, 'saved_jobs', 'job_post_id', 'user_id')->withTimestamps();
+    }
+
     // ===== Helper / Accessor =====
 
     // ডেডলাইন কি শেষ?
@@ -34,11 +40,13 @@ class JobPost extends Model
         return $this->deadline->endOfDay()->isPast();
     }
 
-    // ডেডলাইন কি ঘনিয়ে আসছে? (৩ দিনের মধ্যে)
+    // ডেডলাইন কি ঘনিয়ে আসছে? (আজ থেকে ৩ দিন বা তার কম বাকি)
     public function getIsExpiringSoonAttribute()
     {
         if (!$this->deadline || $this->is_expired) return false;
-        return $this->deadline->endOfDay()->diffInDays(now()) <= 3;
+        // আজ থেকে deadline পর্যন্ত কত দিন বাকি (signed, false=ভবিষ্যৎ ধনাত্মক)
+        $daysLeft = now()->startOfDay()->diffInDays($this->deadline->startOfDay(), false);
+        return $daysLeft >= 0 && $daysLeft <= 3;
     }
 
     // ডেডলাইন শেষ হওয়ার কত দিন পর অটো-ডিলিট হবে (৫ দিন গ্রেস)

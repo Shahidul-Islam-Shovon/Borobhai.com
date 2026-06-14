@@ -391,6 +391,16 @@
     transition:all .15s;
 }
 .bb-jobcard-btn:hover { background:var(--bb-primary); color:#fff; }
+/* job card — posted time, save btn, footer */
+.bb-jobcard-posted { font-size:11.5px; color:var(--bb-muted); margin:3px 0 0; display:flex; align-items:center; gap:5px; }
+.bb-jobcard-posted i { font-size:10px; }
+.bb-job-save-btn { border:none; background:transparent; color:var(--bb-muted); width:34px; height:34px; border-radius:50%; cursor:pointer; flex-shrink:0; font-size:17px; transition:all .15s; }
+.bb-job-save-btn:hover { background:var(--bb-bg); color:#f59e0b; }
+.bb-job-save-btn.saved { color:#f59e0b; }
+.bb-jobcard-foot { margin-top:12px; padding-top:11px; border-top:1px solid var(--bb-line); font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:6px; }
+.bb-foot-expiring { color:#ea580c; }
+.bb-foot-expired { color:#dc2626; }
+
 
         </style>
 </head>
@@ -490,6 +500,11 @@
 
             {{-- Posts Feed --}}
             <div id="postsFeedContainer">
+            @if(isset($feedJobs) && $feedJobs->count())
+                @foreach($feedJobs as $job)
+                    @include('partials.job-card', ['job' => $job])
+                @endforeach
+            @endif
             @forelse($posts as $post)
                 @include('partials.post-card', ['post' => $post])
             @empty
@@ -2136,6 +2151,36 @@ function deleteJob(id) {
             Toast.fire({ icon:'success', title:'Job deleted' });
         });
     });
+}
+</script>
+
+
+<script>
+// ==========================================
+// JOB SAVE / UNSAVE
+// ==========================================
+function toggleJobSave(id){
+    const btn = document.getElementById(`jobSaveBtn-${id}`);
+    if (btn && btn.dataset.busy === '1') return;  // double-click রোধ
+    if (btn) btn.dataset.busy = '1';
+    fetch(`/jobs/${id}/save`, {
+        method:'POST',
+        headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if (btn) btn.dataset.busy = '0';
+        if(!d.success) return;
+        if (btn) {
+            btn.classList.toggle('saved', d.saved);
+            const ic = btn.querySelector('i');
+            if (ic) ic.className = d.saved ? 'bi bi-bookmark-fill' : 'bi bi-bookmark';
+            btn.title = d.saved ? 'Saved' : 'Save job';
+        }
+        const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1600, timerProgressBar:true });
+        Toast.fire({ icon: d.saved ? 'success' : 'info', title: d.message });
+    })
+    .catch(()=>{ const b=document.getElementById(`jobSaveBtn-${id}`); if(b) b.dataset.busy='0'; Swal.fire({icon:'error',title:'Something went wrong'}); });
 }
 </script>
 

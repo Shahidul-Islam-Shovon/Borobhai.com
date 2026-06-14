@@ -11,6 +11,7 @@
         'Freelance'  => ['#fefce8', '#ca8a04', 'bi-person-workspace'],
     ];
     $tc = $typeColors[$job->job_type] ?? ['#eef2ff', '#4f46e5', 'bi-briefcase'];
+    $isSaved = isset($job->is_saved_by_me) ? ($job->is_saved_by_me > 0) : false;
 @endphp
 
 <div class="bb-jobcard" id="jobCard-{{ $job->id }}">
@@ -21,20 +22,23 @@
         <div class="bb-jobcard-headinfo">
             <a href="{{ route('jobs.show', $job->id) }}" class="bb-jobcard-title">{{ $job->title }}</a>
             <p class="bb-jobcard-company">{{ $job->company }}@if($job->location) · {{ $job->location }}@endif</p>
-            @if($expired)
-                <span class="bb-job-expired"><i class="bi bi-x-circle"></i> Deadline over</span>
-            @elseif($expiringSoon)
-                <span class="bb-job-expiring"><i class="bi bi-alarm"></i> Expiring soon</span>
+            <p class="bb-jobcard-posted"><i class="bi bi-clock"></i> Posted at {{ $job->created_at->format('d M, g:i A') }}</p>
+        </div>
+        <div class="d-flex align-items-start gap-1">
+            <button class="bb-job-save-btn {{ $isSaved ? 'saved' : '' }}" id="jobSaveBtn-{{ $job->id }}"
+                    onclick="toggleJobSave({{ $job->id }})" title="{{ $isSaved ? 'Saved' : 'Save job' }}">
+                <i class="bi {{ $isSaved ? 'bi-bookmark-fill' : 'bi-bookmark' }}"></i>
+            </button>
+            @if($job->user_id === Auth::id())
+                <div class="dropdown">
+                    <button class="bb-jobcard-more" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:110px;">
+                        <li><a class="dropdown-item py-1 fs-7" href="javascript:void(0)" onclick="editJobById({{ $job->id }})"><i class="bi bi-pencil me-1"></i> Edit</a></li>
+                        <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deleteJob({{ $job->id }})"><i class="bi bi-trash me-1"></i> Delete</a></li>
+                    </ul>
+                </div>
             @endif
         </div>
-        @if($job->user_id === Auth::id())
-            <div class="dropdown">
-                <button class="bb-jobcard-more" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:110px;">
-                    <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deleteJob({{ $job->id }})"><i class="bi bi-trash me-1"></i> Delete</a></li>
-                </ul>
-            </div>
-        @endif
     </div>
 
     <div class="bb-jobcard-meta">
@@ -47,4 +51,10 @@
     <a href="{{ route('jobs.show', $job->id) }}" class="bb-jobcard-btn">
         <i class="bi bi-box-arrow-up-right me-1"></i> View Details & Apply
     </a>
+
+    @if($expired)
+        <div class="bb-jobcard-foot bb-foot-expired"><i class="bi bi-x-circle"></i> Deadline over</div>
+    @elseif($expiringSoon)
+        <div class="bb-jobcard-foot bb-foot-expiring"><i class="bi bi-alarm"></i> Expiring soon — apply before {{ $job->deadline->format('d M Y') }}</div>
+    @endif
 </div>

@@ -29,6 +29,16 @@ class PostController extends Controller
 
         $user = Auth::user();
 
+        // ফিডে দেখানোর জন্য দৃশ্যমান job (সীমিত — পারফরম্যান্স)
+        $feedJobs = JobPost::with('user')
+                ->withCount(['savedByUsers as is_saved_by_me' => function ($q) {
+                    $q->where('user_id', Auth::id());
+                }])
+                ->visible()
+                ->latest()
+                ->take(15)
+                ->get();
+
         // সাইডবারের জন্য Recent Jobs (Internship/Part-time আগে, তারপর নতুন)
         $recentJobs = JobPost::with('user')
                 ->visible()
@@ -41,9 +51,9 @@ class PostController extends Controller
                 ->get();
 
         if ($user->role === 'alumni') {
-            return view('alumni.dashboard', compact('posts', 'recentJobs'));
+            return view('alumni.dashboard', compact('posts', 'recentJobs', 'feedJobs'));
         }
-        return view('student.dashboard', compact('posts', 'recentJobs'));
+        return view('student.dashboard', compact('posts', 'recentJobs', 'feedJobs'));
     }
 
     public function loadMore(Request $request)

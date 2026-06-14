@@ -44,8 +44,62 @@
 
     <div class="d-flex align-items-center gap-2 mb-4">
         <i class="bi bi-bookmark-heart-fill text-warning fs-3"></i>
-        <h4 class="fw-bold m-0">Saved Posts</h4>
+        <h4 class="fw-bold m-0">Saved</h4>
     </div>
+
+    {{-- ===== SAVED JOBS ===== --}}
+    @if(isset($savedJobs) && $savedJobs->count())
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-briefcase-fill text-primary"></i>
+            <h6 class="fw-bold m-0" style="font-size:15px;">Saved Jobs · {{ $savedJobs->count() }}</h6>
+        </div>
+        @foreach($savedJobs as $job)
+            @php
+                $jt = strtolower($job->job_type);
+                $logoColor = str_contains($jt,'intern') ? 'background:#fff7ed;color:#ea580c;'
+                           : (str_contains($jt,'part') ? 'background:#eff6ff;color:#2563eb;'
+                           : 'background:#eef2ff;color:#4f46e5;');
+                $expired = $job->is_expired;
+                $expiringSoon = $job->is_expiring_soon;
+                $jobSavedAt = $job->pivot->created_at ?? null;
+            @endphp
+            <div class="saved-card p-3 mb-3" id="savedJob-{{ $job->id }}">
+                <div class="d-flex gap-3 align-items-center">
+                    <div class="saved-thumb-placeholder" style="{{ $logoColor }} font-weight:800;font-size:30px;">
+                        {{ strtoupper(substr($job->company, 0, 1)) }}
+                    </div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <a href="{{ route('jobs.show', $job->id) }}" class="fw-bold mb-1 d-block text-dark text-decoration-none" style="font-size:14px;">{{ $job->title }}</a>
+                        <p class="text-muted mb-1" style="font-size:13px;">{{ $job->company }}@if($job->location) · {{ $job->location }}@endif</p>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="badge rounded-pill" style="background:#eef2ff;color:#4f46e5;font-size:10.5px;">{{ $job->job_type }}</span>
+                            @if($expired)
+                                <small style="font-size:11px;color:#dc2626;font-weight:600;"><i class="bi bi-x-circle"></i> Deadline over</small>
+                            @elseif($expiringSoon)
+                                <small style="font-size:11px;color:#ea580c;font-weight:600;"><i class="bi bi-alarm"></i> Expiring soon</small>
+                            @endif
+                            <small class="text-muted" style="font-size:11px;">
+                                <i class="bi bi-bookmark-fill text-warning me-1"></i>Saved {{ $jobSavedAt ? $jobSavedAt->diffForHumans() : '' }}
+                            </small>
+                        </div>
+                    </div>
+                    <button type="button"
+                            class="btn btn-sm btn-light border rounded-circle flex-shrink-0"
+                            style="width:36px;height:36px;"
+                            onclick="unsaveJob({{ $job->id }}, this)"
+                            title="Remove from saved">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+        @endforeach
+
+        <hr class="my-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-file-post-fill text-secondary"></i>
+            <h6 class="fw-bold m-0" style="font-size:15px;">Saved Posts</h6>
+        </div>
+    @endif
 
     @forelse($savedPosts as $post)
         @php
@@ -140,6 +194,37 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+function unsaveJob(jobId, btn) {
+    Swal.fire({
+        title: 'Remove this job from saved?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Remove'
+    }).then(r => {
+        if (!r.isConfirmed) return;
+        fetch(`/jobs/${jobId}/save`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            }
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) return;
+            const card = document.getElementById(`savedJob-${jobId}`);
+            if (card) {
+                card.style.transition = 'opacity .3s ease';
+                card.style.opacity = '0';
+                setTimeout(() => card.remove(), 300);
+            }
+            const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:2000 });
+            Toast.fire({ icon:'info', title:'Removed from saved' });
+        });
+    });
+}
+
 function unsaveFromList(postId, btn) {
     Swal.fire({
         title: 'Remove from saved?',

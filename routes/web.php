@@ -120,6 +120,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/jobs', [JobController::class, 'store'])->name('jobs.store');
     Route::get('/jobs', [JobController::class, 'all'])->name('jobs.all');
+    Route::post('/jobs/{id}/save', [JobController::class, 'toggleSave'])->name('jobs.save');
+    Route::get('/jobs/{id}/data', [JobController::class, 'getJob'])->name('jobs.data');
     Route::get('/jobs/{id}', [JobController::class, 'show'])->name('jobs.show');
     Route::delete('/jobs/{id}', [JobController::class, 'destroy'])->name('jobs.delete');
 
