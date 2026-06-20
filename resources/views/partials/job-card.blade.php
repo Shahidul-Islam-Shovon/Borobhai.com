@@ -49,7 +49,12 @@
         @if($job->deadline)<span class="bb-jobcard-pill"><i class="bi bi-calendar-event"></i> {{ $job->deadline->format('d M Y') }}</span>@endif
     </div>
 
-    @if($hasApplied)
+    @if($expired)
+        {{-- deadline শেষ — শুধু See Details, apply নেই --}}
+        <a href="{{ route('jobs.show', $job->id) }}" class="bb-jobcard-btn" style="background:var(--bb-bg);color:#6b7280;">
+            <i class="bi bi-eye me-1"></i> See Details
+        </a>
+    @elseif($hasApplied)
         <a href="{{ route('jobs.show', $job->id) }}" class="bb-jobcard-btn" style="background:#dcfce7;color:#16a34a;">
             <i class="bi bi-check-circle-fill me-1"></i> Already Applied · View
         </a>

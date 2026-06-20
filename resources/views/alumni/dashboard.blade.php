@@ -542,14 +542,14 @@ textarea.bb-job-input { resize:vertical; }
             </div>
 
             {{-- Posts Feed --}}
+            {{-- Unified Feed: Posts + Jobs mixed by time (LinkedIn style) --}}
             <div id="postsFeedContainer">
-            @if(isset($feedJobs) && $feedJobs->count())
-                @foreach($feedJobs as $job)
-                    @include('partials.job-card', ['job' => $job, 'appliedJobIds' => $appliedJobIds ?? []])
-                @endforeach
-            @endif
-            @forelse($posts as $post)
-                @include('partials.post-card', ['post' => $post])
+            @forelse($feedItems as $item)
+                @if($item['type'] === 'job')
+                    @include('partials.job-card', ['job' => $item['model'], 'appliedJobIds' => $appliedJobIds ?? []])
+                @else
+                    @include('partials.post-card', ['post' => $item['model']])
+                @endif
             @empty
                 <div id="emptyFeedState" class="card p-5 text-center shadow-sm border-0 rounded-3 my-3 bg-white">
                     <div class="card-body">
@@ -572,12 +572,11 @@ textarea.bb-job-input { resize:vertical; }
             <i class="bi bi-check2-circle me-1"></i> You're all caught up!
         </div>
 
-        {{-- Pagination data holder --}}
+        {{-- Pagination data holder (cursor-based) --}}
         <div id="feedMeta"
-            data-next-page="2"
-            data-has-more="{{ $posts->hasMorePages() ? '1' : '0' }}"></div>
-
-        </div>{{-- /Feed column --}}
+            data-next-cursor="{{ $nextCursor ?? '' }}"
+            data-has-more="{{ $hasMore ? '1' : '0' }}"></div>
+              </div>{{-- /Feed column --}}
 
         {{-- ==================== RIGHT SIDEBAR ==================== --}}
         <div class="col-md-3 d-none d-md-block bb-right-sidebar">
@@ -1646,7 +1645,11 @@ document.getElementById('editPostForm')?.addEventListener('submit', function (e)
 // ==========================================
 // INFINITE SCROLL
 // ==========================================
-let feedLoading  = false;
+// ==========================================
+// INFINITE SCROLL (unified feed — page based)
+// ==========================================
+let feedLoading = false;
+let feedPage    = 1;
 
 function loadMorePosts() {
     const meta = document.getElementById('feedMeta');
@@ -1654,24 +1657,22 @@ function loadMorePosts() {
     if (feedLoading || meta.dataset.hasMore === '0') return;
 
     feedLoading = true;
-    const nextPage = meta.dataset.nextPage;
-    const loader   = document.getElementById('feedLoader');
+    feedPage++;
+    const loader = document.getElementById('feedLoader');
     if (loader) loader.classList.remove('d-none');
 
-    fetch(`{{ route('feed.load') }}?page=${nextPage}`, {
+    fetch(`{{ route('feed.load') }}?page=${feedPage}`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
     })
     .then(r => r.json())
     .then(data => {
-
         const container = document.getElementById('postsFeedContainer');
-        if (container && data.html.trim()) {
+        if (container && data.html && data.html.trim()) {
             container.insertAdjacentHTML('beforeend', data.html);
             if (window.bbPrimeVideos) window.bbPrimeVideos(container);
         }
 
-        meta.dataset.nextPage = data.next_page;
-        meta.dataset.hasMore  = data.has_more ? '1' : '0';
+        meta.dataset.hasMore = data.has_more ? '1' : '0';
         if (loader) loader.classList.add('d-none');
         if (!data.has_more) {
             const endMsg = document.getElementById('feedEndMessage');
@@ -1686,11 +1687,13 @@ function loadMorePosts() {
     });
 }
 
+// scroll করলে নিচে গেলে আরও লোড করো (এটাই বাদ পড়েছিল!)
 window.addEventListener('scroll', function () {
     const scrollPos = window.innerHeight + window.scrollY;
     const threshold = document.body.offsetHeight - 300;
     if (scrollPos >= threshold) { loadMorePosts(); }
 });
+
 
 // ==========================================
 // COMMENT MODAL (Premium) — সব কমেন্ট কাজ এখানে
