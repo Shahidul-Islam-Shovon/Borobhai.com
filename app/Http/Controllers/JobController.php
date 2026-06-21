@@ -104,32 +104,74 @@ class JobController extends Controller
             abort(404);
         }
 
-        // user আগে আবেদন করেছে কিনা + status
+        // user আগে আবেদন করেছে কিনা + status + method
+        // (আগে $myApplication বের করি, তারপর সেটা থেকে status/method)
         $myApplication = \App\Models\JobApplication::where('user_id', Auth::id())
             ->where('job_post_id', $job->id)->first();
-        $hasApplied = (bool) $myApplication;
-        $myAppStatus = $myApplication->status ?? null;
 
-        return view('jobs.show', compact('job', 'hasApplied', 'myAppStatus'));
+        $hasApplied  = (bool) $myApplication;
+        $myAppStatus = $myApplication->status ?? null;
+        $myAppMethod = $myApplication->apply_method ?? null;
+
+        return view('jobs.show', compact('job', 'hasApplied', 'myAppStatus', 'myAppMethod'));
     }
 
     // ==========================================
-    // সব job এক পেজে (See all)
+    // সব job এক পেজে (See all) — search + filter সহ
     // ==========================================
     public function all(Request $request)
     {
         self::cleanupExpired();
 
-        $jobs = JobPost::with('user')
-                ->visible()
-                ->orderByRaw("CASE
-                        WHEN LOWER(job_type) LIKE '%intern%' THEN 1
-                        WHEN LOWER(job_type) LIKE '%part%' THEN 2
-                        ELSE 3 END")
-                ->latest()
-                ->paginate(12);
+        $query = JobPost::with('user')->visible();
 
-        return view('jobs.all', compact('jobs'));
+        // search — title, company, location, skills দিয়ে
+        $search = trim((string) $request->input('q', ''));
+        if ($search !== '') {
+            $query->where(function ($qq) use ($search) {
+                $qq->where('title', 'like', "%{$search}%")
+                   ->orWhere('company', 'like', "%{$search}%")
+                   ->orWhere('location', 'like', "%{$search}%")
+                   ->orWhere('skills', 'like', "%{$search}%");
+            });
+        }
+
+        // filter — job type অনুযায়ী
+        $type = $request->input('type');
+        $validTypes = ['Internship', 'Part-time', 'Full-time', 'Remote', 'Contract', 'Freelance'];
+        if ($type && in_array($type, $validTypes)) {
+            $query->where('job_type', $type);
+        }
+
+        // sort — default (Internship/Part-time আগে), অথবা newest/deadline
+        $sort = $request->input('sort', 'default');
+        if ($sort === 'newest') {
+            $query->latest();
+        } elseif ($sort === 'deadline') {
+            $query->orderByRaw('deadline IS NULL, deadline ASC'); // কাছের deadline আগে
+        } else {
+            $query->orderByRaw("CASE
+                    WHEN LOWER(job_type) LIKE '%intern%' THEN 1
+                    WHEN LOWER(job_type) LIKE '%part%' THEN 2
+                    ELSE 3 END")
+                  ->latest();
+        }
+
+        $jobs = $query->paginate(12)->withQueryString();
+
+        // AJAX হলে শুধু job cards + pagination + meta ফেরত দাও (smooth filter)
+        if ($request->ajax() || $request->wantsJson()) {
+            $cardsHtml = view('jobs.partials.all-cards', compact('jobs', 'search', 'type'))->render();
+            return response()->json([
+                'success'    => true,
+                'html'       => $cardsHtml,
+                'pagination' => $jobs->hasPages() ? $jobs->links()->toHtml() : '',
+                'total'      => $jobs->total(),
+                'total_text' => $jobs->total() . ' ' . \Illuminate\Support\Str::plural('opening', $jobs->total()),
+            ]);
+        }
+
+        return view('jobs.all', compact('jobs', 'search', 'type', 'sort'));
     }
 
     // ==========================================

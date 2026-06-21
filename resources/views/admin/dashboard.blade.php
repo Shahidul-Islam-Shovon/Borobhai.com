@@ -204,6 +204,10 @@
         <span class="mt-2 badge text-dark d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background-color: #e0f2fe !important; color: #0369a1 !important;">
             <i class="fa-solid fa-user-graduate" style="font-size: 8px;"></i> Alumni
         </span>
+        @elseif($user->role === 'teacher')
+            <span class="mt-2 badge text-dark d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background-color: #f3e8ff !important; color: #7c3aed !important;">
+                <i class="fa-solid fa-chalkboard-user" style="font-size: 8px;"></i> Teacher
+            </span>
     @else
         {{-- 🧑‍🎓 ৪. রেগুলার স্টুডেন্ট ব্যাজ --}}
         <span class="mt-2 badge text-dark d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background-color: #fef3c7 !important; color: #b45309 !important;">
@@ -257,9 +261,12 @@
                                                 style="max-width: 120px;"
                                                 {{ (in_array($user->status, ['suspended_temp', 'suspended_perm']) || ($user->role === 'admin' && !auth()->user()->isSuperAdmin())) ? 'disabled' : '' }}>
                                             
-                                            <option value="" disabled {{ !in_array($user->role, ['student', 'alumni', 'admin']) ? 'selected' : '' }}>Select Role</option>
+                                            <option value="" disabled {{ !in_array($user->role, ['student', 'alumni', 'admin', 'teacher']) ? 'selected' : '' }}>Select Role</option>
                                             <option value="student" {{ $user->role === 'student' ? 'selected' : '' }} {{ $user->role === 'student' ? 'disabled' : '' }}>Student</option>
                                             <option value="alumni" {{ $user->role === 'alumni' ? 'selected' : '' }} {{ $user->role === 'alumni' ? 'disabled' : '' }}>Alumni</option>
+
+                                            <option value="teacher" {{ $user->role === 'teacher' ? 'selected' : '' }} {{ $user->role === 'teacher' ? 'disabled' : '' }}>Teacher</option>
+
                                             <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }} {{ $user->role === 'admin' ? 'disabled' : '' }}>Admin</option>
                                         </select>
 

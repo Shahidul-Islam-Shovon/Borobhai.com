@@ -401,6 +401,27 @@
 .bb-jobcard-foot { margin-top:12px; padding-top:11px; border-top:1px solid var(--bb-line); font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:6px; }
 .bb-foot-expiring { color:#ea580c; }
 .bb-foot-expired { color:#dc2626; }
+/* ===== নামের নিচে role label (post-card author) ===== */
+.bb-author-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    padding: 1px 8px;
+    border-radius: 12px;
+    width: fit-content;
+    margin: 1px 0;
+}
+.bb-author-role i { font-size: 9px; }
+.bb-author-role-alumni  { background: #fef3c7; color: #d97706; }
+.bb-author-role-student { background: #eef2ff; color: #4f46e5; }
+.bb-author-role-teacher { background: #f3e8ff; color: #7c3aed; }
+
+/* navbar role badge — teacher */
+.bb-role-teacher { background: #f3e8ff; color: #7c3aed; border-color: #e9d5ff; }
+.bb-mini-teacher { background: #f3e8ff; color: #7c3aed; }
 
 
         </style>

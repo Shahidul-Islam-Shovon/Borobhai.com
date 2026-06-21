@@ -163,6 +163,8 @@
 
         /* View Applicants link (profile job posts) */
         .bb-myjob-applicants { display:inline-flex; align-items:center; gap:6px; margin-top:9px; font-size:12.5px; font-weight:600; color:var(--bb-primary); background:var(--bb-primary-soft); padding:6px 13px; border-radius:8px; text-decoration:none; transition:all .15s; }
+        .bb-myjob-viewall { display:flex; align-items:center; justify-content:center; gap:7px; margin-top:14px; padding:11px; font-size:13px; font-weight:600; color:var(--bb-primary); background:var(--bb-primary-soft); border-radius:10px; text-decoration:none; transition:all .15s; }
+        .bb-myjob-viewall:hover { background:var(--bb-primary); color:#fff; }
         .bb-myjob-applicants:hover { background:var(--bb-primary); color:#fff; }
         .bb-myjob-applicants i { font-size:12px; }
 
@@ -187,6 +189,7 @@
         }
         .bb-role-alumni  { background:#fef3c7; color:#d97706; }
         .bb-role-student { background:#eef2ff; color:#4f46e5; }
+        .bb-role-teacher { background:#f3e8ff; color:#7c3aed; }
 
         .bb-edit-profile-btn {
             background:var(--bb-primary); color:#fff; border:none; border-radius:10px;
@@ -337,6 +340,17 @@
     display:flex; align-items:center; justify-content:center; transition:background .15s ease;
 }
 .bb-more-btn:hover { background:var(--bb-bg); color:var(--bb-ink); }
+
+/* নামের নিচে role label (author) */
+.bb-author-role {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .2px;
+    padding: 1px 8px; border-radius: 12px; width: fit-content; margin: 1px 0;
+}
+.bb-author-role i { font-size: 9px; }
+.bb-author-role-alumni  { background: #fef3c7; color: #d97706; }
+.bb-author-role-student { background: #eef2ff; color: #4f46e5; }
+.bb-author-role-teacher { background: #f3e8ff; color: #7c3aed; }
 
 /* ===== CAPTION ===== */
 .bb-caption { padding:2px 16px 12px; font-size:14.5px; line-height:1.55; color:var(--bb-ink); word-break:break-word; }
@@ -545,6 +559,8 @@
 @php
     $role = $user->role;
     $isAlumni = $role === 'alumni';
+    $isTeacher = $role === 'teacher';
+    $isStudent = $role === 'student';
     $skillsList = is_array($user->skills) ? $user->skills : [];
 @endphp
 
@@ -582,6 +598,18 @@
                 </div>
                 <div class="pb-2">
                     <h1 class="bb-name" id="displayName">{{ $user->name }}</h1>
+
+                    {{-- নামের নিচে role badge (Teacher / Alumni / Student) --}}
+                    <div class="mb-2">
+                        @if($isTeacher)
+                            <span class="bb-role-pill bb-role-teacher"><i class="bi bi-easel2-fill"></i> Teacher</span>
+                        @elseif($isAlumni)
+                            <span class="bb-role-pill bb-role-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
+                        @else
+                            <span class="bb-role-pill bb-role-student"><i class="bi bi-backpack-fill"></i> Student</span>
+                        @endif
+                    </div>
+
                     @php
                         $latestEdu = $user->latestEducation;
                         $curJob = $user->currentJob;
@@ -589,8 +617,12 @@
                     <p class="bb-headline">
                         @if($curJob)
                             <span class="fw-semibold" style="color:var(--bb-ink);">{{ $curJob->designation }}</span> @ {{ $curJob->company }}
+                        @elseif($isTeacher)
+                            Educator & Researcher
+                        @elseif($isAlumni)
+                            Alumni
                         @else
-                            {{ $isAlumni ? 'Alumni' : 'Currently a Student' }}
+                            Currently a Student
                         @endif
                     </p>
                     @if($latestEdu || $user->department || $user->session)
@@ -620,7 +652,7 @@
     {{-- ==================== PROFILE TABS ==================== --}}
     <div class="bb-tabs-bar">
         <button class="bb-tab-btn" data-tab="details" onclick="switchTab('details')">
-            <i class="bi bi-person-vcard"></i> <span>Student Details</span>
+            <i class="bi bi-person-vcard"></i> <span>{{ $isStudent ? 'Student Details' : 'Profile Details' }}</span>
         </button>
         <button class="bb-tab-btn active" data-tab="posts" onclick="switchTab('posts')">
             <i class="bi bi-grid-1x2-fill"></i> <span>All Posts</span>
@@ -630,7 +662,7 @@
         </button>
     </div>
 
-    {{-- ===== TAB 1: STUDENT DETAILS ===== --}}
+    {{-- ===== TAB 1: DETAILS ===== --}}
     <div class="bb-tab-panel" id="tab-details">
 
     {{-- About --}}
@@ -643,10 +675,11 @@
         @endif
     </div>
 
-    {{-- Academic & Contact --}}
+    {{-- Academic & Contact (teacher হলে শুধু Contact, academic field বাদ) --}}
     <div class="bb-card">
-        <h2 class="bb-card-title"><i class="bi bi-mortarboard-fill"></i> Academic & Contact</h2>
+        <h2 class="bb-card-title"><i class="bi bi-mortarboard-fill"></i> {{ $isTeacher ? 'Contact Information' : 'Academic & Contact' }}</h2>
         <div class="bb-info-grid">
+            @if(!$isTeacher)
             <div class="bb-info-item">
                 <div class="bb-info-icon"><i class="bi bi-building"></i></div>
                 <div><p class="bb-info-label">Department</p><p class="bb-info-value">{{ $user->department ?? '—' }}</p></div>
@@ -663,6 +696,7 @@
                 <div class="bb-info-icon"><i class="bi bi-bar-chart-steps"></i></div>
                 <div><p class="bb-info-label">Semester</p><p class="bb-info-value">{{ $user->semester ?? '—' }}</p></div>
             </div>
+            @endif
             <div class="bb-info-item">
                 <div class="bb-info-icon"><i class="bi bi-telephone-fill"></i></div>
                 <div><p class="bb-info-label">Phone</p><p class="bb-info-value">{{ $user->phone ?? '—' }}</p></div>
@@ -717,14 +751,14 @@
     </div>
 
     {{-- ===== EDUCATION ===== --}}
-    <div class="bb-card">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="bb-card-title m-0"><i class="bi bi-mortarboard"></i> Education</h2>
-            @if($isOwner)
-                <button class="bb-add-btn" onclick="openEduModal()"><i class="bi bi-plus-lg"></i> Add</button>
-            @endif
-        </div>
-        <div id="eduList">
+<div class="bb-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="bb-card-title m-0"><i class="bi bi-mortarboard"></i> Education</h2>
+        @if($isOwner)
+            <button class="bb-add-btn" onclick="openEduModal()"><i class="bi bi-plus-lg"></i> Add</button>
+        @endif
+    </div>
+    <div id="eduList">
             @forelse($user->educations as $edu)
                 <div class="bb-timeline-item" id="edu-{{ $edu->id }}">
                     <div class="bb-timeline-icon"><i class="bi bi-mortarboard-fill"></i></div>
@@ -868,22 +902,29 @@
     @if($isAlumni)
     <div class="bb-card">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="bb-card-title m-0"><i class="bi bi-briefcase"></i> Job Posts {{ $user->jobPosts->count() ? '· '.$user->jobPosts->count() : '' }}</h2>
-            @if($isOwner)
-                <a href="{{ route('jobs.all') }}" class="bb-side-link" style="font-size:13px;">View all jobs</a>
+            <h2 class="bb-card-title m-0"><i class="bi bi-briefcase"></i> Job Posts {{ $totalJobCount ? '· '.$totalJobCount : '' }}</h2>
+            @if($totalJobCount > 5)
+                <a href="{{ route('jobs.all') }}" class="bb-add-btn" style="text-decoration:none;font-size:13px;">View all ({{ $totalJobCount }})</a>
             @endif
         </div>
         <div id="myJobList">
+
             @forelse($user->jobPosts as $job)
-                @include('partials.myjob-item', ['job' => $job])
-            @empty
-                <p class="bb-empty" id="myJobEmpty">{{ $isOwner ? 'You have not posted any jobs yet. Use “Post A Job” from your feed.' : 'No jobs posted yet.' }}</p>
-            @endforelse
+            @include('partials.myjob-item', ['job' => $job])
+        @empty
+            <p class="bb-empty" id="myJobEmpty">{{ $isOwner ? 'You have not posted any jobs yet. Use "Post A Job" from your feed.' : 'No jobs posted yet.' }}</p>
+        @endforelse
+         {{-- ৫টার বেশি job থাকলে View all বাটন --}}
+        @if($totalJobCount > 5)
+            <a href="{{ route('jobs.all') }}" class="bb-myjob-viewall">
+                <i class="bi bi-grid"></i> View all {{ $totalJobCount }} jobs
+            </a>
+        @endif
         </div>
     </div>
     @endif
 
-    </div>{{-- /TAB 1: Student Details --}}
+    </div>{{-- /TAB 1: Details --}}
 
     {{-- ===== TAB 2: ALL POSTS ===== --}}
     <div class="bb-tab-panel active" id="tab-posts">
@@ -963,6 +1004,7 @@
                             <label class="bb-modal-label">Bio / About</label>
                             <textarea name="bio" class="bb-modal-input" rows="3" placeholder="Tell people about yourself...">{{ $user->bio }}</textarea>
                         </div>
+                        @if(!$isTeacher)
                         <div class="col-md-6">
                             <label class="bb-modal-label">Department</label>
                             <input type="text" name="department" class="bb-modal-input" value="{{ $user->department }}" placeholder="e.g. CSE">
@@ -979,6 +1021,7 @@
                             <label class="bb-modal-label">Semester / Year</label>
                             <input type="text" name="semester" class="bb-modal-input" value="{{ $user->semester }}" placeholder="e.g. 7th">
                         </div>
+                        @endif
                         <div class="col-md-6">
                             <label class="bb-modal-label">Phone</label>
                             <input type="text" name="phone" class="bb-modal-input" value="{{ $user->phone }}" placeholder="e.g. 01XXXXXXXXX">
@@ -1654,16 +1697,23 @@ function applyProfileToPage(u) {
         headline.textContent = h;
     }
 
-    // info grid (order: dept, session, section, semester, phone, location, email, interests)
+    // info grid (teacher হলে dept/session/section/semester নেই — তাই index ভিন্ন)
     const vals = document.querySelectorAll('.bb-info-value');
-    if (vals[0]) vals[0].textContent = u.department || '—';
-    if (vals[1]) vals[1].textContent = u.session || '—';
-    if (vals[2]) vals[2].textContent = u.section || '—';
-    if (vals[3]) vals[3].textContent = u.semester || '—';
-    if (vals[4]) vals[4].textContent = u.phone || '—';
-    if (vals[5]) vals[5].textContent = u.location || '—';
-    // vals[6] = email (বদলায় না)
-    if (vals[7]) vals[7].textContent = u.interests || '—';
+    @if($isTeacher)
+        // teacher: [0]=phone, [1]=location, [2]=email, [3]=interests
+        if (vals[0]) vals[0].textContent = u.phone || '—';
+        if (vals[1]) vals[1].textContent = u.location || '—';
+        if (vals[3]) vals[3].textContent = u.interests || '—';
+    @else
+        // student/alumni: [0..3]=dept/session/section/semester, [4]=phone, [5]=location, [6]=email, [7]=interests
+        if (vals[0]) vals[0].textContent = u.department || '—';
+        if (vals[1]) vals[1].textContent = u.session || '—';
+        if (vals[2]) vals[2].textContent = u.section || '—';
+        if (vals[3]) vals[3].textContent = u.semester || '—';
+        if (vals[4]) vals[4].textContent = u.phone || '—';
+        if (vals[5]) vals[5].textContent = u.location || '—';
+        if (vals[7]) vals[7].textContent = u.interests || '—';
+    @endif
 
     // Bio
     const bioCard = document.querySelectorAll('.bb-card')[1]; // About card
@@ -1674,9 +1724,6 @@ function applyProfileToPage(u) {
             else { bioP.textContent = 'Add a short bio to tell people about yourself.'; bioP.className = 'bb-empty'; }
         }
     }
-    // Note: skills + social links live-update করতে reload সহজ; কিন্তু এড়াতে ছোট রিফ্রেশ এড়িয়ে গেলাম।
-    // পরিবর্তন নিশ্চিত দেখাতে চাইলে নিচের লাইন আনকমেন্ট করুন:
-    // setTimeout(()=>location.reload(), 1200);
 }
 
 // ======== CROP + PHOTO UPLOAD (Fix #2) ========
@@ -2488,7 +2535,9 @@ document.getElementById('editPostForm')?.addEventListener('submit', function (e)
 // INFINITE SCROLL (profile এ নিষ্ক্রিয় — no-op)
 // ==========================================
 function loadMorePosts() { /* profile page: ট্যাবে সব পোস্ট একসাথে লোড হয়, infinite scroll লাগে না */ }
+</script>
 
+<script>
 // ==========================================
 // COMMENT MODAL (Premium) — সব কমেন্ট কাজ এখানে
 // ==========================================
@@ -3282,7 +3331,6 @@ function openReplyBox(parentId, mentionName) {
     const zone = document.getElementById(`reply-box-${parentId}`);
     if (!zone) return;
 
-    // আগে খোলা থাকলে — শুধু mention আপডেট করো (বন্ধ করব না, যদি নতুন কাউকে reply করে)
     let input = document.getElementById(`reply-input-${parentId}`);
 
     const myPic = window.MY_PROFILE_PIC;
@@ -3291,7 +3339,6 @@ function openReplyBox(parentId, mentionName) {
         ? `<img src="${myPic}" style="width:100%;height:100%;object-fit:cover;">`
         : myInit;
 
-    // box বন্ধ থাকলে বানাও
     if (zone.classList.contains('d-none') || zone.dataset.open !== '1') {
         zone.innerHTML = `
             <div class="reply-input-wrap">
@@ -3309,7 +3356,6 @@ function openReplyBox(parentId, mentionName) {
         input = document.getElementById(`reply-input-${parentId}`);
     }
 
-    // mention সেট করো (কাকে reply)
     const tag = document.getElementById(`reply-mention-${parentId}`);
     if (mentionName && tag) {
         tag.textContent = '@' + mentionName;
@@ -3333,7 +3379,6 @@ function submitReply(parentId) {
     const mention = tag && tag.dataset.mention ? tag.dataset.mention : '';
     if (!text && !mention) return;
 
-    // মেনশন থাকলে টেক্সটের আগে @নাম যোগ
     const finalText = mention ? `@${mention} ${text}` : text;
 
     const postId = document.getElementById('commentModalPostId').value;
@@ -3353,7 +3398,6 @@ function submitReply(parentId) {
             ? `<img src="${d.user_picture}" style="width:100%;height:100%;object-fit:cover;">`
             : d.user_initial;
 
-        // @মেনশন হাইলাইট করে দেখাও
         const displayContent = highlightMentions(d.content);
 
         const html = `
@@ -3394,11 +3438,9 @@ function submitReply(parentId) {
     .catch(()=>{ input.disabled=false; });
 }
 
-// @নাম হাইলাইট করো
 function highlightMentions(text) {
     return text.replace(/@([\w\u0980-\u09FF.]+(?:\s[\w\u0980-\u09FF.]+)?)/g, '<span class="comment-mention">@$1</span>');
 }
-
 </script>
 
 

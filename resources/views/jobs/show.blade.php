@@ -99,6 +99,67 @@
         .apply-body { overflow-y:auto; flex:1 1 auto; min-height:0; }
         .apply-footer { flex:0 0 auto; }
         @media (max-width:576px){ .apply-dialog { height:calc(100vh - 1rem); } }
+
+        /* ===== Leaving Site Modal (premium) ===== */
+        .leave-modal-content { border:none; border-radius:22px; overflow:hidden; box-shadow:0 24px 60px rgba(16,24,40,.28); }
+        .leave-hero { background:linear-gradient(135deg,#4f46e5,#7c73f0 55%,#a78bfa); padding:30px 28px 26px; text-align:center; position:relative; }
+        .leave-hero-icon {
+            width:70px; height:70px; border-radius:20px; background:rgba(255,255,255,.18);
+            display:flex; align-items:center; justify-content:center; margin:0 auto 14px;
+            font-size:32px; color:#fff; backdrop-filter:blur(4px); border:1.5px solid rgba(255,255,255,.3);
+            animation:leavePulse 2s ease-in-out infinite;
+        }
+        @keyframes leavePulse { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-5px);} }
+        .leave-hero h4 { color:#fff; font-weight:800; font-size:21px; margin:0 0 5px; letter-spacing:-.4px; }
+        .leave-hero p { color:rgba(255,255,255,.88); font-size:13.5px; margin:0; }
+        .leave-body { padding:24px 28px 14px; }
+        .leave-dest {
+            display:flex; align-items:center; gap:12px; background:var(--bb-bg); border-radius:14px;
+            padding:14px 16px; margin-bottom:16px; border:1px solid var(--bb-line);
+        }
+        .leave-dest-logo {
+            width:46px; height:46px; border-radius:12px; flex-shrink:0; background:var(--bb-primary-soft);
+            color:var(--bb-primary); display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800;
+        }
+        .leave-dest-info { min-width:0; flex-grow:1; }
+        .leave-dest-label { font-size:11px; color:var(--bb-muted); font-weight:600; text-transform:uppercase; letter-spacing:.4px; margin:0; }
+        .leave-dest-url { font-size:13.5px; font-weight:700; color:var(--bb-ink); margin:2px 0 0; word-break:break-all; line-height:1.3; }
+        .leave-copy-btn {
+            flex-shrink:0; border:1.5px solid var(--bb-line); background:#fff; color:var(--bb-muted);
+            width:38px; height:38px; border-radius:10px; cursor:pointer; transition:all .15s; font-size:15px;
+        }
+        .leave-copy-btn:hover { border-color:var(--bb-primary); color:var(--bb-primary); }
+        .leave-steps { margin:0 0 16px; padding:0; list-style:none; }
+        .leave-steps li { display:flex; align-items:flex-start; gap:10px; font-size:13px; color:#4b5563; padding:5px 0; }
+        .leave-steps li i { color:#16a34a; font-size:15px; margin-top:1px; flex-shrink:0; }
+        .leave-safety { font-size:11.5px; color:var(--bb-muted); background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:9px 12px; display:flex; align-items:flex-start; gap:8px; line-height:1.5; }
+        .leave-safety i { color:#d97706; flex-shrink:0; margin-top:1px; }
+        .leave-foot { padding:6px 28px 24px; display:flex; gap:10px; }
+        .leave-btn-cancel { flex:0 0 auto; border:1.5px solid var(--bb-line); background:#fff; color:#4b5563; border-radius:12px; padding:12px 20px; font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; }
+        .leave-btn-cancel:hover { background:var(--bb-bg); }
+        .leave-btn-go { flex:1; border:none; border-radius:12px; padding:12px 20px; font-size:14.5px; font-weight:700; cursor:pointer; color:#fff; background:linear-gradient(135deg,#4f46e5,#7c73f0); box-shadow:0 4px 14px rgba(79,70,229,.35); transition:all .15s; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+        .leave-btn-go:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(79,70,229,.45); }
+        .modal-backdrop.leave-blur { backdrop-filter:blur(3px); }
+
+        /* ===== Post-leave confirm banner (in-page, real-life style) ===== */
+        .confirm-banner {
+            background:linear-gradient(135deg,#eef2ff,#f5f3ff); border:1.5px solid #ddd6fe;
+            border-radius:18px; padding:20px 24px; margin-top:18px; display:none;
+            animation:bannerIn .35s ease;
+        }
+        .confirm-banner.show { display:block; }
+        @keyframes bannerIn { from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:translateY(0);} }
+        .confirm-banner-top { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+        .confirm-banner-icon { width:42px; height:42px; border-radius:12px; background:#fff; color:var(--bb-primary); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; box-shadow:0 2px 8px rgba(79,70,229,.15); }
+        .confirm-banner-title { font-size:15.5px; font-weight:800; color:var(--bb-ink); margin:0; }
+        .confirm-banner-sub { font-size:12.5px; color:var(--bb-muted); margin:1px 0 0; }
+        .confirm-banner-actions { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+        .cb-yes { flex:1; min-width:160px; border:none; border-radius:11px; padding:11px 18px; font-size:14px; font-weight:700; cursor:pointer; color:#fff; background:linear-gradient(135deg,#16a34a,#22c55e); box-shadow:0 4px 12px rgba(34,197,94,.3); transition:all .15s; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+        .cb-yes:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(34,197,94,.4); }
+        .cb-reopen { border:1.5px solid var(--bb-primary); background:#fff; color:var(--bb-primary); border-radius:11px; padding:11px 18px; font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; }
+        .cb-reopen:hover { background:var(--bb-primary-soft); }
+        .cb-cancel { border:1.5px solid var(--bb-line); background:#fff; color:#6b7280; border-radius:11px; padding:11px 16px; font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; }
+        .cb-cancel:hover { background:var(--bb-bg); }
     </style>
 </head>
 <body>
@@ -188,7 +249,7 @@
 
     {{-- APPLY --}}
     <div class="jp-apply">
-        <div class="jp-apply-card">
+        <div class="jp-apply-card" id="applyCard">
             @if($isOwner)
                 <div class="jp-apply-info">
                     <strong><i class="bi bi-person-badge"></i> This is your job posting</strong>
@@ -208,7 +269,7 @@
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
                     <a href="{{ route('jobs.myApplications') }}" class="jp-apply-btn" style="background:#eef2ff;color:var(--bb-primary);box-shadow:none;"><i class="bi bi-clock-history"></i> View in History</a>
-                    @if(in_array($myAppStatus, ['pending', 'reviewed']))
+                    @if(($myAppMethod ?? 'inapp') === 'inapp' && in_array($myAppStatus, ['pending', 'reviewed']))
                         <button class="jp-apply-btn" style="background:#fef2f2;color:#dc2626;box-shadow:none;" onclick="withdrawApplication({{ $job->id }})"><i class="bi bi-x-circle"></i> Withdraw</button>
                     @endif
                 </div>
@@ -234,6 +295,24 @@
                 </div>
             @endif
         </div>
+
+        @if(!$isOwner && !$expired && !$hasApplied)
+        {{-- Continue ক্লিকের পর দেখানো confirm banner (real-life style) --}}
+        <div class="confirm-banner" id="confirmBanner">
+            <div class="confirm-banner-top">
+                <div class="confirm-banner-icon"><i class="bi bi-send-check"></i></div>
+                <div>
+                    <p class="confirm-banner-title">Did you finish applying on the company site?</p>
+                    <p class="confirm-banner-sub">Mark as applied to save in your Job History — only confirm if you actually submitted your application.</p>
+                </div>
+            </div>
+            <div class="confirm-banner-actions">
+                <button class="cb-yes" onclick="markAsApplied()"><i class="bi bi-check-circle-fill"></i> Yes, I submitted</button>
+                <button class="cb-reopen" onclick="reopenExternal()"><i class="bi bi-box-arrow-up-right"></i> Open again</button>
+                <button class="cb-cancel" onclick="cancelConfirm()">Not now</button>
+            </div>
+        </div>
+        @endif
     </div>
 
     @if(!$isOwner && !$expired && !$hasApplied)
@@ -279,6 +358,46 @@
                         <button type="button" class="jp-apply-btn" id="applySubmitBtn" onclick="submitApply()" style="padding:10px 24px;"><i class="bi bi-send-fill me-1"></i> Submit Application</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- ==================== LEAVING SITE MODAL (External Apply) ==================== --}}
+    @if(!$isOwner && !$expired && !$hasApplied)
+    <div class="modal fade" id="leaveModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content leave-modal-content">
+                <div class="leave-hero">
+                    <div class="leave-hero-icon"><i class="bi bi-box-arrow-up-right"></i></div>
+                    <h4>You're leaving Borobhai</h4>
+                    <p>You'll continue your application on the company's site</p>
+                </div>
+                <div class="leave-body">
+                    <div class="leave-dest">
+                        <div class="leave-dest-logo">{{ strtoupper(substr($job->company, 0, 1)) }}</div>
+                        <div class="leave-dest-info">
+                            <p class="leave-dest-label">{{ $job->apply_type === 'email' ? 'Apply via email' : 'Destination' }}</p>
+                            <p class="leave-dest-url" id="leaveDestUrl">—</p>
+                        </div>
+                        <button class="leave-copy-btn" onclick="copyApplyLink()" title="Copy link"><i class="bi bi-clipboard"></i></button>
+                    </div>
+
+                    <ul class="leave-steps">
+                        <li><i class="bi bi-1-circle-fill"></i> Complete your application on the company's official page</li>
+                        <li><i class="bi bi-2-circle-fill"></i> We'll save this in your <strong>Job History</strong> as applied</li>
+                        <li><i class="bi bi-3-circle-fill"></i> Come back anytime to track or withdraw</li>
+                    </ul>
+
+                    <div class="leave-safety">
+                        <i class="bi bi-shield-exclamation"></i>
+                        <span>You're being redirected to an external website. Borobhai isn't responsible for content or data you share there. Never pay money to apply for a job.</span>
+                    </div>
+                </div>
+                <div class="leave-foot">
+                    <button class="leave-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button class="leave-btn-go" id="leaveGoBtn"><i class="bi bi-box-arrow-up-right"></i> Continue to Company Site</button>
+                </div>
             </div>
         </div>
     </div>
@@ -343,37 +462,138 @@ function submitApply(){
     .catch(()=>{ btn.disabled=false; btn.innerHTML=orig; Swal.fire({icon:'error',title:'Network error'}); });
 }
 
-// external apply — track করে তারপর company তে পাঠাও
+// ===== EXTERNAL APPLY — premium "leaving site" flow =====
+let leaveModalObj = null;
+let pendingExternal = { jobId:null, applyType:null, applyHref:null };
+
+document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('leaveModal');
+    if (el) leaveModalObj = bootstrap.Modal.getOrCreateInstance(el);
+
+    // "Continue to Company Site" বাটন
+    const goBtn = document.getElementById('leaveGoBtn');
+    if (goBtn) goBtn.addEventListener('click', confirmExternalLeave);
+});
+
+// "Apply via Company" ক্লিক → আগে সুন্দর leaving modal দেখাও
 function applyExternalBtn(btn){
-    applyExternal(btn.dataset.jobId, btn.dataset.applyType, btn.dataset.applyHref);
+    pendingExternal = {
+        jobId:    btn.dataset.jobId,
+        applyType:btn.dataset.applyType,
+        applyHref:btn.dataset.applyHref
+    };
+
+    // লিংক/মেইল আছে কিনা যাচাই
+    if (!pendingExternal.applyHref || pendingExternal.applyHref === 'mailto:' || pendingExternal.applyHref.trim() === '') {
+        Swal.fire({
+            icon:'warning',
+            title:'No apply link provided',
+            text:'এই job এ প্রতিষ্ঠানের apply লিংক/ইমেইল দেওয়া নেই। Apply on Borobhai ব্যবহার করুন।'
+        });
+        return;
+    }
+
+    // destination সুন্দর করে দেখাই
+    const destEl = document.getElementById('leaveDestUrl');
+    if (destEl) {
+        if (pendingExternal.applyType === 'email') {
+            destEl.textContent = pendingExternal.applyHref.replace('mailto:', '').split('?')[0];
+        } else {
+            try {
+                const u = new URL(pendingExternal.applyHref);
+                destEl.textContent = u.hostname + (u.pathname !== '/' ? u.pathname : '');
+            } catch(e) { destEl.textContent = pendingExternal.applyHref; }
+        }
+    }
+
+    leaveModalObj?.show();
 }
 
-function applyExternal(jobId, applyType, applyHref){
+// লিংক কপি
+function copyApplyLink(){
+    const href = pendingExternal.applyType === 'email'
+        ? pendingExternal.applyHref.replace('mailto:', '').split('?')[0]
+        : pendingExternal.applyHref;
+    navigator.clipboard?.writeText(href).then(()=>{
+        applyToast.fire({ icon:'success', title:'Link copied!' });
+    }).catch(()=>{
+        applyToast.fire({ icon:'info', title:href });
+    });
+}
+
+// "Continue" — external এ পাঠাই + in-page confirm banner দেখাই (auto-detect নেই)
+function confirmExternalLeave(){
+    const { applyType, applyHref } = pendingExternal;
+    leaveModalObj?.hide();
+
+    openExternalTarget(applyType, applyHref);
+
+    // apply card এর নিচে সুন্দর confirm banner দেখাই — user নিজে confirm করবে
+    const banner = document.getElementById('confirmBanner');
+    if (banner) {
+        banner.classList.add('show');
+        setTimeout(()=> banner.scrollIntoView({ behavior:'smooth', block:'center' }), 300);
+    }
+}
+
+// external target (link নতুন ট্যাবে / email mail client) খোলে
+function openExternalTarget(applyType, applyHref){
+    if (applyType === 'email') {
+        const mailWin = window.open(applyHref, '_blank');
+        if (!mailWin) { window.location.href = applyHref; }
+    } else {
+        window.open(applyHref, '_blank', 'noopener,noreferrer');
+    }
+}
+
+// "Open again" — আবার external সাইট/মেইল খোলে
+function reopenExternal(){
+    openExternalTarget(pendingExternal.applyType, pendingExternal.applyHref);
+}
+
+// "Not now" — banner লুকাই, কিছুই track হয় না
+function cancelConfirm(){
+    const banner = document.getElementById('confirmBanner');
+    if (banner) banner.classList.remove('show');
+    applyToast.fire({ icon:'info', title:'No problem — you can apply anytime' });
+}
+
+// "Yes, I submitted" — এখন track হয়
+function markAsApplied(){
+    if (!pendingExternal.jobId) return;
+    const yesBtn = document.querySelector('.cb-yes');
+    if (yesBtn) { yesBtn.disabled = true; yesBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...'; }
+    trackExternalApply(pendingExternal.jobId, pendingExternal.applyType);
+}
+
+// আসল track — শুধু user "Yes, I applied" বললে
+function trackExternalApply(jobId, applyType){
     fetch(`/jobs/${jobId}/apply`, {
         method:'POST',
-        headers:{'X-CSRF-TOKEN':APPLY_CSRF,'Accept':'application/json','Content-Type':'application/json'},
+        headers:{
+            'X-CSRF-TOKEN': APPLY_CSRF,
+            'Accept':'application/json',
+            'Content-Type':'application/json'
+        },
         body: JSON.stringify({ apply_method:'external' })
     })
     .then(r=>r.json())
     .then(d=>{
-        if (d.success || d.message) {
-            applyToast.fire({ icon:'success', title:'Tracked in your Job History' });
-        }
-        // company site/email এ পাঠাও
-        if (applyType === 'email') {
-            window.location.href = applyHref;   // mailto — একই ট্যাবে mail client খোলে
+        if (d.success) {
+            applyToast.fire({ icon:'success', title:'Application tracked! ✓' });
+            setTimeout(()=>location.reload(), 1400);
         } else {
-            window.open(applyHref, '_blank', 'noopener,noreferrer');  // link — নতুন ট্যাব
+            applyToast.fire({ icon:'info', title: d.message || 'Could not track' });
+            setTimeout(()=>location.reload(), 1400);
         }
-        // status আপডেট দেখাতে reload
-        setTimeout(()=>location.reload(), 1200);
     })
     .catch(()=>{
-        // track fail করলেও company তে পাঠাও
-        if (applyType === 'email') window.location.href = applyHref;
-        else window.open(applyHref, '_blank', 'noopener,noreferrer');
+        applyToast.fire({ icon:'error', title:'Network error' });
     });
 }
+
+// ===== external apply state =====
+let pendingExternal2 = null; // (reserved)
 
 // withdraw
 function withdrawApplication(jobId){
@@ -387,10 +607,14 @@ function withdrawApplication(jobId){
         })
         .then(r=>r.json())
         .then(d=>{
-            if(!d.success) return;
+            if(!d.success){
+                Swal.fire({ icon:'info', title:'Cannot withdraw', text: d.message || 'This application cannot be withdrawn.' });
+                return;
+            }
             applyToast.fire({icon:'info', title:'Application withdrawn'});
             setTimeout(()=>location.reload(), 1000);
-        });
+        })
+        .catch(()=>{ Swal.fire({icon:'error', title:'Network error'}); });
     });
 }
 </script>

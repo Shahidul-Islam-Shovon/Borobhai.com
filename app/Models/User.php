@@ -63,19 +63,76 @@ class User extends Authenticatable
         'linkedin_url',
         'github_url',
         'facebook_url',
+        'provider',
+        'provider_id',
     ];
 
 
 
 public function isSuperAdmin()
 {
-    // .env ফাইল থেকে ইমেইল নিয়ে ডাইনামিক চেক
+    // .env ফাইল থেকে ইমেইল নিয়ে ডাইনামিক চেক
     if ($this->email === env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com')) {
         return true;
     }
 
     return (bool) $this->is_super_admin;
 }
+
+    // ==========================================
+    // ROLE HELPERS (Teacher সহ)
+    // ==========================================
+
+    /**
+     * নামের নিচে দেখানোর label।
+     * student → Student, teacher → Teacher, alumni → Alumni, admin → Admin
+     */
+    public function getRoleLabelAttribute(): string
+    {
+        return match ($this->role) {
+            'student' => 'Student',
+            'teacher' => 'Teacher',
+            'alumni'  => 'Alumni',
+            'admin'   => 'Admin',
+            default   => ucfirst((string) $this->role),
+        };
+    }
+
+    /** Teacher রোল কিনা */
+    public function isTeacher(): bool
+    {
+        return $this->role === 'teacher';
+    }
+
+    /** Alumni রোল কিনা */
+    public function isAlumni(): bool
+    {
+        return $this->role === 'alumni';
+    }
+
+    /** Student রোল কিনা */
+    public function isStudent(): bool
+    {
+        return $this->role === 'student';
+    }
+
+    /**
+     * Job তৈরি (post) করার অনুমতি আছে কিনা।
+     * শুধু alumni পারবে। Teacher, Student, Admin পারবে না।
+     */
+    public function canPostJobs(): bool
+    {
+        return $this->role === 'alumni';
+    }
+
+    /**
+     * Feed এ post/share করার অনুমতি — teacher সহ সবাই পারবে (admin বাদে)।
+     * (Teacher শুধু job তৈরি করতে পারে না, কিন্তু সাধারণ post করতে পারে)
+     */
+    public function canPost(): bool
+    {
+        return in_array($this->role, ['student', 'alumni', 'teacher']);
+    }
 
 
     public function posts()

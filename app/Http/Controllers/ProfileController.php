@@ -19,14 +19,23 @@ class ProfileController extends Controller
     // ==========================================
     public function show($id = null)
     {
+        // Profile এ শুধু সাম্প্রতিক ৫টা job দেখাই (বাকি "View all jobs" এ)
         $user = $id
-            ? User::with(['educations', 'experiences', 'certifications', 'latestEducation', 'currentJob', 'documents', 'jobPosts' => fn($q) => $q->withTrashed()->withCount('applications')])->findOrFail($id)
-            : User::with(['educations', 'experiences', 'certifications', 'latestEducation', 'currentJob', 'documents', 'jobPosts' => fn($q) => $q->withTrashed()->withCount('applications')])->find(Auth::id());
+            ? User::with(['educations', 'experiences', 'certifications', 'latestEducation', 'currentJob', 'documents',
+                    'jobPosts' => fn($q) => $q->withTrashed()->withCount('applications')->latest()->limit(5)])->findOrFail($id)
+            : User::with(['educations', 'experiences', 'certifications', 'latestEducation', 'currentJob', 'documents',
+                    'jobPosts' => fn($q) => $q->withTrashed()->withCount('applications')->latest()->limit(5)])->find(Auth::id());
 
         $isOwner = Auth::id() === $user->id;
         $postCount = Post::where('user_id', $user->id)->count();
 
-        return view('profile.show', compact('user', 'isOwner', 'postCount'));
+        // alumni হলে মোট job সংখ্যা (৫টার বেশি থাকলে "View all" দেখানোর জন্য)
+        $totalJobCount = 0;
+        if ($user->role === 'alumni') {
+            $totalJobCount = $user->jobPosts()->withTrashed()->count();
+        }
+
+        return view('profile.show', compact('user', 'isOwner', 'postCount', 'totalJobCount'));
     }
 
     // ==========================================
@@ -48,7 +57,7 @@ class ProfileController extends Controller
                         }
                     ])
                     ->withCount('comments')
-                    ->where('user_id', $user->id)   // নিজের পোস্ট + শেয়ার করা (সব এই user এর তৈরি)
+                    ->where('user_id', $user->id)
                     ->latest()
                     ->get();
 
@@ -67,9 +76,8 @@ class ProfileController extends Controller
         // ----- PHOTOS & VIDEOS ট্যাব -----
         if ($tab === 'media') {
             $media = [];
-            $seen  = [];   // ডুপ্লিকেট এড়াতে URL ট্র্যাক
+            $seen  = [];
 
-            // প্রোফাইল পিকচার + কভার ফটো (থাকলে আগে দেখাও)
             if (!empty($user->cover_photo)) {
                 $url = asset('storage/' . str_replace('//', '/', $user->cover_photo));
                 if (!isset($seen[$url])) { $seen[$url] = true; $media[] = ['type' => 'image', 'url' => $url]; }
@@ -79,7 +87,6 @@ class ProfileController extends Controller
                 if (!isset($seen[$url])) { $seen[$url] = true; $media[] = ['type' => 'image', 'url' => $url]; }
             }
 
-            // সব পোস্টের মিডিয়া
             $posts = Post::with('parentPost')
                     ->where('user_id', $user->id)
                     ->latest()
@@ -107,7 +114,6 @@ class ProfileController extends Controller
      */
     private function collectMedia($post, &$media, &$seen = [])
     {
-        // ছবি
         if (!empty($post->images)) {
             $imgs = is_array($post->images) ? $post->images : json_decode($post->images, true);
             if (is_array($imgs)) {
@@ -122,7 +128,6 @@ class ProfileController extends Controller
             }
         }
 
-        // ভিডিও
         if (!empty($post->video) && $post->video !== 'null') {
             $decoded = is_array($post->video) ? $post->video : json_decode($post->video, true);
             if (is_array($decoded)) {

@@ -12,6 +12,7 @@ use App\Http\Controllers\ProfileDetailController;
 use App\Http\Controllers\SavedPostController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\SocialiteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -217,3 +218,34 @@ Route::get('/stream/video/{path}', function ($path) {
         'Accept-Ranges' => 'bytes',
     ]);
 })->where('path', '.*')->name('stream.video');
+
+
+/*
+|--------------------------------------------------------------------------
+| SOCIAL LOGIN (Google / Facebook — Socialite)
+|--------------------------------------------------------------------------
+| guest middleware: লগইন করা user আবার social এ যেতে পারবে না
+*/
+
+Route::middleware('guest')->group(function () {
+
+    // Step 1: provider এ redirect (?role=student|alumni|teacher query optional)
+    Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'redirect'])
+        ->name('social.redirect');
+
+    // Step 2: provider থেকে ফেরত (callback)
+    Route::get('/auth/{provider}/callback', [SocialiteController::class, 'callback'])
+        ->name('social.callback');
+
+    // Step 3: নতুন social user role select করার পেজ (Option B)
+    Route::get('/auth/choose-role', [SocialiteController::class, 'showChooseRole'])
+        ->name('social.chooseRole');
+
+    // Step 4: role confirm → account তৈরি + login
+    Route::post('/auth/choose-role', [SocialiteController::class, 'storeChooseRole'])
+        ->name('social.storeRole');
+});
+
+// Terms & Privacy — সবাই (login ছাড়াই) দেখতে পারবে
+Route::view('/terms', 'auth.terms')->name('terms');
+Route::view('/privacy', 'auth.privacy')->name('privacy');

@@ -28,50 +28,57 @@ class RegisteredUserController extends Controller
      *
      * @throws ValidationException
      */
-   public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
-{
-    // ১. ব্রিজের ডিফল্ট ভ্যালিডেশন
-    $request->validate([
-        'name' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-        'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        'role' => ['required', 'string', 'in:student,alumni'], // এই লাইনটি যোগ করুন
-    ]);
-
-    // ২. ডাটাবেজে ইউজার ক্রিয়েট করা
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-        'role' => $request->role, // ফর্ম থেকে আসা রোলটি ডাটাবেজে সেভ হবে
-    ]);
-
-    event(new Registered($user));
-
-    Auth::login($user);
-
-    // 🔥 রোল অনুযায়ী ডাইনামিক রিডাইরেক্ট পাথ সেট করা
-    $redirectUrl = '/dashboard'; // ডিফল্ট সেফ ফলব্যাক
-
-    if ($user->role === 'admin') {
-        $redirectUrl = route('admin.dashboard');
-    } elseif ($user->role === 'student') {
-        $redirectUrl = route('student.dashboard'); // আপনার প্রজেক্টের স্টুডেন্ট ড্যাশবোর্ড রাউট নাম
-    } elseif ($user->role === 'alumni') {
-        $redirectUrl = route('alumni.dashboard'); // আপনার প্রজেক্টের এলামনাই ড্যাশবোর্ড রাউট নাম
-    } elseif ($user->role === 'alumni') {
-        $redirectUrl = route('alumni.dashboard'); 
-    }
-
-    // 🔥 আমাদের মডার্ন এজাক্স চেক (এখন এটি ডাইনামিক ইউআরএল পাঠাবে)
-    if ($request->ajax()) {
-        return response()->json([
-            'success' => true,
-            'message' => 'Registration successful! Preparing your dashboard...',
-            'redirect' => $redirectUrl
+    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
+    {
+            // ১. ভ্যালিডেশন — teacher সহ ৩ রোল
+        $request->validate([
+            'role'     => 'required|in:student,alumni,teacher',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users',
+            'password' => 'required|confirmed|min:8',
+            'terms'    => 'accepted',   // ✅ এই লাইন যোগ করুন
+        ], [
+            'terms.accepted' => 'You must agree to the Terms & Privacy Policy.',
         ]);
+
+        // ২. ইউজার ক্রিয়েট
+        $user = User::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
+            'role'     => $request->role,
+        ]);
+
+        event(new Registered($user));
+
+        Auth::login($user);
+
+        // ৩. রোল অনুযায়ী রিডাইরেক্ট
+        $redirectUrl = $this->redirectPathForRole($user->role);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Registration successful! Preparing your dashboard...',
+                'redirect' => $redirectUrl,
+            ]);
+        }
+
+        return redirect($redirectUrl);
     }
 
-    return redirect($redirectUrl);
-}
+    /**
+     * রোল অনুযায়ী সঠিক dashboard path।
+     * Teacher → home feed (alumni এর মতই feed, route('home'))
+     */
+    private function redirectPathForRole(string $role): string
+    {
+        return match ($role) {
+            'admin'   => route('admin.dashboard'),
+            'student' => route('student.dashboard'),
+            'alumni'  => route('alumni.dashboard'),
+            'teacher' => route('home'),  // teacher → home feed (role:alumni guard এড়াতে)
+            default   => route('home'),
+        };
+    }
 }

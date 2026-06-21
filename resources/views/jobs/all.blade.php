@@ -21,9 +21,29 @@
         .jp-back { color:var(--bb-muted); text-decoration:none; font-weight:600; font-size:14px; display:inline-flex; align-items:center; gap:6px; }
         .jp-back:hover { color:var(--bb-primary); }
         .ja-wrap { max-width:980px; margin:26px auto; padding:0 16px; }
-        .ja-head { margin-bottom:20px; }
+        .ja-head { margin-bottom:18px; }
         .ja-head h1 { font-size:26px; font-weight:800; letter-spacing:-.5px; margin:0 0 3px; }
         .ja-head p { color:var(--bb-muted); font-size:14px; margin:0; }
+
+        /* Search + Sort bar */
+        .ja-controls { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+        .ja-search-box { flex-grow:1; position:relative; min-width:200px; }
+        .ja-search-box i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--bb-muted); font-size:15px; }
+        .ja-search-input { width:100%; border:1.5px solid var(--bb-line); border-radius:11px; padding:11px 38px 11px 40px; font-size:13.5px; outline:none; transition:border-color .15s, box-shadow .15s; background:#fff; }
+        .ja-search-input:focus { border-color:var(--bb-primary); box-shadow:0 0 0 3px rgba(79,70,229,.1); }
+        .ja-search-x { position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--bb-muted); font-size:16px; text-decoration:none; transition:color .15s; }
+        .ja-search-x:hover { color:#dc2626; }
+        .ja-search-btn { border:none; background:var(--bb-primary); color:#fff; border-radius:11px; padding:11px 22px; font-size:13.5px; font-weight:600; cursor:pointer; transition:background .15s; }
+        .ja-search-btn:hover { background:#4338ca; }
+        .ja-sort { border:1.5px solid var(--bb-line); border-radius:11px; padding:11px 14px; font-size:13.5px; font-weight:600; color:#4b5563; background:#fff; cursor:pointer; outline:none; }
+        .ja-sort:focus { border-color:var(--bb-primary); }
+
+        /* Filter pills */
+        .ja-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+        .ja-filter { font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:20px; border:1.5px solid var(--bb-line); background:#fff; color:#4b5563; text-decoration:none; transition:all .15s; }
+        .ja-filter:hover { border-color:var(--bb-primary); color:var(--bb-primary); }
+        .ja-filter.active { background:var(--bb-primary); color:#fff; border-color:var(--bb-primary); }
+
         .ja-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
         @media (max-width:680px){ .ja-grid { grid-template-columns:1fr; } }
         .ja-card { background:#fff; border-radius:16px; box-shadow:0 1px 3px rgba(16,24,40,.06); padding:18px; border:1px solid var(--bb-line); transition:box-shadow .2s, transform .2s; display:flex; flex-direction:column; }
@@ -42,6 +62,13 @@
         .ja-view { display:block; text-align:center; background:var(--bb-primary-soft); color:var(--bb-primary); border-radius:9px; padding:9px; font-size:13px; font-weight:700; text-decoration:none; transition:all .15s; }
         .ja-view:hover { background:var(--bb-primary); color:#fff; }
         .ja-empty { background:#fff; border-radius:16px; padding:50px 20px; text-align:center; color:var(--bb-muted); }
+
+        /* Pagination */
+        .ja-pagination .pagination { display:flex; gap:5px; list-style:none; padding:0; margin:0; flex-wrap:wrap; }
+        .ja-pagination .page-item .page-link { border:1.5px solid var(--bb-line); border-radius:9px; padding:7px 13px; font-size:13px; font-weight:600; color:#4b5563; text-decoration:none; background:#fff; display:inline-block; transition:all .15s; }
+        .ja-pagination .page-item .page-link:hover { border-color:var(--bb-primary); color:var(--bb-primary); }
+        .ja-pagination .page-item.active .page-link { background:var(--bb-primary); color:#fff; border-color:var(--bb-primary); }
+        .ja-pagination .page-item.disabled .page-link { opacity:.45; pointer-events:none; }
     </style>
 </head>
 <body>
@@ -56,54 +83,200 @@
 <div class="ja-wrap">
     <div class="ja-head">
         <h1>Job Opportunities</h1>
-        <p>{{ $jobs->total() }} {{ Str::plural('opening', $jobs->total()) }} shared by alumni · internships and part-time roles first</p>
+        <p id="jaHeadCount">{{ $jobs->total() }} {{ Str::plural('opening', $jobs->total()) }} shared by alumni · internships and part-time roles first</p>
     </div>
 
-    @if($jobs->count())
-        <div class="ja-grid">
-            @foreach($jobs as $job)
-                @php
-                    $jt = strtolower($job->job_type);
-                    $logoColor = str_contains($jt,'intern') ? 'background:#fff7ed;color:#ea580c;'
-                               : (str_contains($jt,'part') ? 'background:#eff6ff;color:#2563eb;' : '');
-                @endphp
-                <div class="ja-card">
-                    <div class="ja-top">
-                        <div class="ja-logo" style="{{ $logoColor }}">{{ strtoupper(substr($job->company,0,1)) }}</div>
-                        <div class="flex-grow-1" style="min-width:0;">
-                            <a href="{{ route('jobs.show', $job->id) }}" class="ja-title">{{ $job->title }}</a>
-                            <p class="ja-company">{{ $job->company }}@if($job->location) · {{ $job->location }}@endif</p>
-                        </div>
-                    </div>
-                    <div class="ja-meta">
-                        <span class="ja-pill"><i class="bi bi-briefcase"></i> {{ $job->job_type }}</span>
-                        @if($job->salary)<span class="ja-pill"><i class="bi bi-cash-stack"></i> {{ $job->salary }}</span>@endif
-                        @if($job->is_expired)
-                            <span class="ja-pill ja-expired"><i class="bi bi-x-circle"></i> Deadline over</span>
-                        @elseif($job->is_expiring_soon)
-                            <span class="ja-pill ja-expiring"><i class="bi bi-alarm"></i> Expiring soon</span>
-                        @elseif($job->deadline)
-                            <span class="ja-pill"><i class="bi bi-calendar-event"></i> {{ $job->deadline->format('d M') }}</span>
-                        @endif
-                    </div>
-                    <div class="ja-foot">
-                        <a href="{{ route('jobs.show', $job->id) }}" class="ja-view">View Details & Apply</a>
-                    </div>
-                </div>
-            @endforeach
+    {{-- SEARCH + SORT --}}
+    <form method="GET" action="{{ route('jobs.all') }}" class="ja-controls" id="jaSearchForm">
+        @if(!empty($type))<input type="hidden" name="type" value="{{ $type }}">@endif
+        <div class="ja-search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="q" class="ja-search-input" value="{{ $search ?? '' }}" placeholder="Search title, company, location, or skill...">
+            <a href="javascript:void(0)" class="ja-search-x" title="Clear search" style="display:{{ !empty($search) ? 'inline' : 'none' }};"><i class="bi bi-x-circle-fill"></i></a>
         </div>
+        <select name="sort" class="ja-sort">
+            <option value="default"  {{ ($sort ?? 'default') === 'default' ? 'selected' : '' }}>Recommended</option>
+            <option value="newest"   {{ ($sort ?? '') === 'newest' ? 'selected' : '' }}>Newest first</option>
+            <option value="deadline" {{ ($sort ?? '') === 'deadline' ? 'selected' : '' }}>Deadline soon</option>
+        </select>
+        <button type="submit" class="ja-search-btn">Search</button>
+    </form>
 
-        <div class="mt-4 d-flex justify-content-center">
-            {{ $jobs->links() }}
-        </div>
-    @else
-        <div class="ja-empty">
-            <i class="bi bi-briefcase fs-1 d-block mb-2"></i>
-            <h5 class="fw-bold">No jobs available right now</h5>
-            <p class="mb-0">Check back soon — alumni post new opportunities regularly.</p>
-        </div>
-    @endif
+    {{-- TYPE FILTERS --}}
+    <div class="ja-filters">
+        @php
+            $types = ['' => 'All', 'Internship' => 'Internship', 'Part-time' => 'Part-time', 'Full-time' => 'Full-time', 'Remote' => 'Remote', 'Contract' => 'Contract', 'Freelance' => 'Freelance'];
+        @endphp
+        @foreach($types as $val => $label)
+            <a href="{{ route('jobs.all', array_filter(['type' => $val ?: null, 'q' => $search ?? null, 'sort' => ($sort ?? 'default') !== 'default' ? $sort : null])) }}"
+               data-type="{{ $val }}"
+               class="ja-filter {{ ($type ?? '') === $val ? 'active' : '' }}">{{ $label }}</a>
+        @endforeach
+    </div>
+
+    {{-- JOB CARDS (AJAX দিয়ে আপডেট হয়) --}}
+    <div id="jaResults">
+        @include('jobs.partials.all-cards', ['jobs' => $jobs, 'search' => $search, 'type' => $type])
+    </div>
+
+    {{-- PAGINATION (AJAX দিয়ে আপডেট হয়) --}}
+    <div class="mt-4 d-flex justify-content-center ja-pagination" id="jaPagination">
+        @if($jobs->hasPages()){!! $jobs->links() !!}@endif
+    </div>
+
+    {{-- loading overlay --}}
+    <div id="jaLoading" style="display:none;text-align:center;padding:30px;color:var(--bb-muted);">
+        <div class="spinner-border text-primary" style="width:1.8rem;height:1.8rem;"></div>
+    </div>
 </div>
 
+<script>
+const JA_BASE = "{{ route('jobs.all') }}";
+
+// বর্তমান filter state পড়ি (memory থেকে — URL clean থাকে)
+function jaGetState(){
+    if (window.jaCurrentState) return Object.assign({}, window.jaCurrentState);
+    // প্রথমবার — সব default (clean)
+    return { q:'', type:'', sort:'default', page:'1' };
+}
+
+// state থেকে query string বানাই (খালি মান বাদ)
+function jaBuildQuery(s){
+    const params = new URLSearchParams();
+    if (s.q)    params.set('q', s.q);
+    if (s.type) params.set('type', s.type);
+    if (s.sort && s.sort !== 'default') params.set('sort', s.sort);
+    if (s.page && s.page !== '1') params.set('page', s.page);
+    return params.toString();
+}
+
+// AJAX দিয়ে result লোড — URL বদলাই না (তাই reload দিলে সব clean হয়ে যায়)
+function jaLoad(state, push = true){
+    const qs = jaBuildQuery(state);
+    // fetch করার URL এ query থাকবে, কিন্তু browser address bar বদলাব না
+    const fetchUrl = JA_BASE + (qs ? '?' + qs : '');
+
+    const results = document.getElementById('jaResults');
+    const pager   = document.getElementById('jaPagination');
+    const loading = document.getElementById('jaLoading');
+
+    results.style.opacity = '.4';
+    if (loading) loading.style.display = 'block';
+
+    fetch(fetchUrl, { headers:{ 'X-Requested-With':'XMLHttpRequest', 'Accept':'application/json' } })
+    .then(r => r.json())
+    .then(d => {
+        if (loading) loading.style.display = 'none';
+        results.style.opacity = '1';
+        if (!d.success) return;
+
+        results.innerHTML = d.html;
+        pager.innerHTML = d.pagination || '';
+
+        // header count আপডেট
+        const headP = document.getElementById('jaHeadCount');
+        if (headP && d.total_text) headP.textContent = d.total_text + ' shared by alumni · internships and part-time roles first';
+
+        // current filter state মনে রাখি (pagination এর জন্য) — কিন্তু URL বদলাই না
+        window.jaCurrentState = state;
+
+        // উপরে স্ক্রল (smooth)
+        document.querySelector('.ja-wrap').scrollIntoView({ behavior:'smooth', block:'start' });
+    })
+    .catch(() => {
+        if (loading) loading.style.display = 'none';
+        results.style.opacity = '1';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // search input এ টাইপ করলে ✕ দেখাও/লুকাও
+    const searchInput = document.querySelector('.ja-search-input');
+    const clearBtn = document.querySelector('.ja-search-x');
+    if (searchInput && clearBtn) {
+        searchInput.addEventListener('input', () => {
+            clearBtn.style.display = searchInput.value.trim() ? 'inline' : 'none';
+        });
+    }
+
+    // ---- SEARCH form ----
+    const form = document.getElementById('jaSearchForm');
+    if (form) {
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const s = jaGetState();
+            s.q = form.querySelector('input[name="q"]').value.trim();
+            s.page = '1';
+            jaLoad(s);
+        });
+    }
+
+    // ---- SORT dropdown ----
+    const sortSel = document.querySelector('.ja-sort');
+    if (sortSel) {
+        sortSel.addEventListener('change', () => {
+            const s = jaGetState();
+            s.sort = sortSel.value;
+            s.page = '1';
+            jaLoad(s);
+        });
+    }
+
+    // ---- TYPE filter pills + pagination links + clear (event delegation) ----
+    document.addEventListener('click', e => {
+        // type pill
+        const pill = e.target.closest('.ja-filter');
+        if (pill) {
+            e.preventDefault();
+            const s = jaGetState();
+            s.type = pill.dataset.type || '';
+            s.page = '1';
+            // active ক্লাস সাথে সাথে আপডেট
+            document.querySelectorAll('.ja-filter').forEach(f => f.classList.remove('active'));
+            pill.classList.add('active');
+            jaLoad(s);
+            return;
+        }
+
+        // pagination link
+        const pageLink = e.target.closest('#jaPagination a');
+        if (pageLink) {
+            e.preventDefault();
+            const href = pageLink.getAttribute('href');
+            const pageParam = new URL(href, window.location.origin).searchParams.get('page') || '1';
+            const s = jaGetState();
+            s.page = pageParam;
+            jaLoad(s);
+            return;
+        }
+
+        // search clear X
+        const clearX = e.target.closest('.ja-search-x');
+        if (clearX) {
+            e.preventDefault();
+            const s = jaGetState();
+            s.q = '';
+            s.page = '1';
+            const inp = document.querySelector('.ja-search-input');
+            if (inp) inp.value = '';
+            clearX.style.display = 'none';
+            jaLoad(s);
+            return;
+        }
+    });
+});
+
+// empty state এর "Clear filters" বাটন
+function jaClearAll(){
+    const inp = document.querySelector('.ja-search-input');
+    if (inp) inp.value = '';
+    document.querySelectorAll('.ja-filter').forEach(f => f.classList.remove('active'));
+    const allPill = document.querySelector('.ja-filter[data-type=""]');
+    if (allPill) allPill.classList.add('active');
+    const sortSel = document.querySelector('.ja-sort');
+    if (sortSel) sortSel.value = 'default';
+    jaLoad({ q:'', type:'', sort:'default', page:'1' });
+}
+</script>
 </body>
 </html>

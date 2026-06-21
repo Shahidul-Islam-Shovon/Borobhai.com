@@ -99,14 +99,24 @@ class JobApplicationController extends Controller
     }
 
     // ==========================================
-    // আবেদন প্রত্যাহার (withdraw)
+    // আবেদন প্রত্যাহার (withdraw) — শুধু in-app
     // ==========================================
     public function withdraw($jobId)
     {
         $user = Auth::user();
+
+        // আগে application বের করি, তারপর গার্ড চেক করি
         $application = JobApplication::where('user_id', $user->id)
             ->where('job_post_id', $jobId)
             ->firstOrFail();
+
+        // External apply withdraw করা যায় না — Borobhai প্রতিষ্ঠানে কিছু submit করেনি, শুধু track
+        if ($application->apply_method === 'external') {
+            return response()->json([
+                'success' => false,
+                'message' => 'External applications cannot be withdrawn — they are managed by the company.',
+            ], 422);
+        }
 
         // alumni এগিয়ে নিলে (shortlisted/accepted/rejected) আর withdraw নয়
         if (!in_array($application->status, ['pending', 'reviewed'])) {
@@ -138,15 +148,30 @@ class JobApplicationController extends Controller
             }])
             ->where('user_id', $user->id);
 
+        // search — job title বা company দিয়ে (archived job ও মিলবে)
+        $search = trim((string) $request->input('q', ''));
+        if ($search !== '') {
+            $query->whereHas('jobPost', function ($q) use ($search) {
+                $q->withTrashed()
+                  ->where(function ($qq) use ($search) {
+                      $qq->where('title', 'like', "%{$search}%")
+                         ->orWhere('company', 'like', "%{$search}%");
+                  });
+            });
+        }
+
         // filter
         $filter = $request->input('filter');
         if ($filter && in_array($filter, ['pending', 'reviewed', 'shortlisted', 'accepted', 'rejected'])) {
             $query->where('status', $filter);
         }
 
-        $applications = $query->latest('applied_at')->get();
+        // pagination (search/filter সহ পেজ লিংকে থাকবে)
+        $applications = $query->latest('applied_at')
+            ->paginate(10)
+            ->withQueryString();
 
-        // stats
+        // stats (সবসময় পুরো হিসাব — search/filter এর বাইরে)
         $all = JobApplication::where('user_id', $user->id)->get();
         $stats = [
             'total'       => $all->count(),
@@ -155,22 +180,45 @@ class JobApplicationController extends Controller
             'rejected'    => $all->where('status', 'rejected')->count(),
         ];
 
-        return view('jobs.my-applications', compact('applications', 'stats', 'filter'));
+        return view('jobs.my-applications', compact('applications', 'stats', 'filter', 'search'));
     }
 
     // ==========================================
-    // Alumni — নিজের job এ যারা আবেদন করেছে
+    // Alumni — নিজের job এ যারা আবেদন করেছে (search + filter + pagination)
     // ==========================================
-    public function applicants($jobId)
+    public function applicants(Request $request, $jobId)
     {
-        $job = JobPost::withTrashed()->with(['applications.user'])->findOrFail($jobId);
+        $job = JobPost::withTrashed()->findOrFail($jobId);
 
         // শুধু job এর মালিক দেখতে পারবে
         if ($job->user_id !== Auth::id()) {
             abort(403);
         }
 
-        return view('jobs.applicants', compact('job'));
+        // আবেদনকারীদের query (search/filter/pagination এর জন্য আলাদা)
+        $query = $job->applications()->with('user');
+
+        // search — আবেদনকারীর নাম বা ইমেইল দিয়ে
+        $search = trim((string) $request->input('q', ''));
+        if ($search !== '') {
+            $query->where(function ($qq) use ($search) {
+                $qq->where('applicant_name', 'like', "%{$search}%")
+                   ->orWhere('applicant_email', 'like', "%{$search}%");
+            });
+        }
+
+        // filter — status অনুযায়ী
+        $filter = $request->input('status');
+        if ($filter && in_array($filter, ['pending', 'reviewed', 'shortlisted', 'accepted', 'rejected'])) {
+            $query->where('status', $filter);
+        }
+
+        $applicants = $query->latest('applied_at')->paginate(10)->withQueryString();
+
+        // মোট সংখ্যা (filter এর বাইরে — header এ দেখানোর জন্য)
+        $totalCount = $job->applications()->count();
+
+        return view('jobs.applicants', compact('job', 'applicants', 'search', 'filter', 'totalCount'));
     }
 
     // ==========================================
@@ -183,6 +231,14 @@ class JobApplicationController extends Controller
         // শুধু job এর মালিক
         if (!$application->jobPost || $application->jobPost->user_id !== Auth::id()) {
             abort(403);
+        }
+
+        // External apply এর status alumni বদলাতে পারবে না — প্রতিষ্ঠান নিজের সিস্টেমে handle করে
+        if ($application->apply_method === 'external') {
+            return response()->json([
+                'success' => false,
+                'message' => 'External applications are managed on the company site — status cannot be changed here.',
+            ], 422);
         }
 
         $data = $request->validate([

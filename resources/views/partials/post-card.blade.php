@@ -16,6 +16,20 @@
             </a>
             <div class="bb-head-meta">
                 <a href="{{ $post->user_id === Auth::id() ? route('profile.show') : route('profile.view', $post->user_id) }}" class="bb-author author-name-zone bb-author-link">{{ $post->user->name }}</a>
+                {{-- নামের নিচে role label (Student / Alumni / Teacher) --}}
+                @php $pRole = $post->user->role; @endphp
+                <span class="bb-author-role
+                    @if($pRole === 'teacher') bb-author-role-teacher
+                    @elseif($pRole === 'alumni') bb-author-role-alumni
+                    @else bb-author-role-student @endif">
+                    @if($pRole === 'teacher')
+                        <i class="bi bi-easel2-fill"></i> Teacher
+                    @elseif($pRole === 'alumni')
+                        <i class="bi bi-mortarboard-fill"></i> Alumni
+                    @else
+                        <i class="bi bi-backpack-fill"></i> Student
+                    @endif
+                </span>
                 <span class="bb-time"><i class="bi bi-globe-americas"></i> {{ $post->updated_at->diffForHumans() }}</span>
             </div>
         </div>

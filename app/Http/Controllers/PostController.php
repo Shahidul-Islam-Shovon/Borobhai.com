@@ -45,9 +45,13 @@ class PostController extends Controller
         $feedItems = $feed['items'];
         $hasMore   = $feed['has_more'];
 
-        $data = compact('feedItems', 'hasMore', 'recentJobs', 'appliedJobIds');
+        // teacher নিজে job পোস্ট করতে পারে না (alumni পারে) — view তে Post A Job বাটন hide করতে
+        $canPostJobs = $user->role === 'alumni';
 
-        if ($user->role === 'alumni') {
+        $data = compact('feedItems', 'hasMore', 'recentJobs', 'appliedJobIds', 'canPostJobs');
+
+        // alumni + teacher → একই feed view (teacher = alumni এর মতো, শুধু job পোস্ট পারে না)
+        if (in_array($user->role, ['alumni', 'teacher'])) {
             return view('alumni.dashboard', $data);
         }
         return view('student.dashboard', $data);

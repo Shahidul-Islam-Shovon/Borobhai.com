@@ -18,6 +18,7 @@ class AdminDashboardController extends Controller
             'total_users'     => User::count(),
             'total_students'  => User::where('role', 'student')->count(),
             'total_alumni'    => User::where('role', 'alumni')->count(),
+            'total_teachers'  => User::where('role', 'teacher')->count(),
             'total_posts'     => Post::count(),
             'total_circulars' => Circular::count(),
         ];
@@ -58,7 +59,7 @@ class AdminDashboardController extends Controller
 
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'type'    => 'required|in:student,alumni,admin,super' 
+            'type'    => 'required|in:student,alumni,teacher,admin,super' 
         ]);
 
         $targetUser = User::find($request->user_id);
@@ -73,8 +74,8 @@ class AdminDashboardController extends Controller
             ], 422);
         }
 
-        // 🟢 কন্ডিশন ১: অ্যাডমিন বা সুপার থেকে নরমাল স্টুডেন্ট/অ্যাল্যামনাই বানানো (Make Normal)
-        if (in_array($request->type, ['student', 'alumni'])) {
+        // 🟢 কন্ডিশন ১: অ্যাডমিন/সুপার থেকে normal (student/alumni/teacher) বানানো
+        if (in_array($request->type, ['student', 'alumni', 'teacher'])) {
             $targetUser->update([
                 'role'           => $request->type, 
                 'is_super_admin' => false
@@ -82,7 +83,7 @@ class AdminDashboardController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "{$targetUser->name} কে সফলভাবে সাধারণ সদস্য গ্রুপে নামানো হয়েছে!"
+                'message' => "{$targetUser->name} কে সফলভাবে সাধারণ সদস্য গ্রুপে নামানো হয়েছে!"
             ]);
         }
 
@@ -95,7 +96,7 @@ class AdminDashboardController extends Controller
             
             return response()->json([
                 'success' => true,
-                'message' => "{$targetUser->name} কে সফলভাবে সাধারণ Admin করা হয়েছে!"
+                'message' => "{$targetUser->name} কে সফলভাবে সাধারণ Admin করা হয়েছে!"
             ]);
         }
 
@@ -125,48 +126,45 @@ class AdminDashboardController extends Controller
 
     
     // 🔄 ড্রপডাউন থেকে রোল চেঞ্জ করার মেথড
-// 🔄 ড্রপডাউন থেকে রোল চেঞ্জ করার মেথড
-public function changeRole(Request $request)
-{
-    $request->validate([
-        'user_id' => 'required|exists:users,id',
-        'role'    => 'required|in:student,alumni,admin'
-    ]);
+    public function changeRole(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'role'    => 'required|in:student,alumni,teacher,admin'
+        ]);
 
-    $user = User::find($request->user_id);
+        $user = User::find($request->user_id);
 
-    // 🛡️ ১. ডাইনামিক চিফ সুপার অ্যাডমিন প্রটেকশন
-    $chiefEmail = env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com');
-    if ($user->email === $chiefEmail) {
+        // 🛡️ ১. ডাইনামিক চিফ সুপার অ্যাডমিন প্রটেকশন
+        $chiefEmail = env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com');
+        if ($user->email === $chiefEmail) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The Main System Administrator is fully secured. Role cannot be altered!'
+            ], 422);
+        }
+
+        // 🛡️ ২. সাধারণ Admin অন্য Admin এর রোল বদলাতে পারবে না
+        if ($user->role === 'admin' && !auth()->user()->isSuperAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'অ্যাকশন রিজেক্টেড! একজন সাধারণ Admin হয়ে আপনি অন্য কোনো বর্তমান বা পূর্বতন Admin-এর রোল পরিবর্তন করতে পারবেন না।'
+            ], 403);
+        }
+
+        // রোল চেঞ্জ হয়ে normal হলে সে আর সুপার অ্যাডমিন থাকবে না
+        $isSuper = ($request->role === 'admin') ? $user->is_super_admin : false;
+
+        $user->update([
+            'role'           => $request->role,
+            'is_super_admin' => $isSuper
+        ]);
+
         return response()->json([
-            'success' => false,
-            'message' => 'The Main System Administrator is fully secured. Role cannot be altered!'
-        ], 422);
+            'success' => true,
+            'message' => 'User role updated successfully!'
+        ]);
     }
-
-    // 🛡️ ২. আপনার স্পেশাল লজিক: 
-    // টার্গেট ইউজার যদি অলরেডি একজন Admin (বা সুপার) হয়, এবং লগইন করা ইউজার যদি নিজে Super Admin না হয়,
-    // তবে সে কোনো কারেন্ট/আগের অ্যাডমিনের রোল পরিবর্তন করতে পারবে না!
-    if ($user->role === 'admin' && !auth()->user()->isSuperAdmin()) {
-        return response()->json([
-            'success' => false,
-            'message' => 'অ্যাকশন রিজেক্টেড! একজন সাধারণ Admin হয়ে আপনি অন্য কোনো বর্তমান বা পূর্বতন Admin-এর রোল পরিবর্তন করতে পারবেন না।'
-        ], 403);
-    }
-
-    // রোল চেঞ্জ হয়ে স্টুডেন্ট বা অ্যাল্যামনাই হলে সে আর সুপার অ্যাডমিন থাকবে না
-    $isSuper = ($request->role === 'admin') ? $user->is_super_admin : false;
-
-    $user->update([
-        'role'           => $request->role,
-        'is_super_admin' => $isSuper
-    ]);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'User role updated successfully!'
-    ]);
-}
        
     // 📊 চার্টের আলাদা এপিআই ডাটা ইঞ্জিন
     public function getAnalyticsData()
@@ -190,7 +188,7 @@ public function changeRole(Request $request)
         ]);
     }
 
-    //  ম্যানুয়াল রোল আপডেট মেথড (যদি অন্য কোথাও কল করা থাকে)
+    //  ম্যানুয়াল রোল আপডেট মেথড (যদি অন্য কোথাও কল করা থাকে)
     public function changeUserRole(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -253,7 +251,7 @@ public function changeRole(Request $request)
 
 public function updateSuspensionStatus(Request $request, $id)
     {
-        // ১. আইডি দিয়ে ইউজার খোঁজা
+        // ১. আইডি দিয়ে ইউজার খোঁজা
         $user = User::find($id);
 
         if (!$user) {
@@ -265,11 +263,9 @@ public function updateSuspensionStatus(Request $request, $id)
 
         $action = $request->input('action');
 
-        // ২. টেম্পোরারি ব্লকের জন্য কার্বন ফরম্যাট একদম স্ট্রিক্ট করে দেওয়া হলো
+        // ২. টেম্পোরারি ব্লকের জন্য কার্বন ফরম্যাট
         if ($action === 'temp') {
             $user->status = 'suspended_temp';
-            
-            // 🎯 অনেক সময় সরাসরি অবজেক্ট ডাটাবেজ নিতে পারে না, তাই string ফরম্যাটে কাস্ট করা হলো
             $user->suspended_until = Carbon::now()->addDays(7)->toDateTimeString(); 
             
         } elseif ($action === 'perm') {
@@ -283,8 +279,6 @@ public function updateSuspensionStatus(Request $request, $id)
             return response()->json(['success' => false, 'message' => 'Invalid action.'], 400);
         }
 
-        // ৩. ডিরেক্ট ডাটাবেজ আপডেট (যা কোনো মডেল কনস্ট্রেইন্ট বা মিউটেটরে আটকাবে না)
-        // এটি ব্যবহার করলে মডেলের ভেতর কোনো হিডেন ঝামেলা থাকলেও সেটা বাইপাস হয়ে যাবে
         $updated = \DB::table('users')->where('id', $id)->update([
             'status' => $user->status,
             'suspended_until' => $user->suspended_until,
@@ -303,76 +297,4 @@ public function updateSuspensionStatus(Request $request, $id)
             'message' => 'Failed to write data to database.'
         ], 500);
     }
-
-
-    // post and circular restore methods
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

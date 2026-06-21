@@ -66,8 +66,31 @@
         .ma-method-inapp { background:#eef2ff; color:#4f46e5; }
         .ma-method-external { background:#fff7ed; color:#ea580c; }
 
+        /* External applied badge (status নয়, শুধু applied) */
+        .ma-ext-applied { font-size:12px; font-weight:700; padding:5px 12px; border-radius:20px; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; background:#eef2ff; color:#4f46e5; }
+
         .ma-empty { background:#fff; border-radius:16px; padding:50px 20px; text-align:center; color:var(--bb-muted); border:1px solid var(--bb-line); }
         .ma-empty i { font-size:42px; color:#d1d5db; }
+
+        /* Search bar */
+        .ma-search { display:flex; gap:8px; margin-bottom:14px; }
+        .ma-search-box { flex-grow:1; position:relative; }
+        .ma-search-box i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--bb-muted); font-size:15px; }
+        .ma-search-input { width:100%; border:1.5px solid var(--bb-line); border-radius:11px; padding:11px 14px 11px 40px; font-size:13.5px; outline:none; transition:border-color .15s, box-shadow .15s; background:#fff; }
+        .ma-search-input:focus { border-color:var(--bb-primary); box-shadow:0 0 0 3px rgba(79,70,229,.1); }
+        .ma-search-btn { border:none; background:var(--bb-primary); color:#fff; border-radius:11px; padding:11px 20px; font-size:13.5px; font-weight:600; cursor:pointer; transition:background .15s; }
+        .ma-search-btn:hover { background:#4338ca; }
+        .ma-search-clear { border:1.5px solid var(--bb-line); background:#fff; color:var(--bb-muted); border-radius:11px; padding:11px 16px; font-size:13.5px; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; }
+        .ma-search-clear:hover { color:var(--bb-primary); border-color:var(--bb-primary); }
+
+        /* Pagination */
+        .ma-pagination { display:flex; justify-content:center; margin-top:20px; }
+        .ma-pagination nav > div:first-child { display:none; } /* mobile prev/next text hide */
+        .ma-pagination .pagination { display:flex; gap:5px; list-style:none; padding:0; margin:0; flex-wrap:wrap; }
+        .ma-pagination .page-item .page-link { border:1.5px solid var(--bb-line); border-radius:9px; padding:7px 13px; font-size:13px; font-weight:600; color:#4b5563; text-decoration:none; background:#fff; display:inline-block; transition:all .15s; }
+        .ma-pagination .page-item .page-link:hover { border-color:var(--bb-primary); color:var(--bb-primary); }
+        .ma-pagination .page-item.active .page-link { background:var(--bb-primary); color:#fff; border-color:var(--bb-primary); }
+        .ma-pagination .page-item.disabled .page-link { opacity:.45; pointer-events:none; }
     </style>
 </head>
 <body>
@@ -105,13 +128,26 @@
         </div>
     </div>
 
+    {{-- SEARCH --}}
+    <form method="GET" action="{{ route('jobs.myApplications') }}" class="ma-search">
+        @if($filter)<input type="hidden" name="filter" value="{{ $filter }}">@endif
+        <div class="ma-search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="q" class="ma-search-input" value="{{ $search ?? '' }}" placeholder="Search by job title or company...">
+        </div>
+        <button type="submit" class="ma-search-btn">Search</button>
+        @if(!empty($search))
+            <a href="{{ route('jobs.myApplications', $filter ? ['filter' => $filter] : []) }}" class="ma-search-clear" title="Clear search"><i class="bi bi-x-lg"></i></a>
+        @endif
+    </form>
+
     {{-- FILTERS --}}
     <div class="ma-filters">
-        <a href="{{ route('jobs.myApplications') }}" class="ma-filter {{ !$filter ? 'active' : '' }}">All</a>
-        <a href="{{ route('jobs.myApplications', ['filter' => 'pending']) }}" class="ma-filter {{ $filter === 'pending' ? 'active' : '' }}">Pending</a>
-        <a href="{{ route('jobs.myApplications', ['filter' => 'reviewed']) }}" class="ma-filter {{ $filter === 'reviewed' ? 'active' : '' }}">Under Review</a>
-        <a href="{{ route('jobs.myApplications', ['filter' => 'shortlisted']) }}" class="ma-filter {{ $filter === 'shortlisted' ? 'active' : '' }}">Shortlisted</a>
-        <a href="{{ route('jobs.myApplications', ['filter' => 'rejected']) }}" class="ma-filter {{ $filter === 'rejected' ? 'active' : '' }}">Not Selected</a>
+        <a href="{{ route('jobs.myApplications', !empty($search) ? ['q' => $search] : []) }}" class="ma-filter {{ !$filter ? 'active' : '' }}">All</a>
+        <a href="{{ route('jobs.myApplications', array_filter(['filter' => 'pending', 'q' => $search ?? null])) }}" class="ma-filter {{ $filter === 'pending' ? 'active' : '' }}">Pending</a>
+        <a href="{{ route('jobs.myApplications', array_filter(['filter' => 'reviewed', 'q' => $search ?? null])) }}" class="ma-filter {{ $filter === 'reviewed' ? 'active' : '' }}">Under Review</a>
+        <a href="{{ route('jobs.myApplications', array_filter(['filter' => 'shortlisted', 'q' => $search ?? null])) }}" class="ma-filter {{ $filter === 'shortlisted' ? 'active' : '' }}">Shortlisted</a>
+        <a href="{{ route('jobs.myApplications', array_filter(['filter' => 'rejected', 'q' => $search ?? null])) }}" class="ma-filter {{ $filter === 'rejected' ? 'active' : '' }}">Not Selected</a>
     </div>
 
     {{-- APPLICATIONS --}}
@@ -134,9 +170,17 @@
                         <p class="ma-company">This job posting has been removed</p>
                     @endif
                 </div>
-                <span class="ma-status" style="background:{{ $meta['bg'] }};color:{{ $meta['color'] }};">
-                    <i class="bi {{ $meta['icon'] }}"></i> {{ $meta['label'] }}
-                </span>
+                @if($app->apply_method === 'external')
+                    {{-- External: প্রতিষ্ঠান নিজের সিস্টেমে handle করে, তাই Borobhai status নেই — শুধু Applied --}}
+                    <span class="ma-ext-applied" title="Applied on the company's own site — managed by them">
+                        <i class="bi bi-box-arrow-up-right"></i> Applied externally
+                    </span>
+                @else
+                    {{-- In-app: alumni যে status দেয় সেটাই --}}
+                    <span class="ma-status" style="background:{{ $meta['bg'] }};color:{{ $meta['color'] }};">
+                        <i class="bi {{ $meta['icon'] }}"></i> {{ $meta['label'] }}
+                    </span>
+                @endif
             </div>
 
             <div class="ma-meta">
@@ -152,7 +196,7 @@
                 @if($app->jobPost && !$app->jobPost->trashed())
                     <a href="{{ route('jobs.show', $app->jobPost->id) }}" class="ma-btn ma-btn-view"><i class="bi bi-box-arrow-up-right"></i> View Job</a>
                 @endif
-                @if(in_array($app->status, ['pending', 'reviewed']) && (!$app->jobPost || !$app->jobPost->trashed()))
+                @if($app->apply_method === 'inapp' && in_array($app->status, ['pending', 'reviewed']) && (!$app->jobPost || !$app->jobPost->trashed()))
                     <button class="ma-btn ma-btn-withdraw" onclick="withdrawApp({{ $app->job_post_id }}, {{ $app->id }})"><i class="bi bi-x-circle"></i> Withdraw</button>
                 @endif
             </div>
@@ -160,10 +204,22 @@
     @empty
         <div class="ma-empty">
             <i class="bi bi-inbox d-block mb-2"></i>
-            <h5 class="fw-bold">{{ $filter ? 'No applications in this category' : 'No applications yet' }}</h5>
-            <p class="mb-0">{{ $filter ? 'Try a different filter.' : 'Start applying to jobs from your feed — they\'ll show up here.' }}</p>
+            @if(!empty($search))
+                <h5 class="fw-bold">No matches for "{{ $search }}"</h5>
+                <p class="mb-0">Try a different job title or company name.</p>
+            @else
+                <h5 class="fw-bold">{{ $filter ? 'No applications in this category' : 'No applications yet' }}</h5>
+                <p class="mb-0">{{ $filter ? 'Try a different filter.' : 'Start applying to jobs from your feed — they\'ll show up here.' }}</p>
+            @endif
         </div>
     @endforelse
+
+    {{-- PAGINATION --}}
+    @if($applications->hasPages())
+        <div class="ma-pagination">
+            {{ $applications->links() }}
+        </div>
+    @endif
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -189,12 +245,16 @@ function withdrawApp(jobId, appId){
         })
         .then(r=>r.json())
         .then(d=>{
-            if(!d.success) return;
+            if(!d.success){
+                Swal.fire({ icon:'info', title:'Cannot withdraw', text: d.message || 'This application cannot be withdrawn.' });
+                return;
+            }
             const card = document.getElementById(`appCard-${appId}`);
             if(card){ card.style.transition='opacity .3s'; card.style.opacity='0'; setTimeout(()=>{ card.remove(); location.reload(); },300); }
             const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1800 });
             Toast.fire({ icon:'info', title:'Application withdrawn' });
-        });
+        })
+        .catch(()=>{ Swal.fire({icon:'error', title:'Network error'}); });
     });
 }
 </script>

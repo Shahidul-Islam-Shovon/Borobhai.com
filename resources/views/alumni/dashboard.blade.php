@@ -100,6 +100,17 @@
 }
 .bb-more-btn:hover { background:var(--bb-bg); color:var(--bb-ink); }
 
+/* নামের নিচে role label (author) */
+.bb-author-role {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .2px;
+    padding: 1px 8px; border-radius: 12px; width: fit-content; margin: 1px 0;
+}
+.bb-author-role i { font-size: 9px; }
+.bb-author-role-alumni  { background: #fef3c7; color: #d97706; }
+.bb-author-role-student { background: #eef2ff; color: #4f46e5; }
+.bb-author-role-teacher { background: #f3e8ff; color: #7c3aed; }
+
 /* ===== CAPTION ===== */
 .bb-caption { padding:2px 16px 12px; font-size:14.5px; line-height:1.55; color:var(--bb-ink); word-break:break-word; }
 .bb-color-caption {
@@ -111,11 +122,8 @@
 
 /* ===== MEDIA ===== */
 .bb-media-zone { background:#000; overflow:hidden; line-height:0; }
-
-/* Single image/video — natural ratio, capped height */
 .bb-media-single { position:relative; display:flex; align-items:center; justify-content:center; background:#000; width:100%; }
 .bb-single-img { width:100%; max-height:560px; object-fit:contain; display:block; cursor:pointer; }
-
 .bb-video-wrap { position:relative; width:100%; display:flex; justify-content:center; background:#000; }
 .bb-inline-video { width:100%; max-height:560px; object-fit:contain; display:block; background:#000; }
 .bb-expand-btn {
@@ -126,8 +134,6 @@
     opacity:0; transition:opacity .2s ease; font-size:14px;
 }
 .bb-video-wrap:hover .bb-expand-btn { opacity:1; }
-
-/* Multi-media grids — FIXED heights, object-fit cover (no black gaps) */
 .bb-grid { display:flex; gap:3px; width:100%; }
 .bb-grid-2 { height:300px; }
 .bb-grid-3 { height:340px; }
@@ -137,7 +143,6 @@
 .bb-tile { position:relative; flex:1; min-width:0; overflow:hidden; background:#000; }
 .bb-tile-big { flex:2; }
 .bb-tile-media { width:100%; height:100%; object-fit:cover; cursor:pointer; display:block; }
-
 .bb-play-badge {
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
     width:54px; height:54px; border-radius:50%; background:rgba(0,0,0,.55);
@@ -187,20 +192,15 @@
 
 /* ===== ROLE BADGE (navbar) ===== */
 .bb-role-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .3px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    border: 1.5px solid transparent;
-    transition: transform .15s ease;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 700; letter-spacing: .3px;
+    padding: 6px 14px; border-radius: 20px;
+    border: 1.5px solid transparent; transition: transform .15s ease;
 }
 .bb-role-badge i { font-size: 13px; }
 .bb-role-student { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
 .bb-role-alumni  { background: #fef3c7; color: #d97706; border-color: #fde68a; }
+.bb-role-teacher { background: #f3e8ff; color: #7c3aed; border-color: #ddd6fe; }
 
 /* Post A Job button (navbar) */
 .bb-post-job-btn {
@@ -231,7 +231,6 @@ textarea.bb-job-input { resize:vertical; }
 .bb-job-submit-btn:hover { box-shadow:0 4px 14px rgba(79,70,229,.4); }
 .bb-job-submit-btn:disabled { opacity:.6; }
 
-/* Post Job modal — নির্ভরযোগ্য scroll (form flex column, body scrolls) */
 .postjob-dialog { height:calc(100vh - 3.5rem); }
 .postjob-content { max-height:100%; display:flex; flex-direction:column; overflow:hidden; }
 .postjob-form { display:flex; flex-direction:column; min-height:0; flex:1 1 auto; overflow:hidden; }
@@ -241,10 +240,8 @@ textarea.bb-job-input { resize:vertical; }
 
 /* ===== RIGHT SIDEBAR (reusable) ===== */
 .bb-side-card {
-    background: var(--bb-card);
-    border-radius: var(--bb-radius);
-    box-shadow: var(--bb-shadow);
-    overflow: hidden;
+    background: var(--bb-card); border-radius: var(--bb-radius);
+    box-shadow: var(--bb-shadow); overflow: hidden;
 }
 .bb-side-head {
     display: flex; align-items: center; justify-content: space-between;
@@ -318,24 +315,19 @@ textarea.bb-job-input { resize:vertical; }
 }
 .bb-connect-btn:hover { background: var(--bb-primary); color: #fff; }
 
-/* Right sidebar own scroll (so nothing gets cut off) */
+/* Right sidebar own scroll */
 .bb-right-sidebar {
-    position: sticky;
-    top: 70px;
-    max-height: calc(100vh - 85px);
-    overflow-y: auto;
-    padding-bottom: 10px;
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
+    position: sticky; top: 70px; max-height: calc(100vh - 85px);
+    overflow-y: auto; padding-bottom: 10px;
+    scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
 }
 .bb-right-sidebar::-webkit-scrollbar { width: 6px; }
 .bb-right-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 .bb-right-sidebar::-webkit-scrollbar-track { background: transparent; }
 
-/* Active Now — name + role stacked */
 .bb-active-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 
-/* Mini role badge (Alumni / Student) */
+/* Mini role badge (Alumni / Student / Teacher) */
 .bb-mini-badge {
     display: inline-flex; align-items: center; gap: 3px;
     font-size: 9.5px; font-weight: 700; letter-spacing: .2px;
@@ -344,6 +336,7 @@ textarea.bb-job-input { resize:vertical; }
 .bb-mini-badge i { font-size: 9px; }
 .bb-mini-alumni  { background: #fef3c7; color: #d97706; }
 .bb-mini-student { background: #eef2ff; color: #4f46e5; }
+.bb-mini-teacher { background: #f3e8ff; color: #7c3aed; }
 
 /* ===== EMOJI PICKER ===== */
 .bb-emoji-btn {
@@ -428,7 +421,6 @@ textarea.bb-job-input { resize:vertical; }
     transition:all .15s;
 }
 .bb-jobcard-btn:hover { background:var(--bb-primary); color:#fff; }
-/* job card — posted time, save btn, footer */
 .bb-jobcard-posted { font-size:11.5px; color:var(--bb-muted); margin:3px 0 0; display:flex; align-items:center; gap:5px; }
 .bb-jobcard-posted i { font-size:10px; }
 .bb-job-save-btn { border:none; background:transparent; color:var(--bb-muted); width:34px; height:34px; border-radius:50%; cursor:pointer; flex-shrink:0; font-size:17px; transition:all .15s; }
@@ -438,10 +430,56 @@ textarea.bb-job-input { resize:vertical; }
 .bb-foot-expiring { color:#ea580c; }
 .bb-foot-expired { color:#dc2626; }
 
+/* ============================================
+   TEACHER FEED — PREMIUM VIOLET THEME
+   শুধু teacher এর জন্য আলাদা প্রিমিয়াম লুক
+   ============================================ */
+.bb-teacher-feed {
+    background: linear-gradient(180deg, #faf8ff 0%, #f4f0fb 100%) !important;
+}
+.bb-teacher-feed .navbar {
+    border-top: 3px solid #7c3aed;
+    box-shadow: 0 2px 12px rgba(124,58,237,.08);
+}
+.bb-teacher-feed .navbar-brand { color: #7c3aed !important; }
+.bb-teacher-feed .bb-role-badge {
+    background: #f3e8ff !important; color: #7c3aed !important; border-color: #ddd6fe !important;
+}
+.bb-teacher-feed .create-post-box {
+    border: 1px solid #ede9fe; box-shadow: 0 2px 10px rgba(124,58,237,.06);
+}
+.bb-teacher-feed .create-post-avatar {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa) !important;
+}
+.bb-teacher-feed .sidebar-link.active { color: #7c3aed !important; }
+.bb-teacher-feed .sidebar-link.active i { color: #7c3aed !important; }
+.bb-teacher-feed .bb-post-card:hover {
+    box-shadow: 0 8px 28px rgba(124,58,237,.12), 0 2px 6px rgba(16,24,40,.06);
+}
+.bb-teacher-feed .bb-avatar {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    box-shadow: 0 2px 6px rgba(124,58,237,.25);
+}
+.bb-teacher-feed .bb-author-link:hover { color: #7c3aed; }
+.bb-teacher-feed .bb-action-btn.active-like { color: #7c3aed; }
+.bb-teacher-feed .bb-side-title i { color: #7c3aed; }
+
+/* Teacher Workspace ribbon */
+.bb-teacher-ribbon {
+    display: flex; align-items: center; gap: 9px;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color: #fff; border-radius: 14px;
+    padding: 13px 18px; margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(124,58,237,.25);
+}
+.bb-teacher-ribbon i { font-size: 22px; }
+.bb-teacher-ribbon .bb-tr-title { font-size: 15px; font-weight: 700; letter-spacing:-.2px; }
+.bb-teacher-ribbon .bb-tr-sub { font-size: 12px; opacity:.85; }
 
         </style>
 </head>
-<body>
+@php $role = Auth::user()->role; @endphp
+<body class="{{ $role === 'teacher' ? 'bb-teacher-feed' : '' }}">
 
 <nav class="navbar navbar-expand-md sticky-top">
     <div class="container-fluid">
@@ -453,15 +491,30 @@ textarea.bb-job-input { resize:vertical; }
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 ms-auto">
-            @php $role = Auth::user()->role; @endphp
-            <button type="button" class="bb-post-job-btn" onclick="openPostJobModal()">
-                <i class="bi bi-briefcase-fill"></i>
-                <span class="d-none d-md-inline">Post A Job</span>
-            </button>
-            <span class="bb-role-badge d-none d-sm-inline-flex {{ $role === 'alumni' ? 'bb-role-alumni' : 'bb-role-student' }}">
-                <i class="bi {{ $role === 'alumni' ? 'bi-mortarboard-fill' : 'bi-backpack-fill' }}"></i>
-                {{ ucfirst($role) }} Feed
-            </span>
+
+            {{-- Post A Job — শুধু alumni দেখবে (teacher/student দেখবে না) --}}
+            @if($canPostJobs ?? false)
+                <button type="button" class="bb-post-job-btn" onclick="openPostJobModal()">
+                    <i class="bi bi-briefcase-fill"></i>
+                    <span class="d-none d-md-inline">Post A Job</span>
+                </button>
+            @endif
+
+            {{-- Role badge — alumni / teacher / student আলাদা --}}
+            @if($role === 'alumni')
+                <span class="bb-role-badge d-none d-sm-inline-flex bb-role-alumni">
+                    <i class="bi bi-mortarboard-fill"></i> Alumni Feed
+                </span>
+            @elseif($role === 'teacher')
+                <span class="bb-role-badge d-none d-sm-inline-flex bb-role-teacher">
+                    <i class="bi bi-easel2-fill"></i> Teacher Feed
+                </span>
+            @else
+                <span class="bb-role-badge d-none d-sm-inline-flex bb-role-student">
+                    <i class="bi bi-backpack-fill"></i> Student Feed
+                </span>
+            @endif
+
             <a href="#" class="nav-icon-btn d-md-none"><i class="bi bi-search"></i></a>
             <a href="#" class="nav-icon-btn"><i class="bi bi-messenger"></i></a>
             <a href="#" class="nav-icon-btn"><i class="bi bi-bell-fill"></i></a>
@@ -510,6 +563,17 @@ textarea.bb-job-input { resize:vertical; }
 
         {{-- Feed --}}
         <div class="col-12 col-md-6">
+
+            {{-- Teacher Workspace ribbon — শুধু teacher feed এ --}}
+            @if($role === 'teacher')
+            <div class="bb-teacher-ribbon">
+                <i class="bi bi-easel2-fill"></i>
+                <div>
+                    <div class="bb-tr-title">Teacher Workspace</div>
+                    <div class="bb-tr-sub">Share knowledge, research & resources with the community</div>
+                </div>
+            </div>
+            @endif
 
             {{-- Create Post Box --}}
             <div class="create-post-box mb-3">
@@ -951,7 +1015,6 @@ document.addEventListener("DOMContentLoaded", function () {
      if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
     }
-    // Saved পেজ থেকে এসে নির্দিষ্ট পোস্টে স্ক্রল + হাইলাইট
     if (window.location.hash && window.location.hash.startsWith('#postCard-')) {
         const targetId = window.location.hash.substring(1);
 
@@ -1015,7 +1078,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // ফিডের সব inline ভিডিওর প্রথম ফ্রেম থাম্বনেইল হিসেবে দেখানো
     function primeVideoThumbnails(scope = document) {
         scope.querySelectorAll('video.bb-inline-video, video.bb-tile-media').forEach(v => {
             if (v.dataset.primed) return;
@@ -1030,9 +1092,6 @@ document.addEventListener("DOMContentLoaded", function () {
     window.bbPrimeVideos = primeVideoThumbnails;
 });
 
-// ==========================================
-// RELOAD WARNING
-// ==========================================
 window.addEventListener('beforeunload', function (e) {
     if (isUploading) { e.preventDefault(); e.returnValue = ''; }
 });
@@ -1275,7 +1334,6 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
             setTimeout(() => {
                 const optCard = document.getElementById(pid);
                 if (res.html) {
-                    // optimistic card কে আসল post-card দিয়ে রিপ্লেস (reload ছাড়া)
                     if (optCard) {
                         optCard.outerHTML = res.html;
                     } else {
@@ -1286,7 +1344,6 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
                 } else {
                     if (optCard) optCard.remove();
                 }
-                // empty state থাকলে সরাও
                 document.getElementById('emptyFeedState')?.remove();
 
                 const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1800, timerProgressBar:true });
@@ -1302,7 +1359,7 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
 
 
 // ==========================================
-// SAVE / UNSAVE (Facebook-style toggle)
+// SAVE / UNSAVE
 // ==========================================
 function toggleSave(postId) {
     const btn  = document.getElementById(`saveBtn-${postId}`);
@@ -1321,11 +1378,7 @@ function toggleSave(postId) {
         if (!d.success) return;
 
         const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true
         });
 
         if (d.saved) {
@@ -1591,9 +1644,6 @@ function renderEditPreviewItem(pathOrFile, type, isNew=false) {
     container.appendChild(col);
 }
 
-// ==========================================
-// EDIT: NEW FILE SELECTION
-// ==========================================
 document.getElementById('editMediaInput')?.addEventListener('change', function () {
     Array.from(this.files).forEach(f=>{
         editSelectedFiles.push(f);
@@ -1643,9 +1693,6 @@ document.getElementById('editPostForm')?.addEventListener('submit', function (e)
 });
 
 // ==========================================
-// INFINITE SCROLL
-// ==========================================
-// ==========================================
 // INFINITE SCROLL (unified feed — page based)
 // ==========================================
 let feedLoading = false;
@@ -1687,16 +1734,16 @@ function loadMorePosts() {
     });
 }
 
-// scroll করলে নিচে গেলে আরও লোড করো (এটাই বাদ পড়েছিল!)
 window.addEventListener('scroll', function () {
     const scrollPos = window.innerHeight + window.scrollY;
     const threshold = document.body.offsetHeight - 300;
     if (scrollPos >= threshold) { loadMorePosts(); }
 });
+</script>
 
-
+<script>
 // ==========================================
-// COMMENT MODAL (Premium) — সব কমেন্ট কাজ এখানে
+// COMMENT MODAL (Premium)
 // ==========================================
 function openCommentModal(postId) {
     const list    = document.getElementById('commentModalList');
@@ -1918,14 +1965,9 @@ function deleteComment(cid, postId) {
     });
 }
 
-
-// আমার profile pic (reply box এর জন্য)
 window.MY_PROFILE_PIC = @json(Auth::user()->profile_picture ? asset('storage/'.Auth::user()->profile_picture) : null);
 window.MY_INITIAL = @json(strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)));
 
-// ==========================================
-// COMMENT LIKE
-// ==========================================
 function toggleCommentLike(commentId) {
     fetch(`/comments/${commentId}/like`, {
         method:'POST',
@@ -1948,14 +1990,10 @@ function toggleCommentLike(commentId) {
     });
 }
 
-// ==========================================
-// COMMENT REPLY
-// ==========================================
 function openReplyBox(parentId, mentionName) {
     const zone = document.getElementById(`reply-box-${parentId}`);
     if (!zone) return;
 
-    // আগে খোলা থাকলে — শুধু mention আপডেট করো (বন্ধ করব না, যদি নতুন কাউকে reply করে)
     let input = document.getElementById(`reply-input-${parentId}`);
 
     const myPic = window.MY_PROFILE_PIC;
@@ -1964,7 +2002,6 @@ function openReplyBox(parentId, mentionName) {
         ? `<img src="${myPic}" style="width:100%;height:100%;object-fit:cover;">`
         : myInit;
 
-    // box বন্ধ থাকলে বানাও
     if (zone.classList.contains('d-none') || zone.dataset.open !== '1') {
         zone.innerHTML = `
             <div class="reply-input-wrap">
@@ -1982,7 +2019,6 @@ function openReplyBox(parentId, mentionName) {
         input = document.getElementById(`reply-input-${parentId}`);
     }
 
-    // mention সেট করো (কাকে reply)
     const tag = document.getElementById(`reply-mention-${parentId}`);
     if (mentionName && tag) {
         tag.textContent = '@' + mentionName;
@@ -2006,7 +2042,6 @@ function submitReply(parentId) {
     const mention = tag && tag.dataset.mention ? tag.dataset.mention : '';
     if (!text && !mention) return;
 
-    // মেনশন থাকলে টেক্সটের আগে @নাম যোগ
     const finalText = mention ? `@${mention} ${text}` : text;
 
     const postId = document.getElementById('commentModalPostId').value;
@@ -2026,7 +2061,6 @@ function submitReply(parentId) {
             ? `<img src="${d.user_picture}" style="width:100%;height:100%;object-fit:cover;">`
             : d.user_initial;
 
-        // @মেনশন হাইলাইট করে দেখাও
         const displayContent = highlightMentions(d.content);
 
         const html = `
@@ -2067,16 +2101,14 @@ function submitReply(parentId) {
     .catch(()=>{ input.disabled=false; });
 }
 
-// @নাম হাইলাইট করো
 function highlightMentions(text) {
     return text.replace(/@([\w\u0980-\u09FF.]+(?:\s[\w\u0980-\u09FF.]+)?)/g, '<span class="comment-mention">@$1</span>');
 }
-
-
 </script>
 
 
-{{-- ==================== POST A JOB MODAL ==================== --}}
+@if($canPostJobs ?? false)
+{{-- ==================== POST A JOB MODAL (alumni only) ==================== --}}
 <div class="modal fade" id="postJobModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg postjob-dialog">
         <div class="modal-content border-0 shadow-lg rounded-4 postjob-content">
@@ -2160,21 +2192,20 @@ function highlightMentions(text) {
         </div>
     </div>
 </div>
-
+@endif
 
 {{-- Global Emoji Popover --}}
 <div id="bbEmojiPopover"><emoji-picker class="light"></emoji-picker></div>
 
 <script>
 // ==========================================
-// EMOJI PICKER (shared — post + comment)
+// EMOJI PICKER (shared)
 // ==========================================
 (function(){
     const popover = document.getElementById('bbEmojiPopover');
     const picker  = popover.querySelector('emoji-picker');
-    let currentTarget = null;   // যে input/textarea এ emoji যাবে
+    let currentTarget = null;
 
-    // emoji সিলেক্ট হলে target এ যোগ করো
     picker.addEventListener('emoji-click', e => {
         const emoji = e.detail.unicode;
         if (!currentTarget) return;
@@ -2182,15 +2213,12 @@ function highlightMentions(text) {
         const start = el.selectionStart ?? el.value.length;
         const end   = el.selectionEnd ?? el.value.length;
         el.value = el.value.slice(0, start) + emoji + el.value.slice(end);
-        // cursor emoji এর পরে
         const pos = start + emoji.length;
         el.focus();
         try { el.setSelectionRange(pos, pos); } catch(err){}
-        // input ইভেন্ট ট্রিগার (bg color logic এর জন্য)
         el.dispatchEvent(new Event('input', { bubbles:true }));
     });
 
-    // কোনো emoji বাটনে ক্লিক → popover টগল, target সেট
     document.addEventListener('click', function(ev){
         const btn = ev.target.closest('.bb-emoji-btn');
         if (btn) {
@@ -2199,19 +2227,15 @@ function highlightMentions(text) {
             const target = document.querySelector(targetSel);
             if (!target) return;
 
-            // একই বাটনে আবার ক্লিক → বন্ধ
             if (popover.style.display === 'block' && currentTarget === target) {
                 popover.style.display = 'none';
                 currentTarget = null;
                 return;
             }
             currentTarget = target;
-            // অবস্থান ঠিক করো (বাটনের নিচে/উপরে)
             const r = btn.getBoundingClientRect();
             popover.style.display = 'block';
-            const pop = popover.getBoundingClientRect();
             let top = r.bottom + window.scrollY + 6;
-            // নিচে জায়গা না থাকলে উপরে
             if (r.bottom + 350 > window.innerHeight) {
                 top = r.top + window.scrollY - 350 - 6;
             }
@@ -2222,7 +2246,6 @@ function highlightMentions(text) {
             popover.style.left = left + 'px';
             return;
         }
-        // বাইরে ক্লিক → বন্ধ
         if (popover.style.display === 'block' && !popover.contains(ev.target)) {
             popover.style.display = 'none';
             currentTarget = null;
@@ -2232,9 +2255,10 @@ function highlightMentions(text) {
 </script>
 
 
+@if($canPostJobs ?? false)
 <script>
 // ==========================================
-// POST / EDIT A JOB
+// POST / EDIT A JOB (alumni only)
 // ==========================================
 let jobModalObj = null;
 document.addEventListener('DOMContentLoaded', () => {
@@ -2242,7 +2266,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) jobModalObj = bootstrap.Modal.getOrCreateInstance(el);
 });
 
-// নতুন job — modal রিসেট করে খোলো
 function openPostJobModal(){
     const form = document.getElementById('postJobForm');
     form.reset();
@@ -2252,7 +2275,6 @@ function openPostJobModal(){
     jobModalObj?.show();
 }
 
-// edit — server থেকে data এনে modal ভরো
 function editJobById(id){
     fetch(`/jobs/${id}/data`, { headers:{'Accept':'application/json'} })
     .then(r=>r.json())
@@ -2319,11 +2341,9 @@ function fillJobModal(job){
 
             if (d.html) {
                 if (isEdit) {
-                    // পুরনো card রিপ্লেস
                     const old = document.getElementById(`jobCard-${d.job_id}`);
                     if (old) old.outerHTML = d.html;
                 } else {
-                    // নতুন card উপরে
                     const feedC = document.getElementById('postsFeedContainer');
                     if (feedC) {
                         feedC.insertAdjacentHTML('afterbegin', d.html);
@@ -2336,6 +2356,7 @@ function fillJobModal(job){
     });
 })();
 </script>
+@endif
 
 
 <script>
@@ -2357,16 +2378,13 @@ function deleteJob(id) {
         });
     });
 }
-</script>
 
-
-<script>
 // ==========================================
 // JOB SAVE / UNSAVE
 // ==========================================
 function toggleJobSave(id){
     const btn = document.getElementById(`jobSaveBtn-${id}`);
-    if (btn && btn.dataset.busy === '1') return;  // double-click রোধ
+    if (btn && btn.dataset.busy === '1') return;
     if (btn) btn.dataset.busy = '1';
     fetch(`/jobs/${id}/save`, {
         method:'POST',

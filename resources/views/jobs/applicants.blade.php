@@ -32,6 +32,21 @@
         .ap-count-num { font-size:28px; font-weight:800; color:var(--bb-primary); line-height:1; }
         .ap-count-label { font-size:11.5px; color:var(--bb-muted); }
 
+        /* Search + filter */
+        .ap-search { display:flex; gap:8px; margin-bottom:14px; }
+        .ap-search-box { flex-grow:1; position:relative; }
+        .ap-search-box i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--bb-muted); font-size:15px; }
+        .ap-search-input { width:100%; border:1.5px solid var(--bb-line); border-radius:11px; padding:11px 14px 11px 40px; font-size:13.5px; outline:none; transition:border-color .15s, box-shadow .15s; background:#fff; }
+        .ap-search-input:focus { border-color:var(--bb-primary); box-shadow:0 0 0 3px rgba(79,70,229,.1); }
+        .ap-search-btn { border:none; background:var(--bb-primary); color:#fff; border-radius:11px; padding:11px 20px; font-size:13.5px; font-weight:600; cursor:pointer; transition:background .15s; }
+        .ap-search-btn:hover { background:#4338ca; }
+        .ap-search-clear { border:1.5px solid var(--bb-line); background:#fff; color:var(--bb-muted); border-radius:11px; padding:11px 16px; font-size:13.5px; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; }
+        .ap-search-clear:hover { color:var(--bb-primary); border-color:var(--bb-primary); }
+        .ap-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+        .ap-filter { font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:20px; border:1.5px solid var(--bb-line); background:#fff; color:#4b5563; text-decoration:none; transition:all .15s; }
+        .ap-filter:hover { border-color:var(--bb-primary); color:var(--bb-primary); }
+        .ap-filter.active { background:var(--bb-primary); color:#fff; border-color:var(--bb-primary); }
+
         /* Applicant card */
         .ap-card { background:#fff; border-radius:14px; box-shadow:0 1px 3px rgba(16,24,40,.06); border:1px solid var(--bb-line); padding:18px; margin-bottom:13px; }
         .ap-card-top { display:flex; gap:13px; align-items:flex-start; }
@@ -60,6 +75,13 @@
 
         .ap-empty { background:#fff; border-radius:16px; padding:50px 20px; text-align:center; color:var(--bb-muted); border:1px solid var(--bb-line); }
         .ap-empty i { font-size:42px; color:#d1d5db; }
+
+        /* Pagination */
+        .ap-pagination .pagination { display:flex; gap:5px; list-style:none; padding:0; margin:0; flex-wrap:wrap; justify-content:center; }
+        .ap-pagination .page-item .page-link { border:1.5px solid var(--bb-line); border-radius:9px; padding:7px 13px; font-size:13px; font-weight:600; color:#4b5563; text-decoration:none; background:#fff; display:inline-block; transition:all .15s; }
+        .ap-pagination .page-item .page-link:hover { border-color:var(--bb-primary); color:var(--bb-primary); }
+        .ap-pagination .page-item.active .page-link { background:var(--bb-primary); color:#fff; border-color:var(--bb-primary); }
+        .ap-pagination .page-item.disabled .page-link { opacity:.45; pointer-events:none; }
     </style>
 </head>
 <body>
@@ -81,13 +103,37 @@
             <p class="ap-jobcompany">{{ $job->company }}@if($job->location) · {{ $job->location }}@endif</p>
         </div>
         <div class="ap-count">
-            <div class="ap-count-num">{{ $job->applications->count() }}</div>
-            <div class="ap-count-label">{{ Str::plural('Applicant', $job->applications->count()) }}</div>
+            <div class="ap-count-num">{{ $totalCount }}</div>
+            <div class="ap-count-label">{{ Str::plural('Applicant', $totalCount) }}</div>
         </div>
     </div>
 
+    {{-- SEARCH --}}
+    <form method="GET" action="{{ route('jobs.applicants', $job->id) }}" class="ap-search">
+        @if(!empty($filter))<input type="hidden" name="status" value="{{ $filter }}">@endif
+        <div class="ap-search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="q" class="ap-search-input" value="{{ $search ?? '' }}" placeholder="Search applicant by name or email...">
+        </div>
+        <button type="submit" class="ap-search-btn">Search</button>
+        @if(!empty($search))
+            <a href="{{ route('jobs.applicants', $job->id).($filter ? '?status='.$filter : '') }}" class="ap-search-clear" title="Clear"><i class="bi bi-x-lg"></i></a>
+        @endif
+    </form>
+
+    {{-- STATUS FILTERS --}}
+    <div class="ap-filters">
+        @php
+            $statuses = ['' => 'All', 'pending' => 'Pending', 'reviewed' => 'Under Review', 'shortlisted' => 'Shortlisted', 'accepted' => 'Accepted', 'rejected' => 'Not Selected'];
+        @endphp
+        @foreach($statuses as $val => $label)
+            <a href="{{ route('jobs.applicants', $job->id) }}{{ http_build_query(array_filter(['status' => $val ?: null, 'q' => $search ?? null])) ? '?'.http_build_query(array_filter(['status' => $val ?: null, 'q' => $search ?? null])) : '' }}"
+               class="ap-filter {{ ($filter ?? '') === $val ? 'active' : '' }}">{{ $label }}</a>
+        @endforeach
+    </div>
+
     {{-- APPLICANTS --}}
-    @forelse($job->applications as $app)
+    @forelse($applicants as $app)
         @php $meta = $app->status_meta; @endphp
         <div class="ap-card" id="apCard-{{ $app->id }}">
             <div class="ap-card-top">
@@ -112,9 +158,15 @@
                         <span class="ap-method ap-method-{{ $app->apply_method }}">{{ $app->apply_method === 'inapp' ? 'On Borobhai' : 'External' }}</span>
                     </div>
                 </div>
-                <span class="ap-status-badge" id="apStatusBadge-{{ $app->id }}" style="background:{{ $meta['bg'] }};color:{{ $meta['color'] }};">
-                    <i class="bi {{ $meta['icon'] }}"></i> <span>{{ $meta['label'] }}</span>
-                </span>
+                @if($app->apply_method === 'external')
+                    <span class="ap-status-badge" style="background:#eef2ff;color:#4f46e5;" title="Applied on the company site — managed by the company">
+                        <i class="bi bi-box-arrow-up-right"></i> <span>Applied externally</span>
+                    </span>
+                @else
+                    <span class="ap-status-badge" id="apStatusBadge-{{ $app->id }}" style="background:{{ $meta['bg'] }};color:{{ $meta['color'] }};">
+                        <i class="bi {{ $meta['icon'] }}"></i> <span>{{ $meta['label'] }}</span>
+                    </span>
+                @endif
             </div>
 
             @if($app->cover_note)
@@ -127,24 +179,42 @@
                 @endif
                 <span class="ap-applied"><i class="bi bi-calendar-check"></i> Applied {{ $app->applied_at->format('d M Y') }} · {{ $app->applied_at->diffForHumans() }}</span>
 
-                <div class="ap-status-select">
-                    <select onchange="updateStatus({{ $app->id }}, this.value)">
-                        <option value="pending"     {{ $app->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="reviewed"    {{ $app->status === 'reviewed' ? 'selected' : '' }}>Under Review</option>
-                        <option value="shortlisted" {{ $app->status === 'shortlisted' ? 'selected' : '' }}>Shortlisted</option>
-                        <option value="accepted"    {{ $app->status === 'accepted' ? 'selected' : '' }}>Accepted</option>
-                        <option value="rejected"    {{ $app->status === 'rejected' ? 'selected' : '' }}>Not Selected</option>
-                    </select>
-                </div>
+                @if($app->apply_method === 'external')
+                    <span class="ap-ext-note" style="margin-left:auto;font-size:11.5px;color:#9ca3af;font-style:italic;display:inline-flex;align-items:center;gap:5px;">
+                        <i class="bi bi-info-circle"></i> Managed on company site
+                    </span>
+                @else
+                    <div class="ap-status-select">
+                        <select onchange="updateStatus({{ $app->id }}, this.value)">
+                            <option value="pending"     {{ $app->status === 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="reviewed"    {{ $app->status === 'reviewed' ? 'selected' : '' }}>Under Review</option>
+                            <option value="shortlisted" {{ $app->status === 'shortlisted' ? 'selected' : '' }}>Shortlisted</option>
+                            <option value="accepted"    {{ $app->status === 'accepted' ? 'selected' : '' }}>Accepted</option>
+                            <option value="rejected"    {{ $app->status === 'rejected' ? 'selected' : '' }}>Not Selected</option>
+                        </select>
+                    </div>
+                @endif
             </div>
         </div>
     @empty
         <div class="ap-empty">
             <i class="bi bi-people d-block mb-2"></i>
-            <h5 class="fw-bold">No applicants yet</h5>
-            <p class="mb-0">When students apply to this job, they'll appear here.</p>
+            @if(!empty($search) || !empty($filter))
+                <h5 class="fw-bold">No matching applicants</h5>
+                <p class="mb-0">Try a different search or filter.</p>
+            @else
+                <h5 class="fw-bold">No applicants yet</h5>
+                <p class="mb-0">When students apply to this job, they'll appear here.</p>
+            @endif
         </div>
     @endforelse
+
+    {{-- PAGINATION --}}
+    @if($applicants->hasPages())
+        <div class="mt-3 ap-pagination">
+            {{ $applicants->links() }}
+        </div>
+    @endif
 
 </div>
 
