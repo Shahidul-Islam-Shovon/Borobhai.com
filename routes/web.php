@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\FriendController;
 
 /*
 |--------------------------------------------------------------------------
@@ -265,4 +266,28 @@ Route::middleware('auth')->group(function () {
  
     // Live dropdown (AJAX JSON): /search/live?q=...
     Route::get('/search/live', [SearchController::class, 'live'])->name('search.live');
+});
+
+/*
+|--------------------------------------------------------------------------
+| FRIENDS (Module 5)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->prefix('friends')->name('friends.')->group(function () {
+ 
+    // Friends list page
+    Route::get('/',               [FriendController::class, 'friendsList'])->name('index');
+ 
+    // Request management
+    Route::post('/send',          [FriendController::class, 'sendRequest'])->name('send');
+    Route::post('/accept',        [FriendController::class, 'acceptRequest'])->name('accept');
+    Route::post('/decline',       [FriendController::class, 'declineRequest'])->name('decline');
+    Route::post('/cancel',        [FriendController::class, 'cancelRequest'])->name('cancel');
+    Route::post('/unfriend',      [FriendController::class, 'unfriend'])->name('unfriend');
+    Route::post('/block',         [FriendController::class, 'block'])->name('block');
+    Route::post('/unblock',       [FriendController::class, 'unblock'])->name('unblock');
+ 
+    // Profile button state check
+    Route::get('/status/{userId}',[FriendController::class, 'statusWith'])->name('status');
 });

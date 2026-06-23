@@ -40,7 +40,7 @@ class SearchController extends Controller
                     ->orWhere('skills', 'like', $like);   // JSON string এও LIKE কাজ করে
             })
             ->select('id', 'name', 'role', 'department', 'session', 'profile_picture')
-            ->limit(6)
+            ->limit(8)
             ->get();
 
         // ----- thesis topic খোঁজা (documents.topic) -----

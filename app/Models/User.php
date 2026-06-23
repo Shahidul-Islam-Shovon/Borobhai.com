@@ -210,4 +210,10 @@ public function isSuperAdmin()
                     ->orderBy('id', 'desc');
     }
 
+    public function friendships()
+    {
+        return $this->hasMany(\App\Models\Friendship::class, 'sender_id')
+            ->orWhere('receiver_id', $this->id);
+    }
+
 }

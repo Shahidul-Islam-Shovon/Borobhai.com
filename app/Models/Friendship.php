@@ -1,0 +1,99 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
+
+class Friendship extends Model
+{
+    protected $fillable = ['sender_id', 'receiver_id', 'status'];
+
+    // ===== Relations =====
+    public function sender()
+    {
+        return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    public function receiver()
+    {
+        return $this->belongsTo(User::class, 'receiver_id');
+    }
+
+    // ===== Static Helpers =====
+
+    /**
+     * দুজনের মধ্যে friendship record খোঁজা (যে কেউ sender হতে পারে)
+     */
+    public static function between($userId, $otherId)
+    {
+        return self::where(function ($q) use ($userId, $otherId) {
+            $q->where('sender_id', $userId)->where('receiver_id', $otherId);
+        })->orWhere(function ($q) use ($userId, $otherId) {
+            $q->where('sender_id', $otherId)->where('receiver_id', $userId);
+        })->first();
+    }
+
+    /**
+     * দুজন friend কিনা
+     */
+    public static function areFriends($userId, $otherId): bool
+    {
+        return self::where('status', 'accepted')
+            ->where(function ($q) use ($userId, $otherId) {
+                $q->where('sender_id', $userId)->where('receiver_id', $otherId);
+            })->orWhere(function ($q) use ($userId, $otherId) {
+                $q->where('sender_id', $otherId)->where('receiver_id', $userId);
+            })->exists();
+    }
+
+    /**
+     * কেউ blocked কিনা
+     */
+    public static function isBlocked($userId, $otherId): bool
+    {
+        return self::where('status', 'blocked')
+            ->where(function ($q) use ($userId, $otherId) {
+                $q->where('sender_id', $userId)->where('receiver_id', $otherId);
+            })->orWhere(function ($q) use ($userId, $otherId) {
+                $q->where('sender_id', $otherId)->where('receiver_id', $userId);
+            })->exists();
+    }
+
+    /**
+     * আমার সব friend এর id list
+     */
+    public static function friendIds($userId): array
+    {
+        $sent = self::where('sender_id', $userId)->where('status', 'accepted')->pluck('receiver_id');
+        $recv = self::where('receiver_id', $userId)->where('status', 'accepted')->pluck('sender_id');
+        return $sent->merge($recv)->unique()->values()->toArray();
+    }
+
+    /**
+     * mutual friends count
+     */
+    public static function mutualCount($userId, $otherId): int
+    {
+        $myFriends    = self::friendIds($userId);
+        $theirFriends = self::friendIds($otherId);
+        return count(array_intersect($myFriends, $theirFriends));
+    }
+
+    /**
+     * আমার সাথে কারো friendship status
+     * return: 'none' | 'pending_sent' | 'pending_received' | 'accepted' | 'blocked'
+     */
+    public static function statusWith($meId, $otherId): string
+    {
+        $record = self::between($meId, $otherId);
+        if (!$record) return 'none';
+
+        if ($record->status === 'accepted') return 'accepted';
+        if ($record->status === 'blocked')  return 'blocked';
+
+        // pending — আমি পাঠিয়েছি নাকি পেয়েছি?
+        if ($record->sender_id == $meId) return 'pending_sent';
+        return 'pending_received';
+    }
+}

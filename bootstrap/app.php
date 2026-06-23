@@ -17,7 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'alumni'  => \App\Http\Middleware\AlumniMiddleware::class,
             'student' => \App\Http\Middleware\StudentMiddleware::class,
             'role'    => \App\Http\Middleware\CheckRole::class,
+            
         ]);
+
+        $middleware->append(\App\Http\Middleware\UpdateLastSeen::class);
+      
 
         // ২. নতুন রিকোয়ারমেন্ট: ইউজার সাসপেনশন গ্লোবাল চেক মিডলওয়্যার (web গ্রুপে অ্যাপেন্ড)
         // এটি প্রতিবার পেজ রিকোয়েস্ট বা রিলোডের সময় ব্যাকএন্ডে ইউজার স্ট্যাটাস চেক করবে
