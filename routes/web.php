@@ -13,6 +13,7 @@ use App\Http\Controllers\SavedPostController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\SocialiteController;
+use App\Http\Controllers\SearchController;
 
 /*
 |--------------------------------------------------------------------------
@@ -62,8 +63,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // জব/সার্কুলার মডারেশন (AJAX Delete)
     Route::delete('/circulars/{id}/delete', [AdminDashboardController::class, 'deleteCircular'])->name('circulars.delete');
 
-    // অথরিটি ম্যানেজমেন্ট
-    Route::post('/admin/manage-authority', [AdminDashboardController::class, 'manageAuthority'])->name('admin.manage.authority');
+    // এটা ঠিক (group এ name('admin.') আছে, তাই শুধু 'manage.authority' দিলেই = 'admin.manage.authority')
+    Route::post('/admin/manage-authority', [AdminDashboardController::class, 'manageAuthority'])->name('manage.authority');
 });
 
 
@@ -249,3 +250,19 @@ Route::middleware('guest')->group(function () {
 // Terms & Privacy — সবাই (login ছাড়াই) দেখতে পারবে
 Route::view('/terms', 'auth.terms')->name('terms');
 Route::view('/privacy', 'auth.privacy')->name('privacy');
+
+/*
+|--------------------------------------------------------------------------
+| SEARCH (Module 4) — নাম + thesis topic + department/skills
+|--------------------------------------------------------------------------
+| auth দরকার (লগইন ছাড়া search নয়)
+*/
+
+Route::middleware('auth')->group(function () {
+ 
+    // Full search page: /search?q=...&filter=all|student|alumni|teacher|topic
+    Route::get('/search', [SearchController::class, 'index'])->name('search.index');
+ 
+    // Live dropdown (AJAX JSON): /search/live?q=...
+    Route::get('/search/live', [SearchController::class, 'live'])->name('search.live');
+});

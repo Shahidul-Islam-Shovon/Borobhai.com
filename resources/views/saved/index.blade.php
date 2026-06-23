@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
-    <title>Saved Posts - Borobhai.com</title>
+    <title>Saved Posts - Borobhai.online</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; }
         .navbar { background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.08); padding: .5rem 1rem; }
@@ -34,7 +34,7 @@
 <nav class="navbar navbar-expand-md sticky-top">
     <div class="container-fluid">
         <div class="d-flex align-items-center gap-2">
-            <a style="color:black;" class="navbar-brand m-0" href="{{ route('home') }}">Borobhai.com</a>
+            <a style="color:black;" class="navbar-brand m-0" href="{{ route('home') }}">Borobhai.online</a>
         </div>
         <div class="d-flex align-items-center gap-2 ms-auto">
             <a href="{{ route('home') }}" class="nav-icon-btn"><i class="bi bi-house-door-fill"></i></a>

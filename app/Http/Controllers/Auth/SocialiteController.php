@@ -250,7 +250,7 @@ class SocialiteController extends Controller
 
         $target = $this->redirectPathForRole($user->role);
 
-        $msg = $isNew ? 'Welcome to Borobhai.com! Your account is ready.' : 'Logged in successfully!';
+        $msg = $isNew ? 'Welcome to Borobhai.online! Your account is ready.' : 'Logged in successfully!';
 
         return redirect()->intended($target)->with('success', $msg);
     }

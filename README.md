@@ -2,7 +2,7 @@
 
 ## 🌐 Project Title
 
-# **Borobhai.com – Alumni Tracking and Networking Portal**
+# **Borobhai.online – Alumni Tracking and Networking Portal**
 
 ### 👨‍💻 Designed & Developed By
 
@@ -12,7 +12,7 @@
 
 # 📖 Project Overview
 
-**Borobhai.com** is a modern web-based platform designed to connect university alumni and current students through a centralized networking system.
+**Borobhai.online** is a modern web-based platform designed to connect university alumni and current students through a centralized networking system.
 
 The primary goals of this project are to:
 
@@ -294,7 +294,7 @@ The project should:
 
 # 📌 Conclusion
 
-**Borobhai.com** aims to become a practical and professional alumni networking platform that strengthens communication between students and alumni while providing real-world career and networking opportunities.
+**Borobhai.online** aims to become a practical and professional alumni networking platform that strengthens communication between students and alumni while providing real-world career and networking opportunities.
 
 ---
 

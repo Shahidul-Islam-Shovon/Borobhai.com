@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
-    <title>Choose Your Role · Borobhai.com</title>
+    <title>Choose Your Role · Borobhai.online</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -137,7 +137,7 @@
 
     <div class="cr-brand">
         <div class="cr-brand-icon"><i class="fa-solid fa-graduation-cap"></i></div>
-        <span class="cr-brand-name">Borobhai.com</span>
+        <span class="cr-brand-name">Borobhai.online</span>
     </div>
 
     <div class="cr-head">
@@ -145,7 +145,7 @@
             <i class="fa-solid fa-circle-check"></i> Connected with {{ ucfirst($provider ?? 'your account') }}
         </div>
         <h1>Welcome, <span>{{ $name ?? 'there' }}</span>!</h1>
-        <p>You're almost done. Choose how you want to use Borobhai.com to finish setting up your account.</p>
+        <p>You're almost done. Choose how you want to use Borobhai.online to finish setting up your account.</p>
     </div>
 
     <form id="chooseRoleForm" method="POST" action="{{ route('social.storeRole') }}">

@@ -13,7 +13,7 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
     {{-- Cropper.js for cover + avatar cropping --}}
     <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" rel="stylesheet">
-    <title>{{ $user->name }} · Borobhai.com</title>
+    <title>{{ $user->name }} · Borobhai.online</title>
     <style>
         :root {
             --bb-primary: #4f46e5;
@@ -548,7 +548,7 @@
 {{-- Navbar --}}
 <nav class="bb-nav">
     <div class="d-flex align-items-center justify-content-between" style="max-width:940px;margin:0 auto;">
-        <a href="{{ route('home') }}" class="bb-brand">Borobhai.com</a>
+        <a href="{{ route('home') }}" class="bb-brand">Borobhai.online</a>
         <div class="d-flex align-items-center gap-2">
             <a href="{{ route('home') }}" class="bb-nav-btn" title="Home"><i class="bi bi-house-door-fill"></i></a>
             <a href="{{ route('home') }}" class="bb-nav-btn" title="Back"><i class="bi bi-arrow-left"></i></a>
@@ -2092,7 +2092,7 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
     const modal     = bootstrap.Modal.getInstance(document.getElementById('createPostModal'));
 
     if (!content && !selectedMediaFiles.length) {
-        Swal.fire({ icon: 'warning', title: 'Empty Post!', text: 'কিছু লিখুন অথবা মিডিয়া দিন!' });
+        Swal.fire({ icon: 'warning', title: 'Empty Post!', text: 'Please Write A Post First !'});
         return;
     }
     const captured = [...selectedMediaFiles];

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
-    <title>Terms &amp; Conditions · Borobhai.com</title>
+    <title>Terms &amp; Conditions · Borobhai.online</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -139,7 +139,7 @@
         <div class="legal-nav-inner">
             <a href="{{ url('/') }}" class="legal-brand">
                 <span class="legal-brand-icon"><i class="fa-solid fa-graduation-cap"></i></span>
-                <span class="legal-brand-name">Borobhai.com</span>
+                <span class="legal-brand-name">Borobhai.online</span>
             </a>
             <a href="{{ url()->previous() }}" class="legal-back">
                 <i class="fa-solid fa-arrow-left"></i> Back
@@ -152,7 +152,7 @@
         <div class="legal-hero-inner">
             <div class="badge-doc"><i class="fa-solid fa-file-contract"></i> Legal</div>
             <h1>Terms &amp; Conditions</h1>
-            <p>Please read these terms carefully before using Borobhai.com.</p>
+            <p>Please read these terms carefully before using Borobhai.online.</p>
         </div>
     </div>
 
@@ -165,13 +165,13 @@
 
             <div class="legal-section">
                 <h2><span class="num">1</span> Acceptance of Terms</h2>
-                <p>By creating an account or using Borobhai.com (the "Platform"), you agree to be bound by these Terms &amp; Conditions. If you do not agree with any part of these terms, you may not use the Platform.</p>
-                <p>Borobhai.com is an alumni networking and career platform that connects students, graduates (alumni), and teachers within an academic community.</p>
+                <p>By creating an account or using Borobhai.online (the "Platform"), you agree to be bound by these Terms &amp; Conditions. If you do not agree with any part of these terms, you may not use the Platform.</p>
+                <p>Borobhai.online is an alumni networking and career platform that connects students, graduates (alumni), and teachers within an academic community.</p>
             </div>
 
             <div class="legal-section">
                 <h2><span class="num">2</span> Eligibility &amp; Accounts</h2>
-                <p>To use Borobhai.com, you must:</p>
+                <p>To use Borobhai.online, you must:</p>
                 <ul>
                     <li>Be a current student, graduate, or teacher of a recognized institution.</li>
                     <li>Provide accurate and truthful information during registration.</li>
@@ -183,7 +183,7 @@
 
             <div class="legal-section">
                 <h2><span class="num">3</span> User Roles &amp; Permissions</h2>
-                <p>Borobhai.com supports three account types, each with different capabilities:</p>
+                <p>Borobhai.online supports three account types, each with different capabilities:</p>
                 <ul>
                     <li><strong>Students</strong> can connect with seniors, view and apply to job opportunities, and share posts.</li>
                     <li><strong>Alumni</strong> can post job opportunities, mentor juniors, and share content.</li>
@@ -208,13 +208,13 @@
 
             <div class="legal-section">
                 <h2><span class="num">5</span> Content Ownership</h2>
-                <p>You retain ownership of the content you post (posts, documents, research, comments). However, by posting on Borobhai.com, you grant us a non-exclusive license to display and distribute that content within the Platform.</p>
+                <p>You retain ownership of the content you post (posts, documents, research, comments). However, by posting on Borobhai.online, you grant us a non-exclusive license to display and distribute that content within the Platform.</p>
                 <p>You are solely responsible for the content you share, including theses, research papers, and job postings.</p>
             </div>
 
             <div class="legal-section">
                 <h2><span class="num">6</span> Job Postings &amp; Applications</h2>
-                <p>Alumni may post job opportunities. Borobhai.com does not guarantee the accuracy or legitimacy of any job posting and is not responsible for any outcome of job applications. Users should exercise their own judgment.</p>
+                <p>Alumni may post job opportunities. Borobhai.online does not guarantee the accuracy or legitimacy of any job posting and is not responsible for any outcome of job applications. Users should exercise their own judgment.</p>
             </div>
 
             <div class="legal-section">
@@ -246,7 +246,7 @@
             <a href="{{ route('register') }}"><i class="fa-solid fa-user-plus"></i> Create Account</a>
             <a href="{{ route('login') }}"><i class="fa-solid fa-right-to-bracket"></i> Sign In</a>
         </div>
-        <div class="legal-foot-copy">© {{ date('Y') }} Borobhai.com — All rights reserved.</div>
+        <div class="legal-foot-copy">© {{ date('Y') }} Borobhai.online — All rights reserved.</div>
     </div>
 
 </body>

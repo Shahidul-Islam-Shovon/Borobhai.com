@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Borobhai.com - Connect, Learn & Grow</title>
+    <title>Borobhai.online - Connect, Learn & Grow</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -163,7 +163,7 @@
     <nav class="premium-nav">
         <div class="container d-flex justify-content-between align-items-center">
             <a href="{{ url('/') }}" class="nav-brand">
-                <i class="fa-solid fa-graduation-cap"></i> Borobhai.com
+                <i class="fa-solid fa-graduation-cap"></i> Borobhai.online
             </a>
             
             <div class="d-flex align-items-center gap-2">
@@ -198,7 +198,7 @@
                         Bridging the Gap Between <span>Students</span> & <span>Alumni</span>
                     </h1>
                     <p class="hero-subtitle">
-                        Borobhai.com is a premium community platform designed for real-time mentorship, career guidelines, and secure data sharing across professional networks.
+                        Borobhai.online is a premium community platform designed for real-time mentorship, career guidelines, and secure data sharing across professional networks.
                     </p>
                     
                     <div class="hero-cta-group justify-content-center justify-content-lg-start">

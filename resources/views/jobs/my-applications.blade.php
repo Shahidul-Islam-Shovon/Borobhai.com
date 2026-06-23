@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
-    <title>My Job Applications — Borobhai.com</title>
+    <title>My Job Applications — Borobhai.online</title>
     <style>
         :root {
             --bb-primary:#4f46e5; --bb-primary-soft:#eef2ff; --bb-ink:#1e1f24;
@@ -97,7 +97,7 @@
 
 <nav class="jp-nav">
     <div class="ma-wrap d-flex align-items-center justify-content-between" style="margin:0 auto;">
-        <a href="{{ route('home') }}" class="jp-brand">Borobhai.com</a>
+        <a href="{{ route('home') }}" class="jp-brand">Borobhai.online</a>
         <a href="{{ route('home') }}" class="jp-back"><i class="bi bi-arrow-left"></i> Back to Feed</a>
     </div>
 </nav>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
-    <title>Privacy Policy · Borobhai.com</title>
+    <title>Privacy Policy · Borobhai.online</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -123,7 +123,7 @@
         <div class="legal-nav-inner">
             <a href="{{ url('/') }}" class="legal-brand">
                 <span class="legal-brand-icon"><i class="fa-solid fa-graduation-cap"></i></span>
-                <span class="legal-brand-name">Borobhai.com</span>
+                <span class="legal-brand-name">Borobhai.online</span>
             </a>
             <a href="{{ url()->previous() }}" class="legal-back">
                 <i class="fa-solid fa-arrow-left"></i> Back
@@ -147,7 +147,7 @@
 
             <div class="legal-section">
                 <h2><span class="num">1</span> Introduction</h2>
-                <p>At Borobhai.com, we respect your privacy and are committed to protecting your personal data. This Privacy Policy explains what information we collect, how we use it, and the choices you have.</p>
+                <p>At Borobhai.online, we respect your privacy and are committed to protecting your personal data. This Privacy Policy explains what information we collect, how we use it, and the choices you have.</p>
             </div>
 
             <div class="legal-section">
@@ -181,7 +181,7 @@
 
             <div class="legal-section">
                 <h2><span class="num">5</span> Information Sharing</h2>
-                <p>We <strong>do not sell</strong> your personal information. Your profile and content are visible to other members of the Borobhai.com community as part of the platform's networking purpose. We do not share your data with external advertisers.</p>
+                <p>We <strong>do not sell</strong> your personal information. Your profile and content are visible to other members of the Borobhai.online community as part of the platform's networking purpose. We do not share your data with external advertisers.</p>
                 <div class="legal-note">
                     <i class="fa-solid fa-lock"></i> Your password is securely encrypted and never visible to anyone, including our team.
                 </div>
@@ -210,7 +210,7 @@
 
             <div class="legal-section">
                 <h2><span class="num">9</span> Children's Privacy</h2>
-                <p>Borobhai.com is intended for students, graduates, and teachers of recognized institutions. We do not knowingly collect data from children under the applicable age of digital consent.</p>
+                <p>Borobhai.online is intended for students, graduates, and teachers of recognized institutions. We do not knowingly collect data from children under the applicable age of digital consent.</p>
             </div>
 
             <div class="legal-section">
@@ -226,7 +226,7 @@
             <a href="{{ route('register') }}"><i class="fa-solid fa-user-plus"></i> Create Account</a>
             <a href="{{ route('login') }}"><i class="fa-solid fa-right-to-bracket"></i> Sign In</a>
         </div>
-        <div class="legal-foot-copy">© {{ date('Y') }} Borobhai.com — All rights reserved.</div>
+        <div class="legal-foot-copy">© {{ date('Y') }} Borobhai.online — All rights reserved.</div>
     </div>
 
 </body>

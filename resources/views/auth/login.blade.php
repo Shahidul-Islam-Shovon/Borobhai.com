@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
-    <title>Sign In · Borobhai.com</title>
+    <title>Sign In · Borobhai.online</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -259,7 +259,7 @@
     <div class="auth-left">
         <div class="auth-brand">
             <div class="auth-brand-icon"><i class="fa-solid fa-graduation-cap"></i></div>
-            <span class="auth-brand-name">Borobhai.com</span>
+            <span class="auth-brand-name">Borobhai.online</span>
         </div>
 
         <div class="auth-hero">
@@ -299,7 +299,7 @@
             <div class="auth-form-head">
                 <div class="mobile-brand">
                     <div class="mobile-brand-icon"><i class="fa-solid fa-graduation-cap"></i></div>
-                    <span class="mobile-brand-name">Borobhai.com</span>
+                    <span class="mobile-brand-name">Borobhai.online</span>
                 </div>
                 <h2>Sign in</h2>
                 <p>Welcome back! Please enter your details.</p>

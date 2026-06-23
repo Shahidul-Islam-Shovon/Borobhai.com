@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     
-    <title>@yield('title', 'Admin Panel') - Borobhai.com</title>
+    <title>@yield('title', 'Admin Panel') - Borobhai.online</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -156,7 +156,7 @@
     <nav id="sidebar">
         <div class="sidebar-header">
             <span class="admin-brand-name">
-                <i class="fa-solid fa-graduation-cap text-info me-1"></i> Borobhai.com
+                <i class="fa-solid fa-graduation-cap text-info me-1"></i> Borobhai.online
             </span>
             <div class="sidebar-admin-title">
                 <i class="fa-solid fa-shield-halved"></i> Admin Panel

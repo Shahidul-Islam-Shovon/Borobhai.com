@@ -12,7 +12,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
-    <title>Borobhai.com</title>
+    <title>Borobhai.online</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; }
         .navbar { background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.08); padding: .5rem 1rem; }
@@ -423,20 +423,29 @@
 .bb-role-teacher { background: #f3e8ff; color: #7c3aed; border-color: #e9d5ff; }
 .bb-mini-teacher { background: #f3e8ff; color: #7c3aed; }
 
+.bb-search-wrap{position:relative}.bb-search-box{background:#f0f2f5;border-radius:50px;padding:.45rem 1rem;display:flex;align-items:center;width:260px;transition:width .2s ease}.bb-search-box:focus-within{width:320px;background:#e4e6eb}.bb-search-box input{background:transparent;border:none;outline:none;margin-left:8px;font-size:.9rem;width:100%}.bb-search-dropdown{position:absolute;top:calc(100% + 8px);left:0;width:360px;background:#fff;border-radius:14px;z-index:9999;display:none;overflow:hidden;box-shadow:0 8px 32px rgba(16,24,40,.14);border:1px solid #eceef1}.bb-search-dropdown.show{display:block;animation:sdIn .18s ease}@keyframes sdIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}.bb-sd-label{font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.5px;text-transform:uppercase;padding:12px 14px 6px}.bb-sd-item{display:flex;align-items:center;gap:11px;padding:9px 14px;cursor:pointer;transition:background .12s;text-decoration:none}.bb-sd-item:hover,.bb-sd-item.active{background:#f3f4f8}.bb-sd-avatar{width:42px;height:42px;border-radius:50%;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px}.bb-sd-avatar img{width:100%;height:100%;object-fit:cover}.bb-sd-info{flex-grow:1;min-width:0}.bb-sd-name{font-size:.9rem;font-weight:700;color:#1e1f24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bb-sd-sub{font-size:.78rem;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}.bb-sd-topic{font-size:.74rem;color:#4f46e5;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bb-sd-rolechip{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:12px;flex-shrink:0}.bb-sd-student{background:#eef2ff;color:#4f46e5}.bb-sd-alumni{background:#fef3c7;color:#d97706}.bb-sd-teacher{background:#f3e8ff;color:#7c3aed}.bb-sd-footer{border-top:1px solid #eceef1;padding:10px 14px;font-size:.86rem;font-weight:700;color:#4f46e5;text-align:center;text-decoration:none;display:block;transition:background .12s}.bb-sd-footer:hover{background:#f3f4f8}.bb-sd-spinner{text-align:center;padding:20px;color:#6b7280;font-size:.88rem}.bb-sd-empty{text-align:center;padding:20px 14px;color:#9ca3af;font-size:.86rem}
+
 
         </style>
 </head>
 <body>
 
 <nav class="navbar navbar-expand-md sticky-top">
-    <div class="container-fluid">
-        <div class="d-flex align-items-center gap-2">
-            <a style="color:black;" class="navbar-brand m-0" href="{{ route('home') }}">Borobhai.com</a>
-            <div class="search-box d-none d-lg-flex">
-                <i class="bi bi-search text-muted"></i>
-                <input type="text" placeholder="Search In Borobhai">
+    <div class="d-flex align-items-center gap-2">
+            <a style="color:black;" class="navbar-brand m-0" href="{{ route('home') }}">Borobhai.online</a>
+
+            <div class="bb-search-wrap d-none d-lg-block">
+                <div class="bb-search-box">
+                    <i class="bi bi-search text-muted"></i>
+                    <input type="text" id="bbLiveSearch"
+                        placeholder="Search Borobhai..."
+                        autocomplete="off">
+                </div>
+                <div class="bb-search-dropdown" id="bbSearchDropdown"></div>
             </div>
+
         </div>
+
         <div class="d-flex align-items-center gap-2 ms-auto">
             @php $role = Auth::user()->role; @endphp
             <span class="bb-role-badge d-none d-sm-inline-flex {{ $role === 'alumni' ? 'bb-role-alumni' : 'bb-role-student' }}">
@@ -485,6 +494,10 @@
                 <a href="{{ route('saved.index') }}" class="sidebar-link"><i class="bi bi-bookmark-heart-fill text-warning"></i><span>Saved</span></a>
 
                 <a href="{{ route('jobs.myApplications') }}" class="sidebar-link"><i class="bi bi-briefcase-fill text-primary"></i><span>Job History</span></a>
+
+                <a href="{{ route('search.index') }}" class="sidebar-link">
+                    <i class="bi bi-search text-primary"></i><span>Search People</span>
+                </a>
 
             </div>
         </div>
@@ -1220,7 +1233,7 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
     const modal     = bootstrap.Modal.getInstance(document.getElementById('createPostModal'));
 
     if (!content && !selectedMediaFiles.length) {
-        Swal.fire({ icon: 'warning', title: 'Empty Post!', text: 'কিছু লিখুন অথবা মিডিয়া দিন!' });
+        Swal.fire({ icon: 'warning', title: 'Empty Post!', text: 'Please Write A Post First !' });
         return;
     }
     const captured = [...selectedMediaFiles];
@@ -2211,6 +2224,63 @@ function toggleJobSave(id){
     })
     .catch(()=>{ const b=document.getElementById(`jobSaveBtn-${id}`); if(b) b.dataset.busy='0'; Swal.fire({icon:'error',title:'Something went wrong'}); });
 }
+
+(function(){
+const input=document.getElementById('bbLiveSearch');
+const dropdown=document.getElementById('bbSearchDropdown');
+if(!input||!dropdown)return;
+let timer=null,activeIdx=-1;
+input.addEventListener('input',function(){
+    clearTimeout(timer);
+    const q=this.value.trim();
+    if(q.length<2){close();return;}
+    dropdown.innerHTML='<div class="bb-sd-spinner"><i class="bi bi-search me-1"></i> Searching...</div>';
+    dropdown.classList.add('show');
+    timer=setTimeout(()=>doSearch(q),320);
+});
+input.addEventListener('keydown',function(e){
+    const items=dropdown.querySelectorAll('.bb-sd-item');
+    if(e.key==='ArrowDown'){e.preventDefault();activeIdx=Math.min(activeIdx+1,items.length-1);hl(items);}
+    else if(e.key==='ArrowUp'){e.preventDefault();activeIdx=Math.max(activeIdx-1,0);hl(items);}
+    else if(e.key==='Enter'){e.preventDefault();if(activeIdx>=0&&items[activeIdx])items[activeIdx].click();else go();}
+    else if(e.key==='Escape'){close();input.blur();}
+});
+document.addEventListener('click',function(e){if(!input.contains(e.target)&&!dropdown.contains(e.target))close();});
+function close(){dropdown.classList.remove('show');dropdown.innerHTML='';activeIdx=-1;}
+function go(){const q=input.value.trim();if(q)window.location.href='/search?q='+encodeURIComponent(q);}
+function hl(items){items.forEach((el,i)=>el.classList.toggle('active',i===activeIdx));}
+async function doSearch(q){
+    try{
+        const res=await fetch('/search/live?q='+encodeURIComponent(q),{headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}});
+        const data=await res.json();
+        render(data.results||[],q);
+    }catch(e){dropdown.innerHTML='<div class="bb-sd-empty">Something went wrong.</div>';}
+}
+function render(results,q){
+    activeIdx=-1;
+    if(!results.length){dropdown.innerHTML='<div class="bb-sd-empty"><i class="bi bi-search me-1"></i> No results for "'+esc(q)+'"</div>';return;}
+    let html='<div class="bb-sd-label">People</div>';
+    results.forEach(r=>{
+        const av=r.avatar?`<img src="${esc(r.avatar)}" alt="">`:(esc(r.initial)||'U');
+        const top=r.topic?`<div class="bb-sd-topic"><i class="bi bi-journal-text"></i> ${esc(r.topic.substring(0,55))}${r.topic.length>55?'…':''}</div>`:'';
+        html+=`<a href="/profile/${r.id}" class="bb-sd-item">
+            <div class="bb-sd-avatar">${av}</div>
+            <div class="bb-sd-info">
+                <div class="bb-sd-name">${hlq(esc(r.name),q)}</div>
+                ${r.sub?`<div class="bb-sd-sub">${esc(r.sub)}</div>`:''}
+                ${top}
+            </div>
+            <span class="bb-sd-rolechip bb-sd-${r.role}">${esc(r.role_label||r.role)}</span>
+        </a>`;
+    });
+    html+=`<a href="/search?q=${encodeURIComponent(q)}" class="bb-sd-footer"><i class="bi bi-search me-1"></i> See all results for "${esc(q)}"</a>`;
+    dropdown.innerHTML=html;
+    dropdown.classList.add('show');
+}
+function hlq(text,q){if(!q)return text;return text.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:#dbeafe;padding:0 2px;border-radius:2px;">$1</mark>');}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+})();
+
 </script>
 
 </body>
