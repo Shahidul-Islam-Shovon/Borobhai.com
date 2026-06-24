@@ -2518,13 +2518,11 @@ function refreshActiveNow() {
     .catch(() => {});
 }
 
-// page load এর 2 সেকেন্ড পরে একবার refresh করি (last_seen update হওয়ার সময় দেই)
-setTimeout(refreshActiveNow, 2000);
+// এই দিয়ে replace করুন:
+refreshActiveNow();
 setInterval(refreshActiveNow, 30000);
 
 </script>
-
-
 
 </body>
 </html>

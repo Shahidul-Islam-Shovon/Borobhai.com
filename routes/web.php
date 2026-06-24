@@ -335,3 +335,5 @@ Route::middleware('auth')->get('/active-now', function () {
 
     return response()->json(['html' => $html]);
 });
+
+Route::get('/active-now', [PostController::class, 'activeNow'])->middleware('auth');

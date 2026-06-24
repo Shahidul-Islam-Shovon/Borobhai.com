@@ -279,17 +279,31 @@ function switchTab(tab) {
     document.getElementById('tab-' + tab)?.classList.add('active');
 }
 
-// Friend action
+
+// ==========================================
+// Friend action — friends/index.blade.php
+// ==========================================
+// এই পুরো <script> ব্লক টা friends/index.blade.php এর
+// শেষের <script> এর ভেতরে frAction function কে REPLACE করবে
+
 function frAction(action, userId, btnEl) {
     const endpoints = {
-        accept:  '/friends/accept',
-        decline: '/friends/decline',
-        cancel:  '/friends/cancel',
-        unfriend:'/friends/unfriend',
-        block:   '/friends/block',
+        accept:   '/friends/accept',
+        decline:  '/friends/decline',
+        cancel:   '/friends/cancel',
+        unfriend: '/friends/unfriend',
+        block:    '/friends/block',
     };
 
-    if (action === 'unfriend' && !confirm('Remove this person from your friends?')) return;
+    // ✅ Confirm dialog — cancel + unfriend + block
+    const confirmMsg = {
+        cancel:   'Cancel this friend request?',
+        unfriend: 'Remove this person from your friends?',
+        block:    "Block this user? They won't be able to find you.",
+    };
+    if (['cancel', 'unfriend', 'block'].includes(action)) {
+        if (!confirm(confirmMsg[action])) return;
+    }
 
     if (btnEl) btnEl.disabled = true;
 
@@ -297,7 +311,7 @@ function frAction(action, userId, btnEl) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
+            'Accept':       'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
         },
         body: JSON.stringify({ user_id: userId }),
@@ -310,25 +324,29 @@ function frAction(action, userId, btnEl) {
             return;
         }
 
-        // card সরাও
+        // card সরাও (smooth fade)
         const card = document.getElementById('fr-card-' + userId);
         if (card) {
             card.style.transition = 'opacity .3s, transform .3s';
-            card.style.opacity = '0';
-            card.style.transform = 'scale(.95)';
+            card.style.opacity    = '0';
+            card.style.transform  = 'scale(.95)';
             setTimeout(() => card.remove(), 300);
         }
 
-        Swal.mixin({
-            toast: true, position: 'top-end',
-            showConfirmButton: false, timer: 2000, timerProgressBar: true
-        }).fire({ icon: 'success', title: d.message });
+        // ✅ Swal toast
+        if (typeof Swal !== 'undefined') {
+            Swal.mixin({
+                toast: true, position: 'top-end',
+                showConfirmButton: false, timer: 2000, timerProgressBar: true
+            }).fire({ icon: 'success', title: d.message });
+        }
     })
     .catch(() => {
         if (btnEl) btnEl.disabled = false;
-        alert('Network error.');
+        alert('Network error. Please try again.');
     });
 }
+
 </script>
 </body>
 </html>

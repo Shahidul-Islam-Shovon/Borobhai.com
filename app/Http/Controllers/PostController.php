@@ -76,15 +76,10 @@ class PostController extends Controller
             'canPostJobs', 'activeUsers', 'suggested', 'pendingRequests'
         );
 
-       // পরে
-        if ($user->role === 'alumni') {
-            return view('alumni.dashboard', $data);
-        }
-        if ($user->role === 'teacher') {
+        if (in_array($user->role, ['alumni', 'teacher'])) {
+                return view('alumni.dashboard', $data);
+            }
             return view('student.dashboard', $data);
-        }
-        // teacher ও student একই dashboard (বা আলাদা teacher.dashboard বানাতে পারেন)
-        return view('student.dashboard', $data);
         }
 
     public function loadMore(Request $request)
@@ -355,4 +350,48 @@ class PostController extends Controller
         $post->delete();
         return response()->json(['success' => true]);
     }
+
+    public function activeNow()
+{
+    $meId       = Auth::id();
+    $friendIds  = Friendship::friendIds($meId);
+    $blockedIds = $this->getBlockedIds($meId);
+ 
+    // ✅ CORE FIX: নিজের last_seen এখানেও update করি
+    // যাতে page load এর পরেই আমার friends আমাকে দেখতে পায়
+    // এবং আমিও নিজেকে refresh এ দেখি
+    DB::table('users')->where('id', $meId)->update(['last_seen' => now()]);
+ 
+    $activeUsers = \App\Models\User::whereIn('id', $friendIds)
+        ->whereNotIn('id', $blockedIds)
+        ->where('last_seen', '>=', now()->subMinutes(10))
+        ->select('id', 'name', 'role', 'profile_picture')
+        ->limit(8)
+        ->get();
+ 
+    // HTML বানাও
+    if ($activeUsers->isEmpty()) {
+        $html = '<div class="text-muted small px-2 py-3">No friends active right now.</div>';
+    } else {
+        $html = '';
+        foreach ($activeUsers as $au) {
+            $avatarHtml = $au->profile_picture
+                ? '<img src="' . asset('storage/' . $au->profile_picture) . '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+                : strtoupper(substr($au->name, 0, 1));
+ 
+            $badgeClass = 'bb-mini-' . $au->role;
+ 
+            $html .= '<a href="' . route('profile.view', $au->id) . '" class="bb-active-item" style="text-decoration:none;">';
+            $html .= '<div class="bb-active-avatar" style="overflow:hidden;">' . $avatarHtml . '</div>';
+            $html .= '<div class="bb-active-meta">';
+            $html .= '<span class="bb-active-name">' . e($au->name) . '</span>';
+            $html .= '<span class="bb-mini-badge ' . $badgeClass . '">';
+            $html .= '<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> Active now';
+            $html .= '</span></div></a>';
+        }
+    }
+ 
+    return response()->json(['html' => $html]);
+}
+
 }
