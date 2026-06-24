@@ -541,6 +541,18 @@
     font-weight:600; font-size:11.5px; padding:2px 8px; border-radius:12px; white-space:nowrap;
 }
 
+.bb-friend-btn{display:inline-flex;align-items:center;gap:7px;font-size:.88rem;font-weight:700;padding:9px 18px;border-radius:10px;border:none;cursor:pointer;transition:all .15s ease;margin-right:6px;}
+.bb-friend-add{background:#4f46e5;color:#fff;}.bb-friend-add:hover{background:#4338ca;}
+.bb-friend-pending{background:#eef2ff;color:#4f46e5;border:1.5px solid #c7d2fe;}
+.bb-friend-pending:hover{background:#fef2f2;color:#dc2626;}
+.bb-friend-cancel-hint{font-size:.78rem;opacity:.75;}
+.bb-friend-accept{background:#059669;color:#fff;}.bb-friend-accept:hover{background:#047857;}
+.bb-friend-decline{background:#f3f4f8;color:#374151;}.bb-friend-decline:hover{background:#fee2e2;color:#dc2626;}
+.bb-friend-already{background:#f3f4f8;color:#374151;}.bb-friend-already:hover{background:#e5e7eb;}
+.bb-friend-blocked{background:#fee2e2;color:#dc2626;border:1.5px solid #fca5a5;}
+.bb-mutual-count{font-size:.82rem;color:#6b7280;margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.bb-mutual-count i{color:#4f46e5;}
+
     </style>
 </head>
 <body>
@@ -634,13 +646,88 @@
                     @endif
                 </div>
             </div>
-            @if($isOwner)
-                <div class="pb-2">
-                    <button class="bb-edit-profile-btn" onclick="openEditModal()">
-                        <i class="bi bi-pencil-fill"></i> Edit Profile
-                    </button>
-                </div>
-            @endif
+
+            
+            {{-- add friend button --}}
+                @if($isOwner)
+                    <div class="pb-2">
+                        <button class="bb-edit-profile-btn" onclick="openEditModal()">
+                            <i class="bi bi-pencil-fill"></i> Edit Profile
+                        </button>
+                    </div>
+                @else
+                    {{-- অন্যের profile — friend button এখানে --}}
+                    <div class="pb-2">
+                       @php
+                        $meId         = Auth::id();
+                        $friendStatus = \App\Models\Friendship::statusWith($meId, $user->id);
+                        $mutualCount  = \App\Models\Friendship::mutualCount($meId, $user->id);
+                    @endphp
+
+                        @if($mutualCount > 0)
+                            <div class="bb-mutual-count">
+                                <i class="bi bi-people-fill"></i>
+                                {{ $mutualCount }} mutual friend{{ $mutualCount > 1 ? 's' : '' }}
+                            </div>
+                        @endif
+
+                        <div id="friendBtnWrap-{{ $user->id }}">
+                            @if($friendStatus === 'none')
+                                <button class="bb-friend-btn bb-friend-add"
+                                        onclick="friendAction('send', {{ $user->id }}, this)">
+                                    <i class="bi bi-person-plus-fill"></i> Add Friend
+                                </button>
+
+                            @elseif($friendStatus === 'pending_sent')
+                                <button class="bb-friend-btn bb-friend-pending"
+                                        onclick="friendAction('cancel', {{ $user->id }}, this)">
+                                    <i class="bi bi-person-check-fill"></i> Request Sent
+                                    <span class="bb-friend-cancel-hint">· Cancel</span>
+                                </button>
+
+                            @elseif($friendStatus === 'pending_received')
+                            <button class="bb-friend-btn bb-friend-accept"
+                                    onclick="friendAction('accept', {{ $user->id }}, this)">
+                                <i class="bi bi-check-lg"></i> Accept
+                            </button>
+                            <button class="bb-friend-btn bb-friend-decline"
+                                    onclick="friendAction('decline', {{ $user->id }}, this)">
+                                <i class="bi bi-x-lg"></i> Decline
+                            </button>
+
+                            @elseif($friendStatus === 'accepted')
+                                <div class="dropdown d-inline-block">
+                                    <button class="bb-friend-btn bb-friend-already dropdown-toggle"
+                                            data-bs-toggle="dropdown">
+                                        <i class="bi bi-people-fill"></i> Friends
+                                    </button>
+                                    <ul class="dropdown-menu shadow border-0 rounded-3">
+                                        <li>
+                                            <button class="dropdown-item text-danger py-2"
+                                                    onclick="friendAction('unfriend', {{ $user->id }}, this)">
+                                                <i class="bi bi-person-x me-2"></i> Unfriend
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item py-2"
+                                                    onclick="friendAction('block', {{ $user->id }}, this)">
+                                                <i class="bi bi-slash-circle me-2"></i> Block
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                            @elseif($friendStatus === 'blocked')
+                                <button class="bb-friend-btn bb-friend-blocked"
+                                        onclick="friendAction('unblock', {{ $user->id }}, this)">
+                                    <i class="bi bi-slash-circle"></i> Blocked · Unblock
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            {{-- end --}}
+
         </div>
 
         <div class="bb-stat-row">
@@ -697,18 +784,24 @@
                 <div><p class="bb-info-label">Semester</p><p class="bb-info-value">{{ $user->semester ?? '—' }}</p></div>
             </div>
             @endif
+            @if($isOwner)
             <div class="bb-info-item">
                 <div class="bb-info-icon"><i class="bi bi-telephone-fill"></i></div>
-                <div><p class="bb-info-label">Phone</p><p class="bb-info-value">{{ $user->phone ?? '—' }}</p></div>
+                <div><p class="bb-info-label">Phone <span class="badge bg-secondary" style="font-size:9px;">Private</span></p>
+                <p class="bb-info-value">{{ $user->phone ?? '—' }}</p></div>
             </div>
+            @endif
             <div class="bb-info-item">
                 <div class="bb-info-icon"><i class="bi bi-geo-alt-fill"></i></div>
                 <div><p class="bb-info-label">Location</p><p class="bb-info-value">{{ $user->location ?? '—' }}</p></div>
             </div>
+            @if($isOwner)
             <div class="bb-info-item">
                 <div class="bb-info-icon"><i class="bi bi-envelope-fill"></i></div>
-                <div><p class="bb-info-label">Email</p><p class="bb-info-value">{{ $user->email }}</p></div>
+                <div><p class="bb-info-label">Email <span class="badge bg-secondary" style="font-size:9px;">Private</span></p>
+                <p class="bb-info-value">{{ $user->email }}</p></div>
             </div>
+            @endif
             <div class="bb-info-item">
                 <div class="bb-info-icon"><i class="bi bi-heart-fill"></i></div>
                 <div><p class="bb-info-label">Interests</p><p class="bb-info-value">{{ $user->interests ?? '—' }}</p></div>
@@ -3582,6 +3675,90 @@ function highlightMentions(text) {
         }
     });
 })();
+
+
+function friendAction(action, userId, btnEl) {
+    const endpoints = {
+        send:     '/friends/send',
+        accept:   '/friends/accept',
+        decline:  '/friends/decline',
+        cancel:   '/friends/cancel',
+        unfriend: '/friends/unfriend',
+        block:    '/friends/block',
+        unblock:  '/friends/unblock',
+    };
+ 
+    const confirmMsg = {
+        unfriend: 'Remove this person from your friends?',
+        block:    "Block this user? They won't be able to find you.",
+        cancel:   'Cancel this friend request?',
+    };
+ 
+    if (['unfriend', 'block', 'cancel'].includes(action)) {
+        if (!confirm(confirmMsg[action])) return;
+    }
+ 
+    if (btnEl) btnEl.disabled = true;
+ 
+    fetch(endpoints[action], {
+        method: 'POST',
+        headers: {
+            'Content-Type':  'application/json',
+            'Accept':        'application/json',
+            'X-CSRF-TOKEN':  document.querySelector('meta[name="csrf-token"]').content,
+        },
+        body: JSON.stringify({ user_id: userId }),
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (btnEl) btnEl.disabled = false;
+        if (!d.success) { alert(d.message || 'Something went wrong.'); return; }
+ 
+        const wrap = document.getElementById('friendBtnWrap-' + userId);
+        if (wrap) updateFriendBtn(wrap, d.status, userId);
+ 
+        // sidebar pending request card সরাও
+        if (action === 'accept' || action === 'decline') {
+            const card = document.getElementById('freq-' + userId);
+            if (card) {
+                card.style.transition = 'opacity .3s';
+                card.style.opacity = '0';
+                setTimeout(() => card.remove(), 300);
+            }
+        }
+ 
+        if (typeof Swal !== 'undefined') {
+            Swal.mixin({
+                toast: true, position: 'top-end',
+                showConfirmButton: false, timer: 2000, timerProgressBar: true
+            }).fire({ icon: 'success', title: d.message });
+        }
+    })
+    .catch(() => {
+        if (btnEl) btnEl.disabled = false;
+        alert('Network error. Please try again.');
+    });
+}
+ 
+function updateFriendBtn(wrap, status, userId) {
+    const btns = {
+        none: `<button class="bb-friend-btn bb-friend-add" onclick="friendAction('send',${userId},this)"><i class="bi bi-person-plus-fill"></i> Add Friend</button>`,
+        pending_sent: `<button class="bb-friend-btn bb-friend-pending" onclick="friendAction('cancel',${userId},this)"><i class="bi bi-person-check-fill"></i> Request Sent <span class="bb-friend-cancel-hint">· Cancel</span></button>`,
+        pending_received: `
+            <button class="bb-friend-btn bb-friend-accept" onclick="friendAction('accept',${userId},this)"><i class="bi bi-check-lg"></i> Accept</button>
+            <button class="bb-friend-btn bb-friend-decline" onclick="friendAction('decline',${userId},this)"><i class="bi bi-x-lg"></i> Decline</button>`,
+        accepted: `<div class="dropdown d-inline-block">
+            <button class="bb-friend-btn bb-friend-already dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-people-fill"></i> Friends</button>
+            <ul class="dropdown-menu shadow border-0 rounded-3">
+                <li><button class="dropdown-item text-danger py-2" onclick="friendAction('unfriend',${userId},this)"><i class="bi bi-person-x me-2"></i> Unfriend</button></li>
+                <li><button class="dropdown-item py-2" onclick="friendAction('block',${userId},this)"><i class="bi bi-slash-circle me-2"></i> Block</button></li>
+            </ul></div>`,
+        blocked: `<button class="bb-friend-btn bb-friend-blocked" onclick="friendAction('unblock',${userId},this)"><i class="bi bi-slash-circle"></i> Blocked · Unblock</button>`,
+    };
+    if (btns[status]) wrap.innerHTML = btns[status];
+}
+
+
 </script>
 
 </body>

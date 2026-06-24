@@ -515,6 +515,23 @@ textarea.bb-job-input { resize:vertical; }
 .bb-sd-footer:hover { background:#f3f4f8; }
 .bb-sd-spinner { text-align:center; padding:20px; color:#6b7280; font-size:.88rem; }
 .bb-sd-empty { text-align:center; padding:20px 14px; color:#9ca3af; font-size:.86rem; }
+.bb-friend-btn {
+    display:inline-flex;align-items:center;gap:7px;
+    font-size:.88rem;font-weight:700;padding:9px 18px;
+    border-radius:10px;border:none;cursor:pointer;
+    transition:all .15s ease;margin-right:6px;
+}
+.bb-friend-add{background:#4f46e5;color:#fff;}
+.bb-friend-add:hover{background:#4338ca;}
+.bb-friend-pending{background:#eef2ff;color:#4f46e5;border:1.5px solid #c7d2fe;}
+.bb-friend-pending:hover{background:#fef2f2;color:#dc2626;}
+.bb-friend-cancel-hint{font-size:.78rem;opacity:.75;}
+.bb-friend-accept{background:#059669;color:#fff;}
+.bb-friend-decline{background:#f3f4f8;color:#374151;}
+.bb-friend-already{background:#f3f4f8;color:#374151;}
+.bb-friend-blocked{background:#fee2e2;color:#dc2626;}
+.bb-mutual-count{font-size:.82rem;color:#6b7280;margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.bb-mutual-count i{color:#4f46e5;}
 
         </style>
 </head>
@@ -599,7 +616,67 @@ textarea.bb-job-input { resize:vertical; }
         <div class="col-md-3 d-none d-md-block position-sticky" style="top:70px;height:fit-content;">
             <div class="d-flex flex-column gap-1">
                 <a href="{{ route('home') }}" class="sidebar-link active"><i class="bi bi-house-door-fill text-primary"></i><span>Home</span></a>
-                <a href="#" class="sidebar-link"><i class="bi bi-people-fill text-info"></i><span>Friends</span></a>
+
+                <a href="{{ route('friends.index') }}" class="sidebar-link">
+                    <i class="bi bi-people-fill text-info"></i>
+                    <span>See Friend List</span>
+                </a>
+
+                {{-- Pending Friend Requests --}}
+                @php
+                    $pendingRequests = \App\Models\Friendship::where('receiver_id', Auth::id())
+                        ->where('status', 'pending')
+                        ->with('sender:id,name,role,profile_picture')
+                        ->latest()
+                        ->limit(5)
+                        ->get();
+                @endphp
+
+                @if(isset($pendingRequests) && $pendingRequests->count() > 0)
+                <div class="bb-side-card mb-3">
+                    <div class="bb-side-head">
+                        <span class="bb-side-title">
+                            <i class="bi bi-person-plus-fill text-primary"></i>
+                            Friend Requests
+                            <span class="badge bg-primary rounded-pill ms-1" style="font-size:10px;">
+                                {{ $pendingRequests->count() }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="bb-side-body">
+                        @foreach($pendingRequests as $req)
+                        <div class="bb-suggest-item" id="freq-{{ $req->sender->id }}">
+                            <a href="{{ route('profile.view', $req->sender->id) }}"
+                            class="bb-suggest-avatar" style="text-decoration:none;overflow:hidden;">
+                                @if($req->sender->profile_picture)
+                                    <img src="{{ asset('storage/'.$req->sender->profile_picture) }}"
+                                        style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                                @else
+                                    {{ strtoupper(substr($req->sender->name,0,1)) }}
+                                @endif
+                            </a>
+                            <div class="bb-suggest-info">
+                                <a href="{{ route('profile.view', $req->sender->id) }}"
+                                class="bb-suggest-name" style="text-decoration:none;">
+                                    {{ $req->sender->name }}
+                                </a>
+                                <p class="bb-suggest-role">{{ ucfirst($req->sender->role) }}</p>
+                                <div class="d-flex gap-1 mt-1">
+                                    <button class="btn btn-primary btn-sm py-0 px-2" style="font-size:11px;"
+                                            onclick="friendAction('accept', {{ $req->sender->id }}, this)">
+                                        Accept
+                                    </button>
+                                    <button class="btn btn-light btn-sm py-0 px-2" style="font-size:11px;"
+                                            onclick="friendAction('decline', {{ $req->sender->id }}, this)">
+                                        Decline
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
 
                 <a href="{{ route('saved.index') }}" class="sidebar-link"><i class="bi bi-bookmark-heart-fill text-warning"></i><span>Saved</span></a>
 
@@ -701,37 +778,33 @@ textarea.bb-job-input { resize:vertical; }
                 <div class="bb-side-head">
                     <span class="bb-side-title"><i class="bi bi-circle-fill text-success" style="font-size:9px;"></i> Active Now</span>
                 </div>
+
                 <div class="bb-side-body" id="activeNowZone">
                     {{-- TODO: Backend — loop $activeUsers here --}}
-                    <div class="bb-active-item">
-                        <div class="bb-active-avatar">A</div>
-                        <div class="bb-active-meta">
-                            <span class="bb-active-name">Ayesha Rahman</span>
-                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
-                        </div>
-                    </div>
-                    <div class="bb-active-item">
-                        <div class="bb-active-avatar" style="background:linear-gradient(135deg,#f59e0b,#f97316);">R</div>
-                        <div class="bb-active-meta">
-                            <span class="bb-active-name">Rifat Hossain</span>
-                            <span class="bb-mini-badge bb-mini-student"><i class="bi bi-backpack-fill"></i> Student</span>
-                        </div>
-                    </div>
-                    <div class="bb-active-item">
-                        <div class="bb-active-avatar" style="background:linear-gradient(135deg,#10b981,#059669);">N</div>
-                        <div class="bb-active-meta">
-                            <span class="bb-active-name">Nadia Islam</span>
-                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
-                        </div>
-                    </div>
-                    <div class="bb-active-item">
-                        <div class="bb-active-avatar" style="background:linear-gradient(135deg,#ec4899,#be185d);">T</div>
-                        <div class="bb-active-meta">
-                            <span class="bb-active-name">Tanvir Ahmed</span>
-                            <span class="bb-mini-badge bb-mini-student"><i class="bi bi-backpack-fill"></i> Student</span>
-                        </div>
-                    </div>
+                    {{-- Active Now --}}
+                    @forelse($activeUsers ?? [] as $au)
+                        <a href="{{ route('profile.view', $au->id) }}" class="bb-active-item" style="text-decoration:none;">
+                            <div class="bb-active-avatar" style="overflow:hidden;">
+                                @if($au->profile_picture)
+                                    <img src="{{ asset('storage/'.$au->profile_picture) }}"
+                                        style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                                @else
+                                    {{ strtoupper(substr($au->name,0,1)) }}
+                                @endif
+                            </div>
+                            <div class="bb-active-meta">
+                                <span class="bb-active-name">{{ $au->name }}</span>
+                                <span class="bb-mini-badge bb-mini-{{ $au->role }}">
+                                    <i class="bi bi-circle-fill text-success" style="font-size:7px;"></i>
+                                    Active now
+                                </span>
+                            </div>
+                        </a>
+                    @empty
+                        <div class="text-muted small px-2 py-3">No friends active right now.</div>
+                    @endforelse
                 </div>
+
             </div>
 
             {{-- Suggested People --}}
@@ -740,34 +813,51 @@ textarea.bb-job-input { resize:vertical; }
                     <span class="bb-side-title"><i class="bi bi-person-plus-fill text-primary"></i> Suggested Contact</span>
                 </div>
                 <div class="bb-side-body" id="suggestedPeopleZone">
-                    {{-- TODO: Backend — loop $suggestedUsers here --}}
-                    <div class="bb-suggest-item">
-                        <div class="bb-suggest-avatar">M</div>
-                        <div class="bb-suggest-info">
-                            <h6 class="bb-suggest-name">Mahmudul Hasan</h6>
-                            <p class="bb-suggest-role">CSE · Batch 2019</p>
-                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
-                        </div>
-                        <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
-                    </div>
-                    <div class="bb-suggest-item">
-                        <div class="bb-suggest-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">F</div>
-                        <div class="bb-suggest-info">
-                            <h6 class="bb-suggest-name">Farhana Akter</h6>
-                            <p class="bb-suggest-role">EEE · Batch 2024</p>
-                            <span class="bb-mini-badge bb-mini-student"><i class="bi bi-backpack-fill"></i> Student</span>
-                        </div>
-                        <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
-                    </div>
-                    <div class="bb-suggest-item">
-                        <div class="bb-suggest-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">K</div>
-                        <div class="bb-suggest-info">
-                            <h6 class="bb-suggest-name">Kamrul Islam</h6>
-                            <p class="bb-suggest-role">BBA · Batch 2018</p>
-                            <span class="bb-mini-badge bb-mini-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
-                        </div>
-                        <button type="button" class="bb-connect-btn"><i class="bi bi-person-plus"></i></button>
-                    </div>
+                 {{-- TODO: Backend — loop $suggestedUsers here --}}
+                   {{-- Suggested Contact --}}
+                    @forelse($suggested ?? [] as $su)
+    <div class="bb-suggest-item" id="suggest-{{ $su->id }}">
+        <a href="{{ route('profile.view', $su->id) }}"
+           class="bb-suggest-avatar" style="text-decoration:none;overflow:hidden;">
+            @if($su->profile_picture)
+                <img src="{{ asset('storage/'.$su->profile_picture) }}"
+                     style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+            @else
+                {{ strtoupper(substr($su->name,0,1)) }}
+            @endif
+        </a>
+        <div class="bb-suggest-info">
+            <a href="{{ route('profile.view', $su->id) }}"
+               class="bb-suggest-name" style="text-decoration:none;color:inherit;">
+                {{ $su->name }}
+            </a>
+            <p class="bb-suggest-role">
+                {{ $su->department ?? ucfirst($su->role) }}
+                @if($su->mutual > 0) · {{ $su->mutual }} mutual @endif
+            </p>
+        </div>
+        @if($su->is_pending)
+            {{-- আগেই request দেওয়া — টিক দেখাবে, ক্লিক করলে cancel --}}
+            <button type="button"
+                    class="bb-connect-btn"
+                    style="background:#4f46e5;border-color:#4f46e5;color:#fff;"
+                    onclick="suggestAction('cancel', {{ $su->id }}, this)"
+                    title="Cancel Request">
+                <i class="bi bi-check-lg"></i>
+            </button>
+        @else
+            <button type="button"
+                    class="bb-connect-btn"
+                    onclick="suggestAction('send', {{ $su->id }}, this)"
+                    title="Add Friend">
+                <i class="bi bi-person-plus"></i>
+            </button>
+        @endif
+    </div>
+@empty
+    <div class="text-muted small px-2 py-3 text-center">No suggestions right now.</div>
+@endforelse
+                   
                 </div>
             </div>
 
@@ -2406,11 +2496,7 @@ function fillJobModal(job){
         .catch(()=>{ btn.disabled=false; btn.innerHTML=orig; Swal.fire({icon:'error',title:'Network error'}); });
     });
 })();
-</script>
-@endif
 
-
-<script>
 // ==========================================
 // DELETE JOB (poster only)
 // ==========================================
@@ -2498,7 +2584,7 @@ function toggleJobSave(id){
         }
     }
 
-    function render(results, q) {
+function render(results, q) {
         activeIdx = -1;
         if (!results.length) {
             dropdown.innerHTML='<div class="bb-sd-empty"><i class="bi bi-search me-1"></i> No results for "'+esc(q)+'"</div>';
@@ -2529,7 +2615,161 @@ function toggleJobSave(id){
     }
     function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 })();
+
+
+function friendAction(action, userId, btnEl) {
+    const endpoints = {
+        send:     '/friends/send',
+        accept:   '/friends/accept',
+        decline:  '/friends/decline',
+        cancel:   '/friends/cancel',
+        unfriend: '/friends/unfriend',
+        block:    '/friends/block',
+        unblock:  '/friends/unblock',
+    };
+
+    const confirmMsg = {
+        unfriend: 'Remove this person from your friends?',
+        block:    "Block this user? They won't be able to find you.",
+        cancel:   'Cancel this friend request?',
+    };
+
+    if (['unfriend', 'block', 'cancel'].includes(action)) {
+        if (!confirm(confirmMsg[action])) return;
+    }
+
+    if (btnEl) btnEl.disabled = true;
+
+    fetch(endpoints[action], {
+        method: 'POST',
+        headers: {
+            'Content-Type':  'application/json',
+            'Accept':        'application/json',
+            'X-CSRF-TOKEN':  document.querySelector('meta[name="csrf-token"]').content,
+        },
+        body: JSON.stringify({ user_id: userId }),
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (btnEl) btnEl.disabled = false;
+        if (!d.success) { alert(d.message || 'Something went wrong.'); return; }
+
+        const wrap = document.getElementById('friendBtnWrap-' + userId);
+        if (wrap) updateFriendBtn(wrap, d.status, userId);
+
+        if (action === 'accept' || action === 'decline') {
+            const card = document.getElementById('freq-' + userId);
+            if (card) {
+                card.style.transition = 'opacity .3s';
+                card.style.opacity = '0';
+                setTimeout(() => card.remove(), 300);
+            }
+        }
+
+        if (typeof Swal !== 'undefined') {
+            Swal.mixin({
+                toast: true, position: 'top-end',
+                showConfirmButton: false, timer: 2000, timerProgressBar: true
+            }).fire({ icon: 'success', title: d.message });
+        }
+    })
+    .catch(() => {
+        if (btnEl) btnEl.disabled = false;
+        alert('Network error. Please try again.');
+    });
+}
+
+function suggestAction(action, userId, btnEl) {
+    const endpoint = action === 'send' ? '/friends/send' : '/friends/cancel';
+
+    if (action === 'cancel' && !confirm('Cancel this friend request?')) return;
+
+    if (btnEl) btnEl.disabled = true;
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept':       'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+        },
+        body: JSON.stringify({ user_id: userId }),
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (btnEl) btnEl.disabled = false;
+        if (!d.success) { alert(d.message || 'Error'); return; }
+
+        if (action === 'send') {
+            btnEl.style.background  = '#4f46e5';
+            btnEl.style.borderColor = '#4f46e5';
+            btnEl.style.color       = '#fff';
+            btnEl.innerHTML         = '<i class="bi bi-check-lg"></i>';
+            btnEl.title             = 'Cancel Request';
+            btnEl.onclick = function () { suggestAction('cancel', userId, this); };
+        } else {
+            btnEl.style.background  = '';
+            btnEl.style.borderColor = '';
+            btnEl.style.color       = '';
+            btnEl.innerHTML         = '<i class="bi bi-person-plus"></i>';
+            btnEl.title             = 'Add Friend';
+            btnEl.onclick = function () { suggestAction('send', userId, this); };
+        }
+
+        if (typeof Swal !== 'undefined') {
+            Swal.mixin({
+                toast: true, position: 'top-end',
+                showConfirmButton: false, timer: 2000, timerProgressBar: true
+            }).fire({ icon: 'success', title: d.message });
+        }
+    })
+    .catch(() => {
+        if (btnEl) btnEl.disabled = false;
+        alert('Network error.');
+    });
+}
+
+function updateFriendBtn(wrap, status, userId) {
+    const btns = {
+        none: `<button class="bb-friend-btn bb-friend-add" onclick="friendAction('send',${userId},this)"><i class="bi bi-person-plus-fill"></i> Add Friend</button>`,
+        pending_sent: `<button class="bb-friend-btn bb-friend-pending" onclick="friendAction('cancel',${userId},this)"><i class="bi bi-person-check-fill"></i> Request Sent <span class="bb-friend-cancel-hint">· Cancel</span></button>`,
+        pending_received: `
+            <button class="bb-friend-btn bb-friend-accept" onclick="friendAction('accept',${userId},this)"><i class="bi bi-check-lg"></i> Accept</button>
+            <button class="bb-friend-btn bb-friend-decline" onclick="friendAction('decline',${userId},this)"><i class="bi bi-x-lg"></i> Decline</button>`,
+        accepted: `<div class="dropdown d-inline-block">
+            <button class="bb-friend-btn bb-friend-already dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-people-fill"></i> Friends</button>
+            <ul class="dropdown-menu shadow border-0 rounded-3">
+                <li><button class="dropdown-item text-danger py-2" onclick="friendAction('unfriend',${userId},this)"><i class="bi bi-person-x me-2"></i> Unfriend</button></li>
+                <li><button class="dropdown-item py-2" onclick="friendAction('block',${userId},this)"><i class="bi bi-slash-circle me-2"></i> Block</button></li>
+            </ul></div>`,
+        blocked: `<button class="bb-friend-btn bb-friend-blocked" onclick="friendAction('unblock',${userId},this)"><i class="bi bi-slash-circle"></i> Blocked · Unblock</button>`,
+    };
+    if (btns[status]) wrap.innerHTML = btns[status];
+}
+
+// Active Now — page load এ এবং প্রতি 30s refresh
+function refreshActiveNow() {
+    fetch('/active-now', {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.html !== undefined) {
+            const zone = document.getElementById('activeNowZone');
+            if (zone) zone.innerHTML = d.html;
+        }
+    })
+    .catch(() => {});
+}
+
+// page load এর 2 সেকেন্ড পরে একবার refresh করি (last_seen update হওয়ার সময় দেই)
+setTimeout(refreshActiveNow, 2000);
+setInterval(refreshActiveNow, 30000);
+
+
 </script>
+
+@endif  {{-- ← এটা যোগ করুন --}}
 
 </body>
 </html>

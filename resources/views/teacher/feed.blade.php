@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="yLeZsHdJiPbawa5jvfsPVpaGFzX1iVZyb5Jhpr6w">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -101,6 +101,17 @@
 }
 .bb-more-btn:hover { background:var(--bb-bg); color:var(--bb-ink); }
 
+/* নামের নিচে role label (author) */
+.bb-author-role {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .2px;
+    padding: 1px 8px; border-radius: 12px; width: fit-content; margin: 1px 0;
+}
+.bb-author-role i { font-size: 9px; }
+.bb-author-role-alumni  { background: #fef3c7; color: #d97706; }
+.bb-author-role-student { background: #eef2ff; color: #4f46e5; }
+.bb-author-role-teacher { background: #f3e8ff; color: #7c3aed; }
+
 /* ===== CAPTION ===== */
 .bb-caption { padding:2px 16px 12px; font-size:14.5px; line-height:1.55; color:var(--bb-ink); word-break:break-word; }
 .bb-color-caption {
@@ -112,11 +123,8 @@
 
 /* ===== MEDIA ===== */
 .bb-media-zone { background:#000; overflow:hidden; line-height:0; }
-
-/* Single image/video — natural ratio, capped height */
 .bb-media-single { position:relative; display:flex; align-items:center; justify-content:center; background:#000; width:100%; }
 .bb-single-img { width:100%; max-height:560px; object-fit:contain; display:block; cursor:pointer; }
-
 .bb-video-wrap { position:relative; width:100%; display:flex; justify-content:center; background:#000; }
 .bb-inline-video { width:100%; max-height:560px; object-fit:contain; display:block; background:#000; }
 .bb-expand-btn {
@@ -127,8 +135,6 @@
     opacity:0; transition:opacity .2s ease; font-size:14px;
 }
 .bb-video-wrap:hover .bb-expand-btn { opacity:1; }
-
-/* Multi-media grids — FIXED heights, object-fit cover (no black gaps) */
 .bb-grid { display:flex; gap:3px; width:100%; }
 .bb-grid-2 { height:300px; }
 .bb-grid-3 { height:340px; }
@@ -138,7 +144,6 @@
 .bb-tile { position:relative; flex:1; min-width:0; overflow:hidden; background:#000; }
 .bb-tile-big { flex:2; }
 .bb-tile-media { width:100%; height:100%; object-fit:cover; cursor:pointer; display:block; }
-
 .bb-play-badge {
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
     width:54px; height:54px; border-radius:50%; background:rgba(0,0,0,.55);
@@ -188,27 +193,56 @@
 
 /* ===== ROLE BADGE (navbar) ===== */
 .bb-role-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .3px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    border: 1.5px solid transparent;
-    transition: transform .15s ease;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 700; letter-spacing: .3px;
+    padding: 6px 14px; border-radius: 20px;
+    border: 1.5px solid transparent; transition: transform .15s ease;
 }
 .bb-role-badge i { font-size: 13px; }
 .bb-role-student { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
 .bb-role-alumni  { background: #fef3c7; color: #d97706; border-color: #fde68a; }
+.bb-role-teacher { background: #f3e8ff; color: #7c3aed; border-color: #ddd6fe; }
+
+/* Post A Job button (navbar) */
+.bb-post-job-btn {
+    display:inline-flex; align-items:center; gap:7px;
+    background:linear-gradient(135deg, #4f46e5, #7c73f0); color:#fff;
+    border:none; border-radius:20px; padding:8px 16px;
+    font-size:13px; font-weight:700; letter-spacing:.2px;
+    box-shadow:0 2px 8px rgba(79,70,229,.3); transition:all .15s ease;
+}
+.bb-post-job-btn:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(79,70,229,.4); }
+.bb-post-job-btn i { font-size:14px; }
+@media (max-width:767px){ .bb-post-job-btn { padding:8px 11px; border-radius:50%; } }
+
+/* Post Job modal form */
+.bb-job-label { display:block; font-size:12.5px; font-weight:600; color:#374151; margin-bottom:5px; }
+.bb-job-input {
+    width:100%; border:1.5px solid #e4e6eb; border-radius:10px;
+    padding:9px 12px; font-size:13.5px; outline:none; transition:border-color .15s, box-shadow .15s;
+    background:#fff;
+}
+.bb-job-input:focus { border-color:#4f46e5; box-shadow:0 0 0 3px rgba(79,70,229,.12); }
+textarea.bb-job-input { resize:vertical; }
+.bb-job-submit-btn {
+    background:linear-gradient(135deg,#4f46e5,#7c73f0); color:#fff; border:none;
+    border-radius:10px; padding:9px 22px; font-size:14px; font-weight:700;
+    display:inline-flex; align-items:center; transition:all .15s;
+}
+.bb-job-submit-btn:hover { box-shadow:0 4px 14px rgba(79,70,229,.4); }
+.bb-job-submit-btn:disabled { opacity:.6; }
+
+.postjob-dialog { height:calc(100vh - 3.5rem); }
+.postjob-content { max-height:100%; display:flex; flex-direction:column; overflow:hidden; }
+.postjob-form { display:flex; flex-direction:column; min-height:0; flex:1 1 auto; overflow:hidden; }
+.postjob-body { overflow-y:auto; flex:1 1 auto; min-height:0; }
+.postjob-footer { flex:0 0 auto; }
+@media (max-width:576px){ .postjob-dialog { height:calc(100vh - 1rem); } }
 
 /* ===== RIGHT SIDEBAR (reusable) ===== */
 .bb-side-card {
-    background: var(--bb-card);
-    border-radius: var(--bb-radius);
-    box-shadow: var(--bb-shadow);
-    overflow: hidden;
+    background: var(--bb-card); border-radius: var(--bb-radius);
+    box-shadow: var(--bb-shadow); overflow: hidden;
 }
 .bb-side-head {
     display: flex; align-items: center; justify-content: space-between;
@@ -282,24 +316,19 @@
 }
 .bb-connect-btn:hover { background: var(--bb-primary); color: #fff; }
 
-/* Right sidebar own scroll (so nothing gets cut off) */
+/* Right sidebar own scroll */
 .bb-right-sidebar {
-    position: sticky;
-    top: 70px;
-    max-height: calc(100vh - 85px);
-    overflow-y: auto;
-    padding-bottom: 10px;
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
+    position: sticky; top: 70px; max-height: calc(100vh - 85px);
+    overflow-y: auto; padding-bottom: 10px;
+    scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
 }
 .bb-right-sidebar::-webkit-scrollbar { width: 6px; }
 .bb-right-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 .bb-right-sidebar::-webkit-scrollbar-track { background: transparent; }
 
-/* Active Now — name + role stacked */
 .bb-active-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 
-/* Mini role badge (Alumni / Student) */
+/* Mini role badge (Alumni / Student / Teacher) */
 .bb-mini-badge {
     display: inline-flex; align-items: center; gap: 3px;
     font-size: 9.5px; font-weight: 700; letter-spacing: .2px;
@@ -308,6 +337,7 @@
 .bb-mini-badge i { font-size: 9px; }
 .bb-mini-alumni  { background: #fef3c7; color: #d97706; }
 .bb-mini-student { background: #eef2ff; color: #4f46e5; }
+.bb-mini-teacher { background: #f3e8ff; color: #7c3aed; }
 
 /* ===== EMOJI PICKER ===== */
 .bb-emoji-btn {
@@ -392,7 +422,6 @@
     transition:all .15s;
 }
 .bb-jobcard-btn:hover { background:var(--bb-primary); color:#fff; }
-/* job card — posted time, save btn, footer */
 .bb-jobcard-posted { font-size:11.5px; color:var(--bb-muted); margin:3px 0 0; display:flex; align-items:center; gap:5px; }
 .bb-jobcard-posted i { font-size:10px; }
 .bb-job-save-btn { border:none; background:transparent; color:var(--bb-muted); width:34px; height:34px; border-radius:50%; cursor:pointer; flex-shrink:0; font-size:17px; transition:all .15s; }
@@ -401,29 +430,92 @@
 .bb-jobcard-foot { margin-top:12px; padding-top:11px; border-top:1px solid var(--bb-line); font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:6px; }
 .bb-foot-expiring { color:#ea580c; }
 .bb-foot-expired { color:#dc2626; }
-/* ===== নামের নিচে role label (post-card author) ===== */
-.bb-author-role {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: .2px;
-    padding: 1px 8px;
-    border-radius: 12px;
-    width: fit-content;
-    margin: 1px 0;
+
+/* ============================================
+   TEACHER FEED — PREMIUM VIOLET THEME
+   শুধু teacher এর জন্য আলাদা প্রিমিয়াম লুক
+   ============================================ */
+.bb-teacher-feed {
+    background: linear-gradient(180deg, #faf8ff 0%, #f4f0fb 100%) !important;
 }
-.bb-author-role i { font-size: 9px; }
-.bb-author-role-alumni  { background: #fef3c7; color: #d97706; }
-.bb-author-role-student { background: #eef2ff; color: #4f46e5; }
-.bb-author-role-teacher { background: #f3e8ff; color: #7c3aed; }
+.bb-teacher-feed .navbar {
+    border-top: 3px solid #7c3aed;
+    box-shadow: 0 2px 12px rgba(124,58,237,.08);
+}
+.bb-teacher-feed .navbar-brand { color: #7c3aed !important; }
+.bb-teacher-feed .bb-role-badge {
+    background: #f3e8ff !important; color: #7c3aed !important; border-color: #ddd6fe !important;
+}
+.bb-teacher-feed .create-post-box {
+    border: 1px solid #ede9fe; box-shadow: 0 2px 10px rgba(124,58,237,.06);
+}
+.bb-teacher-feed .create-post-avatar {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa) !important;
+}
+.bb-teacher-feed .sidebar-link.active { color: #7c3aed !important; }
+.bb-teacher-feed .sidebar-link.active i { color: #7c3aed !important; }
+.bb-teacher-feed .bb-post-card:hover {
+    box-shadow: 0 8px 28px rgba(124,58,237,.12), 0 2px 6px rgba(16,24,40,.06);
+}
+.bb-teacher-feed .bb-avatar {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    box-shadow: 0 2px 6px rgba(124,58,237,.25);
+}
+.bb-teacher-feed .bb-author-link:hover { color: #7c3aed; }
+.bb-teacher-feed .bb-action-btn.active-like { color: #7c3aed; }
+.bb-teacher-feed .bb-side-title i { color: #7c3aed; }
 
-/* navbar role badge — teacher */
-.bb-role-teacher { background: #f3e8ff; color: #7c3aed; border-color: #e9d5ff; }
-.bb-mini-teacher { background: #f3e8ff; color: #7c3aed; }
+/* Teacher Workspace ribbon */
+.bb-teacher-ribbon {
+    display: flex; align-items: center; gap: 9px;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color: #fff; border-radius: 14px;
+    padding: 13px 18px; margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(124,58,237,.25);
+}
+.bb-teacher-ribbon i { font-size: 22px; }
+.bb-teacher-ribbon .bb-tr-title { font-size: 15px; font-weight: 700; letter-spacing:-.2px; }
+.bb-teacher-ribbon .bb-tr-sub { font-size: 12px; opacity:.85; }
 
-.bb-search-wrap{position:relative}.bb-search-box{background:#f0f2f5;border-radius:50px;padding:.45rem 1rem;display:flex;align-items:center;width:260px;transition:width .2s ease}.bb-search-box:focus-within{width:320px;background:#e4e6eb}.bb-search-box input{background:transparent;border:none;outline:none;margin-left:8px;font-size:.9rem;width:100%}.bb-search-dropdown{position:absolute;top:calc(100% + 8px);left:0;width:360px;background:#fff;border-radius:14px;z-index:9999;display:none;overflow:hidden;box-shadow:0 8px 32px rgba(16,24,40,.14);border:1px solid #eceef1}.bb-search-dropdown.show{display:block;animation:sdIn .18s ease}@keyframes sdIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}.bb-sd-label{font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.5px;text-transform:uppercase;padding:12px 14px 6px}.bb-sd-item{display:flex;align-items:center;gap:11px;padding:9px 14px;cursor:pointer;transition:background .12s;text-decoration:none}.bb-sd-item:hover,.bb-sd-item.active{background:#f3f4f8}.bb-sd-avatar{width:42px;height:42px;border-radius:50%;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px}.bb-sd-avatar img{width:100%;height:100%;object-fit:cover}.bb-sd-info{flex-grow:1;min-width:0}.bb-sd-name{font-size:.9rem;font-weight:700;color:#1e1f24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bb-sd-sub{font-size:.78rem;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}.bb-sd-topic{font-size:.74rem;color:#4f46e5;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bb-sd-rolechip{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:12px;flex-shrink:0}.bb-sd-student{background:#eef2ff;color:#4f46e5}.bb-sd-alumni{background:#fef3c7;color:#d97706}.bb-sd-teacher{background:#f3e8ff;color:#7c3aed}.bb-sd-footer{border-top:1px solid #eceef1;padding:10px 14px;font-size:.86rem;font-weight:700;color:#4f46e5;text-align:center;text-decoration:none;display:block;transition:background .12s}.bb-sd-footer:hover{background:#f3f4f8}.bb-sd-spinner{text-align:center;padding:20px;color:#6b7280;font-size:.88rem}.bb-sd-empty{text-align:center;padding:20px 14px;color:#9ca3af;font-size:.86rem}
+/* LIVE SEARCH DROPDOWN */
+.bb-search-wrap { position: relative; }
+.bb-search-box {
+    background: #f0f2f5; border-radius: 50px; padding: .45rem 1rem;
+    display: flex; align-items: center; width: 260px; transition: width .2s ease;
+}
+.bb-search-box:focus-within { width: 320px; background: #e4e6eb; }
+.bb-search-box input { background: transparent; border: none; outline: none; margin-left: 8px; font-size: .9rem; width: 100%; }
+.bb-search-dropdown {
+    position: absolute; top: calc(100% + 8px); left: 0; width: 360px;
+    background: #fff; border-radius: 14px; z-index: 9999; display: none; overflow: hidden;
+    box-shadow: 0 8px 32px rgba(16,24,40,.14); border: 1px solid #eceef1;
+}
+.bb-search-dropdown.show { display: block; animation: sdIn .18s ease; }
+@keyframes sdIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+.bb-sd-label { font-size:11px; font-weight:700; color:#6b7280; letter-spacing:.5px; text-transform:uppercase; padding:12px 14px 6px; }
+.bb-sd-item { display:flex; align-items:center; gap:11px; padding:9px 14px; cursor:pointer; transition:background .12s; text-decoration:none; }
+.bb-sd-item:hover, .bb-sd-item.active { background:#f3f4f8; }
+.bb-sd-avatar {
+    width:42px; height:42px; border-radius:50%; flex-shrink:0; overflow:hidden;
+    background:linear-gradient(135deg,#4f46e5,#7c73f0); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px;
+}
+.bb-sd-avatar img { width:100%; height:100%; object-fit:cover; }
+.bb-sd-info { flex-grow:1; min-width:0; }
+.bb-sd-name { font-size:.9rem; font-weight:700; color:#1e1f24; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bb-sd-sub { font-size:.78rem; color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
+.bb-sd-topic { font-size:.74rem; color:#4f46e5; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bb-sd-rolechip { font-size:9.5px; font-weight:700; padding:1px 7px; border-radius:12px; flex-shrink:0; }
+.bb-sd-student { background:#eef2ff; color:#4f46e5; }
+.bb-sd-alumni  { background:#fef3c7; color:#d97706; }
+.bb-sd-teacher { background:#f3e8ff; color:#7c3aed; }
+.bb-sd-footer {
+    border-top:1px solid #eceef1; padding:10px 14px; font-size:.86rem; font-weight:700;
+    color:#4f46e5; text-align:center; text-decoration:none; display:block; transition:background .12s;
+}
+.bb-sd-footer:hover { background:#f3f4f8; }
+.bb-sd-spinner { text-align:center; padding:20px; color:#6b7280; font-size:.88rem; }
+.bb-sd-empty { text-align:center; padding:20px 14px; color:#9ca3af; font-size:.86rem; }
 .bb-friend-btn {
     display:inline-flex;align-items:center;gap:7px;
     font-size:.88rem;font-weight:700;padding:9px 18px;
@@ -444,11 +536,12 @@
 
         </style>
 </head>
-<body>
+<body class="bb-teacher-feed">
 
 <nav class="navbar navbar-expand-md sticky-top">
-    <div class="d-flex align-items-center gap-2">
-            <a style="color:black;" class="navbar-brand m-0" href="{{ route('home') }}">Borobhai.online</a>
+    <div class="container-fluid">
+        <div class="d-flex align-items-center gap-2">
+            <a style="color:black;" class="navbar-brand m-0" href="http://127.0.0.1:8000">Borobhai.online</a>
 
             <div class="bb-search-wrap d-none d-lg-block">
                 <div class="bb-search-box">
@@ -461,13 +554,15 @@
             </div>
 
         </div>
-
         <div class="d-flex align-items-center gap-2 ms-auto">
-            @php $role = Auth::user()->role; @endphp
-            <span class="bb-role-badge d-none d-sm-inline-flex {{ $role === 'alumni' ? 'bb-role-alumni' : 'bb-role-student' }}">
-                <i class="bi {{ $role === 'alumni' ? 'bi-mortarboard-fill' : 'bi-backpack-fill' }}"></i>
-                {{ ucfirst($role) }} Feed
-            </span>
+
+            
+            
+            
+                            <span class="bb-role-badge d-none d-sm-inline-flex bb-role-teacher">
+                    <i class="bi bi-easel2-fill"></i> Teacher Feed
+                </span>
+            
             <a href="#" class="nav-icon-btn d-md-none"><i class="bi bi-search"></i></a>
             <a href="#" class="nav-icon-btn"><i class="bi bi-messenger"></i></a>
             <a href="#" class="nav-icon-btn"><i class="bi bi-bell-fill"></i></a>
@@ -476,18 +571,17 @@
                     <i class="bi bi-person-fill"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow">
-                    <li><span class="dropdown-item-text fw-bold text-dark">{{ Auth::user()->name }}</span></li>
+                    <li><span class="dropdown-item-text fw-bold text-dark">teacher</span></li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
-                        <a href="{{ route('profile.show') }}" class="dropdown-item">
+                        <a href="http://127.0.0.1:8000/profile" class="dropdown-item">
                             <i class="bi bi-person-circle me-2"></i>View Profile
                         </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
-                        <form action="{{ route('logout') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="dropdown-item text-danger">
+                        <form action="http://127.0.0.1:8000/logout" method="POST">
+                            <input type="hidden" name="_token" value="yLeZsHdJiPbawa5jvfsPVpaGFzX1iVZyb5Jhpr6w" autocomplete="off">                            <button type="submit" class="dropdown-item text-danger">
                                 <i class="bi bi-box-arrow-right me-2"></i>Logout
                             </button>
                         </form>
@@ -501,100 +595,50 @@
 <div class="container-fluid mt-3">
     <div class="row px-md-2">
 
-        {{-- Sidebar --}}
         
         <div class="col-md-3 d-none d-md-block position-sticky" style="top:70px;height:fit-content;">
             <div class="d-flex flex-column gap-1">
-                <a href="{{ route('home') }}" class="sidebar-link active"><i class="bi bi-house-door-fill text-primary"></i><span>Home</span></a>
-                
-                <a href="{{ route('friends.index') }}" class="sidebar-link">
+                <a href="http://127.0.0.1:8000" class="sidebar-link active"><i class="bi bi-house-door-fill text-primary"></i><span>Home</span></a>
+
+                <a href="http://127.0.0.1:8000/friends" class="sidebar-link">
                     <i class="bi bi-people-fill text-info"></i>
                     <span>See Friend List</span>
                 </a>
 
-                {{-- requests accept or decline --}}
-                {{-- Pending Friend Requests --}}
-                @php
-                    $pendingRequests = \App\Models\Friendship::where('receiver_id', Auth::id())
-                        ->where('status', 'pending')
-                        ->with('sender:id,name,role,profile_picture')
-                        ->latest()
-                        ->limit(5)
-                        ->get();
-                @endphp
+                
+                
+                
+                <a href="http://127.0.0.1:8000/saved" class="sidebar-link"><i class="bi bi-bookmark-heart-fill text-warning"></i><span>Saved</span></a>
 
-                @if(isset($pendingRequests) && $pendingRequests->count() > 0)
-                <div class="bb-side-card mb-3">
-                    <div class="bb-side-head">
-                        <span class="bb-side-title">
-                            <i class="bi bi-person-plus-fill text-primary"></i>
-                            Friend Requests
-                            <span class="badge bg-primary rounded-pill ms-1" style="font-size:10px;">
-                                {{ $pendingRequests->count() }}
-                            </span>
-                        </span>
-                    </div>
-                    <div class="bb-side-body">
-                        @foreach($pendingRequests as $req)
-                        <div class="bb-suggest-item" id="freq-{{ $req->sender->id }}">
-                            <a href="{{ route('profile.view', $req->sender->id) }}"
-                            class="bb-suggest-avatar" style="text-decoration:none;overflow:hidden;">
-                                @if($req->sender->profile_picture)
-                                    <img src="{{ asset('storage/'.$req->sender->profile_picture) }}"
-                                        style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
-                                @else
-                                    {{ strtoupper(substr($req->sender->name,0,1)) }}
-                                @endif
-                            </a>
-                            <div class="bb-suggest-info">
-                                <a href="{{ route('profile.view', $req->sender->id) }}"
-                                class="bb-suggest-name" style="text-decoration:none;">
-                                    {{ $req->sender->name }}
-                                </a>
-                                <p class="bb-suggest-role">{{ ucfirst($req->sender->role) }}</p>
-                                <div class="d-flex gap-1 mt-1">
-                                    <button class="btn btn-primary btn-sm py-0 px-2" style="font-size:11px;"
-                                            onclick="friendAction('accept', {{ $req->sender->id }}, this)">
-                                        Accept
-                                    </button>
-                                    <button class="btn btn-light btn-sm py-0 px-2" style="font-size:11px;"
-                                            onclick="friendAction('decline', {{ $req->sender->id }}, this)">
-                                        Decline
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-                @endif
+                <a href="http://127.0.0.1:8000/my-applications" class="sidebar-link"><i class="bi bi-briefcase-fill text-primary"></i><span>Job History</span></a>
 
-                <a href="{{ route('saved.index') }}" class="sidebar-link"><i class="bi bi-bookmark-heart-fill text-warning"></i><span>Saved</span></a>
-
-                <a href="{{ route('jobs.myApplications') }}" class="sidebar-link"><i class="bi bi-briefcase-fill text-primary"></i><span>Job History</span></a>
-
-                <a href="{{ route('search.index') }}" class="sidebar-link">
+                <a href="http://127.0.0.1:8000/search" class="sidebar-link">
                     <i class="bi bi-search text-primary"></i><span>Search People</span>
                 </a>
 
             </div>
         </div>
 
-        {{-- Feed --}}
+        
         <div class="col-12 col-md-6">
 
-            {{-- Create Post Box --}}
+            
+                        <div class="bb-teacher-ribbon">
+                <i class="bi bi-easel2-fill"></i>
+                <div>
+                    <div class="bb-tr-title">Teacher Workspace</div>
+                    <div class="bb-tr-sub">Share knowledge, research & resources with the community</div>
+                </div>
+            </div>
+            
+            
             <div class="create-post-box mb-3">
                 <div class="d-flex align-items-center gap-2 mb-3">
-                    <a href="{{ route('profile.show') }}" class="create-post-avatar" style="text-decoration:none;" title="Go to your profile">
-                        @if(Auth::user()->profile_picture)
-                            <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
-                        @else
-                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
-                        @endif
-                    </a>
+                    <a href="http://127.0.0.1:8000/profile" class="create-post-avatar" style="text-decoration:none;" title="Go to your profile">
+                                                    <img src="http://127.0.0.1:8000/storage/profiles/STdJLDKjO8EDMviAEFQFQ5qQfEhiDO3v4InTSTWc.jpg" alt="me" class="cpa-img">
+                                            </a>
                     <div class="mock-input" onclick="resetPostBg();" data-bs-toggle="modal" data-bs-target="#createPostModal">
-                        What's on your mind, {{ explode(' ', Auth::user()->name)[0] }}?
+                        What's on your mind, teacher?
                     </div>
                 </div>
                 <hr class="my-2">
@@ -613,28 +657,411 @@
                 </div>
             </div>
 
-            {{-- Posts Feed --}}
-            {{-- Unified Feed: Posts + Jobs mixed by time (LinkedIn style) --}}
+            
+            
             <div id="postsFeedContainer">
-            @forelse($feedItems as $item)
-                @if($item['type'] === 'job')
-                    @include('partials.job-card', ['job' => $item['model'], 'appliedJobIds' => $appliedJobIds ?? []])
-                @else
-                    @include('partials.post-card', ['post' => $item['model']])
-                @endif
-            @empty
-                <div id="emptyFeedState" class="card p-5 text-center shadow-sm border-0 rounded-3 my-3 bg-white">
-                    <div class="card-body">
-                        <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-                        <h5 class="fw-bold text-secondary">No post available right now</h5>
-                        <p class="text-muted small mb-0">Be the first one to share something!</p>
-                    </div>
-                </div>
-            @endforelse
-        </div>
-          
+                                                <div class="bb-post-card" id="postCard-124" data-bg-color="">
 
-        {{-- Infinite Scroll: Loader + Sentinel --}}
+    
+    <div class="bb-post-head">
+        <div class="bb-head-left">
+            <a href="http://127.0.0.1:8000/profile/2" class="bb-avatar author-avatar-zone" style="text-decoration:none;" title="View profile">
+                                    <img src="http://127.0.0.1:8000/storage/profiles/sh0UKM4ATo9mWi948wD1YecF3ln8g8nW4n0tkDcO.jpg" alt="Shahidul Islam Shovon" class="bb-avatar-img">
+                            </a>
+            <div class="bb-head-meta">
+                <a href="http://127.0.0.1:8000/profile/2" class="bb-author author-name-zone bb-author-link">Shahidul Islam Shovon</a>
+                
+                                <span class="bb-author-role
+                     bb-author-role-student ">
+                                            <i class="bi bi-backpack-fill"></i> Student
+                                    </span>
+                <span class="bb-time"><i class="bi bi-globe-americas"></i> 21 hours ago</span>
+            </div>
+        </div>
+            </div>
+
+    
+    
+        <div class="bb-caption">
+        <p class="mb-0 dynamic-caption">তোমাকে না পেয়েই এত ভালবাসি<br />
+তোমাকে পেয়ে গেল কত ভালবাসতাম 😅</p>
+    </div>
+    
+    
+    
+        <div class="bb-media-zone dynamic-media-container-zone" data-media-json="[{&quot;type&quot;:&quot;video&quot;,&quot;url&quot;:&quot;http:\/\/127.0.0.1:8000\/stream\/video\/posts\/videos\/JLafR4ZI4QpiS2H0xtFPT6WKJMw1Ty3LSSLhcO5i.mp4&quot;}]">
+
+                                    
+                <div class="bb-video-wrap">
+                    <video src="http://127.0.0.1:8000/stream/video/posts/videos/JLafR4ZI4QpiS2H0xtFPT6WKJMw1Ty3LSSLhcO5i.mp4" class="bb-inline-video" preload="metadata" controls playsinline></video>
+                    <button type="button" class="bb-expand-btn" title="Expand"
+                            onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),0)">
+                        <i class="bi bi-arrows-fullscreen"></i>
+                    </button>
+                </div>
+            
+            </div>
+    
+    
+    
+    
+    <div class="bb-stats">
+        <div id="like-zone-124" class="bb-like-stat">
+                            <span class="bb-like-bubble"><i class="bi bi-hand-thumbs-up-fill"></i></span>
+                <span class="like-count-text">1</span>
+                    </div>
+        <div>
+            <span class="bb-stat-link" id="comment-count-124"
+                  onclick="openCommentModal(124)">2 comments</span>
+        </div>
+    </div>
+
+    
+        <div class="bb-actions">
+        <button type="button"
+                class="bb-action-btn "
+                id="likeBtn-124" onclick="toggleLike(124)">
+            <i class="bi bi-hand-thumbs-up"></i>
+            <span>Like</span>
+        </button>
+        <button type="button" class="bb-action-btn" onclick="openCommentModal(124)">
+            <i class="bi bi-chat-square-text"></i>
+            <span>Comment</span>
+        </button>
+        <button type="button" class="bb-action-btn" onclick="openShareModal(124)">
+            <i class="bi bi-share"></i>
+            <span>Share</span>
+        </button>
+        <button type="button"
+                class="bb-action-btn "
+                id="saveBtn-124" onclick="toggleSave(124)">
+            <i class="bi bi-bookmark" id="saveIcon-124"></i>
+            <span id="saveText-124">Save</span>
+        </button>
+    </div>
+
+</div>                                                                <div class="bb-post-card" id="postCard-123" data-bg-color="">
+
+    
+    <div class="bb-post-head">
+        <div class="bb-head-left">
+            <a href="http://127.0.0.1:8000/profile/2" class="bb-avatar author-avatar-zone" style="text-decoration:none;" title="View profile">
+                                    <img src="http://127.0.0.1:8000/storage/profiles/sh0UKM4ATo9mWi948wD1YecF3ln8g8nW4n0tkDcO.jpg" alt="Shahidul Islam Shovon" class="bb-avatar-img">
+                            </a>
+            <div class="bb-head-meta">
+                <a href="http://127.0.0.1:8000/profile/2" class="bb-author author-name-zone bb-author-link">Shahidul Islam Shovon</a>
+                
+                                <span class="bb-author-role
+                     bb-author-role-student ">
+                                            <i class="bi bi-backpack-fill"></i> Student
+                                    </span>
+                <span class="bb-time"><i class="bi bi-globe-americas"></i> 21 hours ago</span>
+            </div>
+        </div>
+            </div>
+
+    
+    
+    
+    
+    
+        <div class="bb-media-zone dynamic-media-container-zone" data-media-json="[{&quot;type&quot;:&quot;video&quot;,&quot;url&quot;:&quot;http:\/\/127.0.0.1:8000\/stream\/video\/posts\/videos\/9FAU28ASOaQn7uqjjsE8nEHqbATIMyk9W4QNXPSx.mp4&quot;}]">
+
+                                    
+                <div class="bb-video-wrap">
+                    <video src="http://127.0.0.1:8000/stream/video/posts/videos/9FAU28ASOaQn7uqjjsE8nEHqbATIMyk9W4QNXPSx.mp4" class="bb-inline-video" preload="metadata" controls playsinline></video>
+                    <button type="button" class="bb-expand-btn" title="Expand"
+                            onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),0)">
+                        <i class="bi bi-arrows-fullscreen"></i>
+                    </button>
+                </div>
+            
+            </div>
+    
+    
+    
+    
+    <div class="bb-stats">
+        <div id="like-zone-123" class="bb-like-stat">
+                            <span class="bb-like-bubble"><i class="bi bi-hand-thumbs-up-fill"></i></span>
+                <span class="like-count-text">1</span>
+                    </div>
+        <div>
+            <span class="bb-stat-link" id="comment-count-123"
+                  onclick="openCommentModal(123)">0 comments</span>
+        </div>
+    </div>
+
+    
+        <div class="bb-actions">
+        <button type="button"
+                class="bb-action-btn "
+                id="likeBtn-123" onclick="toggleLike(123)">
+            <i class="bi bi-hand-thumbs-up"></i>
+            <span>Like</span>
+        </button>
+        <button type="button" class="bb-action-btn" onclick="openCommentModal(123)">
+            <i class="bi bi-chat-square-text"></i>
+            <span>Comment</span>
+        </button>
+        <button type="button" class="bb-action-btn" onclick="openShareModal(123)">
+            <i class="bi bi-share"></i>
+            <span>Share</span>
+        </button>
+        <button type="button"
+                class="bb-action-btn "
+                id="saveBtn-123" onclick="toggleSave(123)">
+            <i class="bi bi-bookmark" id="saveIcon-123"></i>
+            <span id="saveText-123">Save</span>
+        </button>
+    </div>
+
+</div>                                                                <div class="bb-post-card" id="postCard-122" data-bg-color="">
+
+    
+    <div class="bb-post-head">
+        <div class="bb-head-left">
+            <a href="http://127.0.0.1:8000/profile/2" class="bb-avatar author-avatar-zone" style="text-decoration:none;" title="View profile">
+                                    <img src="http://127.0.0.1:8000/storage/profiles/sh0UKM4ATo9mWi948wD1YecF3ln8g8nW4n0tkDcO.jpg" alt="Shahidul Islam Shovon" class="bb-avatar-img">
+                            </a>
+            <div class="bb-head-meta">
+                <a href="http://127.0.0.1:8000/profile/2" class="bb-author author-name-zone bb-author-link">Shahidul Islam Shovon</a>
+                
+                                <span class="bb-author-role
+                     bb-author-role-student ">
+                                            <i class="bi bi-backpack-fill"></i> Student
+                                    </span>
+                <span class="bb-time"><i class="bi bi-globe-americas"></i> 21 hours ago</span>
+            </div>
+        </div>
+            </div>
+
+    
+    
+        <div class="bb-caption">
+        <p class="mb-0 dynamic-caption">Its argentina</p>
+    </div>
+    
+    
+    
+        <div class="bb-media-zone dynamic-media-container-zone" data-media-json="[{&quot;type&quot;:&quot;image&quot;,&quot;url&quot;:&quot;http:\/\/127.0.0.1:8000\/storage\/posts\/images\/3DbeODtYWirN4DwBqmnUQBZYAhPl2psTdTgF4TLr.jpg&quot;}]">
+
+                                    <div class="bb-media-single">
+                    <img src="http://127.0.0.1:8000/storage/posts/images/3DbeODtYWirN4DwBqmnUQBZYAhPl2psTdTgF4TLr.jpg" class="bb-single-img"
+                         onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),0)">
+                </div>
+            
+            </div>
+    
+    
+    
+    
+    <div class="bb-stats">
+        <div id="like-zone-122" class="bb-like-stat">
+                            <span class="bb-like-bubble"><i class="bi bi-hand-thumbs-up-fill"></i></span>
+                <span class="like-count-text">1</span>
+                    </div>
+        <div>
+            <span class="bb-stat-link" id="comment-count-122"
+                  onclick="openCommentModal(122)">0 comments</span>
+        </div>
+    </div>
+
+    
+        <div class="bb-actions">
+        <button type="button"
+                class="bb-action-btn "
+                id="likeBtn-122" onclick="toggleLike(122)">
+            <i class="bi bi-hand-thumbs-up"></i>
+            <span>Like</span>
+        </button>
+        <button type="button" class="bb-action-btn" onclick="openCommentModal(122)">
+            <i class="bi bi-chat-square-text"></i>
+            <span>Comment</span>
+        </button>
+        <button type="button" class="bb-action-btn" onclick="openShareModal(122)">
+            <i class="bi bi-share"></i>
+            <span>Share</span>
+        </button>
+        <button type="button"
+                class="bb-action-btn "
+                id="saveBtn-122" onclick="toggleSave(122)">
+            <i class="bi bi-bookmark" id="saveIcon-122"></i>
+            <span id="saveText-122">Save</span>
+        </button>
+    </div>
+
+</div>                                                                <div class="bb-post-card" id="postCard-121" data-bg-color="">
+
+    
+    <div class="bb-post-head">
+        <div class="bb-head-left">
+            <a href="http://127.0.0.1:8000/profile/8" class="bb-avatar author-avatar-zone" style="text-decoration:none;" title="View profile">
+                                    J
+                            </a>
+            <div class="bb-head-meta">
+                <a href="http://127.0.0.1:8000/profile/8" class="bb-author author-name-zone bb-author-link">Jafar Hossain</a>
+                
+                                <span class="bb-author-role
+                     bb-author-role-teacher
+                    ">
+                                            <i class="bi bi-easel2-fill"></i> Teacher
+                                    </span>
+                <span class="bb-time"><i class="bi bi-globe-americas"></i> 3 days ago</span>
+            </div>
+        </div>
+            </div>
+
+    
+    
+        <div class="bb-caption">
+        <p class="mb-0 dynamic-caption">❤️</p>
+    </div>
+    
+    
+    
+    
+    
+    
+    
+    <div class="bb-stats">
+        <div id="like-zone-121" class="bb-like-stat">
+                            <span class="bb-like-bubble"><i class="bi bi-hand-thumbs-up-fill"></i></span>
+                <span class="like-count-text">2</span>
+                    </div>
+        <div>
+            <span class="bb-stat-link" id="comment-count-121"
+                  onclick="openCommentModal(121)">0 comments</span>
+        </div>
+    </div>
+
+    
+        <div class="bb-actions">
+        <button type="button"
+                class="bb-action-btn "
+                id="likeBtn-121" onclick="toggleLike(121)">
+            <i class="bi bi-hand-thumbs-up"></i>
+            <span>Like</span>
+        </button>
+        <button type="button" class="bb-action-btn" onclick="openCommentModal(121)">
+            <i class="bi bi-chat-square-text"></i>
+            <span>Comment</span>
+        </button>
+        <button type="button" class="bb-action-btn" onclick="openShareModal(121)">
+            <i class="bi bi-share"></i>
+            <span>Share</span>
+        </button>
+        <button type="button"
+                class="bb-action-btn "
+                id="saveBtn-121" onclick="toggleSave(121)">
+            <i class="bi bi-bookmark" id="saveIcon-121"></i>
+            <span id="saveText-121">Save</span>
+        </button>
+    </div>
+
+</div>                                                                <div class="bb-jobcard" id="jobCard-6">
+    <div class="bb-jobcard-top">
+        <div class="bb-jobcard-logo" style="background:#eff6ff;color:#2563eb;">
+            S
+        </div>
+        <div class="bb-jobcard-headinfo">
+            <a href="http://127.0.0.1:8000/jobs/6" class="bb-jobcard-title">Video Editor</a>
+            <p class="bb-jobcard-company">Shahidul Graphics and Multimedia · Narayanganj</p>
+            <p class="bb-jobcard-posted"><i class="bi bi-clock"></i> Posted at 20 Jun, 8:29 AM</p>
+        </div>
+        <div class="d-flex align-items-start gap-1">
+            <button class="bb-job-save-btn " id="jobSaveBtn-6"
+                    onclick="toggleJobSave(6)" title="Save job">
+                <i class="bi bi-bookmark"></i>
+            </button>
+                    </div>
+    </div>
+
+    <div class="bb-jobcard-meta">
+        <span class="bb-jobcard-tag" style="background:#eff6ff;color:#2563eb;"><i class="bi bi-clock-history"></i> Part-time</span>
+        <span class="bb-jobcard-pill"><i class="bi bi-cash-stack"></i> 12,000</span>        <span class="bb-jobcard-pill"><i class="bi bi-bar-chart"></i> Fresher</span>        <span class="bb-jobcard-pill"><i class="bi bi-calendar-event"></i> 25 Jun 2026</span>    </div>
+
+            <a href="http://127.0.0.1:8000/jobs/6" class="bb-jobcard-btn">
+            <i class="bi bi-box-arrow-up-right me-1"></i> View Details & Apply
+        </a>
+    
+            <div class="bb-jobcard-foot bb-foot-expiring"><i class="bi bi-alarm"></i> Expiring soon — apply before 25 Jun 2026</div>
+    </div>                                                                <div class="bb-post-card" id="postCard-120" data-bg-color="">
+
+    
+    <div class="bb-post-head">
+        <div class="bb-head-left">
+            <a href="http://127.0.0.1:8000/profile/5" class="bb-avatar author-avatar-zone" style="text-decoration:none;" title="View profile">
+                                    <img src="http://127.0.0.1:8000/storage/profiles/aVuhR8kSgWyZEnRlfmvY1zFzre2gqNXIB6LePsyR.jpg" alt="Shahidul Islam Khan" class="bb-avatar-img">
+                            </a>
+            <div class="bb-head-meta">
+                <a href="http://127.0.0.1:8000/profile/5" class="bb-author author-name-zone bb-author-link">Shahidul Islam Khan</a>
+                
+                                <span class="bb-author-role
+                     bb-author-role-alumni
+                    ">
+                                            <i class="bi bi-mortarboard-fill"></i> Alumni
+                                    </span>
+                <span class="bb-time"><i class="bi bi-globe-americas"></i> 6 days ago</span>
+            </div>
+        </div>
+            </div>
+
+    
+    
+    
+    
+    
+        <div class="bb-media-zone dynamic-media-container-zone" data-media-json="[{&quot;type&quot;:&quot;image&quot;,&quot;url&quot;:&quot;http:\/\/127.0.0.1:8000\/storage\/posts\/images\/TEa5kLhI8JCMw5MCdMv0wvihqZj9iWe03DyodMC9.png&quot;}]">
+
+                                    <div class="bb-media-single">
+                    <img src="http://127.0.0.1:8000/storage/posts/images/TEa5kLhI8JCMw5MCdMv0wvihqZj9iWe03DyodMC9.png" class="bb-single-img"
+                         onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),0)">
+                </div>
+            
+            </div>
+    
+    
+    
+    
+    <div class="bb-stats">
+        <div id="like-zone-120" class="bb-like-stat">
+                            <span class="bb-like-bubble"><i class="bi bi-hand-thumbs-up-fill"></i></span>
+                <span class="like-count-text">1</span>
+                    </div>
+        <div>
+            <span class="bb-stat-link" id="comment-count-120"
+                  onclick="openCommentModal(120)">0 comments</span>
+        </div>
+    </div>
+
+    
+        <div class="bb-actions">
+        <button type="button"
+                class="bb-action-btn "
+                id="likeBtn-120" onclick="toggleLike(120)">
+            <i class="bi bi-hand-thumbs-up"></i>
+            <span>Like</span>
+        </button>
+        <button type="button" class="bb-action-btn" onclick="openCommentModal(120)">
+            <i class="bi bi-chat-square-text"></i>
+            <span>Comment</span>
+        </button>
+        <button type="button" class="bb-action-btn" onclick="openShareModal(120)">
+            <i class="bi bi-share"></i>
+            <span>Share</span>
+        </button>
+        <button type="button"
+                class="bb-action-btn "
+                id="saveBtn-120" onclick="toggleSave(120)">
+            <i class="bi bi-bookmark" id="saveIcon-120"></i>
+            <span id="saveText-120">Save</span>
+        </button>
+    </div>
+
+</div>                                    </div>
+
+        
         <div id="feedLoader" class="text-center py-4 d-none">
             <div class="spinner-border text-primary" role="status" style="width:2rem;height:2rem;">
                 <span class="visually-hidden">Loading...</span>
@@ -645,145 +1072,156 @@
             <i class="bi bi-check2-circle me-1"></i> You're all caught up!
         </div>
 
-        {{-- Pagination data holder (cursor-based) --}}
+        
         <div id="feedMeta"
-            data-next-cursor="{{ $nextCursor ?? '' }}"
-            data-has-more="{{ $hasMore ? '1' : '0' }}"></div>
-              </div>{{-- /Feed column --}}
+            data-next-cursor=""
+            data-has-more="1"></div>
+              </div>
 
-        {{-- ==================== RIGHT SIDEBAR ==================== --}}
+        
         <div class="col-md-3 d-none d-md-block bb-right-sidebar">
 
-            {{-- Recent Jobs --}}
-            <div class="bb-side-card mb-3">
-                <div class="bb-side-head">
-                    <span class="bb-side-title"><i class="bi bi-briefcase-fill text-primary"></i> Recent Jobs</span>
-                    <a href="{{ route('jobs.all') }}" class="bb-side-link">See all</a>
-                </div>
-                <div class="bb-side-body" id="recentJobsZone">
-                    @forelse($recentJobs ?? [] as $job)
-                        @php
-                            $jt = strtolower($job->job_type);
-                            $logoColor = str_contains($jt,'intern') ? 'background:#fff7ed;color:#ea580c;'
-                                       : (str_contains($jt,'part') ? 'background:#eff6ff;color:#2563eb;'
-                                       : 'background:var(--bb-primary-soft);color:var(--bb-primary);');
-                        @endphp
-                        <a href="{{ route('jobs.show', $job->id) }}" class="bb-job-item" style="text-decoration:none;">
-                            <div class="bb-job-logo" style="{{ $logoColor }}">{{ strtoupper(substr($job->company,0,1)) }}</div>
-                            <div class="bb-job-info">
-                                <h6 class="bb-job-title">{{ \Illuminate\Support\Str::limit($job->title, 28) }}</h6>
-                                <p class="bb-job-company">{{ \Illuminate\Support\Str::limit($job->company, 22) }}@if($job->location) · {{ \Illuminate\Support\Str::limit($job->location, 14) }}@endif</p>
-                                @if($job->is_expired)
-                                    <span class="bb-job-tag" style="color:#dc2626;"><i class="bi bi-x-circle"></i> Deadline over</span>
-                                @elseif($job->is_expiring_soon)
-                                    <span class="bb-job-tag" style="color:#ea580c;"><i class="bi bi-alarm"></i> Expiring soon</span>
-                                @else
-                                    <span class="bb-job-tag"><i class="bi bi-briefcase"></i> {{ $job->job_type }}</span>
-                                @endif
-                            </div>
-                        </a>
-                    @empty
-                        <p class="text-muted text-center small py-3 mb-0">No jobs posted yet.</p>
-                    @endforelse
-                </div>
-            </div>
-
-            {{-- Active Now --}}
+            
             <div class="bb-side-card mb-3">
                 <div class="bb-side-head">
                     <span class="bb-side-title"><i class="bi bi-circle-fill text-success" style="font-size:9px;"></i> Active Now</span>
                 </div>
-                <div class="bb-side-body" id="activeNowZone">
 
-                    {{-- TODO: Backend — loop $activeUsers here --}}
-                    {{-- Active Now --}}
-                    @forelse($activeUsers ?? [] as $au)
-                        <a href="{{ route('profile.view', $au->id) }}" class="bb-active-item" style="text-decoration:none;">
-                            <div class="bb-active-avatar" style="overflow:hidden;">
-                                @if($au->profile_picture)
-                                    <img src="{{ asset('storage/'.$au->profile_picture) }}"
-                                        style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
-                                @else
-                                    {{ strtoupper(substr($au->name,0,1)) }}
-                                @endif
-                            </div>
-                            <div class="bb-active-meta">
-                                <span class="bb-active-name">{{ $au->name }}</span>
-                                <span class="bb-mini-badge bb-mini-{{ $au->role }}">
-                                    <i class="bi bi-circle-fill text-success" style="font-size:7px;"></i>
-                                    Active now
-                                </span>
-                            </div>
-                        </a>
-                    @empty
-                        <div class="text-muted small px-2 py-3">No friends active right now.</div>
-                    @endforelse           
-                </div>
+                <div class="bb-side-body" id="activeNowZone">
+                    
+                    
+                                            <div class="text-muted small px-2 py-3">No friends active right now.</div>
+                                    </div>
+
             </div>
 
-            {{-- Suggested People --}}
+            
             <div class="bb-side-card mb-3">
                 <div class="bb-side-head">
-                    <span class="bb-side-title"><i class="bi bi-person-plus-fill text-primary"></i> Suggested People</span>
+                    <span class="bb-side-title"><i class="bi bi-person-plus-fill text-primary"></i> Suggested Contact</span>
                 </div>
                 <div class="bb-side-body" id="suggestedPeopleZone">
-                    {{-- TODO: Backend — loop $suggestedUsers here --}}
-                    {{-- Suggested Contact --}}
-
-                    @forelse($suggested ?? [] as $su)
-    <div class="bb-suggest-item" id="suggest-{{ $su->id }}">
-        <a href="{{ route('profile.view', $su->id) }}"
+                 
+                   
+                        <div class="bb-suggest-item" id="suggest-2">
+        <a href="http://127.0.0.1:8000/profile/2"
            class="bb-suggest-avatar" style="text-decoration:none;overflow:hidden;">
-            @if($su->profile_picture)
-                <img src="{{ asset('storage/'.$su->profile_picture) }}"
+                            <img src="http://127.0.0.1:8000/storage/profiles/sh0UKM4ATo9mWi948wD1YecF3ln8g8nW4n0tkDcO.jpg"
                      style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
-            @else
-                {{ strtoupper(substr($su->name,0,1)) }}
-            @endif
-        </a>
+                    </a>
         <div class="bb-suggest-info">
-            <a href="{{ route('profile.view', $su->id) }}"
+            <a href="http://127.0.0.1:8000/profile/2"
                class="bb-suggest-name" style="text-decoration:none;color:inherit;">
-                {{ $su->name }}
+                Shahidul Islam Shovon
             </a>
             <p class="bb-suggest-role">
-                {{ $su->department ?? ucfirst($su->role) }}
-                @if($su->mutual > 0) · {{ $su->mutual }} mutual @endif
-            </p>
+                CSE
+                            </p>
         </div>
-        @if($su->is_pending)
-            {{-- আগেই request দেওয়া — টিক দেখাবে, ক্লিক করলে cancel --}}
-            <button type="button"
+                    <button type="button"
                     class="bb-connect-btn"
-                    style="background:#4f46e5;border-color:#4f46e5;color:#fff;"
-                    onclick="suggestAction('cancel', {{ $su->id }}, this)"
-                    title="Cancel Request">
-                <i class="bi bi-check-lg"></i>
-            </button>
-        @else
-            <button type="button"
-                    class="bb-connect-btn"
-                    onclick="suggestAction('send', {{ $su->id }}, this)"
+                    onclick="suggestAction('send', 2, this)"
                     title="Add Friend">
                 <i class="bi bi-person-plus"></i>
             </button>
-        @endif
-    </div>
-@empty
-    <div class="text-muted small px-2 py-3 text-center">No suggestions right now.</div>
-@endforelse
-
-                </div>               
+            </div>
+    <div class="bb-suggest-item" id="suggest-3">
+        <a href="http://127.0.0.1:8000/profile/3"
+           class="bb-suggest-avatar" style="text-decoration:none;overflow:hidden;">
+                            A
+                    </a>
+        <div class="bb-suggest-info">
+            <a href="http://127.0.0.1:8000/profile/3"
+               class="bb-suggest-name" style="text-decoration:none;color:inherit;">
+                Ayesha Akter
+            </a>
+            <p class="bb-suggest-role">
+                Student
+                            </p>
+        </div>
+                    <button type="button"
+                    class="bb-connect-btn"
+                    onclick="suggestAction('send', 3, this)"
+                    title="Add Friend">
+                <i class="bi bi-person-plus"></i>
+            </button>
+            </div>
+    <div class="bb-suggest-item" id="suggest-4">
+        <a href="http://127.0.0.1:8000/profile/4"
+           class="bb-suggest-avatar" style="text-decoration:none;overflow:hidden;">
+                            E
+                    </a>
+        <div class="bb-suggest-info">
+            <a href="http://127.0.0.1:8000/profile/4"
+               class="bb-suggest-name" style="text-decoration:none;color:inherit;">
+                Ertiza
+            </a>
+            <p class="bb-suggest-role">
+                Alumni
+                            </p>
+        </div>
+                    <button type="button"
+                    class="bb-connect-btn"
+                    onclick="suggestAction('send', 4, this)"
+                    title="Add Friend">
+                <i class="bi bi-person-plus"></i>
+            </button>
+            </div>
+    <div class="bb-suggest-item" id="suggest-5">
+        <a href="http://127.0.0.1:8000/profile/5"
+           class="bb-suggest-avatar" style="text-decoration:none;overflow:hidden;">
+                            <img src="http://127.0.0.1:8000/storage/profiles/aVuhR8kSgWyZEnRlfmvY1zFzre2gqNXIB6LePsyR.jpg"
+                     style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                    </a>
+        <div class="bb-suggest-info">
+            <a href="http://127.0.0.1:8000/profile/5"
+               class="bb-suggest-name" style="text-decoration:none;color:inherit;">
+                Shahidul Islam Khan
+            </a>
+            <p class="bb-suggest-role">
+                EEE
+                            </p>
+        </div>
+                    <button type="button"
+                    class="bb-connect-btn"
+                    onclick="suggestAction('send', 5, this)"
+                    title="Add Friend">
+                <i class="bi bi-person-plus"></i>
+            </button>
+            </div>
+    <div class="bb-suggest-item" id="suggest-6">
+        <a href="http://127.0.0.1:8000/profile/6"
+           class="bb-suggest-avatar" style="text-decoration:none;overflow:hidden;">
+                            F
+                    </a>
+        <div class="bb-suggest-info">
+            <a href="http://127.0.0.1:8000/profile/6"
+               class="bb-suggest-name" style="text-decoration:none;color:inherit;">
+                Fatiha Islam
+            </a>
+            <p class="bb-suggest-role">
+                Alumni
+                            </p>
+        </div>
+                    <button type="button"
+                    class="bb-connect-btn"
+                    onclick="suggestAction('send', 6, this)"
+                    title="Add Friend">
+                <i class="bi bi-person-plus"></i>
+            </button>
+            </div>
+                   
+                </div>
             </div>
 
-        </div>{{-- /Right sidebar --}}
+        </div>
 
-    </div>{{-- /row --}}
-</div>{{-- /container --}}
+    </div>
+</div>
 
-{{-- ==================== MODALS ==================== --}}
 
-{{-- Create Post Modal --}}
+
+
 <div class="modal fade" id="createPostModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
@@ -792,18 +1230,13 @@
                 <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" onclick="resetPostBg();"></button>
             </div>
             <form id="ajaxPostForm" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-body">
+                <input type="hidden" name="_token" value="yLeZsHdJiPbawa5jvfsPVpaGFzX1iVZyb5Jhpr6w" autocomplete="off">                <div class="modal-body">
                     <div class="d-flex align-items-center gap-2 mb-3">
                         <div class="create-post-avatar">
-                            @if(Auth::user()->profile_picture)
-                                <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
-                            @else
-                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
-                            @endif
-                        </div>
+                                                            <img src="http://127.0.0.1:8000/storage/profiles/STdJLDKjO8EDMviAEFQFQ5qQfEhiDO3v4InTSTWc.jpg" alt="me" class="cpa-img">
+                                                    </div>
                         <div>
-                            <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
+                            <h6 class="m-0 fw-bold" style="font-size:14px;">teacher</h6>
                             <span class="badge bg-light text-muted border py-1 px-2" style="font-size:10px;">
                                 <i class="bi bi-globe-americas me-1"></i>Public
                             </span>
@@ -850,7 +1283,7 @@
     </div>
 </div>
 
-{{-- Edit Post Modal --}}
+
 <div class="modal fade" id="editPostModal" tabindex="-1" aria-modal="true" role="dialog">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-3 border-0 shadow">
@@ -859,20 +1292,15 @@
                 <button type="button" class="btn-close ms-0" data-bs-dismiss="modal"></button>
             </div>
             <form id="editPostForm" enctype="multipart/form-data">
-                @csrf
-                <input type="hidden" id="editPostId">
+                <input type="hidden" name="_token" value="yLeZsHdJiPbawa5jvfsPVpaGFzX1iVZyb5Jhpr6w" autocomplete="off">                <input type="hidden" id="editPostId">
                 <input type="hidden" id="edit_bg_color_input">
                 <div class="modal-body pb-1">
                     <div class="d-flex align-items-center gap-2 mb-3">
                         <div class="create-post-avatar">
-                            @if(Auth::user()->profile_picture)
-                                <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
-                            @else
-                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
-                            @endif
-                        </div>
+                                                            <img src="http://127.0.0.1:8000/storage/profiles/STdJLDKjO8EDMviAEFQFQ5qQfEhiDO3v4InTSTWc.jpg" alt="me" class="cpa-img">
+                                                    </div>
                         <div>
-                            <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
+                            <h6 class="m-0 fw-bold" style="font-size:14px;">teacher</h6>
                             <span class="badge bg-light text-muted border py-1 px-2" style="font-size:10px;">
                                 <i class="bi bi-globe-americas me-1"></i>Public
                             </span>
@@ -923,7 +1351,7 @@
     </div>
 </div>
 
-{{-- Share Modal --}}
+
 <div class="modal fade" id="fbShareModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-3 border-0 shadow">
@@ -947,7 +1375,7 @@
     </div>
 </div>
 
-{{-- ==================== COMMENT MODAL (Premium) ==================== --}}
+
 <div class="modal fade" id="commentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content rounded-4 border-0 shadow-lg" style="max-height:90vh;">
@@ -989,12 +1417,8 @@
                 <form id="commentModalForm" class="d-flex align-items-center gap-2 w-100">
                     <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden"
                          style="width:34px;height:34px;font-size:13px;">
-                        @if(Auth::user()->profile_picture)
-                            <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" style="width:100%;height:100%;object-fit:cover;">
-                        @else
-                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
-                        @endif
-                    </div>
+                                                    <img src="http://127.0.0.1:8000/storage/profiles/STdJLDKjO8EDMviAEFQFQ5qQfEhiDO3v4InTSTWc.jpg" alt="me" style="width:100%;height:100%;object-fit:cover;">
+                                            </div>
                     <div class="input-group align-items-center bg-light rounded-pill px-3 py-1 w-100 border">
                         <input type="hidden" id="commentModalPostId">
                         <input type="text" id="commentModalInput"
@@ -1014,7 +1438,7 @@
     </div>
 </div>
 
-{{-- Lightbox Modal --}}
+
 <div class="modal fade" id="imageLightboxModal" tabindex="-1" style="background:rgba(0,0,0,0.92);">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content bg-transparent border-0 position-relative">
@@ -1043,7 +1467,7 @@
     </div>
 </div>
 
-{{-- ==================== SCRIPTS ==================== --}}
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -1071,7 +1495,6 @@ document.addEventListener("DOMContentLoaded", function () {
      if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
     }
-    // Saved পেজ থেকে এসে নির্দিষ্ট পোস্টে স্ক্রল + হাইলাইট
     if (window.location.hash && window.location.hash.startsWith('#postCard-')) {
         const targetId = window.location.hash.substring(1);
 
@@ -1135,7 +1558,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // ফিডের সব inline ভিডিওর প্রথম ফ্রেম থাম্বনেইল হিসেবে দেখানো
     function primeVideoThumbnails(scope = document) {
         scope.querySelectorAll('video.bb-inline-video, video.bb-tile-media').forEach(v => {
             if (v.dataset.primed) return;
@@ -1150,9 +1572,6 @@ document.addEventListener("DOMContentLoaded", function () {
     window.bbPrimeVideos = primeVideoThumbnails;
 });
 
-// ==========================================
-// RELOAD WARNING
-// ==========================================
 window.addEventListener('beforeunload', function (e) {
     if (isUploading) { e.preventDefault(); e.returnValue = ''; }
 });
@@ -1324,7 +1743,7 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
     const modal     = bootstrap.Modal.getInstance(document.getElementById('createPostModal'));
 
     if (!content && !selectedMediaFiles.length) {
-        Swal.fire({ icon: 'warning', title: 'Empty Post!', text: 'Please Write A Post First !' });
+        Swal.fire({ icon: 'warning', title: 'Empty Post!', text: 'Please Write A Post First !'});
         return;
     }
     const captured = [...selectedMediaFiles];
@@ -1337,8 +1756,8 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
     submitBtn.disabled = false;
 
     const pid     = 'opt-' + Date.now();
-    const uName   = '{{ Auth::user()->name }}';
-    const uInit   = '{{ strtoupper(substr(Auth::user()->name ?? "U", 0, 1)) }}';
+    const uName   = 'teacher';
+    const uInit   = 'T';
     const html    = `
     <div class="card mb-3 fb-post-card shadow-sm border-0 rounded-3" id="${pid}">
       <div class="card-body p-3">
@@ -1371,7 +1790,7 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
     captured.forEach(f => fd.append('media[]', f));
 
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', "{{ route('posts.store') }}", true);
+    xhr.open('POST', "http://127.0.0.1:8000/posts", true);
     xhr.setRequestHeader('Accept', 'application/json');
     isUploading = true;
 
@@ -1395,7 +1814,6 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
             setTimeout(() => {
                 const optCard = document.getElementById(pid);
                 if (res.html) {
-                    // optimistic card কে আসল post-card দিয়ে রিপ্লেস (reload ছাড়া)
                     if (optCard) {
                         optCard.outerHTML = res.html;
                     } else {
@@ -1406,7 +1824,6 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
                 } else {
                     if (optCard) optCard.remove();
                 }
-                // empty state থাকলে সরাও
                 document.getElementById('emptyFeedState')?.remove();
 
                 const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1800, timerProgressBar:true });
@@ -1422,7 +1839,7 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
 
 
 // ==========================================
-// SAVE / UNSAVE (Facebook-style toggle)
+// SAVE / UNSAVE
 // ==========================================
 function toggleSave(postId) {
     const btn  = document.getElementById(`saveBtn-${postId}`);
@@ -1441,11 +1858,7 @@ function toggleSave(postId) {
         if (!d.success) return;
 
         const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true
         });
 
         if (d.saved) {
@@ -1658,7 +2071,7 @@ function renderEditPreviewItem(pathOrFile, type, isNew=false) {
     col.style.height='110px';
     if(!isNew){ col.setAttribute('data-server-path',pathOrFile); col.setAttribute('data-type',type); }
 
-    const src=isNew?URL.createObjectURL(pathOrFile):`{{ asset('storage') }}/${pathOrFile}`;
+    const src=isNew?URL.createObjectURL(pathOrFile):`http://127.0.0.1:8000/storage/${pathOrFile}`;
     let mediaEl;
 
     if(type==='image') {
@@ -1711,9 +2124,6 @@ function renderEditPreviewItem(pathOrFile, type, isNew=false) {
     container.appendChild(col);
 }
 
-// ==========================================
-// EDIT: NEW FILE SELECTION
-// ==========================================
 document.getElementById('editMediaInput')?.addEventListener('change', function () {
     Array.from(this.files).forEach(f=>{
         editSelectedFiles.push(f);
@@ -1763,9 +2173,6 @@ document.getElementById('editPostForm')?.addEventListener('submit', function (e)
 });
 
 // ==========================================
-// INFINITE SCROLL
-// ==========================================
-// ==========================================
 // INFINITE SCROLL (unified feed — page based)
 // ==========================================
 let feedLoading = false;
@@ -1781,7 +2188,7 @@ function loadMorePosts() {
     const loader = document.getElementById('feedLoader');
     if (loader) loader.classList.remove('d-none');
 
-    fetch(`{{ route('feed.load') }}?page=${feedPage}`, {
+    fetch(`http://127.0.0.1:8000/feed/load?page=${feedPage}`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
     })
     .then(r => r.json())
@@ -1807,17 +2214,16 @@ function loadMorePosts() {
     });
 }
 
-// scroll করলে নিচে গেলে আরও লোড করো (এটাই বাদ পড়েছিল!)
 window.addEventListener('scroll', function () {
     const scrollPos = window.innerHeight + window.scrollY;
     const threshold = document.body.offsetHeight - 300;
     if (scrollPos >= threshold) { loadMorePosts(); }
 });
+</script>
 
-
-
+<script>
 // ==========================================
-// COMMENT MODAL (Premium) — সব কমেন্ট কাজ এখানে
+// COMMENT MODAL (Premium)
 // ==========================================
 function openCommentModal(postId) {
     const list    = document.getElementById('commentModalList');
@@ -2039,14 +2445,9 @@ function deleteComment(cid, postId) {
     });
 }
 
+window.MY_PROFILE_PIC = "http:\/\/127.0.0.1:8000\/storage\/profiles\/STdJLDKjO8EDMviAEFQFQ5qQfEhiDO3v4InTSTWc.jpg";
+window.MY_INITIAL = "T";
 
-// আমার profile pic (reply box এর জন্য)
-window.MY_PROFILE_PIC = @json(Auth::user()->profile_picture ? asset('storage/'.Auth::user()->profile_picture) : null);
-window.MY_INITIAL = @json(strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)));
-
-// ==========================================
-// COMMENT LIKE
-// ==========================================
 function toggleCommentLike(commentId) {
     fetch(`/comments/${commentId}/like`, {
         method:'POST',
@@ -2069,14 +2470,10 @@ function toggleCommentLike(commentId) {
     });
 }
 
-// ==========================================
-// COMMENT REPLY
-// ==========================================
 function openReplyBox(parentId, mentionName) {
     const zone = document.getElementById(`reply-box-${parentId}`);
     if (!zone) return;
 
-    // আগে খোলা থাকলে — শুধু mention আপডেট করো (বন্ধ করব না, যদি নতুন কাউকে reply করে)
     let input = document.getElementById(`reply-input-${parentId}`);
 
     const myPic = window.MY_PROFILE_PIC;
@@ -2085,7 +2482,6 @@ function openReplyBox(parentId, mentionName) {
         ? `<img src="${myPic}" style="width:100%;height:100%;object-fit:cover;">`
         : myInit;
 
-    // box বন্ধ থাকলে বানাও
     if (zone.classList.contains('d-none') || zone.dataset.open !== '1') {
         zone.innerHTML = `
             <div class="reply-input-wrap">
@@ -2103,7 +2499,6 @@ function openReplyBox(parentId, mentionName) {
         input = document.getElementById(`reply-input-${parentId}`);
     }
 
-    // mention সেট করো (কাকে reply)
     const tag = document.getElementById(`reply-mention-${parentId}`);
     if (mentionName && tag) {
         tag.textContent = '@' + mentionName;
@@ -2127,7 +2522,6 @@ function submitReply(parentId) {
     const mention = tag && tag.dataset.mention ? tag.dataset.mention : '';
     if (!text && !mention) return;
 
-    // মেনশন থাকলে টেক্সটের আগে @নাম যোগ
     const finalText = mention ? `@${mention} ${text}` : text;
 
     const postId = document.getElementById('commentModalPostId').value;
@@ -2147,7 +2541,6 @@ function submitReply(parentId) {
             ? `<img src="${d.user_picture}" style="width:100%;height:100%;object-fit:cover;">`
             : d.user_initial;
 
-        // @মেনশন হাইলাইট করে দেখাও
         const displayContent = highlightMentions(d.content);
 
         const html = `
@@ -2188,27 +2581,25 @@ function submitReply(parentId) {
     .catch(()=>{ input.disabled=false; });
 }
 
-// @নাম হাইলাইট করো
 function highlightMentions(text) {
     return text.replace(/@([\w\u0980-\u09FF.]+(?:\s[\w\u0980-\u09FF.]+)?)/g, '<span class="comment-mention">@$1</span>');
 }
-
-
 </script>
 
-{{-- Global Emoji Popover --}}
+
+
+
 <div id="bbEmojiPopover"><emoji-picker class="light"></emoji-picker></div>
 
 <script>
 // ==========================================
-// EMOJI PICKER (shared — post + comment)
+// EMOJI PICKER (shared)
 // ==========================================
 (function(){
     const popover = document.getElementById('bbEmojiPopover');
     const picker  = popover.querySelector('emoji-picker');
-    let currentTarget = null;   // যে input/textarea এ emoji যাবে
+    let currentTarget = null;
 
-    // emoji সিলেক্ট হলে target এ যোগ করো
     picker.addEventListener('emoji-click', e => {
         const emoji = e.detail.unicode;
         if (!currentTarget) return;
@@ -2216,15 +2607,12 @@ function highlightMentions(text) {
         const start = el.selectionStart ?? el.value.length;
         const end   = el.selectionEnd ?? el.value.length;
         el.value = el.value.slice(0, start) + emoji + el.value.slice(end);
-        // cursor emoji এর পরে
         const pos = start + emoji.length;
         el.focus();
         try { el.setSelectionRange(pos, pos); } catch(err){}
-        // input ইভেন্ট ট্রিগার (bg color logic এর জন্য)
         el.dispatchEvent(new Event('input', { bubbles:true }));
     });
 
-    // কোনো emoji বাটনে ক্লিক → popover টগল, target সেট
     document.addEventListener('click', function(ev){
         const btn = ev.target.closest('.bb-emoji-btn');
         if (btn) {
@@ -2233,19 +2621,15 @@ function highlightMentions(text) {
             const target = document.querySelector(targetSel);
             if (!target) return;
 
-            // একই বাটনে আবার ক্লিক → বন্ধ
             if (popover.style.display === 'block' && currentTarget === target) {
                 popover.style.display = 'none';
                 currentTarget = null;
                 return;
             }
             currentTarget = target;
-            // অবস্থান ঠিক করো (বাটনের নিচে/উপরে)
             const r = btn.getBoundingClientRect();
             popover.style.display = 'block';
-            const pop = popover.getBoundingClientRect();
             let top = r.bottom + window.scrollY + 6;
-            // নিচে জায়গা না থাকলে উপরে
             if (r.bottom + 350 > window.innerHeight) {
                 top = r.top + window.scrollY - 350 - 6;
             }
@@ -2256,7 +2640,6 @@ function highlightMentions(text) {
             popover.style.left = left + 'px';
             return;
         }
-        // বাইরে ক্লিক → বন্ধ
         if (popover.style.display === 'block' && !popover.contains(ev.target)) {
             popover.style.display = 'none';
             currentTarget = null;
@@ -2264,267 +2647,6 @@ function highlightMentions(text) {
     });
 })();
 </script>
-
-
-<script>
-// ==========================================
-// DELETE JOB (poster only)
-// ==========================================
-function deleteJob(id) {
-    Swal.fire({ title:'Delete this job?', icon:'warning', showCancelButton:true, confirmButtonColor:'#ef4444', confirmButtonText:'Delete' })
-    .then(r=>{
-        if(!r.isConfirmed) return;
-        fetch(`/jobs/${id}`, { method:'DELETE', headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'} })
-        .then(r=>r.json())
-        .then(d=>{
-            if(!d.success) return;
-            const card = document.getElementById(`jobCard-${id}`);
-            if(card){ card.style.transition='opacity .3s'; card.style.opacity='0'; setTimeout(()=>card.remove(),300); }
-            const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1500 });
-            Toast.fire({ icon:'success', title:'Job deleted' });
-        });
-    });
-}
-</script>
-
-
-<script>
-// ==========================================
-// JOB SAVE / UNSAVE
-// ==========================================
-function toggleJobSave(id){
-    const btn = document.getElementById(`jobSaveBtn-${id}`);
-    if (btn && btn.dataset.busy === '1') return;  // double-click রোধ
-    if (btn) btn.dataset.busy = '1';
-    fetch(`/jobs/${id}/save`, {
-        method:'POST',
-        headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}
-    })
-    .then(r=>r.json())
-    .then(d=>{
-        if (btn) btn.dataset.busy = '0';
-        if(!d.success) return;
-        if (btn) {
-            btn.classList.toggle('saved', d.saved);
-            const ic = btn.querySelector('i');
-            if (ic) ic.className = d.saved ? 'bi bi-bookmark-fill' : 'bi bi-bookmark';
-            btn.title = d.saved ? 'Saved' : 'Save job';
-        }
-        const Toast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:1600, timerProgressBar:true });
-        Toast.fire({ icon: d.saved ? 'success' : 'info', title: d.message });
-    })
-    .catch(()=>{ const b=document.getElementById(`jobSaveBtn-${id}`); if(b) b.dataset.busy='0'; Swal.fire({icon:'error',title:'Something went wrong'}); });
-}
-
-(function(){
-const input=document.getElementById('bbLiveSearch');
-const dropdown=document.getElementById('bbSearchDropdown');
-if(!input||!dropdown)return;
-let timer=null,activeIdx=-1;
-input.addEventListener('input',function(){
-    clearTimeout(timer);
-    const q=this.value.trim();
-    if(q.length<2){close();return;}
-    dropdown.innerHTML='<div class="bb-sd-spinner"><i class="bi bi-search me-1"></i> Searching...</div>';
-    dropdown.classList.add('show');
-    timer=setTimeout(()=>doSearch(q),320);
-});
-input.addEventListener('keydown',function(e){
-    const items=dropdown.querySelectorAll('.bb-sd-item');
-    if(e.key==='ArrowDown'){e.preventDefault();activeIdx=Math.min(activeIdx+1,items.length-1);hl(items);}
-    else if(e.key==='ArrowUp'){e.preventDefault();activeIdx=Math.max(activeIdx-1,0);hl(items);}
-    else if(e.key==='Enter'){e.preventDefault();if(activeIdx>=0&&items[activeIdx])items[activeIdx].click();else go();}
-    else if(e.key==='Escape'){close();input.blur();}
-});
-document.addEventListener('click',function(e){if(!input.contains(e.target)&&!dropdown.contains(e.target))close();});
-function close(){dropdown.classList.remove('show');dropdown.innerHTML='';activeIdx=-1;}
-function go(){const q=input.value.trim();if(q)window.location.href='/search?q='+encodeURIComponent(q);}
-function hl(items){items.forEach((el,i)=>el.classList.toggle('active',i===activeIdx));}
-async function doSearch(q){
-    try{
-        const res=await fetch('/search/live?q='+encodeURIComponent(q),{headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}});
-        const data=await res.json();
-        render(data.results||[],q);
-    }catch(e){dropdown.innerHTML='<div class="bb-sd-empty">Something went wrong.</div>';}
-}
-function render(results,q){
-    activeIdx=-1;
-    if(!results.length){dropdown.innerHTML='<div class="bb-sd-empty"><i class="bi bi-search me-1"></i> No results for "'+esc(q)+'"</div>';return;}
-    let html='<div class="bb-sd-label">People</div>';
-    results.forEach(r=>{
-        const av=r.avatar?`<img src="${esc(r.avatar)}" alt="">`:(esc(r.initial)||'U');
-        const top=r.topic?`<div class="bb-sd-topic"><i class="bi bi-journal-text"></i> ${esc(r.topic.substring(0,55))}${r.topic.length>55?'…':''}</div>`:'';
-        html+=`<a href="/profile/${r.id}" class="bb-sd-item">
-            <div class="bb-sd-avatar">${av}</div>
-            <div class="bb-sd-info">
-                <div class="bb-sd-name">${hlq(esc(r.name),q)}</div>
-                ${r.sub?`<div class="bb-sd-sub">${esc(r.sub)}</div>`:''}
-                ${top}
-            </div>
-            <span class="bb-sd-rolechip bb-sd-${r.role}">${esc(r.role_label||r.role)}</span>
-        </a>`;
-    });
-    html+=`<a href="/search?q=${encodeURIComponent(q)}" class="bb-sd-footer"><i class="bi bi-search me-1"></i> See all results for "${esc(q)}"</a>`;
-    dropdown.innerHTML=html;
-    dropdown.classList.add('show');
-}
-function hlq(text,q){if(!q)return text;return text.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:#dbeafe;padding:0 2px;border-radius:2px;">$1</mark>');}
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-})();
-
-
-function friendAction(action, userId, btnEl) {
-    const endpoints = {
-        send:     '/friends/send',
-        accept:   '/friends/accept',
-        decline:  '/friends/decline',
-        cancel:   '/friends/cancel',
-        unfriend: '/friends/unfriend',
-        block:    '/friends/block',
-        unblock:  '/friends/unblock',
-    };
-
-    const confirmMsg = {
-        unfriend: 'Remove this person from your friends?',
-        block:    "Block this user? They won't be able to find you.",
-        cancel:   'Cancel this friend request?',
-    };
-
-    if (['unfriend', 'block', 'cancel'].includes(action)) {
-        if (!confirm(confirmMsg[action])) return;
-    }
-
-    if (btnEl) btnEl.disabled = true;
-
-    fetch(endpoints[action], {
-        method: 'POST',
-        headers: {
-            'Content-Type':  'application/json',
-            'Accept':        'application/json',
-            'X-CSRF-TOKEN':  document.querySelector('meta[name="csrf-token"]').content,
-        },
-        body: JSON.stringify({ user_id: userId }),
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (btnEl) btnEl.disabled = false;
-        if (!d.success) { alert(d.message || 'Something went wrong.'); return; }
-
-        const wrap = document.getElementById('friendBtnWrap-' + userId);
-        if (wrap) updateFriendBtn(wrap, d.status, userId);
-
-        if (action === 'accept' || action === 'decline') {
-            const card = document.getElementById('freq-' + userId);
-            if (card) {
-                card.style.transition = 'opacity .3s';
-                card.style.opacity = '0';
-                setTimeout(() => card.remove(), 300);
-            }
-        }
-
-        if (typeof Swal !== 'undefined') {
-            Swal.mixin({
-                toast: true, position: 'top-end',
-                showConfirmButton: false, timer: 2000, timerProgressBar: true
-            }).fire({ icon: 'success', title: d.message });
-        }
-    })
-    .catch(() => {
-        if (btnEl) btnEl.disabled = false;
-        alert('Network error. Please try again.');
-    });
-}
-
-function suggestAction(action, userId, btnEl) {
-    const endpoint = action === 'send' ? '/friends/send' : '/friends/cancel';
-
-    if (action === 'cancel' && !confirm('Cancel this friend request?')) return;
-
-    if (btnEl) btnEl.disabled = true;
-
-    fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept':       'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-        },
-        body: JSON.stringify({ user_id: userId }),
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (btnEl) btnEl.disabled = false;
-        if (!d.success) { alert(d.message || 'Error'); return; }
-
-        if (action === 'send') {
-            btnEl.style.background  = '#4f46e5';
-            btnEl.style.borderColor = '#4f46e5';
-            btnEl.style.color       = '#fff';
-            btnEl.innerHTML         = '<i class="bi bi-check-lg"></i>';
-            btnEl.title             = 'Cancel Request';
-            btnEl.onclick = function () { suggestAction('cancel', userId, this); };
-        } else {
-            btnEl.style.background  = '';
-            btnEl.style.borderColor = '';
-            btnEl.style.color       = '';
-            btnEl.innerHTML         = '<i class="bi bi-person-plus"></i>';
-            btnEl.title             = 'Add Friend';
-            btnEl.onclick = function () { suggestAction('send', userId, this); };
-        }
-
-        if (typeof Swal !== 'undefined') {
-            Swal.mixin({
-                toast: true, position: 'top-end',
-                showConfirmButton: false, timer: 2000, timerProgressBar: true
-            }).fire({ icon: 'success', title: d.message });
-        }
-    })
-    .catch(() => {
-        if (btnEl) btnEl.disabled = false;
-        alert('Network error.');
-    });
-}
-
-function updateFriendBtn(wrap, status, userId) {
-    const btns = {
-        none: `<button class="bb-friend-btn bb-friend-add" onclick="friendAction('send',${userId},this)"><i class="bi bi-person-plus-fill"></i> Add Friend</button>`,
-        pending_sent: `<button class="bb-friend-btn bb-friend-pending" onclick="friendAction('cancel',${userId},this)"><i class="bi bi-person-check-fill"></i> Request Sent <span class="bb-friend-cancel-hint">· Cancel</span></button>`,
-        pending_received: `
-            <button class="bb-friend-btn bb-friend-accept" onclick="friendAction('accept',${userId},this)"><i class="bi bi-check-lg"></i> Accept</button>
-            <button class="bb-friend-btn bb-friend-decline" onclick="friendAction('decline',${userId},this)"><i class="bi bi-x-lg"></i> Decline</button>`,
-        accepted: `<div class="dropdown d-inline-block">
-            <button class="bb-friend-btn bb-friend-already dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-people-fill"></i> Friends</button>
-            <ul class="dropdown-menu shadow border-0 rounded-3">
-                <li><button class="dropdown-item text-danger py-2" onclick="friendAction('unfriend',${userId},this)"><i class="bi bi-person-x me-2"></i> Unfriend</button></li>
-                <li><button class="dropdown-item py-2" onclick="friendAction('block',${userId},this)"><i class="bi bi-slash-circle me-2"></i> Block</button></li>
-            </ul></div>`,
-        blocked: `<button class="bb-friend-btn bb-friend-blocked" onclick="friendAction('unblock',${userId},this)"><i class="bi bi-slash-circle"></i> Blocked · Unblock</button>`,
-    };
-    if (btns[status]) wrap.innerHTML = btns[status];
-}
-
-// Active Now — page load এ এবং প্রতি 30s refresh
-function refreshActiveNow() {
-    fetch('/active-now', {
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (d.html !== undefined) {
-            const zone = document.getElementById('activeNowZone');
-            if (zone) zone.innerHTML = d.html;
-        }
-    })
-    .catch(() => {});
-}
-
-// page load এর 2 সেকেন্ড পরে একবার refresh করি (last_seen update হওয়ার সময় দেই)
-setTimeout(refreshActiveNow, 2000);
-setInterval(refreshActiveNow, 30000);
-
-</script>
-
-
 
 </body>
 </html>

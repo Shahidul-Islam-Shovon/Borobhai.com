@@ -4,79 +4,108 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Models\JobPost;
+use App\Models\Friendship;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
-    // প্রতি পেজে কতগুলো feed আইটেম (post + job মিলিয়ে)
     private const FEED_PER_PAGE = 6;
 
     public function index()
     {
-        // মেয়াদোত্তীর্ণ (৫ দিন গ্রেস শেষ) job গুলো পরিষ্কার করো
         JobController::cleanupExpired();
 
         $user = Auth::user();
+        $meId = Auth::id();
 
-        // page 1 — প্রথম ব্যাচ
-        $feed = $this->buildFeed(1);
+        // last_seen — প্রতি request এ update, cache clear করি
+        DB::table('users')->where('id', $meId)->update(['last_seen' => now()]);
+        Cache::forget('last_seen_' . $meId);
 
-        $appliedJobIds = \App\Models\JobApplication::where('user_id', $user->id)
+        $friendIds  = Friendship::friendIds($meId);
+        $blockedIds = $this->getBlockedIds($meId);
+
+        $feed = $this->buildFeed(1, $meId, $friendIds);
+
+        $appliedJobIds = \App\Models\JobApplication::where('user_id', $meId)
             ->pluck('job_post_id')->toArray();
 
-        // সাইডবারের জন্য Recent Jobs — শুধু ACTIVE (deadline শেষ হয়নি এমন)
-        // Internship আগে, তারপর Part-time, তারপর বাকি; প্রতিটির ভেতরে নতুন আগে
         $recentJobs = JobPost::with('user')
-                ->visible()
-                ->where(function ($q) {
-                    $q->whereNull('deadline')
-                      ->orWhereDate('deadline', '>=', now()->toDateString());
-                })
-                ->orderByRaw("CASE
-                        WHEN LOWER(job_type) LIKE '%intern%' THEN 1
-                        WHEN LOWER(job_type) LIKE '%part%' THEN 2
-                        ELSE 3 END")
-                ->latest()
-                ->take(5)
-                ->get();
+            ->visible()
+            ->where(function ($q) {
+                $q->whereNull('deadline')
+                  ->orWhereDate('deadline', '>=', now()->toDateString());
+            })
+            ->orderByRaw("CASE
+                WHEN LOWER(job_type) LIKE '%intern%' THEN 1
+                WHEN LOWER(job_type) LIKE '%part%'   THEN 2
+                ELSE 3 END")
+            ->latest()
+            ->take(5)
+            ->get();
 
-        $feedItems = $feed['items'];
-        $hasMore   = $feed['has_more'];
-
-        // teacher নিজে job পোস্ট করতে পারে না (alumni পারে) — view তে Post A Job বাটন hide করতে
+        $feedItems   = $feed['items'];
+        $hasMore     = $feed['has_more'];
         $canPostJobs = $user->role === 'alumni';
 
-        $data = compact('feedItems', 'hasMore', 'recentJobs', 'appliedJobIds', 'canPostJobs');
+        // Active Now — friends only, blocked বাদ, last 10 min
+        $activeUsers = \App\Models\User::whereIn('id', $friendIds)
+            ->whereNotIn('id', $blockedIds)
+            ->where('last_seen', '>=', now()->subMinutes(10))
+            ->select('id', 'name', 'role', 'profile_picture')
+            ->limit(8)
+            ->get();
 
-        // alumni + teacher → একই feed view (teacher = alumni এর মতো, শুধু job পোস্ট পারে না)
-        if (in_array($user->role, ['alumni', 'teacher'])) {
+        // Suggested Contact
+        $suggested = $this->getSuggested($meId, $friendIds, $blockedIds);
+
+        // Pending friend requests (left sidebar)
+        $pendingRequests = Friendship::where('receiver_id', $meId)
+            ->where('status', 'pending')
+            ->with('sender:id,name,role,profile_picture')
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        $data = compact(
+            'feedItems', 'hasMore', 'recentJobs', 'appliedJobIds',
+            'canPostJobs', 'activeUsers', 'suggested', 'pendingRequests'
+        );
+
+       // পরে
+        if ($user->role === 'alumni') {
             return view('alumni.dashboard', $data);
         }
+        if ($user->role === 'teacher') {
+            return view('student.dashboard', $data);
+        }
+        // teacher ও student একই dashboard (বা আলাদা teacher.dashboard বানাতে পারেন)
         return view('student.dashboard', $data);
-    }
+        }
 
     public function loadMore(Request $request)
     {
-        $page = max(1, (int) $request->query('page', 2));
+        $page      = max(1, (int) $request->query('page', 2));
+        $meId      = Auth::id();
+        $friendIds = Friendship::friendIds($meId);
+        $feed      = $this->buildFeed($page, $meId, $friendIds);
 
-        $feed = $this->buildFeed($page);
-
-        $appliedJobIds = \App\Models\JobApplication::where('user_id', Auth::id())
+        $appliedJobIds = \App\Models\JobApplication::where('user_id', $meId)
             ->pluck('job_post_id')->toArray();
 
         $html = '';
         foreach ($feed['items'] as $item) {
             if ($item['type'] === 'job') {
                 $html .= view('partials.job-card', [
-                    'job' => $item['model'],
+                    'job'           => $item['model'],
                     'appliedJobIds' => $appliedJobIds,
                 ])->render();
             } else {
-                $html .= view('partials.post-card', [
-                    'post' => $item['model'],
-                ])->render();
+                $html .= view('partials.post-card', ['post' => $item['model']])->render();
             }
         }
 
@@ -87,78 +116,98 @@ class PostController extends Controller
         ]);
     }
 
-    /**
-     * Unified time-sorted feed (offset/page based)।
-     * post + job একসাথে created_at দিয়ে sort করে নির্দিষ্ট পেজের slice ফেরত দেয়।
-     * নির্ভরযোগ্য — duplicate timestamp বা edge case এ আটকায় না।
-     */
-    private function buildFeed(int $page): array
+    private function buildFeed(int $page, int $meId, array $friendIds): array
     {
         $perPage = self::FEED_PER_PAGE;
         $offset  = ($page - 1) * $perPage;
+        $need    = $offset + $perPage + 1;
 
-        // এই পেজ পর্যন্ত যত লাগবে তত (+1) করে আনি — পুরো টেবিল নয় (পারফরম্যান্স)
-        $need = $offset + $perPage + 1;
-
-        // ---- Posts ----
         $posts = Post::with([
-                    'user',
-                    'parentPost.user',
-                    'likes',
-                    'comments' => function ($q) {
-                        $q->with('user')->latest()->limit(10);
-                    }
+                    'user', 'parentPost.user', 'likes',
+                    'comments' => fn($q) => $q->with('user')->latest()->limit(10),
                 ])
                 ->withCount('comments')
+                ->where(function ($q) use ($meId, $friendIds) {
+                    // নিজের সব post
+                    $q->where('user_id', $meId)
+                    // friends এর public + friends post
+                    ->orWhere(function ($sub) use ($friendIds) {
+                        $sub->whereIn('user_id', $friendIds)
+                            ->whereIn('privacy', ['public', 'friends']);
+                    })
+                    // অন্যদের শুধু public
+                    ->orWhere(function ($sub) use ($meId, $friendIds) {
+                        $sub->whereNotIn('user_id', array_merge($friendIds, [$meId]))
+                            ->where('privacy', 'public');
+                    });
+                })
                 ->latest('created_at')
                 ->take($need)
                 ->get();
 
-        // ---- Jobs (feed-visible only) ----
         $jobs = JobPost::with('user')
-                ->withCount(['savedByUsers as is_saved_by_me' => function ($q) {
-                    $q->where('user_id', Auth::id());
-                }])
+                ->withCount(['savedByUsers as is_saved_by_me' => fn($q) => $q->where('user_id', Auth::id())])
                 ->visible()
                 ->latest('created_at')
                 ->take($need)
                 ->get();
 
-        // ---- Merge ----
         $items = collect();
-
         foreach ($posts as $p) {
-            $items->push([
-                'type'       => 'post',
-                'model'      => $p,
-                'created_at' => $p->created_at,
-            ]);
+            $items->push(['type' => 'post', 'model' => $p, 'created_at' => $p->created_at]);
         }
         foreach ($jobs as $j) {
-            $items->push([
-                'type'       => 'job',
-                'model'      => $j,
-                'created_at' => $j->created_at,
-            ]);
+            $items->push(['type' => 'job', 'model' => $j, 'created_at' => $j->created_at]);
         }
 
-        // newest first; একই সময় হলে job আগে
         $sorted = $items->sort(function ($a, $b) {
             $cmp = $b['created_at']->timestamp <=> $a['created_at']->timestamp;
             if ($cmp !== 0) return $cmp;
             return ($a['type'] === 'job' ? 0 : 1) <=> ($b['type'] === 'job' ? 0 : 1);
         })->values();
 
-        // এই পেজের slice
-        $pageItems = $sorted->slice($offset, $perPage)->values();
-
-        // আরো আছে কিনা
-        $hasMore = $sorted->count() > ($offset + $perPage);
-
         return [
-            'items'    => $pageItems->all(),
-            'has_more' => $hasMore,
+            'items'    => $sorted->slice($offset, $perPage)->values()->all(),
+            'has_more' => $sorted->count() > ($offset + $perPage),
         ];
+    }
+
+    private function getSuggested(int $meId, array $friendIds, array $blockedIds): \Illuminate\Support\Collection
+    {
+        // pending sent — এদের দেখাব কিন্তু "Requested" state এ
+        $pendingSentIds = Friendship::where('sender_id', $meId)
+            ->where('status', 'pending')
+            ->pluck('receiver_id')
+            ->toArray();
+
+        // exclude: friends + blocked + me, কিন্তু pending sent বাদ দেব না (দেখাতে হবে)
+        $hardExclude = array_values(array_unique(
+            array_merge($friendIds, $blockedIds, [$meId])
+        ));
+        // pending sent যদি hard exclude এ থাকে, সরিয়ে দাও
+        $finalExclude = array_values(array_diff($hardExclude, $pendingSentIds));
+
+        return \App\Models\User::whereNotIn('id', $finalExclude)
+            ->where('role', '!=', 'admin')
+            ->orderBy('id') // stable — random নয়
+            ->select('id', 'name', 'role', 'department', 'session', 'profile_picture')
+            ->limit(5)
+            ->get()
+            ->map(function ($u) use ($meId, $pendingSentIds) {
+                $u->mutual     = Friendship::mutualCount($meId, $u->id);
+                $u->is_pending = in_array($u->id, $pendingSentIds);
+                return $u;
+            });
+    }
+
+    private function getBlockedIds(int $meId): array
+    {
+        return Friendship::where('status', 'blocked')
+            ->where(fn($q) => $q->where('sender_id', $meId)->orWhere('receiver_id', $meId))
+            ->get()
+            ->flatMap(fn($f) => [$f->sender_id, $f->receiver_id])
+            ->filter(fn($id) => $id != $meId)
+            ->unique()->values()->toArray();
     }
 
     public function store(Request $request)
@@ -166,77 +215,61 @@ class PostController extends Controller
         $request->validate([
             'content' => 'nullable|string',
             'media.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,wmv|max:102400',
-        ], [
-            'media.*.max' => 'Each file maximum size cannot exceed 100MB.',
-            'media.*.mimes' => 'Unsupported file format.'
         ]);
 
-        $post = new Post();
+        $post          = new Post();
         $post->user_id = Auth::id();
         $post->content = $request->content ?? '';
+        $post->privacy = in_array($request->privacy, ['public', 'friends', 'only_me'])
+            ? $request->privacy : 'public';
 
         if ($request->filled('bg_color') && !$request->hasFile('media')) {
             $post->bg_color = $request->bg_color;
         }
 
         if ($request->hasFile('media')) {
-            $imagePaths = [];
-            $videoPaths = [];
-
+            $images = []; $videos = [];
             foreach ($request->file('media') as $file) {
-                $mimeType = $file->getMimeType();
-
-                if (str_starts_with($mimeType, 'video/')) {
-                    $videoPaths[] = $file->store('posts/videos', 'public');
+                if (str_starts_with($file->getMimeType(), 'video/')) {
+                    $videos[] = $file->store('posts/videos', 'public');
                 } else {
-                    $imagePaths[] = $file->store('posts/images', 'public');
+                    $images[] = $file->store('posts/images', 'public');
                 }
             }
-
-            if (count($imagePaths) > 0) {
-                $post->images = $imagePaths;
-            }
-
-            if (count($videoPaths) > 0) {
-                if (count($videoPaths) === 1) {
-                    $post->video = $videoPaths[0];
-                } else {
-                    $post->video = json_encode($videoPaths);
-                }
-            }
+            if ($images) $post->images = $images;
+            if ($videos) $post->video  = count($videos) === 1 ? $videos[0] : json_encode($videos);
         }
 
         $post->save();
-
         $post->load(['user', 'parentPost.user', 'likes', 'comments.user']);
         $post->loadCount('comments');
-
-        $html = view('partials.post-card', ['post' => $post])->render();
 
         return response()->json([
             'success' => true,
             'message' => 'Published successfully!',
             'post'    => $post,
-            'html'    => $html,
+            'html'    => view('partials.post-card', ['post' => $post])->render(),
         ]);
     }
 
     public function share(Request $request, $id)
     {
-        $targetPost = Post::findOrFail($id);
-        $actualParentId = $targetPost->parent_id ?: $targetPost->id;
-
-        $post = new Post();
+        $targetPost      = Post::findOrFail($id);
+        $post            = new Post();
         $post->user_id   = Auth::id();
         $post->content   = $request->content ?? '';
-        $post->parent_id = $actualParentId;
+        $post->parent_id = $targetPost->parent_id ?: $targetPost->id;
+        $post->privacy   = in_array($request->privacy, ['public', 'friends', 'only_me'])
+            ? $request->privacy : 'public';
         $post->save();
 
         $post->load(['user', 'parentPost.user', 'likes', 'comments.user']);
         $post->loadCount('comments');
-        $html = view('partials.post-card', ['post' => $post])->render();
 
-        return response()->json(['success' => true, 'html' => $html]);
+        return response()->json([
+            'success' => true,
+            'html'    => view('partials.post-card', ['post' => $post])->render(),
+        ]);
     }
 
     public function update(Request $request, $id)
@@ -253,47 +286,35 @@ class PostController extends Controller
         ]);
 
         $post->content = $request->content ?? '';
-
-        if ($request->has('bg_color')) {
-            $post->bg_color = $request->bg_color;
+        if ($request->has('bg_color'))  $post->bg_color = $request->bg_color;
+        if ($request->has('privacy') && in_array($request->privacy, ['public', 'friends', 'only_me'])) {
+            $post->privacy = $request->privacy;
         }
 
         $currentImages = $post->images ?? [];
         if ($request->has('removed_images')) {
-            $removedImages = json_decode($request->removed_images, true) ?? [];
-            foreach ($removedImages as $img) {
-                if (Storage::disk('public')->exists($img)) {
-                    Storage::disk('public')->delete($img);
-                }
-                if (($key = array_search($img, $currentImages)) !== false) {
-                    unset($currentImages[$key]);
-                }
+            foreach (json_decode($request->removed_images, true) ?? [] as $img) {
+                Storage::disk('public')->exists($img) && Storage::disk('public')->delete($img);
+                $currentImages = array_values(array_filter($currentImages, fn($i) => $i !== $img));
             }
-            $currentImages = array_values($currentImages);
         }
 
         $currentVideos = [];
         if (!empty($post->video) && $post->video !== 'null') {
-            $currentVideos = is_array($post->video) ? $post->video : (json_decode($post->video, true) ?: [$post->video]);
+            $currentVideos = is_array($post->video)
+                ? $post->video
+                : (json_decode($post->video, true) ?: [$post->video]);
         }
-
         if ($request->has('removed_videos')) {
-            $removedVideos = json_decode($request->removed_videos, true) ?? [];
-            foreach ($removedVideos as $vid) {
-                if (Storage::disk('public')->exists($vid)) {
-                    Storage::disk('public')->delete($vid);
-                }
-                if (($key = array_search($vid, $currentVideos)) !== false) {
-                    unset($currentVideos[$key]);
-                }
+            foreach (json_decode($request->removed_videos, true) ?? [] as $vid) {
+                Storage::disk('public')->exists($vid) && Storage::disk('public')->delete($vid);
+                $currentVideos = array_values(array_filter($currentVideos, fn($v) => $v !== $vid));
             }
-            $currentVideos = array_values($currentVideos);
         }
 
         if ($request->hasFile('media')) {
             foreach ($request->file('media') as $file) {
-                $mimeType = $file->getMimeType();
-                if (str_starts_with($mimeType, 'video/')) {
+                if (str_starts_with($file->getMimeType(), 'video/')) {
                     $currentVideos[] = $file->store('posts/videos', 'public');
                 } else {
                     $currentImages[] = $file->store('posts/images', 'public');
@@ -302,57 +323,36 @@ class PostController extends Controller
         }
 
         $post->images = !empty($currentImages) ? $currentImages : null;
-
-        if (!empty($currentVideos)) {
-            if (count($currentVideos) === 1) {
-                $post->video = $currentVideos[0];
-            } else {
-                $post->video = json_encode($currentVideos);
-            }
-        } else {
-            $post->video = null;
-        }
+        $post->video  = !empty($currentVideos)
+            ? (count($currentVideos) === 1 ? $currentVideos[0] : json_encode($currentVideos))
+            : null;
 
         $post->save();
-
         $post->load(['user', 'parentPost.user', 'likes', 'comments.user']);
-
-        $html = view('partials.post-card', ['post' => $post])->render();
 
         return response()->json([
             'success' => true,
             'message' => 'Post updated successfully!',
-            'html'    => $html,
-            'post'    => $post
+            'html'    => view('partials.post-card', ['post' => $post])->render(),
+            'post'    => $post,
         ]);
     }
 
     public function destroy($id)
     {
         $post = Post::findOrFail($id);
-
         if ($post->user_id !== Auth::id()) {
             return response()->json(['success' => false], 403);
         }
-
-        $this->deleteMediaFromStorage($post);
-        $post->delete();
-
-        return response()->json(['success' => true]);
-    }
-
-    private function deleteMediaFromStorage($post)
-    {
         if ($post->video && Storage::disk('public')->exists($post->video)) {
             Storage::disk('public')->delete($post->video);
         }
-
-        if ($post->images && is_array($post->images)) {
-            foreach ($post->images as $image) {
-                if (Storage::disk('public')->exists($image)) {
-                    Storage::disk('public')->delete($image);
-                }
+        if ($post->images) {
+            foreach ($post->images as $img) {
+                Storage::disk('public')->exists($img) && Storage::disk('public')->delete($img);
             }
         }
+        $post->delete();
+        return response()->json(['success' => true]);
     }
 }

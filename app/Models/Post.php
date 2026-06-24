@@ -16,7 +16,8 @@ class Post extends Model
         'parent_id', 
         'images', 
         'video', 
-        'bg_color'
+        'bg_color',
+        'privacy',
     ];
 
     // ডাটাবেজের JSON কে অ্যারে হিসেবে ব্যবহার করার জন্য

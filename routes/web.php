@@ -291,3 +291,47 @@ Route::middleware('auth')->prefix('friends')->name('friends.')->group(function (
     // Profile button state check
     Route::get('/status/{userId}',[FriendController::class, 'statusWith'])->name('status');
 });
+
+Route::middleware('auth')->get('/active-now', function () {
+    $meId       = Auth::id();
+    $friendIds  = \App\Models\Friendship::friendIds($meId);
+    $blockedIds = \App\Models\Friendship::where('status', 'blocked')
+        ->where(function($q) use ($meId) {
+            $q->where('sender_id', $meId)->orWhere('receiver_id', $meId);
+        })
+        ->get()
+        ->flatMap(fn($f) => [$f->sender_id, $f->receiver_id])
+        ->filter(fn($id) => $id != $meId)
+        ->unique()->values()->toArray();
+
+    $activeUsers = \App\Models\User::whereIn('id', $friendIds)
+        ->whereNotIn('id', $blockedIds)
+        ->where('last_seen', '>=', now()->subMinutes(10))
+        ->select('id', 'name', 'role', 'profile_picture')
+        ->get();
+
+    $html = '';
+    foreach ($activeUsers as $au) {
+        $initial = strtoupper(substr($au->name, 0, 1));
+        $avatar  = $au->profile_picture
+            ? '<img src="'.asset('storage/'.$au->profile_picture).'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+            : $initial;
+        $roleClass = 'bb-mini-' . $au->role;
+        $html .= '
+        <a href="'.route('profile.view', $au->id).'" class="bb-active-item" style="text-decoration:none;">
+            <div class="bb-active-avatar" style="overflow:hidden;">'.$avatar.'</div>
+            <div class="bb-active-meta">
+                <span class="bb-active-name">'.e($au->name).'</span>
+                <span class="bb-mini-badge '.$roleClass.'">
+                    <i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> Active now
+                </span>
+            </div>
+        </a>';
+    }
+
+    if (!$html) {
+        $html = '<div class="text-muted small px-2 py-3">No friends active right now.</div>';
+    }
+
+    return response()->json(['html' => $html]);
+});

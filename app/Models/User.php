@@ -65,6 +65,7 @@ class User extends Authenticatable
         'facebook_url',
         'provider',
         'provider_id',
+        'last_seen',
     ];
 
 
