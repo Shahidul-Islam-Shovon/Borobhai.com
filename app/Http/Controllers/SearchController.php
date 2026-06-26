@@ -3,25 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Document;
+use App\Models\Friendship;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class SearchController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | LIVE SEARCH (navbar dropdown) — JSON
-    |--------------------------------------------------------------------------
-    | টাইপ করার সাথে সাথে AJAX এ কল হয়। দ্রুত হালকা result দেয় (max 6)।
-    | খোঁজে: name, department, skills(JSON), আর thesis topic (documents.topic)
-    */
     public function live(Request $request)
     {
         $q = trim($request->query('q', ''));
-
-        // খুব ছোট query তে কিছু খুঁজব না (অপ্রয়োজনীয় load কমাতে)
         if (mb_strlen($q) < 2) {
             return response()->json(['success' => true, 'results' => []]);
         }
@@ -29,97 +20,75 @@ class SearchController extends Controller
         $like = '%' . $q . '%';
         $meId = Auth::id();
 
-        // ----- ইউজার খোঁজা (name / department / skills) -----
-        // admin বাদ, নিজেকে বাদ
         $users = User::query()
             ->where('id', '!=', $meId)
             ->where('role', '!=', 'admin')
             ->where(function ($sub) use ($like) {
                 $sub->where('name', 'like', $like)
                     ->orWhere('department', 'like', $like)
-                    ->orWhere('skills', 'like', $like);   // JSON string এও LIKE কাজ করে
+                    ->orWhere('skills', 'like', $like);
             })
             ->select('id', 'name', 'role', 'department', 'session', 'profile_picture')
             ->limit(8)
             ->get();
 
-        // ----- thesis topic খোঁজা (documents.topic) -----
-        // ঐ document গুলোর owner user দেখাব
         $topicUsers = User::query()
             ->where('users.id', '!=', $meId)
             ->where('users.role', '!=', 'admin')
             ->whereHas('documents', function ($d) use ($like) {
-                $d->where('topic', 'like', $like)
-                  ->orWhere('title', 'like', $like);
+                $d->where('topic', 'like', $like)->orWhere('title', 'like', $like);
             })
             ->with(['documents' => function ($d) use ($like) {
-                $d->where('topic', 'like', $like)
-                  ->orWhere('title', 'like', $like)
-                  ->select('id', 'user_id', 'title', 'topic')
-                  ->limit(1);
+                $d->where('topic', 'like', $like)->orWhere('title', 'like', $like)
+                  ->select('id', 'user_id', 'title', 'topic')->limit(1);
             }])
             ->select('id', 'name', 'role', 'department', 'session', 'profile_picture')
             ->limit(4)
             ->get();
 
-        // ----- দুই সেট merge করি (id দিয়ে unique) -----
         $merged = [];
-
         foreach ($users as $u) {
             $merged[$u->id] = [
-                'id'         => $u->id,
-                'name'       => $u->name,
-                'role'       => $u->role,
-                'role_label' => ucfirst($u->role),
-                'sub'        => $this->subLine($u),
-                'avatar'     => $this->avatarUrl($u),
-                'initial'    => mb_strtoupper(mb_substr($u->name ?? 'U', 0, 1)),
-                'topic'      => null,
+                'id' => $u->id, 'name' => $u->name, 'role' => $u->role,
+                'role_label' => ucfirst($u->role), 'sub' => $this->subLine($u),
+                'avatar' => $this->avatarUrl($u),
+                'initial' => mb_strtoupper(mb_substr($u->name ?? 'U', 0, 1)),
+                'topic' => null,
             ];
         }
-
         foreach ($topicUsers as $u) {
             $doc = $u->documents->first();
             if (isset($merged[$u->id])) {
-                // আগেই আছে — শুধু topic যোগ করি
                 $merged[$u->id]['topic'] = $doc->topic ?? $doc->title ?? null;
             } else {
                 $merged[$u->id] = [
-                    'id'         => $u->id,
-                    'name'       => $u->name,
-                    'role'       => $u->role,
-                    'role_label' => ucfirst($u->role),
-                    'sub'        => $this->subLine($u),
-                    'avatar'     => $this->avatarUrl($u),
-                    'initial'    => mb_strtoupper(mb_substr($u->name ?? 'U', 0, 1)),
-                    'topic'      => $doc->topic ?? $doc->title ?? null,
+                    'id' => $u->id, 'name' => $u->name, 'role' => $u->role,
+                    'role_label' => ucfirst($u->role), 'sub' => $this->subLine($u),
+                    'avatar' => $this->avatarUrl($u),
+                    'initial' => mb_strtoupper(mb_substr($u->name ?? 'U', 0, 1)),
+                    'topic' => $doc->topic ?? $doc->title ?? null,
                 ];
             }
         }
 
-        // array তে নিয়ে max 8 রাখি
         $results = array_slice(array_values($merged), 0, 8);
 
-        return response()->json([
-            'success' => true,
-            'query'   => $q,
-            'results' => $results,
-        ]);
+        // Recent search save
+        if (!empty($results)) {
+            DB::table('recent_searches')->updateOrInsert(
+                ['user_id' => $meId, 'query' => $q],
+                ['updated_at' => now(), 'created_at' => now()]
+            );
+        }
+
+        return response()->json(['success' => true, 'query' => $q, 'results' => $results]);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | FULL SEARCH PAGE
-    |--------------------------------------------------------------------------
-    | /search?q=...&filter=all|student|alumni|teacher|topic
-    | পূর্ণ result, pagination সহ
-    */
     public function index(Request $request)
     {
         $q      = trim($request->query('q', ''));
         $filter = $request->query('filter', 'all');
         $meId   = Auth::id();
-
         $results = collect();
         $total   = 0;
 
@@ -131,42 +100,34 @@ class SearchController extends Controller
                 ->where('role', '!=', 'admin');
 
             if ($filter === 'topic') {
-                // শুধু thesis topic দিয়ে
                 $query->whereHas('documents', function ($d) use ($like) {
-                    $d->where('topic', 'like', $like)
-                      ->orWhere('title', 'like', $like);
+                    $d->where('topic', 'like', $like)->orWhere('title', 'like', $like);
                 });
             } elseif (in_array($filter, ['student', 'alumni', 'teacher'])) {
-                // নির্দিষ্ট role + name/dept/skills/topic
                 $query->where('role', $filter)
                       ->where(function ($sub) use ($like) {
                           $sub->where('name', 'like', $like)
                               ->orWhere('department', 'like', $like)
                               ->orWhere('skills', 'like', $like)
                               ->orWhereHas('documents', function ($d) use ($like) {
-                                  $d->where('topic', 'like', $like)
-                                    ->orWhere('title', 'like', $like);
+                                  $d->where('topic', 'like', $like)->orWhere('title', 'like', $like);
                               });
                       });
             } else {
-                // all — name/dept/skills/topic সব
                 $query->where(function ($sub) use ($like) {
                     $sub->where('name', 'like', $like)
                         ->orWhere('department', 'like', $like)
                         ->orWhere('skills', 'like', $like)
                         ->orWhereHas('documents', function ($d) use ($like) {
-                            $d->where('topic', 'like', $like)
-                              ->orWhere('title', 'like', $like);
+                            $d->where('topic', 'like', $like)->orWhere('title', 'like', $like);
                         });
                 });
             }
 
             $results = $query
                 ->with(['documents' => function ($d) use ($like) {
-                    $d->where('topic', 'like', $like)
-                      ->orWhere('title', 'like', $like)
-                      ->select('id', 'user_id', 'title', 'topic')
-                      ->limit(1);
+                    $d->where('topic', 'like', $like)->orWhere('title', 'like', $like)
+                      ->select('id', 'user_id', 'title', 'topic')->limit(1);
                 }])
                 ->select('id', 'name', 'role', 'department', 'session', 'bio', 'profile_picture', 'skills')
                 ->orderBy('name')
@@ -174,23 +135,60 @@ class SearchController extends Controller
                 ->withQueryString();
 
             $total = $results->total();
+
+            // ✅ Friendship status — clean query
+            $userIds = $results->pluck('id')->toArray();
+
+            $friendships = Friendship::where(function ($q) use ($meId, $userIds) {
+                $q->where('sender_id', $meId)->whereIn('receiver_id', $userIds);
+            })->orWhere(function ($q) use ($meId, $userIds) {
+                $q->where('receiver_id', $meId)->whereIn('sender_id', $userIds);
+            })->get();
+
+            $statusMap = [];
+            foreach ($friendships as $f) {
+                $otherId = $f->sender_id === $meId ? $f->receiver_id : $f->sender_id;
+                if ($f->status === 'accepted') {
+                    $statusMap[$otherId] = 'accepted';
+                } elseif ($f->status === 'pending') {
+                    $statusMap[$otherId] = $f->sender_id === $meId ? 'pending_sent' : 'pending_received';
+                } elseif ($f->status === 'blocked') {
+                    $statusMap[$otherId] = 'blocked';
+                }
+            }
+
+            foreach ($results as $user) {
+                $user->friendshipStatus = $statusMap[$user->id] ?? 'none';
+            }
         }
 
-        return view('search.results', [
-            'query'   => $q,
-            'filter'  => $filter,
-            'results' => $results,
-            'total'   => $total,
-        ]);
+        return view('search.results', compact('q', 'filter', 'results', 'total') + ['query' => $q]);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | HELPERS
-    |--------------------------------------------------------------------------
-    */
+    public function recentSearches()
+    {
+        $searches = DB::table('recent_searches')
+            ->where('user_id', Auth::id())
+            ->orderByDesc('updated_at')
+            ->limit(8)
+            ->get(['id', 'query']);
 
-    // নামের নিচের sub-line: department · session
+        return response()->json(['success' => true, 'searches' => $searches]);
+    }
+
+    public function deleteSearch($id)
+    {
+        DB::table('recent_searches')
+            ->where('id', $id)->where('user_id', Auth::id())->delete();
+        return response()->json(['success' => true]);
+    }
+
+    public function clearSearches()
+    {
+        DB::table('recent_searches')->where('user_id', Auth::id())->delete();
+        return response()->json(['success' => true]);
+    }
+
     private function subLine(User $u): string
     {
         $parts = [];
@@ -199,7 +197,6 @@ class SearchController extends Controller
         return implode(' · ', $parts);
     }
 
-    // avatar URL বা null (null হলে frontend initial দেখাবে)
     private function avatarUrl(User $u): ?string
     {
         return $u->profile_picture ? asset('storage/' . $u->profile_picture) : null;

@@ -73,12 +73,7 @@
 </head>
 <body>
 
-<nav class="jp-nav">
-    <div class="ja-wrap d-flex align-items-center justify-content-between" style="margin:0 auto;">
-        <a href="{{ route('home') }}" class="jp-brand">Borobhai.online</a>
-        <a href="{{ route('home') }}" class="jp-back"><i class="bi bi-arrow-left"></i> Back to Feed</a>
-    </div>
-</nav>
+@include('partials.inner-navbar')
 
 <div class="ja-wrap">
     <div class="ja-head">

@@ -31,16 +31,7 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand-md sticky-top">
-    <div class="container-fluid">
-        <div class="d-flex align-items-center gap-2">
-            <a style="color:black;" class="navbar-brand m-0" href="{{ route('home') }}">Borobhai.online</a>
-        </div>
-        <div class="d-flex align-items-center gap-2 ms-auto">
-            <a href="{{ route('home') }}" class="nav-icon-btn"><i class="bi bi-house-door-fill"></i></a>
-        </div>
-    </div>
-</nav>
+@include('partials.inner-navbar')
 
 <div class="container py-4" style="max-width:680px;">
 

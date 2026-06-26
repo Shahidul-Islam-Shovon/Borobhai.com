@@ -86,12 +86,7 @@
 </head>
 <body>
 
-<nav class="jp-nav">
-    <div class="ap-wrap d-flex align-items-center justify-content-between" style="margin:0 auto;">
-        <a href="{{ route('home') }}" class="jp-brand">Borobhai.online</a>
-        <a href="{{ route('jobs.show', $job->id) }}" class="jp-back"><i class="bi bi-arrow-left"></i> Back to Job</a>
-    </div>
-</nav>
+@include('partials.inner-navbar')
 
 <div class="ap-wrap">
 

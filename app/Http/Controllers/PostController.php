@@ -22,14 +22,14 @@ class PostController extends Controller
         $user = Auth::user();
         $meId = Auth::id();
 
-        // last_seen — প্রতি request এ update, cache clear করি
+        // last_seen update
         DB::table('users')->where('id', $meId)->update(['last_seen' => now()]);
         Cache::forget('last_seen_' . $meId);
 
         $friendIds  = Friendship::friendIds($meId);
         $blockedIds = $this->getBlockedIds($meId);
 
-        $feed = $this->buildFeed(1, $meId, $friendIds);
+        $feed = $this->buildFeed(1, $meId, $friendIds, 'all');
 
         $appliedJobIds = \App\Models\JobApplication::where('user_id', $meId)
             ->pluck('job_post_id')->toArray();
@@ -52,11 +52,12 @@ class PostController extends Controller
         $hasMore     = $feed['has_more'];
         $canPostJobs = $user->role === 'alumni';
 
-        // Active Now — friends only, blocked বাদ, last 10 min
+        // Active Now — 3 ঘন্টার মধ্যে active friends
         $activeUsers = \App\Models\User::whereIn('id', $friendIds)
             ->whereNotIn('id', $blockedIds)
-            ->where('last_seen', '>=', now()->subMinutes(10))
-            ->select('id', 'name', 'role', 'profile_picture')
+            ->where('last_seen', '>=', now()->subHours(3))
+            ->select('id', 'name', 'role', 'profile_picture', 'last_seen')
+            ->orderByDesc('last_seen')
             ->limit(8)
             ->get();
 
@@ -77,17 +78,18 @@ class PostController extends Controller
         );
 
         if (in_array($user->role, ['alumni', 'teacher'])) {
-                return view('alumni.dashboard', $data);
-            }
-            return view('student.dashboard', $data);
+            return view('alumni.dashboard', $data);
         }
+        return view('student.dashboard', $data);
+    }
 
     public function loadMore(Request $request)
     {
         $page      = max(1, (int) $request->query('page', 2));
+        $filter    = $request->query('filter', 'all');
         $meId      = Auth::id();
         $friendIds = Friendship::friendIds($meId);
-        $feed      = $this->buildFeed($page, $meId, $friendIds);
+        $feed      = $this->buildFeed($page, $meId, $friendIds, $filter);
 
         $appliedJobIds = \App\Models\JobApplication::where('user_id', $meId)
             ->pluck('job_post_id')->toArray();
@@ -111,7 +113,7 @@ class PostController extends Controller
         ]);
     }
 
-    private function buildFeed(int $page, int $meId, array $friendIds): array
+    private function buildFeed(int $page, int $meId, array $friendIds, string $filter = 'all'): array
     {
         $perPage = self::FEED_PER_PAGE;
         $offset  = ($page - 1) * $perPage;
@@ -122,30 +124,41 @@ class PostController extends Controller
                     'comments' => fn($q) => $q->with('user')->latest()->limit(10),
                 ])
                 ->withCount('comments')
-                ->where(function ($q) use ($meId, $friendIds) {
-                    // নিজের সব post
-                    $q->where('user_id', $meId)
-                    // friends এর public + friends post
-                    ->orWhere(function ($sub) use ($friendIds) {
-                        $sub->whereIn('user_id', $friendIds)
-                            ->whereIn('privacy', ['public', 'friends']);
-                    })
-                    // অন্যদের শুধু public
-                    ->orWhere(function ($sub) use ($meId, $friendIds) {
-                        $sub->whereNotIn('user_id', array_merge($friendIds, [$meId]))
-                            ->where('privacy', 'public');
-                    });
+                ->where(function ($q) use ($meId, $friendIds, $filter) {
+                    if ($filter === 'friends') {
+                        // শুধু friends এর post
+                        $q->whereIn('user_id', $friendIds)
+                          ->whereIn('privacy', ['public', 'friends']);
+                    } elseif ($filter === 'public') {
+                        // শুধু public post
+                        $q->where('privacy', 'public');
+                    } else {
+                        // all — নিজের সব + friends এর public/friends + অন্যদের public
+                        $q->where('user_id', $meId)
+                          ->orWhere(function ($sub) use ($friendIds) {
+                              $sub->whereIn('user_id', $friendIds)
+                                  ->whereIn('privacy', ['public', 'friends']);
+                          })
+                          ->orWhere(function ($sub) use ($meId, $friendIds) {
+                              $sub->whereNotIn('user_id', array_merge($friendIds, [$meId]))
+                                  ->where('privacy', 'public');
+                          });
+                    }
                 })
                 ->latest('created_at')
                 ->take($need)
                 ->get();
 
-        $jobs = JobPost::with('user')
-                ->withCount(['savedByUsers as is_saved_by_me' => fn($q) => $q->where('user_id', Auth::id())])
-                ->visible()
-                ->latest('created_at')
-                ->take($need)
-                ->get();
+        // Jobs — শুধু 'all' filter এ
+        $jobs = collect();
+        if ($filter === 'all') {
+            $jobs = JobPost::with('user')
+                    ->withCount(['savedByUsers as is_saved_by_me' => fn($q) => $q->where('user_id', Auth::id())])
+                    ->visible()
+                    ->latest('created_at')
+                    ->take($need)
+                    ->get();
+        }
 
         $items = collect();
         foreach ($posts as $p) {
@@ -169,28 +182,37 @@ class PostController extends Controller
 
     private function getSuggested(int $meId, array $friendIds, array $blockedIds): \Illuminate\Support\Collection
     {
-        // pending sent — এদের দেখাব কিন্তু "Requested" state এ
         $pendingSentIds = Friendship::where('sender_id', $meId)
             ->where('status', 'pending')
             ->pluck('receiver_id')
             ->toArray();
 
-        // exclude: friends + blocked + me, কিন্তু pending sent বাদ দেব না (দেখাতে হবে)
-        $hardExclude = array_values(array_unique(
-            array_merge($friendIds, $blockedIds, [$meId])
+        $notInterestedIds = DB::table('not_interested_users')
+            ->where('user_id', $meId)
+            ->pluck('ignored_user_id')
+            ->toArray();
+
+        $hardExclude  = array_values(array_unique(
+            array_merge($friendIds, $blockedIds, [$meId], $notInterestedIds)
         ));
-        // pending sent যদি hard exclude এ থাকে, সরিয়ে দাও
         $finalExclude = array_values(array_diff($hardExclude, $pendingSentIds));
 
         return \App\Models\User::whereNotIn('id', $finalExclude)
             ->where('role', '!=', 'admin')
-            ->orderBy('id') // stable — random নয়
-            ->select('id', 'name', 'role', 'department', 'session', 'profile_picture')
+            ->orderBy('id')
+            ->select('id', 'name', 'role', 'department', 'section', 'profile_picture')
+            ->with([
+                'experiences' => fn($q) => $q->where('is_current', true)
+                    ->select('user_id', 'company', 'designation')
+                    ->limit(1),
+            ])
             ->limit(5)
             ->get()
             ->map(function ($u) use ($meId, $pendingSentIds) {
-                $u->mutual     = Friendship::mutualCount($meId, $u->id);
-                $u->is_pending = in_array($u->id, $pendingSentIds);
+                $u->mutual          = Friendship::mutualCount($meId, $u->id);
+                $u->is_pending      = in_array($u->id, $pendingSentIds);
+                $exp                = $u->experiences->first();
+                $u->current_company = $exp?->company;
                 return $u;
             });
     }
@@ -205,6 +227,9 @@ class PostController extends Controller
             ->unique()->values()->toArray();
     }
 
+    // ==========================================
+    // STORE
+    // ==========================================
     public function store(Request $request)
     {
         $request->validate([
@@ -247,6 +272,9 @@ class PostController extends Controller
         ]);
     }
 
+    // ==========================================
+    // SHARE
+    // ==========================================
     public function share(Request $request, $id)
     {
         $targetPost      = Post::findOrFail($id);
@@ -258,6 +286,17 @@ class PostController extends Controller
             ? $request->privacy : 'public';
         $post->save();
 
+        if ($targetPost->user_id !== Auth::id()) {
+            \App\Models\BbNotification::send(
+                $targetPost->user_id,
+                Auth::id(),
+                'post_share',
+                Auth::user()->name . ' shared your post.',
+                'post',
+                $targetPost->id
+            );
+        }
+
         $post->load(['user', 'parentPost.user', 'likes', 'comments.user']);
         $post->loadCount('comments');
 
@@ -267,6 +306,9 @@ class PostController extends Controller
         ]);
     }
 
+    // ==========================================
+    // UPDATE
+    // ==========================================
     public function update(Request $request, $id)
     {
         $post = Post::findOrFail($id);
@@ -281,7 +323,7 @@ class PostController extends Controller
         ]);
 
         $post->content = $request->content ?? '';
-        if ($request->has('bg_color'))  $post->bg_color = $request->bg_color;
+        if ($request->has('bg_color')) $post->bg_color = $request->bg_color;
         if ($request->has('privacy') && in_array($request->privacy, ['public', 'friends', 'only_me'])) {
             $post->privacy = $request->privacy;
         }
@@ -333,6 +375,9 @@ class PostController extends Controller
         ]);
     }
 
+    // ==========================================
+    // DESTROY
+    // ==========================================
     public function destroy($id)
     {
         $post = Post::findOrFail($id);
@@ -351,47 +396,81 @@ class PostController extends Controller
         return response()->json(['success' => true]);
     }
 
+    // ==========================================
+    // ACTIVE NOW
+    // ==========================================
     public function activeNow()
-{
-    $meId       = Auth::id();
-    $friendIds  = Friendship::friendIds($meId);
-    $blockedIds = $this->getBlockedIds($meId);
- 
-    // ✅ CORE FIX: নিজের last_seen এখানেও update করি
-    // যাতে page load এর পরেই আমার friends আমাকে দেখতে পায়
-    // এবং আমিও নিজেকে refresh এ দেখি
-    DB::table('users')->where('id', $meId)->update(['last_seen' => now()]);
- 
-    $activeUsers = \App\Models\User::whereIn('id', $friendIds)
-        ->whereNotIn('id', $blockedIds)
-        ->where('last_seen', '>=', now()->subMinutes(10))
-        ->select('id', 'name', 'role', 'profile_picture')
-        ->limit(8)
-        ->get();
- 
-    // HTML বানাও
-    if ($activeUsers->isEmpty()) {
-        $html = '<div class="text-muted small px-2 py-3">No friends active right now.</div>';
-    } else {
+    {
+        $meId       = Auth::id();
+        $friendIds  = Friendship::friendIds($meId);
+        $blockedIds = $this->getBlockedIds($meId);
+
+        DB::table('users')->where('id', $meId)->update(['last_seen' => now()]);
+
+        $activeUsers = \App\Models\User::whereIn('id', $friendIds)
+            ->whereNotIn('id', $blockedIds)
+            ->where('last_seen', '>=', now()->subMinutes(10))
+            ->select('id', 'name', 'role', 'profile_picture', 'last_seen')
+            ->orderByDesc('last_seen')
+            ->limit(8)
+            ->get();
+
+        if ($activeUsers->isEmpty()) {
+            return response()->json([
+                'html' => '<div class="text-muted small px-2 py-3 text-center">No friends active right now.</div>'
+            ]);
+        }
+
         $html = '';
         foreach ($activeUsers as $au) {
-            $avatarHtml = $au->profile_picture
-                ? '<img src="' . asset('storage/' . $au->profile_picture) . '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+            $lastSeenText = self::formatLastSeen($au->last_seen);
+            $isOnline     = $au->last_seen >= now()->subMinutes(10);
+            $pic          = $au->profile_picture
+                ? '<img src="'.asset('storage/'.$au->profile_picture).'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
                 : strtoupper(substr($au->name, 0, 1));
- 
-            $badgeClass = 'bb-mini-' . $au->role;
- 
-            $html .= '<a href="' . route('profile.view', $au->id) . '" class="bb-active-item" style="text-decoration:none;">';
-            $html .= '<div class="bb-active-avatar" style="overflow:hidden;">' . $avatarHtml . '</div>';
-            $html .= '<div class="bb-active-meta">';
-            $html .= '<span class="bb-active-name">' . e($au->name) . '</span>';
-            $html .= '<span class="bb-mini-badge ' . $badgeClass . '">';
-            $html .= '<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> Active now';
-            $html .= '</span></div></a>';
-        }
-    }
- 
-    return response()->json(['html' => $html]);
-}
+            $dotColor   = $isOnline ? '#22c55e' : '#9ca3af';
+            $roleClass  = 'bb-mini-' . $au->role;
+            $badgeContent = $isOnline
+                ? '<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> '.$lastSeenText
+                : $lastSeenText;
+            $nameJs    = addslashes($au->name);
+            $picUrl    = $au->profile_picture ? asset('storage/'.$au->profile_picture) : '';
+            $isOnlineJs = $isOnline ? '1' : '0';
 
+            $html .= '
+            <a href="#" class="bb-active-item" style="text-decoration:none;"
+               onclick="event.preventDefault(); openChatBox('.$au->id.', \''.$nameJs.'\', \''.$picUrl.'\', \''.$lastSeenText.'\', \''.$isOnlineJs.'\')">
+                <div class="bb-active-avatar" style="overflow:hidden;position:relative;">
+                    '.$pic.'
+                    <span style="position:absolute;bottom:0;right:0;width:11px;height:11px;border-radius:50%;background:'.$dotColor.';border:2px solid #fff;display:block;"></span>
+                </div>
+                <div class="bb-active-meta">
+                    <span class="bb-active-name">'.e($au->name).'</span>
+                    <span class="bb-mini-badge '.$roleClass.'">'.$badgeContent.'</span>
+                </div>
+            </a>';
+        }
+
+        return response()->json(['html' => $html]);
+    }
+
+    // ==========================================
+    // LAST SEEN FORMAT
+    // ==========================================
+    public static function formatLastSeen($lastSeen): string
+    {
+        if (!$lastSeen) return 'Never';
+
+        $lastSeen = \Carbon\Carbon::parse($lastSeen);
+        $diffMin  = now()->diffInMinutes($lastSeen);
+        $diffHour = now()->diffInHours($lastSeen);
+        $diffDay  = now()->diffInDays($lastSeen);
+
+        if ($diffMin < 2)   return 'Active now';
+        if ($diffMin < 60)  return 'Active ' . $diffMin . 'm ago';
+        if ($diffHour < 24) return 'Active ' . $diffHour . 'h ago';
+        if ($diffDay < 7)   return 'Active ' . $diffDay . 'd ago';
+
+        return 'Active ' . $lastSeen->format('M d');
+    }
 }

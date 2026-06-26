@@ -1,13 +1,48 @@
 @php
     use Illuminate\Support\Facades\Auth;
+    $meId = Auth::id();
+
+    // Privacy config
+    $privacy = $post->privacy ?? 'public';
+    $privacyConfig = match($privacy) {
+        'friends' => ['icon' => 'bi-people-fill',    'label' => 'Friends',  'color' => 'text-success'],
+        'only_me' => ['icon' => 'bi-lock-fill',      'label' => 'Only Me',  'color' => 'text-warning'],
+        default   => ['icon' => 'bi-globe-americas', 'label' => 'Public',   'color' => 'text-primary'],
+    };
+
+    // Friendship status with post author
+    $isMyPost = $post->user_id === $meId;
+    $friendshipStatus = 'none';
+    if (!$isMyPost) {
+
+        $fs = \App\Models\Friendship::where(function($q) use ($meId, $post) {
+        $q->where(function($inner) use ($meId, $post) {
+            $inner->where('sender_id', $meId)
+                ->where('receiver_id', $post->user_id);
+        })->orWhere(function($inner) use ($meId, $post) {
+            $inner->where('sender_id', $post->user_id)
+                ->where('receiver_id', $meId);
+        });
+        })->first();
+
+
+        if ($fs) {
+            if ($fs->status === 'accepted') $friendshipStatus = 'accepted';
+            elseif ($fs->status === 'pending') {
+                $friendshipStatus = $fs->sender_id === $meId ? 'pending_sent' : 'pending_received';
+            }
+            elseif ($fs->status === 'blocked') $friendshipStatus = 'blocked';
+        }
+    }
 @endphp
 
-<div class="bb-post-card" id="postCard-{{ $post->id }}" data-bg-color="{{ $post->bg_color }}">
+<div class="bb-post-card" id="postCard-{{ $post->id }}" data-bg-color="{{ $post->bg_color }}" data-privacy="{{ $privacy }}">
 
     {{-- Post Header --}}
     <div class="bb-post-head">
         <div class="bb-head-left">
-            <a href="{{ $post->user_id === Auth::id() ? route('profile.show') : route('profile.view', $post->user_id) }}" class="bb-avatar author-avatar-zone" style="text-decoration:none;" title="View profile">
+            <a href="{{ $isMyPost ? route('profile.show') : route('profile.view', $post->user_id) }}"
+               class="bb-avatar author-avatar-zone" style="text-decoration:none;">
                 @if($post->user->profile_picture)
                     <img src="{{ asset('storage/'.$post->user->profile_picture) }}" alt="{{ $post->user->name }}" class="bb-avatar-img">
                 @else
@@ -15,54 +50,95 @@
                 @endif
             </a>
             <div class="bb-head-meta">
-                <a href="{{ $post->user_id === Auth::id() ? route('profile.show') : route('profile.view', $post->user_id) }}" class="bb-author author-name-zone bb-author-link">{{ $post->user->name }}</a>
-                {{-- নামের নিচে role label (Student / Alumni / Teacher) --}}
+                <a href="{{ $isMyPost ? route('profile.show') : route('profile.view', $post->user_id) }}"
+                   class="bb-author author-name-zone bb-author-link">{{ $post->user->name }}</a>
+
+                {{-- Role badge --}}
                 @php $pRole = $post->user->role; @endphp
-                <span class="bb-author-role
-                    @if($pRole === 'teacher') bb-author-role-teacher
-                    @elseif($pRole === 'alumni') bb-author-role-alumni
-                    @else bb-author-role-student @endif">
-                    @if($pRole === 'teacher')
-                        <i class="bi bi-easel2-fill"></i> Teacher
-                    @elseif($pRole === 'alumni')
-                        <i class="bi bi-mortarboard-fill"></i> Alumni
-                    @else
-                        <i class="bi bi-backpack-fill"></i> Student
-                    @endif
+                <span class="bb-author-role {{ match($pRole) { 'teacher' => 'bb-author-role-teacher', 'alumni' => 'bb-author-role-alumni', default => 'bb-author-role-student' } }}">
+                    <i class="bi {{ match($pRole) { 'teacher' => 'bi-easel2-fill', 'alumni' => 'bi-mortarboard-fill', default => 'bi-backpack-fill' } }}"></i>
+                    {{ ucfirst($pRole) }}
                 </span>
-                <span class="bb-time"><i class="bi bi-globe-americas"></i> {{ $post->updated_at->diffForHumans() }}</span>
+
+                {{-- Time + Privacy icon --}}
+                <span class="bb-time">
+                    <i class="bi {{ $privacyConfig['icon'] }} {{ $privacyConfig['color'] }}" title="{{ $privacyConfig['label'] }}"></i>
+                    {{ $post->updated_at->diffForHumans() }}
+                </span>
             </div>
         </div>
-        @if($post->user_id === Auth::id())
-            <div class="dropdown">
-                <button class="bb-more-btn" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-1">
-                    <li>
-                        <a class="dropdown-item py-2 px-3 rounded" href="javascript:void(0)"
-                            onclick="prepareEditModal(this)"
-                            data-id="{{ $post->id }}"
-                            data-content="{{ $post->content }}"
-                            data-bg-color="{{ $post->bg_color }}"
-                            data-images="{{ json_encode($post->images) }}"
-                            data-video="{{ is_array($post->video) ? json_encode($post->video) : $post->video }}"
-                            data-is-shared="{{ $post->parent_id ? '1' : '0' }}">
-                            <i class="bi bi-pencil-square me-2"></i> Edit post
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item py-2 px-3 rounded text-danger" href="javascript:void(0)"
-                            onclick="deletePost({{ $post->id }})">
-                            <i class="bi bi-trash3 me-2"></i> Delete
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        @endif
+
+        <div class="d-flex align-items-center gap-2">
+            {{-- Add Friend button (অন্যের post এ) --}}
+            @if(!$isMyPost && $friendshipStatus !== 'blocked')
+                <div id="postFriendWrap-{{ $post->user_id }}">
+                    @if($friendshipStatus === 'accepted')
+                        {{-- already friends — কিছু দেখাব না --}}
+                    @elseif($friendshipStatus === 'pending_sent')
+                        <button class="btn btn-sm" style="font-size:11px;font-weight:700;background:#eef2ff;color:#4f46e5;border:1.5px solid #c7d2fe;border-radius:20px;padding:4px 10px;"
+                                onclick="postCardFriend('cancel', {{ $post->user_id }}, this)">
+                            <i class="bi bi-person-check-fill me-1"></i>Requested
+                        </button>
+                    @elseif($friendshipStatus === 'pending_received')
+                        <button class="btn btn-sm" style="font-size:11px;font-weight:700;background:#059669;color:#fff;border-radius:20px;padding:4px 10px;"
+                                onclick="postCardFriend('accept', {{ $post->user_id }}, this)">
+                            <i class="bi bi-person-plus-fill me-1"></i>Accept
+                        </button>
+                    @else
+                        <button class="btn btn-sm" style="font-size:11px;font-weight:700;background:#eef2ff;color:#4f46e5;border:1.5px solid #c7d2fe;border-radius:20px;padding:4px 10px;"
+                                onclick="postCardFriend('send', {{ $post->user_id }}, this)">
+                            <i class="bi bi-person-plus-fill me-1"></i>Add Friend
+                        </button>
+                    @endif
+                </div>
+            @endif
+
+            {{-- Three dots menu (নিজের post) --}}
+            @if($isMyPost)
+                <div class="dropdown">
+                    <button class="bb-more-btn" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-1">
+                        <li>
+                            <a class="dropdown-item py-2 px-3 rounded" href="javascript:void(0)"
+                               onclick="prepareEditModal(this)"
+                               data-id="{{ $post->id }}"
+                               data-content="{{ $post->content }}"
+                               data-bg-color="{{ $post->bg_color }}"
+                               data-privacy="{{ $privacy }}"
+                               data-images="{{ json_encode($post->images) }}"
+                               data-video="{{ is_array($post->video) ? json_encode($post->video) : $post->video }}"
+                               data-is-shared="{{ $post->parent_id ? '1' : '0' }}">
+                                <i class="bi bi-pencil-square me-2"></i> Edit post
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2 px-3 rounded text-danger" href="javascript:void(0)"
+                               onclick="deletePost({{ $post->id }})">
+                                <i class="bi bi-trash3 me-2"></i> Delete
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            @else
+                {{-- অন্যের post এ report option --}}
+                <div class="dropdown">
+                    <button class="bb-more-btn" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-1">
+                        <li>
+                            <a class="dropdown-item py-2 px-3 rounded text-danger" href="javascript:void(0)"
+                               onclick="openReport('post', {{ $post->id }}, '{{ e($post->user->name) }}')">
+                                <i class="bi bi-flag me-2"></i> Report post
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            @endif
+        </div>
     </div>
 
     {{-- Post Caption --}}
     @php
-        $hasImages      = is_array($post->images) && count($post->images) > 0;
+        $hasImages       = is_array($post->images) && count($post->images) > 0;
         $videoItemsArray = [];
         if (!empty($post->video) && $post->video !== 'null') {
             $decoded = is_array($post->video) ? $post->video : json_decode($post->video, true);
@@ -103,7 +179,6 @@
 
     @if($mediaCount > 0)
     <div class="bb-media-zone dynamic-media-container-zone" data-media-json="{{ $escapedImagesJson }}">
-
         @if($mediaCount === 1)
             @if($mediaItems[0]['type'] === 'image')
                 <div class="bb-media-single">
@@ -111,16 +186,14 @@
                          onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),0)">
                 </div>
             @else
-                {{-- Inline playable video (Facebook-style) --}}
                 <div class="bb-video-wrap">
                     <video src="{{ $mediaItems[0]['url'] }}" class="bb-inline-video" preload="metadata" controls playsinline></video>
-                    <button type="button" class="bb-expand-btn" title="Expand"
+                    <button type="button" class="bb-expand-btn"
                             onclick="openLightbox(this.closest('[data-media-json]').getAttribute('data-media-json'),0)">
                         <i class="bi bi-arrows-fullscreen"></i>
                     </button>
                 </div>
             @endif
-
         @elseif($mediaCount === 2)
             <div class="bb-grid bb-grid-2">
                 @foreach($mediaItems as $i => $media)
@@ -136,7 +209,6 @@
                     </div>
                 @endforeach
             </div>
-
         @elseif($mediaCount === 3)
             <div class="bb-grid bb-grid-3">
                 <div class="bb-tile bb-tile-big">
@@ -164,7 +236,6 @@
                     @endforeach
                 </div>
             </div>
-
         @elseif($mediaCount === 4)
             <div class="bb-grid bb-grid-4">
                 @foreach($mediaItems as $i => $media)
@@ -180,7 +251,6 @@
                     </div>
                 @endforeach
             </div>
-
         @else
             @php $visibleItems = array_slice($mediaItems,0,4); $remaining = $mediaCount-4; @endphp
             <div class="bb-grid bb-grid-4">
@@ -240,13 +310,11 @@
                     <span class="bb-time">{{ $post->parentPost->created_at->diffForHumans() }}</span>
                 </div>
             </div>
-
             @if(trim($post->parentPost->content) !== '' || $pRenderBg)
             <div class="{{ $pRenderBg ? 'bb-color-caption bb-color-caption-sm '.$post->parentPost->bg_color : 'bb-caption' }}" style="{{ $pRenderBg ? '' : 'padding:0 14px 8px;' }}">
                 <p class="mb-0">{!! nl2br(e($post->parentPost->content)) !!}</p>
             </div>
             @endif
-
             @if($pCount > 0)
             <div class="bb-media-zone" data-media-json="{{ $parentMediaJson }}">
                 @if($pCount === 1)
@@ -307,18 +375,16 @@
     @php $isSaved = $post->isSavedByCurrentUser(); @endphp
     <div class="bb-actions">
         <button type="button"
-                class="bb-action-btn {{ $post->likes->contains('user_id', Auth::id()) ? 'active-like' : '' }}"
+                class="bb-action-btn {{ $post->likes->contains('user_id', $meId) ? 'active-like' : '' }}"
                 id="likeBtn-{{ $post->id }}" onclick="toggleLike({{ $post->id }})">
-            <i class="bi {{ $post->likes->contains('user_id', Auth::id()) ? 'bi-hand-thumbs-up-fill' : 'bi-hand-thumbs-up' }}"></i>
+            <i class="bi {{ $post->likes->contains('user_id', $meId) ? 'bi-hand-thumbs-up-fill' : 'bi-hand-thumbs-up' }}"></i>
             <span>Like</span>
         </button>
         <button type="button" class="bb-action-btn" onclick="openCommentModal({{ $post->id }})">
-            <i class="bi bi-chat-square-text"></i>
-            <span>Comment</span>
+            <i class="bi bi-chat-square-text"></i><span>Comment</span>
         </button>
         <button type="button" class="bb-action-btn" onclick="openShareModal({{ $post->id }})">
-            <i class="bi bi-share"></i>
-            <span>Share</span>
+            <i class="bi bi-share"></i><span>Share</span>
         </button>
         <button type="button"
                 class="bb-action-btn {{ $isSaved ? 'active-save' : '' }}"
@@ -329,3 +395,45 @@
     </div>
 
 </div>
+
+@once
+<script>
+// Post card এ friend action
+function postCardFriend(action, userId, btn) {
+    const endpoints = {
+        send:   '/friends/send',
+        cancel: '/friends/cancel',
+        accept: '/friends/accept',
+    };
+    if (btn) btn.disabled = true;
+    fetch(endpoints[action], {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Accept':'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: JSON.stringify({ user_id: userId }),
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (btn) btn.disabled = false;
+        if (!d.success) return;
+        // সব post card এ ঐ user এর button update করো
+        document.querySelectorAll(`#postFriendWrap-${userId}`).forEach(wrap => {
+            if (d.status === 'pending_sent') {
+                wrap.innerHTML = `<button class="btn btn-sm" style="font-size:11px;font-weight:700;background:#eef2ff;color:#4f46e5;border:1.5px solid #c7d2fe;border-radius:20px;padding:4px 10px;"
+                    onclick="postCardFriend('cancel',${userId},this)">
+                    <i class="bi bi-person-check-fill me-1"></i>Requested</button>`;
+            } else if (d.status === 'accepted') {
+                wrap.innerHTML = '';
+            } else {
+                wrap.innerHTML = `<button class="btn btn-sm" style="font-size:11px;font-weight:700;background:#eef2ff;color:#4f46e5;border:1.5px solid #c7d2fe;border-radius:20px;padding:4px 10px;"
+                    onclick="postCardFriend('send',${userId},this)">
+                    <i class="bi bi-person-plus-fill me-1"></i>Add Friend</button>`;
+            }
+        });
+        if (typeof Swal !== 'undefined') {
+            Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:2000, timerProgressBar:true }).fire({ icon:'success', title: d.message });
+        }
+    })
+    .catch(() => { if (btn) btn.disabled = false; });
+}
+</script>
+@endonce

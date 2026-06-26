@@ -96,4 +96,19 @@ class Friendship extends Model
         if ($record->sender_id == $meId) return 'pending_sent';
         return 'pending_received';
     }
+
+    public static function mutualFriends(int $userId, int $otherUserId): \Illuminate\Support\Collection
+    {
+        $myFriends    = static::friendIds($userId);
+        $otherFriends = static::friendIds($otherUserId);
+        $mutualIds    = array_intersect($myFriends, $otherFriends);
+
+        if (empty($mutualIds)) return collect();
+
+        return \App\Models\User::whereIn('id', $mutualIds)
+            ->select('id', 'name', 'role', 'department', 'profile_picture')
+            ->limit(10)
+            ->get();
+    }
+
 }

@@ -10,330 +10,164 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileDetailController;
 use App\Http\Controllers\SavedPostController;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\FriendController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\NotificationController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| HOME / FEED (Facebook মডেল)
-|--------------------------------------------------------------------------
-| লগইন না থাকলে auth middleware লগইন পেজে পাঠাবে → লগইনের পর আবার "/" তে ফিরবে
-*/
+// ==========================================
+// HOME
+// ==========================================
 Route::get('/', function () {
     $user = Auth::user();
-
-    if ($user->role === 'admin') {
-        return redirect()->route('admin.dashboard');
-    }
-
-    // student বা alumni — দুজনের ফিডই "/" তে; PostController@index role দেখে ঠিক view দেবে
+    if ($user->role === 'admin') return redirect()->route('admin.dashboard');
     return app(PostController::class)->index();
 })->middleware(['auth', 'verified'])->name('home');
 
-// পুরনো /dashboard → "/" তে redirect (backward compatibility)
 Route::get('/dashboard', function () {
     return redirect()->route('home');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN (role:admin)
-|--------------------------------------------------------------------------
-*/
+// ==========================================
+// ADMIN
+// ==========================================
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-
-    // মূল অ্যাডমিন ড্যাশবোর্ড
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-
-    // Chart.js এর জন্য ডাইনামিক ডাটা API
-    Route::get('/dashboard/analytics-data', [AdminDashboardController::class, 'getAnalyticsData'])->name('dashboard.analytics');
-
-    // ইউজার রোল পরিবর্তন
-    Route::post('/users/{id}/change-role', [AdminDashboardController::class, 'changeUserRole'])->name('users.change-role');
-
-    // অ্যাডভান্সড সাসপেনশন (Temp/Perm)
-    Route::post('/users/{id}/suspension', [AdminDashboardController::class, 'updateSuspensionStatus'])->name('users.suspension');
-
-    // পোস্ট মডারেশন (AJAX Delete)
-    Route::delete('/posts/{id}/delete', [AdminDashboardController::class, 'deletePost'])->name('posts.delete');
-
-    // জব/সার্কুলার মডারেশন (AJAX Delete)
-    Route::delete('/circulars/{id}/delete', [AdminDashboardController::class, 'deleteCircular'])->name('circulars.delete');
-
-    // এটা ঠিক (group এ name('admin.') আছে, তাই শুধু 'manage.authority' দিলেই = 'admin.manage.authority')
-    Route::post('/admin/manage-authority', [AdminDashboardController::class, 'manageAuthority'])->name('manage.authority');
+    Route::get('/dashboard',                          [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/analytics-data',           [AdminDashboardController::class, 'getAnalyticsData'])->name('dashboard.analytics');
+    Route::post('/users/{id}/change-role',            [AdminDashboardController::class, 'changeUserRole'])->name('users.change-role');
+    Route::post('/users/{id}/suspension',             [AdminDashboardController::class, 'updateSuspensionStatus'])->name('users.suspension');
+    Route::delete('/posts/{id}/delete',               [AdminDashboardController::class, 'deletePost'])->name('posts.delete');
+    Route::delete('/circulars/{id}/delete',           [AdminDashboardController::class, 'deleteCircular'])->name('circulars.delete');
+    Route::post('/admin/manage-authority',            [AdminDashboardController::class, 'manageAuthority'])->name('manage.authority');
 });
 
-
-/*
-|--------------------------------------------------------------------------
-| STUDENT / ALUMNI DASHBOARD (একই ইউনিফাইড ফিড)
-|--------------------------------------------------------------------------
-*/
+// ==========================================
+// LEGACY DASHBOARD ROUTES
+// ==========================================
 Route::middleware(['auth', 'role:student'])->prefix('student')->group(function () {
     Route::get('/dashboard', [PostController::class, 'index'])->name('student.dashboard');
 });
-
 Route::middleware(['auth', 'role:alumni'])->prefix('alumni')->group(function () {
     Route::get('/dashboard', [PostController::class, 'index'])->name('alumni.dashboard');
 });
 
-
 // Breeze auth routes
 require __DIR__.'/auth.php';
 
+// Terms & Privacy — সবাই দেখতে পারবে
+Route::view('/terms',   'auth.terms')->name('terms');
+Route::view('/privacy', 'auth.privacy')->name('privacy');
 
-/*
-|--------------------------------------------------------------------------
-| PROFILE
-|--------------------------------------------------------------------------
-*/
-Route::middleware('auth')->group(function () {
-
-    // প্রিমিয়াম প্রোফাইল
-    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');               // নিজের
-    Route::get('/profile/tab/content', [ProfileController::class, 'tabContent'])->name('profile.tab');
-    Route::post('/profile/update', [ProfileController::class, 'updateProfile'])->name('profile.update.info');
-    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.update.photo');
-
-    // Profile Details (Education / Experience / Certification)
-    Route::post('/profile/education', [ProfileDetailController::class, 'storeEducation'])->name('profile.education.store');
-    Route::delete('/profile/education/{id}', [ProfileDetailController::class, 'deleteEducation'])->name('profile.education.delete');
-
-    Route::post('/profile/experience', [ProfileDetailController::class, 'storeExperience'])->name('profile.experience.store');
-    Route::delete('/profile/experience/{id}', [ProfileDetailController::class, 'deleteExperience'])->name('profile.experience.delete');
-
-    Route::post('/profile/certification', [ProfileDetailController::class, 'storeCertification'])->name('profile.certification.store');
-    Route::delete('/profile/certification/{id}', [ProfileDetailController::class, 'deleteCertification'])->name('profile.certification.delete');
-
-    // Documents (Thesis / Project / Research)
-    Route::post('/profile/document', [DocumentController::class, 'store'])->name('profile.document.store');
-    Route::delete('/profile/document/{id}', [DocumentController::class, 'destroy'])->name('profile.document.delete');
-
-    // Breeze account settings (ডিফল্ট)
-    Route::get('/profile/edit/account', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // অন্যের প্রোফাইল ও তার ট্যাব (⚠️ {id} যুক্ত — তাই উপরের static গুলোর পরে)
-    Route::get('/profile/{id}/tab/content', [ProfileController::class, 'tabContent'])->name('profile.tab.user');
-    Route::get('/profile/{id}', [ProfileController::class, 'show'])->name('profile.view');
+// Social login — guest only
+Route::middleware('guest')->group(function () {
+    Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'redirect'])->name('social.redirect');
+    Route::get('/auth/{provider}/callback', [SocialiteController::class, 'callback'])->name('social.callback');
+    Route::get('/auth/choose-role',         [SocialiteController::class, 'showChooseRole'])->name('social.chooseRole');
+    Route::post('/auth/choose-role',        [SocialiteController::class, 'storeChooseRole'])->name('social.storeRole');
 });
 
-
-/*
-|--------------------------------------------------------------------------
-| POSTS (feed, share, save, infinite scroll)
-|--------------------------------------------------------------------------
-*/
+// ==========================================
+// AUTH REQUIRED — সব এক group এ
+// ==========================================
 Route::middleware('auth')->group(function () {
 
-    // Infinite scroll feed loader
-    Route::get('/feed/load', [PostController::class, 'loadMore'])->name('feed.load');
+    // ---------- PROFILE ----------
+    Route::get('/profile',                      [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/tab/content',          [ProfileController::class, 'tabContent'])->name('profile.tab');
+    Route::post('/profile/update',              [ProfileController::class, 'updateProfile'])->name('profile.update.info');
+    Route::post('/profile/photo',               [ProfileController::class, 'updatePhoto'])->name('profile.update.photo');
+    Route::get('/profile/edit/account',         [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile',                    [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile',                   [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // পোস্ট আপডেট / ডিলিট / শেয়ার
-    Route::post('/posts/{id}', [PostController::class, 'update'])->name('posts.update');
-    Route::delete('/posts/{id}', [PostController::class, 'destroy'])->name('posts.destroy');
-    Route::post('/posts/{id}/share', [PostController::class, 'share'])->name('posts.share');
+    Route::post('/profile/education',           [ProfileDetailController::class, 'storeEducation'])->name('profile.education.store');
+    Route::delete('/profile/education/{id}',    [ProfileDetailController::class, 'deleteEducation'])->name('profile.education.delete');
+    Route::post('/profile/experience',          [ProfileDetailController::class, 'storeExperience'])->name('profile.experience.store');
+    Route::delete('/profile/experience/{id}',   [ProfileDetailController::class, 'deleteExperience'])->name('profile.experience.delete');
+    Route::post('/profile/certification',       [ProfileDetailController::class, 'storeCertification'])->name('profile.certification.store');
+    Route::delete('/profile/certification/{id}',[ProfileDetailController::class, 'deleteCertification'])->name('profile.certification.delete');
+    Route::post('/profile/document',            [DocumentController::class, 'store'])->name('profile.document.store');
+    Route::delete('/profile/document/{id}',     [DocumentController::class, 'destroy'])->name('profile.document.delete');
 
-    // পোস্ট সেভ/আনসেভ + Saved পেজ
-    Route::post('/posts/{post}/save', [SavedPostController::class, 'toggle'])->name('posts.save');
-    Route::get('/saved', [SavedPostController::class, 'index'])->name('saved.index');
+    // ⚠️ {id} routes — static এর পরে
+    Route::get('/profile/{id}/tab/content',     [ProfileController::class, 'tabContent'])->name('profile.tab.user');
+    Route::get('/profile/{id}',                 [ProfileController::class, 'show'])->name('profile.view');
+
+    // ---------- FEED ----------
+    Route::get('/feed/load',                    [PostController::class, 'loadMore'])->name('feed.load');
+    Route::post('/posts',                       [PostController::class, 'store'])->name('posts.store');
+    Route::post('/posts/{id}',                  [PostController::class, 'update'])->name('posts.update');
+    Route::delete('/posts/{id}',                [PostController::class, 'destroy'])->name('posts.destroy');
+    Route::post('/posts/{id}/share',            [PostController::class, 'share'])->name('posts.share');
+    Route::post('/posts/{post}/save',           [SavedPostController::class, 'toggle'])->name('posts.save');
+    Route::get('/saved',                        [SavedPostController::class, 'index'])->name('saved.index');
+
+    // ---------- JOBS ----------
+    Route::post('/jobs',                        [JobController::class, 'store'])->name('jobs.store');
+    Route::get('/jobs',                         [JobController::class, 'all'])->name('jobs.all');
+    Route::get('/my-applications',              [JobApplicationController::class, 'myApplications'])->name('jobs.myApplications');
+    Route::get('/jobs/{id}/data',               [JobController::class, 'getJob'])->name('jobs.data');
+    Route::post('/jobs/{id}/save',              [JobController::class, 'toggleSave'])->name('jobs.save');
+    Route::post('/jobs/{id}/apply',             [JobApplicationController::class, 'apply'])->name('jobs.apply');
+    Route::post('/jobs/{id}/withdraw',          [JobApplicationController::class, 'withdraw'])->name('jobs.withdraw');
+    Route::get('/jobs/{id}/applicants',         [JobApplicationController::class, 'applicants'])->name('jobs.applicants');
+    Route::post('/applications/{id}/status',    [JobApplicationController::class, 'updateStatus'])->name('jobs.application.status');
+    Route::delete('/jobs/{id}',                 [JobController::class, 'destroy'])->name('jobs.delete');
+    Route::get('/jobs/{id}',                    [JobController::class, 'show'])->name('jobs.show');
+
+    // ---------- LIKES + COMMENTS ----------
+    Route::post('/posts/{post}/like',           [LikeController::class, 'toggle'])->name('posts.like');
+    Route::post('/posts/{post}/comments',       [CommentController::class, 'store'])->name('comments.store');
+    Route::put('/comments/{comment}',           [CommentController::class, 'update'])->name('comments.update');
+    Route::delete('/comments/{comment}',        [CommentController::class, 'destroy'])->name('comments.destroy');
+    Route::get('/posts/{post}/comments/load',   [CommentController::class, 'loadMore'])->name('comments.load');
+    Route::post('/comments/{comment}/like',     [CommentController::class, 'toggleLike'])->name('comments.like');
+
+    // ---------- ACTIVE NOW ----------
+    Route::get('/active-now',                   [PostController::class, 'activeNow'])->name('active.now');
+
+    // ---------- SEARCH ----------
+    Route::get('/search',                       [SearchController::class, 'index'])->name('search.index');
+    Route::get('/search/live',                  [SearchController::class, 'live'])->name('search.live');
+    Route::get('/search/recent',                [SearchController::class, 'recentSearches'])->name('search.recent');
+    Route::delete('/search/recent/{id}',        [SearchController::class, 'deleteSearch'])->name('search.deleteRecent');
+    Route::delete('/search/recent',             [SearchController::class, 'clearSearches'])->name('search.clearRecent');
+
+    // ---------- FRIENDS ----------
+    Route::prefix('friends')->name('friends.')->group(function () {
+        Route::get('/',                         [FriendController::class, 'friendsList'])->name('index');
+        Route::get('/suggested',                [FriendController::class, 'suggestedAll'])->name('suggested');
+        Route::get('/{userId}/mutual',          [FriendController::class, 'mutualFriends'])->name('mutual');
+        Route::get('/status/{userId}',          [FriendController::class, 'statusWith'])->name('status');
+        Route::post('/send',                    [FriendController::class, 'sendRequest'])->name('send');
+        Route::post('/accept',                  [FriendController::class, 'acceptRequest'])->name('accept');
+        Route::post('/decline',                 [FriendController::class, 'declineRequest'])->name('decline');
+        Route::post('/cancel',                  [FriendController::class, 'cancelRequest'])->name('cancel');
+        Route::post('/unfriend',                [FriendController::class, 'unfriend'])->name('unfriend');
+        Route::post('/block',                   [FriendController::class, 'block'])->name('block');
+        Route::post('/unblock',                 [FriendController::class, 'unblock'])->name('unblock');
+        Route::post('/not-interested',          [FriendController::class, 'notInterested'])->name('notInterested');
+    });
+
+    // ---------- REPORT ----------
+    Route::post('/report',                      [ReportController::class, 'store'])->name('report.store');
+
+    // ---------- NOTIFICATIONS ----------
+    Route::get('/notifications',                [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/poll',           [NotificationController::class, 'poll'])->name('notifications.poll');
+    Route::post('/notifications/read-all',      [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
 });
 
-
-/*
-|--------------------------------------------------------------------------
-| JOBS + APPLICATIONS
-|--------------------------------------------------------------------------
-| ⚠️ ক্রম গুরুত্বপূর্ণ:
-|   1) static path (/jobs, /my-applications) — আগে
-|   2) /jobs/{id}/... (extra segment) — মাঝে
-|   3) /jobs/{id} (শুধু id, show) — সবার শেষে
-*/
-Route::middleware('auth')->group(function () {
-
-    // --- static (কোনো {id} নেই) ---
-    Route::post('/jobs', [JobController::class, 'store'])->name('jobs.store');
-    Route::get('/jobs', [JobController::class, 'all'])->name('jobs.all');
-    Route::get('/my-applications', [JobApplicationController::class, 'myApplications'])->name('jobs.myApplications');
-
-    // --- /jobs/{id}/... (sub-path আগে, যাতে show এগুলো গিলে না ফেলে) ---
-    Route::get('/jobs/{id}/data', [JobController::class, 'getJob'])->name('jobs.data');
-    Route::post('/jobs/{id}/save', [JobController::class, 'toggleSave'])->name('jobs.save');
-    Route::post('/jobs/{id}/apply', [JobApplicationController::class, 'apply'])->name('jobs.apply');
-    Route::post('/jobs/{id}/withdraw', [JobApplicationController::class, 'withdraw'])->name('jobs.withdraw');
-    Route::get('/jobs/{id}/applicants', [JobApplicationController::class, 'applicants'])->name('jobs.applicants');
-
-    // --- application status (alumni) ---
-    Route::post('/applications/{id}/status', [JobApplicationController::class, 'updateStatus'])->name('jobs.application.status');
-
-    // --- জব ডিলিট ---
-    Route::delete('/jobs/{id}', [JobController::class, 'destroy'])->name('jobs.delete');
-
-    // --- {id} show — সবার শেষে (catch-all) ---
-    Route::get('/jobs/{id}', [JobController::class, 'show'])->name('jobs.show');
-});
-
-
-/*
-|--------------------------------------------------------------------------
-| LIKES + COMMENTS
-|--------------------------------------------------------------------------
-*/
-Route::middleware('auth')->group(function () {
-
-    // Like টগল
-    Route::post('/posts/{post}/like', [LikeController::class, 'toggle'])->name('posts.like');
-
-    // Comment CRUD
-    Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
-    Route::put('/comments/{comment}', [CommentController::class, 'update'])->name('comments.update');
-    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
-
-    // Comment — লোড মোর, লাইক
-    Route::get('/posts/{post}/comments/load', [CommentController::class, 'loadMore'])->name('comments.load');
-    Route::post('/comments/{comment}/like', [CommentController::class, 'toggleLike'])->name('comments.like');
-});
-
-
-/*
-|--------------------------------------------------------------------------
-| VIDEO STREAMING (Range request সাপোর্ট সহ)
-|--------------------------------------------------------------------------
-*/
+// ---------- VIDEO STREAMING ----------
 Route::get('/stream/video/{path}', function ($path) {
-    $path = str_replace('..', '', $path); // নিরাপত্তা
-
+    $path     = str_replace('..', '', $path);
     $fullPath = storage_path('app/public/' . $path);
-
-    if (!file_exists($fullPath)) {
-        abort(404);
-    }
-
+    if (!file_exists($fullPath)) abort(404);
     return response()->file($fullPath, [
         'Content-Type'  => 'video/mp4',
         'Accept-Ranges' => 'bytes',
     ]);
 })->where('path', '.*')->name('stream.video');
-
-
-/*
-|--------------------------------------------------------------------------
-| SOCIAL LOGIN (Google / Facebook — Socialite)
-|--------------------------------------------------------------------------
-| guest middleware: লগইন করা user আবার social এ যেতে পারবে না
-*/
-
-Route::middleware('guest')->group(function () {
-
-    // Step 1: provider এ redirect (?role=student|alumni|teacher query optional)
-    Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'redirect'])
-        ->name('social.redirect');
-
-    // Step 2: provider থেকে ফেরত (callback)
-    Route::get('/auth/{provider}/callback', [SocialiteController::class, 'callback'])
-        ->name('social.callback');
-
-    // Step 3: নতুন social user role select করার পেজ (Option B)
-    Route::get('/auth/choose-role', [SocialiteController::class, 'showChooseRole'])
-        ->name('social.chooseRole');
-
-    // Step 4: role confirm → account তৈরি + login
-    Route::post('/auth/choose-role', [SocialiteController::class, 'storeChooseRole'])
-        ->name('social.storeRole');
-});
-
-// Terms & Privacy — সবাই (login ছাড়াই) দেখতে পারবে
-Route::view('/terms', 'auth.terms')->name('terms');
-Route::view('/privacy', 'auth.privacy')->name('privacy');
-
-/*
-|--------------------------------------------------------------------------
-| SEARCH (Module 4) — নাম + thesis topic + department/skills
-|--------------------------------------------------------------------------
-| auth দরকার (লগইন ছাড়া search নয়)
-*/
-
-Route::middleware('auth')->group(function () {
- 
-    // Full search page: /search?q=...&filter=all|student|alumni|teacher|topic
-    Route::get('/search', [SearchController::class, 'index'])->name('search.index');
- 
-    // Live dropdown (AJAX JSON): /search/live?q=...
-    Route::get('/search/live', [SearchController::class, 'live'])->name('search.live');
-});
-
-/*
-|--------------------------------------------------------------------------
-| FRIENDS (Module 5)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware('auth')->prefix('friends')->name('friends.')->group(function () {
- 
-    // Friends list page
-    Route::get('/',               [FriendController::class, 'friendsList'])->name('index');
- 
-    // Request management
-    Route::post('/send',          [FriendController::class, 'sendRequest'])->name('send');
-    Route::post('/accept',        [FriendController::class, 'acceptRequest'])->name('accept');
-    Route::post('/decline',       [FriendController::class, 'declineRequest'])->name('decline');
-    Route::post('/cancel',        [FriendController::class, 'cancelRequest'])->name('cancel');
-    Route::post('/unfriend',      [FriendController::class, 'unfriend'])->name('unfriend');
-    Route::post('/block',         [FriendController::class, 'block'])->name('block');
-    Route::post('/unblock',       [FriendController::class, 'unblock'])->name('unblock');
- 
-    // Profile button state check
-    Route::get('/status/{userId}',[FriendController::class, 'statusWith'])->name('status');
-});
-
-Route::middleware('auth')->get('/active-now', function () {
-    $meId       = Auth::id();
-    $friendIds  = \App\Models\Friendship::friendIds($meId);
-    $blockedIds = \App\Models\Friendship::where('status', 'blocked')
-        ->where(function($q) use ($meId) {
-            $q->where('sender_id', $meId)->orWhere('receiver_id', $meId);
-        })
-        ->get()
-        ->flatMap(fn($f) => [$f->sender_id, $f->receiver_id])
-        ->filter(fn($id) => $id != $meId)
-        ->unique()->values()->toArray();
-
-    $activeUsers = \App\Models\User::whereIn('id', $friendIds)
-        ->whereNotIn('id', $blockedIds)
-        ->where('last_seen', '>=', now()->subMinutes(10))
-        ->select('id', 'name', 'role', 'profile_picture')
-        ->get();
-
-    $html = '';
-    foreach ($activeUsers as $au) {
-        $initial = strtoupper(substr($au->name, 0, 1));
-        $avatar  = $au->profile_picture
-            ? '<img src="'.asset('storage/'.$au->profile_picture).'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
-            : $initial;
-        $roleClass = 'bb-mini-' . $au->role;
-        $html .= '
-        <a href="'.route('profile.view', $au->id).'" class="bb-active-item" style="text-decoration:none;">
-            <div class="bb-active-avatar" style="overflow:hidden;">'.$avatar.'</div>
-            <div class="bb-active-meta">
-                <span class="bb-active-name">'.e($au->name).'</span>
-                <span class="bb-mini-badge '.$roleClass.'">
-                    <i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> Active now
-                </span>
-            </div>
-        </a>';
-    }
-
-    if (!$html) {
-        $html = '<div class="text-muted small px-2 py-3">No friends active right now.</div>';
-    }
-
-    return response()->json(['html' => $html]);
-});
-
-Route::get('/active-now', [PostController::class, 'activeNow'])->middleware('auth');

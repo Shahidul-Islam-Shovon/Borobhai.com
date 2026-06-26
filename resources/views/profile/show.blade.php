@@ -553,20 +553,66 @@
 .bb-mutual-count{font-size:.82rem;color:#6b7280;margin-bottom:8px;display:flex;align-items:center;gap:5px;}
 .bb-mutual-count i{color:#4f46e5;}
 
+/* ===== Mutual Friends Circles (profile page) ===== */
+.bb-mutual-section { margin-top: 14px; }
+.bb-mutual-label {
+    font-size: 13px; color: #6b7280; font-weight: 600;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 5px;
+}
+.bb-mutual-circles { display: flex; align-items: center; }
+.bb-mutual-circle-wrap {
+    position: relative;
+    margin-right: -8px;
+    z-index: 1;
+    transition: z-index 0s;
+}
+.bb-mutual-circle-wrap:hover { z-index: 10; }
+.bb-mutual-circle {
+    width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff;
+    overflow: hidden; background: linear-gradient(135deg,#4f46e5,#7c73f0);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; text-decoration: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,.12);
+    transition: transform .15s ease; cursor: pointer;
+}
+.bb-mutual-circle:hover { transform: scale(1.12) translateY(-3px); }
+.bb-mutual-circle img { width: 100%; height: 100%; object-fit: cover; }
+.bb-mutual-more {
+    width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff;
+    background: #e4e6eb; color: #374151; display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer;
+    margin-left: 4px; box-shadow: 0 2px 6px rgba(0,0,0,.12);
+    flex-shrink: 0;
+}
+.bb-mutual-more:hover { background: #d8dadf; }
+
+/* Hover card */
+.bb-mutual-hovercard {
+    display: none; position: absolute; bottom: calc(100% + 12px); left: 50%;
+    transform: translateX(-50%); background: #fff; border-radius: 14px;
+    padding: 14px; z-index: 999; width: 200px;
+    box-shadow: 0 8px 28px rgba(16,24,40,.14); border: 1px solid #eceef1;
+    pointer-events: none;
+}
+.bb-mutual-hovercard::after {
+    content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    border: 7px solid transparent; border-top-color: #fff;
+}
+.bb-mutual-circle-wrap:hover .bb-mutual-hovercard { display: block; animation: hcIn .15s ease; }
+@keyframes hcIn { from{opacity:0;transform:translateX(-50%) translateY(6px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+.bb-hc-avatar {
+    width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+    background: linear-gradient(135deg,#4f46e5,#7c73f0); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; flex-shrink: 0;
+}
+.bb-hc-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
     </style>
 </head>
 <body>
 
-{{-- Navbar --}}
-<nav class="bb-nav">
-    <div class="d-flex align-items-center justify-content-between" style="max-width:940px;margin:0 auto;">
-        <a href="{{ route('home') }}" class="bb-brand">Borobhai.online</a>
-        <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('home') }}" class="bb-nav-btn" title="Home"><i class="bi bi-house-door-fill"></i></a>
-            <a href="{{ route('home') }}" class="bb-nav-btn" title="Back"><i class="bi bi-arrow-left"></i></a>
-        </div>
-    </div>
-</nav>
+@include('partials.inner-navbar')
 
 @php
     $role = $user->role;
@@ -734,6 +780,65 @@
             <div class="bb-stat"><b>{{ $postCount }}</b><span>Posts</span></div>
             <div class="bb-stat"><b>0</b><span>Connections</span></div>
         </div>
+           {{--  new add  --}}
+           {{-- Mutual Friends Circles --}}
+        @if(!$isOwner)
+        @php
+            $meId2        = Auth::id();
+            $mutualCount  = \App\Models\Friendship::mutualCount($meId2, $user->id);
+            $mutualsList  = $mutualCount > 0 ? \App\Models\Friendship::mutualFriends($meId2, $user->id) : collect();
+        @endphp
+        @if($mutualCount > 0)
+        <div class="bb-mutual-section">
+            <div class="bb-mutual-label">
+                <i class="bi bi-people-fill text-primary"></i>
+                {{ $mutualCount }} mutual friend{{ $mutualCount > 1 ? 's' : '' }}
+            </div>
+            <div class="bb-mutual-circles">
+                @foreach($mutualsList->take(6) as $m)
+                <div class="bb-mutual-circle-wrap">
+                    <a href="{{ route('profile.view', $m->id) }}" class="bb-mutual-circle">
+                        @if($m->profile_picture)
+                            <img src="{{ asset('storage/'.$m->profile_picture) }}" alt="{{ $m->name }}">
+                        @else
+                            {{ strtoupper(substr($m->name, 0, 1)) }}
+                        @endif
+                    </a>
+                    {{-- Hover card --}}
+                    <div class="bb-mutual-hovercard">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="bb-hc-avatar">
+                                @if($m->profile_picture)
+                                    <img src="{{ asset('storage/'.$m->profile_picture) }}" alt="{{ $m->name }}">
+                                @else
+                                    {{ strtoupper(substr($m->name, 0, 1)) }}
+                                @endif
+                            </div>
+                            <div>
+                                <div style="font-size:13px;font-weight:700;color:#1e1f24;">{{ $m->name }}</div>
+                                <div style="font-size:11px;color:#6b7280;">
+                                    {{ ucfirst($m->role) }}@if($m->department) · {{ $m->department }}@endif
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{{ route('profile.view', $m->id) }}"
+                           style="display:block;text-align:center;background:#eef2ff;color:#4f46e5;font-size:12px;font-weight:600;border-radius:8px;padding:6px;">
+                            View Profile
+                        </a>
+                    </div>
+                </div>
+                @endforeach
+
+                @if($mutualCount > 6)
+                <div class="bb-mutual-more"
+                     onclick="showMutualModal()">
+                    +{{ $mutualCount - 6 }}
+                </div>
+                @endif
+            </div>
+        </div>
+        @endif
+        @endif
     </div>
 
     {{-- ==================== PROFILE TABS ==================== --}}
@@ -3624,6 +3729,22 @@ function highlightMentions(text) {
 </div>
 @endif
 
+
+{{-- Mutual Modal --}}
+<div class="modal fade" id="mutualFriendsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold">Mutual Friends</h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-2" id="mutualModalBody">
+                <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Global Emoji Popover --}}
 <div id="bbEmojiPopover"><emoji-picker class="light"></emoji-picker></div>
 
@@ -3756,6 +3877,42 @@ function updateFriendBtn(wrap, status, userId) {
         blocked: `<button class="bb-friend-btn bb-friend-blocked" onclick="friendAction('unblock',${userId},this)"><i class="bi bi-slash-circle"></i> Blocked · Unblock</button>`,
     };
     if (btns[status]) wrap.innerHTML = btns[status];
+}
+
+
+let _mutualModal2 = null;
+document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('mutualFriendsModal');
+    if (el) _mutualModal2 = new bootstrap.Modal(el);
+});
+
+function showMutualModal() {
+    if (!_mutualModal2) return;
+    _mutualModal2.show();
+    fetch('/friends/{{ $user->id }}/mutual', { headers: { 'Accept': 'application/json' } })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.mutuals || !d.mutuals.length) {
+            document.getElementById('mutualModalBody').innerHTML =
+                '<p class="text-muted text-center small py-2">No mutual friends.</p>';
+            return;
+        }
+        let html = '';
+        d.mutuals.forEach(m => {
+            const pic = m.profile_picture
+                ? `<img src="/storage/${m.profile_picture}" style="width:100%;height:100%;object-fit:cover;">`
+                : m.name.charAt(0).toUpperCase();
+            html += `<a href="/profile/${m.id}"
+                style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f3f4f8;text-decoration:none;">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;overflow:hidden;flex-shrink:0;">${pic}</div>
+                <div>
+                    <div style="font-size:13.5px;font-weight:700;color:#1e1f24;">${m.name}</div>
+                    <div style="font-size:11.5px;color:#6b7280;">${m.department || m.role}</div>
+                </div>
+            </a>`;
+        });
+        document.getElementById('mutualModalBody').innerHTML = html;
+    });
 }
 
 
