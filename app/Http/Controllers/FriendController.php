@@ -167,14 +167,34 @@ class FriendController extends Controller
     // ==========================================
     public function notInterested(Request $request)
     {
-        $request->validate(['user_id' => 'required|integer|exists:users,id']);
-        $meId = Auth::id();
-
+        $targetId = $request->user_id;
+        if (!$targetId || $targetId == Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'Invalid user']);
+        }
+    
         DB::table('not_interested_users')->updateOrInsert(
-            ['user_id' => $meId, 'ignored_user_id' => $request->user_id]
+            ['user_id' => Auth::id(), 'ignored_user_id' => $targetId],
+            ['created_at' => now(), 'updated_at' => now()]
         );
+    
+        return response()->json(['success' => true, 'message' => 'Removed from suggestions']);
+    }
+    
+   public function messengerContacts()
+    {
+        $friends = Auth::user()->friends()
+            ->select('users.id', 'users.name', 'users.profile_picture', 'users.last_seen')
+            ->get()
+            ->map(function($u) {
+                return [
+                    'id'              => $u->id,
+                    'name'            => $u->name,
+                    'profile_picture' => $u->profile_picture,
+                    'is_online'       => $u->last_seen && $u->last_seen >= now()->subMinutes(10),
+                ];
+            });
 
-        return response()->json(['success' => true, 'message' => 'Removed from suggestions.']);
+        return response()->json(['contacts' => $friends]);
     }
 
     // ==========================================

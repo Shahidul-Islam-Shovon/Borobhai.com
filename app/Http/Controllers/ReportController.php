@@ -1,7 +1,10 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Report;
+use App\Models\User;
+use App\Models\BbNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -41,6 +44,19 @@ class ReportController extends Controller
             'reason'          => $request->reason,
             'details'         => $request->details,
         ]);
+
+        // সব admin কে notification
+        $adminIds = User::where('role', 'admin')->pluck('id')->toArray();
+        foreach ($adminIds as $adminId) {
+            BbNotification::send(
+                $adminId,
+                Auth::id(),
+                'report_submitted',
+                Auth::user()->name . ' reported a ' . $request->type . '.',
+                $request->type,
+                $request->id
+            );
+        }
 
         return response()->json(['success' => true, 'message' => 'Report submitted. Our team will review it.']);
     }

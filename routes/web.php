@@ -128,6 +128,7 @@ Route::middleware('auth')->group(function () {
 
     // ---------- ACTIVE NOW ----------
     Route::get('/active-now',                   [PostController::class, 'activeNow'])->name('active.now');
+    Route::get('/friends/messenger-contacts', [PostController::class, 'messengerContacts']);
 
     // ---------- SEARCH ----------
     Route::get('/search',                       [SearchController::class, 'index'])->name('search.index');
@@ -149,7 +150,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/unfriend',                [FriendController::class, 'unfriend'])->name('unfriend');
         Route::post('/block',                   [FriendController::class, 'block'])->name('block');
         Route::post('/unblock',                 [FriendController::class, 'unblock'])->name('unblock');
-        Route::post('/not-interested',          [FriendController::class, 'notInterested'])->name('notInterested');
+        Route::post('/not-interested',     [FriendController::class, 'notInterested']);
+        Route::get('/messenger-contacts',  [FriendController::class, 'messengerContacts']); // ← /friends/ বাদ দাও
+        
     });
 
     // ---------- REPORT ----------

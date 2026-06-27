@@ -75,16 +75,17 @@ class ProfileController extends Controller
 
         // ----- PHOTOS & VIDEOS ট্যাব -----
         if ($tab === 'media') {
-            $media = [];
-            $seen  = [];
+        $meId        = Auth::id();
+        $isOwner     = $meId === $user->id;
+        $isFriend    = Friendship::areFriends($meId, $user->id);
 
-            if (!empty($user->cover_photo)) {
-                $url = asset('storage/' . str_replace('//', '/', $user->cover_photo));
-                if (!isset($seen[$url])) { $seen[$url] = true; $media[] = ['type' => 'image', 'url' => $url]; }
-            }
-            if (!empty($user->profile_picture)) {
-                $url = asset('storage/' . str_replace('//', '/', $user->profile_picture));
-                if (!isset($seen[$url])) { $seen[$url] = true; $media[] = ['type' => 'image', 'url' => $url]; }
+             // শুধু owner + friends দেখবে
+            if (!$isOwner && !$isFriend) {
+                return response()->json([
+                    'success' => true,
+                    'count'   => 0,
+                    'media'   => [],
+                ]);
             }
 
             $posts = Post::with('parentPost')

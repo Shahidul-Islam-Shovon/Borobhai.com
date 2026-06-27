@@ -242,7 +242,7 @@ function suggestAction(action, userId, btnEl) {
 
 function notInterested(userId, btnEl) {
     if (btnEl) btnEl.disabled = true;
-    fetch('/not-interested', {
+    fetch('/friends/not-interested', {
         method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':CSRF},
         body: JSON.stringify({ user_id: userId })
     })

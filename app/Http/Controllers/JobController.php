@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use App\Models\JobPost;
+use App\Models\BbNotification;
+use App\Models\Friendship;
 
 class JobController extends Controller
 {
@@ -52,8 +55,8 @@ class JobController extends Controller
                 'deadline'     => 'nullable|date|after_or_equal:today',
                 'category'     => 'nullable|string|max:100',
             ], [
-                'apply_value.email' => 'Please enter a valid email address.',
-                'apply_value.url'   => 'Please enter a valid website link (e.g. https://...).',
+                'apply_value.email'       => 'Please enter a valid email address.',
+                'apply_value.url'         => 'Please enter a valid website link (e.g. https://...).',
                 'deadline.after_or_equal' => 'Deadline must be today or a future date.',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -61,7 +64,9 @@ class JobController extends Controller
         }
 
         // এডিট না নতুন
-        if ($request->filled('id')) {
+        $isNew = !$request->filled('id');
+
+        if (!$isNew) {
             $job = JobPost::where('id', $request->id)->where('user_id', Auth::id())->firstOrFail();
         } else {
             $job = new JobPost();
@@ -71,6 +76,21 @@ class JobController extends Controller
         $job->fill($data);
         $job->status = 'active';
         $job->save();
+
+        // নতুন job হলে সব friends দের notify করো
+        if ($isNew) {
+            $friendIds = Friendship::friendIds(Auth::id());
+            foreach ($friendIds as $friendId) {
+                BbNotification::send(
+                    $friendId,
+                    Auth::id(),
+                    'new_job',
+                    Auth::user()->name . ' posted a new job: ' . Str::limit($job->title, 50),
+                    'job',
+                    $job->id
+                );
+            }
+        }
 
         $fresh = $job->fresh();
         $fresh->load('user');
@@ -105,7 +125,6 @@ class JobController extends Controller
         }
 
         // user আগে আবেদন করেছে কিনা + status + method
-        // (আগে $myApplication বের করি, তারপর সেটা থেকে status/method)
         $myApplication = \App\Models\JobApplication::where('user_id', Auth::id())
             ->where('job_post_id', $job->id)->first();
 
@@ -137,7 +156,7 @@ class JobController extends Controller
         }
 
         // filter — job type অনুযায়ী
-        $type = $request->input('type');
+        $type       = $request->input('type');
         $validTypes = ['Internship', 'Part-time', 'Full-time', 'Remote', 'Contract', 'Freelance'];
         if ($type && in_array($type, $validTypes)) {
             $query->where('job_type', $type);
@@ -148,7 +167,7 @@ class JobController extends Controller
         if ($sort === 'newest') {
             $query->latest();
         } elseif ($sort === 'deadline') {
-            $query->orderByRaw('deadline IS NULL, deadline ASC'); // কাছের deadline আগে
+            $query->orderByRaw('deadline IS NULL, deadline ASC');
         } else {
             $query->orderByRaw("CASE
                     WHEN LOWER(job_type) LIKE '%intern%' THEN 1
@@ -159,7 +178,7 @@ class JobController extends Controller
 
         $jobs = $query->paginate(12)->withQueryString();
 
-        // AJAX হলে শুধু job cards + pagination + meta ফেরত দাও (smooth filter)
+        // AJAX হলে শুধু job cards + pagination + meta ফেরত দাও
         if ($request->ajax() || $request->wantsJson()) {
             $cardsHtml = view('jobs.partials.all-cards', compact('jobs', 'search', 'type'))->render();
             return response()->json([
@@ -179,9 +198,8 @@ class JobController extends Controller
     // ==========================================
     public function toggleSave($id)
     {
-        $job = JobPost::withTrashed()->findOrFail($id);
-        $user = Auth::user();
-
+        $job      = JobPost::withTrashed()->findOrFail($id);
+        $user     = Auth::user();
         $existing = $job->savedByUsers()->where('user_id', $user->id)->exists();
 
         if ($existing) {
@@ -207,7 +225,7 @@ class JobController extends Controller
         $job = JobPost::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
         return response()->json([
             'success' => true,
-            'job' => [
+            'job'     => [
                 'id'           => $job->id,
                 'title'        => $job->title,
                 'company'      => $job->company,
@@ -238,11 +256,9 @@ class JobController extends Controller
 
     // ==========================================
     // মেয়াদোত্তীর্ণ (৫ দিন গ্রেস শেষ) job গুলো পরিষ্কার
-    // feed/portal লোডের সময় ডাকা হবে (cron ছাড়াই auto-clean)
     // ==========================================
     public static function cleanupExpired()
     {
-        // deadline + 5 দিন < আজ → ডিলিট
         JobPost::whereNotNull('deadline')
             ->whereRaw('DATE_ADD(deadline, INTERVAL 5 DAY) < ?', [now()->toDateString()])
             ->delete();

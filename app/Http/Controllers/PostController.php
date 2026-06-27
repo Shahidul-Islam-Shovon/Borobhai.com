@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use App\Models\BbNotification;
 
 class PostController extends Controller
 {
@@ -304,6 +305,7 @@ class PostController extends Controller
             'success' => true,
             'html'    => view('partials.post-card', ['post' => $post])->render(),
         ]);
+        
     }
 
     // ==========================================
@@ -473,4 +475,29 @@ class PostController extends Controller
 
         return 'Active ' . $lastSeen->format('M d');
     }
+
+    public function messengerContacts()
+    {
+        $meId       = Auth::id();
+        $friendIds  = Friendship::friendIds($meId);
+        $blockedIds = $this->getBlockedIds($meId);
+
+        $contacts = \App\Models\User::whereIn('id', $friendIds)
+            ->whereNotIn('id', $blockedIds)
+            ->select('id', 'name', 'profile_picture', 'last_seen')
+            ->orderByDesc('last_seen')
+            ->limit(20)
+            ->get()
+            ->map(fn($u) => [
+                'id'              => $u->id,
+                'name'            => $u->name,
+                'profile_picture' => $u->profile_picture,
+                'is_online'       => $u->last_seen && $u->last_seen >= now()->subMinutes(10),
+            ]);
+
+        return response()->json(['contacts' => $contacts]);
+    }
+
+    
+
 }

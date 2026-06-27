@@ -12,244 +12,1513 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
     <title>Borobhai.online</title>
+
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; }
-        .navbar { background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.08); padding: .5rem 1rem; }
-        .nav-icon-btn { width: 40px; height: 40px; border-radius: 50px; background-color: #e4e6eb; display: flex; align-items: center; justify-content: center; color: #050505; text-decoration: none; font-size: 1.2rem; border: none; cursor:pointer; }
-        .nav-icon-btn:hover { background-color: #d8dadf; color: #050505; }
-        .sidebar-link { display: flex; align-items: center; gap: 12px; padding: .5rem .75rem; color: #050505; text-decoration: none; font-weight: 600; font-size: .95rem; border-radius: 8px; }
-        .sidebar-link:hover { background-color: #e4e6eb; }
-        .sidebar-link.active { color: #1877f2; }
-        .create-post-box { background-color: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); padding: 1rem; }
-        .create-post-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: #65676b; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow:hidden; flex-shrink:0; }
-        .cpa-img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-        .mock-input { background-color: #f0f2f5; border-radius: 20px; padding: .5rem 1rem; color: #65676b; cursor: pointer; flex-grow: 1; }
-        .mock-input:hover { background-color: #e4e6eb; }
-        .post-action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: .5rem; color: #65676b; text-decoration: none; font-weight: 600; font-size: .9rem; border-radius: 4px; }
-        .post-action-btn:hover { background-color: #f2f2f2; }
-        .fs-7 { font-size: 0.85rem !important; }
-        .fb-bg-gradient-1 { background: linear-gradient(45deg, #f321d7, #2196f3) !important; }
-        .fb-bg-gradient-2 { background: linear-gradient(45deg, #ff9800, #ff5722) !important; }
-        .fb-bg-gradient-3 { background: linear-gradient(45deg, #4caf50, #00bcd4) !important; }
-        .fb-bg-gradient-4 { background: linear-gradient(45deg, #1a2a6c, #b21f1f, #fdbb2d) !important; }
-        .fb-bg-gradient-5 { background: linear-gradient(45deg, #00c6ff, #0072ff) !important; }
-        .fb-color-circle { width: 28px; height: 28px; border-radius: 50%; display: inline-block; cursor: pointer; border: 2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.2); }
-        .fb-colored-post-render { transition: all .3s ease; }
-        #imageLightboxModal { z-index: 1090 !important; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: #f0f2f5;
+        color: #1c1e21;
+    }
+    .navbar {
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        padding: 0.5rem 1rem;
+    }
+    .nav-icon-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50px;
+        background-color: #e4e6eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #050505;
+        text-decoration: none;
+        font-size: 1.2rem;
+        border: none;
+        cursor: pointer;
+    }
+    .nav-icon-btn:hover {
+        background-color: #d8dadf;
+        color: #050505;
+    }
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0.5rem 0.75rem;
+        color: #050505;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border-radius: 8px;
+    }
+    .sidebar-link:hover {
+        background-color: #e4e6eb;
+    }
+    .sidebar-link.active {
+        color: #1877f2;
+    }
+    .create-post-box {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        padding: 1rem;
+    }
+    .create-post-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #65676b;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    .cpa-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+    .mock-input {
+        background-color: #f0f2f5;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        color: #65676b;
+        cursor: pointer;
+        flex-grow: 1;
+    }
+    .mock-input:hover {
+        background-color: #e4e6eb;
+    }
+    .post-action-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0.5rem;
+        color: #65676b;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-radius: 4px;
+    }
+    .post-action-btn:hover {
+        background-color: #f2f2f2;
+    }
+    .fs-7 {
+        font-size: 0.85rem !important;
+    }
+    .fb-bg-gradient-1 {
+        background: linear-gradient(45deg, #f321d7, #2196f3) !important;
+    }
+    .fb-bg-gradient-2 {
+        background: linear-gradient(45deg, #ff9800, #ff5722) !important;
+    }
+    .fb-bg-gradient-3 {
+        background: linear-gradient(45deg, #4caf50, #00bcd4) !important;
+    }
+    .fb-bg-gradient-4 {
+        background: linear-gradient(45deg, #1a2a6c, #b21f1f, #fdbb2d) !important;
+    }
+    .fb-bg-gradient-5 {
+        background: linear-gradient(45deg, #00c6ff, #0072ff) !important;
+    }
+    .fb-color-circle {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-block;
+        cursor: pointer;
+        border: 2px solid #fff;
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    }
+    .fb-colored-post-render {
+        transition: all 0.3s ease;
+    }
+    #imageLightboxModal {
+        z-index: 1090 !important;
+    }
 
-:root {
-    --bb-primary: #4f46e5; --bb-primary-dark: #4338ca; --bb-primary-soft: #eef2ff;
-    --bb-ink: #1e1f24; --bb-muted: #6b7280; --bb-line: #eceef1;
-    --bb-bg: #f3f4f8; --bb-card: #ffffff; --bb-radius: 16px;
-    --bb-shadow: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
-    --bb-shadow-hover: 0 8px 28px rgba(79,70,229,.10), 0 2px 6px rgba(16,24,40,.06);
-}
-.bb-post-card { background:var(--bb-card); border-radius:var(--bb-radius); box-shadow:var(--bb-shadow); margin-bottom:18px; overflow:hidden; transition:box-shadow .25s ease; }
-.bb-post-card:hover { box-shadow:var(--bb-shadow-hover); }
-.bb-post-head { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 8px; }
-.bb-head-left { display:flex; align-items:center; gap:10px; }
-.bb-avatar { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--bb-primary),#7c73f0); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; flex-shrink:0; box-shadow:0 2px 6px rgba(79,70,229,.25); overflow:hidden; padding:0; }
-.bb-avatar:has(img) { background:none; }
-.bb-avatar-sm { width:30px; height:30px; font-size:12px; box-shadow:none; }
-.bb-avatar-img { width:100%; height:100%; border-radius:50%; object-fit:cover; flex-shrink:0; }
-.bb-head-meta { line-height:1.25; }
-.bb-author { margin:0; font-weight:700; font-size:14.5px; color:var(--bb-ink); letter-spacing:-.2px; }
-.bb-author-link { text-decoration:none; display:inline-block; }
-.bb-author-link:hover { color:var(--bb-primary); text-decoration:underline; }
-.bb-time { font-size:11.5px; color:var(--bb-muted); display:flex; align-items:center; gap:4px; }
-.bb-more-btn { border:none; background:transparent; color:var(--bb-muted); width:34px; height:34px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s ease; }
-.bb-more-btn:hover { background:var(--bb-bg); color:var(--bb-ink); }
-.bb-author-role { display:inline-flex; align-items:center; gap:3px; font-size:10.5px; font-weight:700; letter-spacing:.2px; padding:1px 8px; border-radius:12px; width:fit-content; margin:1px 0; }
-.bb-author-role-alumni  { background:#fef3c7; color:#d97706; }
-.bb-author-role-student { background:#eef2ff; color:#4f46e5; }
-.bb-author-role-teacher { background:#f3e8ff; color:#7c3aed; }
-.bb-caption { padding:2px 16px 12px; font-size:14.5px; line-height:1.55; color:var(--bb-ink); word-break:break-word; }
-.bb-color-caption { margin:4px 16px 12px; border-radius:12px; min-height:200px; display:flex; align-items:center; justify-content:center; text-align:center; color:#fff; font-weight:700; font-size:22px; padding:24px; word-break:break-word; }
-.bb-color-caption-sm { min-height:120px; font-size:16px; margin:8px 14px; }
-.bb-media-zone { background:#000; overflow:hidden; line-height:0; }
-.bb-media-single { position:relative; display:flex; align-items:center; justify-content:center; background:#000; width:100%; }
-.bb-single-img { width:100%; max-height:560px; object-fit:contain; display:block; cursor:pointer; }
-.bb-video-wrap { position:relative; width:100%; display:flex; justify-content:center; background:#000; }
-.bb-inline-video { width:100%; max-height:560px; object-fit:contain; display:block; background:#000; }
-.bb-expand-btn { position:absolute; top:10px; right:10px; z-index:5; width:34px; height:34px; border-radius:8px; border:none; background:rgba(0,0,0,.55); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .2s ease; font-size:14px; }
-.bb-video-wrap:hover .bb-expand-btn { opacity:1; }
-.bb-grid { display:flex; gap:3px; width:100%; }
-.bb-grid-2 { height:300px; } .bb-grid-3 { height:340px; }
-.bb-grid-3-side { display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
-.bb-grid-4 { flex-wrap:wrap; height:480px; }
-.bb-grid-4 .bb-tile { width:calc(50% - 1.5px); height:calc(50% - 1.5px); flex:none; }
-.bb-tile { position:relative; flex:1; min-width:0; overflow:hidden; background:#000; }
-.bb-tile-big { flex:2; }
-.bb-tile-media { width:100%; height:100%; object-fit:cover; cursor:pointer; display:block; }
-.bb-play-badge { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:54px; height:54px; border-radius:50%; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; font-size:1.8rem; transition:transform .15s ease, background .15s ease; }
-.bb-play-badge:hover { transform:translate(-50%,-50%) scale(1.08); background:rgba(0,0,0,.7); }
-.bb-play-sm { width:40px; height:40px; font-size:1.2rem; }
-.bb-more-overlay { position:absolute; inset:0; background:rgba(0,0,0,.55); color:#fff; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:2rem; cursor:pointer; line-height:1; }
-.bb-shared { margin:0 16px 12px; border:1px solid var(--bb-line); border-radius:12px; overflow:hidden; }
-.bb-shared-head { display:flex; align-items:center; gap:8px; padding:12px 14px 6px; }
-.bb-stats { display:flex; align-items:center; justify-content:space-between; padding:10px 18px 8px; font-size:13px; color:var(--bb-muted); }
-.bb-like-stat { display:flex; align-items:center; gap:6px; }
-.bb-like-bubble { width:20px; height:20px; border-radius:50%; background:var(--bb-primary); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:10px; }
-.bb-stat-link { cursor:pointer; transition:color .15s ease; }
-.bb-stat-link:hover { color:var(--bb-primary); text-decoration:underline; }
-.bb-actions { display:flex; padding:4px 8px; border-top:1px solid var(--bb-line); }
-.bb-action-btn { flex:1; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; padding:9px 4px; border-radius:8px; margin:4px 2px; color:var(--bb-muted); font-weight:600; font-size:13.5px; transition:background .15s ease, color .15s ease; }
-.bb-action-btn i { font-size:17px; }
-.bb-action-btn:hover { background:var(--bb-bg); }
-.bb-action-btn.active-like { color:var(--bb-primary); }
-.bb-action-btn.active-save { color:#f59e0b; }
-@media (max-width:576px) { .bb-action-btn span { display:none; } .bb-action-btn i { font-size:19px; } .bb-grid-2, .bb-grid-3 { height:220px; } .bb-grid-4 { height:360px; } }
-.bb-role-badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; letter-spacing:.3px; padding:6px 14px; border-radius:20px; border:1.5px solid transparent; transition:transform .15s ease; }
-.bb-role-student { background:#eef2ff; color:#4f46e5; border-color:#c7d2fe; }
-.bb-role-alumni  { background:#fef3c7; color:#d97706; border-color:#fde68a; }
-.bb-role-teacher { background:#f3e8ff; color:#7c3aed; border-color:#ddd6fe; }
-.bb-jobcard { background:#fff; border-radius:16px; box-shadow:0 1px 3px rgba(16,24,40,.06); padding:16px 18px; margin-bottom:18px; border:1px solid var(--bb-line); transition:box-shadow .2s; }
-.bb-jobcard:hover { box-shadow:0 8px 24px rgba(79,70,229,.10); }
-.bb-jobcard-top { display:flex; align-items:flex-start; gap:13px; }
-.bb-jobcard-logo { width:52px; height:52px; border-radius:13px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:23px; font-weight:800; }
-.bb-jobcard-headinfo { flex-grow:1; min-width:0; }
-.bb-jobcard-title { font-size:16.5px; font-weight:800; color:var(--bb-ink); text-decoration:none; letter-spacing:-.3px; display:inline-block; line-height:1.25; }
-.bb-jobcard-title:hover { color:var(--bb-primary); }
-.bb-jobcard-company { font-size:13px; color:var(--bb-muted); margin:2px 0 0; font-weight:500; }
-.bb-job-expiring { display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:#ea580c; margin-top:5px; }
-.bb-job-expired  { display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:#dc2626; margin-top:5px; }
-.bb-jobcard-more { border:none; background:transparent; color:var(--bb-muted); width:32px; height:32px; border-radius:50%; cursor:pointer; flex-shrink:0; }
-.bb-jobcard-more:hover { background:var(--bb-bg); }
-.bb-jobcard-meta { display:flex; flex-wrap:wrap; gap:7px; margin:13px 0; }
-.bb-jobcard-tag, .bb-jobcard-pill { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:5px 11px; border-radius:8px; }
-.bb-jobcard-pill { background:var(--bb-bg); color:#4b5563; }
-.bb-jobcard-btn { display:flex; align-items:center; justify-content:center; width:100%; background:var(--bb-primary-soft); color:var(--bb-primary); border:none; border-radius:10px; padding:10px; font-size:13.5px; font-weight:700; text-decoration:none; transition:all .15s; }
-.bb-jobcard-btn:hover { background:var(--bb-primary); color:#fff; }
-.bb-jobcard-posted { font-size:11.5px; color:var(--bb-muted); margin:3px 0 0; display:flex; align-items:center; gap:5px; }
-.bb-job-save-btn { border:none; background:transparent; color:var(--bb-muted); width:34px; height:34px; border-radius:50%; cursor:pointer; flex-shrink:0; font-size:17px; transition:all .15s; }
-.bb-job-save-btn:hover { background:var(--bb-bg); color:#f59e0b; }
-.bb-job-save-btn.saved { color:#f59e0b; }
-.bb-jobcard-foot { margin-top:12px; padding-top:11px; border-top:1px solid var(--bb-line); font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:6px; }
-.bb-foot-expiring { color:#ea580c; }
-.bb-foot-expired  { color:#dc2626; }
-.bb-side-card { background:var(--bb-card); border-radius:var(--bb-radius); box-shadow:var(--bb-shadow); overflow:hidden; }
-.bb-side-head { display:flex; align-items:center; justify-content:space-between; padding:12px 16px 8px; }
-.bb-side-title { font-size:14px; font-weight:700; color:var(--bb-ink); display:flex; align-items:center; gap:7px; }
-.bb-side-link { font-size:12px; color:var(--bb-primary); text-decoration:none; font-weight:600; }
-.bb-side-link:hover { text-decoration:underline; }
-.bb-side-body { padding:4px 10px 12px; }
-.bb-job-item { display:flex; gap:10px; padding:8px 6px; border-radius:10px; cursor:pointer; transition:background .15s ease; text-decoration:none; }
-.bb-job-item:hover { background:var(--bb-bg); }
-.bb-job-logo { width:40px; height:40px; border-radius:9px; flex-shrink:0; background:var(--bb-primary-soft); color:var(--bb-primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; }
-.bb-job-info { min-width:0; }
-.bb-job-title { font-size:13.5px; font-weight:700; color:var(--bb-ink); margin:0 0 1px; }
-.bb-job-company { font-size:12px; color:var(--bb-muted); margin:0 0 3px; }
-.bb-job-tag { font-size:10.5px; color:#16a34a; font-weight:600; display:inline-flex; align-items:center; gap:3px; }
-.bb-active-item { display:flex; align-items:center; gap:10px; padding:6px; border-radius:10px; cursor:pointer; transition:background .15s ease; text-decoration:none; }
-.bb-active-item:hover { background:var(--bb-bg); }
-.bb-active-avatar { position:relative; width:38px; height:38px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,var(--bb-primary),#7c73f0); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; overflow:hidden; }
-.bb-active-meta { display:flex; flex-direction:column; gap:2px; min-width:0; }
-.bb-active-name { font-size:13.5px; font-weight:600; color:var(--bb-ink); }
-.bb-mini-badge { display:inline-flex; align-items:center; gap:3px; font-size:9.5px; font-weight:700; letter-spacing:.2px; padding:1px 7px; border-radius:12px; width:fit-content; text-transform:uppercase; }
-.bb-mini-alumni  { background:#fef3c7; color:#d97706; }
-.bb-mini-student { background:#eef2ff; color:#4f46e5; }
-.bb-mini-teacher { background:#f3e8ff; color:#7c3aed; }
-.bb-suggest-item { display:flex; align-items:center; gap:10px; padding:8px 6px; border-radius:10px; transition:background .15s ease; }
-.bb-suggest-item:hover { background:var(--bb-bg); }
-.bb-suggest-avatar { width:40px; height:40px; border-radius:50%; flex-shrink:0; background:linear-gradient(135deg,var(--bb-primary),#7c73f0); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; }
-.bb-suggest-info { flex-grow:1; min-width:0; }
-.bb-suggest-name { font-size:13.5px; font-weight:700; color:var(--bb-ink); margin:0 0 1px; }
-.bb-suggest-role { font-size:11.5px; color:var(--bb-muted); margin:0; }
-.bb-connect-btn { width:34px; height:34px; border-radius:9px; flex-shrink:0; border:1.5px solid var(--bb-primary); background:#fff; color:var(--bb-primary); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:15px; transition:all .15s ease; }
-.bb-connect-btn:hover { background:var(--bb-primary); color:#fff; }
-.bb-right-sidebar { position:sticky; top:70px; max-height:calc(100vh - 85px); overflow-y:auto; padding-bottom:10px; scrollbar-width:thin; scrollbar-color:#cbd5e1 transparent; }
-.bb-right-sidebar::-webkit-scrollbar { width:6px; }
-.bb-right-sidebar::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:10px; }
-.bb-friend-btn { display:inline-flex; align-items:center; gap:7px; font-size:.88rem; font-weight:700; padding:9px 18px; border-radius:10px; border:none; cursor:pointer; transition:all .15s ease; margin-right:6px; }
-.bb-friend-add { background:#4f46e5; color:#fff; } .bb-friend-add:hover { background:#4338ca; }
-.bb-friend-pending { background:#eef2ff; color:#4f46e5; border:1.5px solid #c7d2fe; } .bb-friend-pending:hover { background:#fef2f2; color:#dc2626; }
-.bb-friend-cancel-hint { font-size:.78rem; opacity:.75; }
-.bb-friend-accept { background:#059669; color:#fff; }
-.bb-friend-decline { background:#f3f4f8; color:#374151; }
-.bb-friend-already { background:#f3f4f8; color:#374151; }
-.bb-friend-blocked { background:#fee2e2; color:#dc2626; }
-.bb-search-wrap { position:relative; }
-.bb-search-box { background:#f0f2f5; border-radius:50px; padding:.45rem 1rem; display:flex; align-items:center; width:260px; transition:width .2s ease; }
-.bb-search-box:focus-within { width:320px; background:#e4e6eb; }
-.bb-search-box input { background:transparent; border:none; outline:none; margin-left:8px; font-size:.9rem; width:100%; }
-.bb-search-dropdown { position:absolute; top:calc(100% + 8px); left:0; width:360px; background:#fff; border-radius:14px; z-index:9999; display:none; overflow:hidden; box-shadow:0 8px 32px rgba(16,24,40,.14); border:1px solid #eceef1; }
-.bb-search-dropdown.show { display:block; animation:sdIn .18s ease; }
-@keyframes sdIn { from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);} }
-.bb-sd-label { font-size:11px; font-weight:700; color:#6b7280; letter-spacing:.5px; text-transform:uppercase; padding:12px 14px 6px; }
-.bb-sd-item { display:flex; align-items:center; gap:11px; padding:9px 14px; cursor:pointer; transition:background .12s; text-decoration:none; }
-.bb-sd-item:hover, .bb-sd-item.active { background:#f3f4f8; }
-.bb-sd-avatar { width:42px; height:42px; border-radius:50%; flex-shrink:0; overflow:hidden; background:linear-gradient(135deg,#4f46e5,#7c73f0); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; }
-.bb-sd-avatar img { width:100%; height:100%; object-fit:cover; }
-.bb-sd-info { flex-grow:1; min-width:0; }
-.bb-sd-name { font-size:.9rem; font-weight:700; color:#1e1f24; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.bb-sd-sub { font-size:.78rem; color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
-.bb-sd-topic { font-size:.74rem; color:#4f46e5; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.bb-sd-rolechip { font-size:9.5px; font-weight:700; padding:1px 7px; border-radius:12px; flex-shrink:0; }
-.bb-sd-student { background:#eef2ff; color:#4f46e5; } .bb-sd-alumni { background:#fef3c7; color:#d97706; } .bb-sd-teacher { background:#f3e8ff; color:#7c3aed; }
-.bb-sd-footer { border-top:1px solid #eceef1; padding:10px 14px; font-size:.86rem; font-weight:700; color:#4f46e5; text-align:center; text-decoration:none; display:block; transition:background .12s; }
-.bb-sd-footer:hover { background:#f3f4f8; }
-.bb-sd-spinner { text-align:center; padding:20px; color:#6b7280; font-size:.88rem; }
-.bb-sd-empty { text-align:center; padding:20px 14px; color:#9ca3af; font-size:.86rem; }
-.bb-emoji-btn { border:none; background:transparent; cursor:pointer; color:#65676b; font-size:20px; padding:4px 8px; border-radius:8px; transition:background .15s,color .15s; display:inline-flex; align-items:center; }
-.bb-emoji-btn:hover { background:#f0f2f5; color:#f59e0b; }
-#bbEmojiPopover { position:absolute; z-index:3000; display:none; box-shadow:0 8px 30px rgba(0,0,0,.18); border-radius:12px; overflow:hidden; }
-#bbEmojiPopover emoji-picker { --background:#fff; --border-color:#e4e6eb; --indicator-color:#4f46e5; --num-columns:8; --emoji-size:1.3rem; height:340px; }
-.comment-like-btn { color:#65676b; cursor:pointer; font-weight:600; }
-.comment-like-btn:hover { text-decoration:underline; }
-.comment-like-btn.liked { color:#4f46e5; }
-.comment-like-count { font-size:11px; }
-.reply-row { padding-left:6px; }
-.replies-zone { border-left:2px solid #eceef1; padding-left:10px; margin-left:6px; }
-.reply-input-wrap { display:flex; align-items:center; gap:8px; }
-.reply-input-box { flex-grow:1; border:1px solid #e4e6eb; border-radius:20px; background:#f0f2f5; padding:6px 14px; font-size:12.5px; outline:none; }
-.reply-input-box:focus { border-color:#4f46e5; background:#fff; }
-.reply-send-btn { border:none; background:transparent; color:#4f46e5; cursor:pointer; font-size:16px; padding:2px 6px; }
-.reply-send-btn:disabled { opacity:.4; cursor:default; }
-.comment-mention { color:#4f46e5; font-weight:600; }
-.reply-field { display:flex; align-items:center; gap:6px; flex-grow:1; background:#f0f2f5; border:1px solid #e4e6eb; border-radius:20px; padding:2px 6px 2px 12px; }
-.reply-field:focus-within { border-color:#4f46e5; background:#fff; }
-.reply-field .reply-input-box { border:none; background:transparent; padding:5px 4px; }
-.reply-mention-tag { display:inline-flex; align-items:center; background:#e0e7ff; color:#4f46e5; font-weight:600; font-size:11.5px; padding:2px 8px; border-radius:12px; white-space:nowrap; }
+    :root {
+        --bb-primary: #4f46e5;
+        --bb-primary-dark: #4338ca;
+        --bb-primary-soft: #eef2ff;
+        --bb-ink: #1e1f24;
+        --bb-muted: #6b7280;
+        --bb-line: #eceef1;
+        --bb-bg: #f3f4f8;
+        --bb-card: #ffffff;
+        --bb-radius: 16px;
+        --bb-shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+        --bb-shadow-hover: 0 8px 28px rgba(79, 70, 229, 0.1), 0 2px 6px rgba(16, 24, 40, 0.06);
+    }
+    .bb-post-card {
+        background: var(--bb-card);
+        border-radius: var(--bb-radius);
+        box-shadow: var(--bb-shadow);
+        margin-bottom: 18px;
+        overflow: hidden;
+        transition: box-shadow 0.25s ease;
+    }
+    .bb-post-card:hover {
+        box-shadow: var(--bb-shadow-hover);
+    }
+    .bb-post-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px 8px;
+    }
+    .bb-head-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .bb-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--bb-primary), #7c73f0);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 16px;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+        overflow: hidden;
+        padding: 0;
+    }
+    .bb-avatar:has(img) {
+        background: none;
+    }
+    .bb-avatar-sm {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+        box-shadow: none;
+    }
+    .bb-avatar-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+    .bb-head-meta {
+        line-height: 1.25;
+    }
+    .bb-author {
+        margin: 0;
+        font-weight: 700;
+        font-size: 14.5px;
+        color: var(--bb-ink);
+        letter-spacing: -0.2px;
+    }
+    .bb-author-link {
+        text-decoration: none;
+        display: inline-block;
+    }
+    .bb-author-link:hover {
+        color: var(--bb-primary);
+        text-decoration: underline;
+    }
+    .bb-time {
+        font-size: 11.5px;
+        color: var(--bb-muted);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .bb-more-btn {
+        border: none;
+        background: transparent;
+        color: var(--bb-muted);
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s ease;
+    }
+    .bb-more-btn:hover {
+        background: var(--bb-bg);
+        color: var(--bb-ink);
+    }
+    .bb-author-role {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        padding: 1px 8px;
+        border-radius: 12px;
+        width: fit-content;
+        margin: 1px 0;
+    }
+    .bb-author-role-alumni {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    .bb-author-role-student {
+        background: #eef2ff;
+        color: #4f46e5;
+    }
+    .bb-author-role-teacher {
+        background: #f3e8ff;
+        color: #7c3aed;
+    }
+    .bb-caption {
+        padding: 2px 16px 12px;
+        font-size: 14.5px;
+        line-height: 1.55;
+        color: var(--bb-ink);
+        word-break: break-word;
+    }
+    .bb-color-caption {
+        margin: 4px 16px 12px;
+        border-radius: 12px;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 22px;
+        padding: 24px;
+        word-break: break-word;
+    }
+    .bb-color-caption-sm {
+        min-height: 120px;
+        font-size: 16px;
+        margin: 8px 14px;
+    }
+    .bb-media-zone {
+        background: #000;
+        overflow: hidden;
+        line-height: 0;
+    }
+    .bb-media-single {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        width: 100%;
+    }
+    .bb-single-img {
+        width: 100%;
+        max-height: 560px;
+        object-fit: contain;
+        display: block;
+        cursor: pointer;
+    }
+    .bb-video-wrap {
+        position: relative;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        background: #000;
+    }
+    .bb-inline-video {
+        width: 100%;
+        max-height: 560px;
+        object-fit: contain;
+        display: block;
+        background: #000;
+    }
+    .bb-expand-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 5;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: none;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        font-size: 14px;
+    }
+    .bb-video-wrap:hover .bb-expand-btn {
+        opacity: 1;
+    }
+    .bb-grid {
+        display: flex;
+        gap: 3px;
+        width: 100%;
+    }
+    .bb-grid-2 {
+        height: 300px;
+    }
+    .bb-grid-3 {
+        height: 340px;
+    }
+    .bb-grid-3-side {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        flex: 1;
+        min-width: 0;
+    }
+    .bb-grid-4 {
+        flex-wrap: wrap;
+        height: 480px;
+    }
+    .bb-grid-4 .bb-tile {
+        width: calc(50% - 1.5px);
+        height: calc(50% - 1.5px);
+        flex: none;
+    }
+    .bb-tile {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        background: #000;
+    }
+    .bb-tile-big {
+        flex: 2;
+    }
+    .bb-tile-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        cursor: pointer;
+        display: block;
+    }
+    .bb-play-badge {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #fff;
+        font-size: 1.8rem;
+        transition:
+            transform 0.15s ease,
+            background 0.15s ease;
+    }
+    .bb-play-badge:hover {
+        transform: translate(-50%, -50%) scale(1.08);
+        background: rgba(0, 0, 0, 0.7);
+    }
+    .bb-play-sm {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+    .bb-more-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        cursor: pointer;
+        line-height: 1;
+    }
+    .bb-shared {
+        margin: 0 16px 12px;
+        border: 1px solid var(--bb-line);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .bb-shared-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 14px 6px;
+    }
+    .bb-stats {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 18px 8px;
+        font-size: 13px;
+        color: var(--bb-muted);
+    }
+    .bb-like-stat {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .bb-like-bubble {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--bb-primary);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+    }
+    .bb-stat-link {
+        cursor: pointer;
+        transition: color 0.15s ease;
+    }
+    .bb-stat-link:hover {
+        color: var(--bb-primary);
+        text-decoration: underline;
+    }
+    .bb-actions {
+        display: flex;
+        padding: 4px 8px;
+        border-top: 1px solid var(--bb-line);
+    }
+    .bb-action-btn {
+        flex: 1;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 9px 4px;
+        border-radius: 8px;
+        margin: 4px 2px;
+        color: var(--bb-muted);
+        font-weight: 600;
+        font-size: 13.5px;
+        transition:
+            background 0.15s ease,
+            color 0.15s ease;
+    }
+    .bb-action-btn i {
+        font-size: 17px;
+    }
+    .bb-action-btn:hover {
+        background: var(--bb-bg);
+    }
+    .bb-action-btn.active-like {
+        color: var(--bb-primary);
+    }
+    .bb-action-btn.active-save {
+        color: #f59e0b;
+    }
+    @media (max-width: 576px) {
+        .bb-action-btn span {
+            display: none;
+        }
+        .bb-action-btn i {
+            font-size: 19px;
+        }
+        .bb-grid-2,
+        .bb-grid-3 {
+            height: 220px;
+        }
+        .bb-grid-4 {
+            height: 360px;
+        }
+    }
+    .bb-role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1.5px solid transparent;
+        transition: transform 0.15s ease;
+    }
+    .bb-role-student {
+        background: #eef2ff;
+        color: #4f46e5;
+        border-color: #c7d2fe;
+    }
+    .bb-role-alumni {
+        background: #fef3c7;
+        color: #d97706;
+        border-color: #fde68a;
+    }
+    .bb-role-teacher {
+        background: #f3e8ff;
+        color: #7c3aed;
+        border-color: #ddd6fe;
+    }
+    .bb-jobcard {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+        padding: 16px 18px;
+        margin-bottom: 18px;
+        border: 1px solid var(--bb-line);
+        transition: box-shadow 0.2s;
+    }
+    .bb-jobcard:hover {
+        box-shadow: 0 8px 24px rgba(79, 70, 229, 0.1);
+    }
+    .bb-jobcard-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 13px;
+    }
+    .bb-jobcard-logo {
+        width: 52px;
+        height: 52px;
+        border-radius: 13px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 23px;
+        font-weight: 800;
+    }
+    .bb-jobcard-headinfo {
+        flex-grow: 1;
+        min-width: 0;
+    }
+    .bb-jobcard-title {
+        font-size: 16.5px;
+        font-weight: 800;
+        color: var(--bb-ink);
+        text-decoration: none;
+        letter-spacing: -0.3px;
+        display: inline-block;
+        line-height: 1.25;
+    }
+    .bb-jobcard-title:hover {
+        color: var(--bb-primary);
+    }
+    .bb-jobcard-company {
+        font-size: 13px;
+        color: var(--bb-muted);
+        margin: 2px 0 0;
+        font-weight: 500;
+    }
+    .bb-job-expiring {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #ea580c;
+        margin-top: 5px;
+    }
+    .bb-job-expired {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #dc2626;
+        margin-top: 5px;
+    }
+    .bb-jobcard-more {
+        border: none;
+        background: transparent;
+        color: var(--bb-muted);
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    .bb-jobcard-more:hover {
+        background: var(--bb-bg);
+    }
+    .bb-jobcard-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin: 13px 0;
+    }
+    .bb-jobcard-tag,
+    .bb-jobcard-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 5px 11px;
+        border-radius: 8px;
+    }
+    .bb-jobcard-pill {
+        background: var(--bb-bg);
+        color: #4b5563;
+    }
+    .bb-jobcard-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        background: var(--bb-primary-soft);
+        color: var(--bb-primary);
+        border: none;
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 13.5px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.15s;
+    }
+    .bb-jobcard-btn:hover {
+        background: var(--bb-primary);
+        color: #fff;
+    }
+    .bb-jobcard-posted {
+        font-size: 11.5px;
+        color: var(--bb-muted);
+        margin: 3px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .bb-job-save-btn {
+        border: none;
+        background: transparent;
+        color: var(--bb-muted);
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        cursor: pointer;
+        flex-shrink: 0;
+        font-size: 17px;
+        transition: all 0.15s;
+    }
+    .bb-job-save-btn:hover {
+        background: var(--bb-bg);
+        color: #f59e0b;
+    }
+    .bb-job-save-btn.saved {
+        color: #f59e0b;
+    }
+    .bb-jobcard-foot {
+        margin-top: 12px;
+        padding-top: 11px;
+        border-top: 1px solid var(--bb-line);
+        font-size: 12.5px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .bb-foot-expiring {
+        color: #ea580c;
+    }
+    .bb-foot-expired {
+        color: #dc2626;
+    }
+    .bb-side-card {
+        background: var(--bb-card);
+        border-radius: var(--bb-radius);
+        box-shadow: var(--bb-shadow);
+        overflow: hidden;
+    }
+    .bb-side-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px 8px;
+    }
+    .bb-side-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--bb-ink);
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+    .bb-side-link {
+        font-size: 12px;
+        color: var(--bb-primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .bb-side-link:hover {
+        text-decoration: underline;
+    }
+    .bb-side-body {
+        padding: 4px 10px 12px;
+    }
+    .bb-job-item {
+        display: flex;
+        gap: 10px;
+        padding: 8px 6px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        text-decoration: none;
+    }
+    .bb-job-item:hover {
+        background: var(--bb-bg);
+    }
+    .bb-job-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 9px;
+        flex-shrink: 0;
+        background: var(--bb-primary-soft);
+        color: var(--bb-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 17px;
+    }
+    .bb-job-info {
+        min-width: 0;
+    }
+    .bb-job-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--bb-ink);
+        margin: 0 0 1px;
+    }
+    .bb-job-company {
+        font-size: 12px;
+        color: var(--bb-muted);
+        margin: 0 0 3px;
+    }
+    .bb-job-tag {
+        font-size: 10.5px;
+        color: #16a34a;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+    }
+    .bb-active-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        text-decoration: none;
+    }
+    .bb-active-item:hover {
+        background: var(--bb-bg);
+    }
+    .bb-active-avatar {
+        position: relative;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, var(--bb-primary), #7c73f0);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 15px;
+        overflow: hidden;
+    }
+    .bb-active-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+    .bb-active-name {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--bb-ink);
+    }
+    .bb-mini-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        padding: 1px 7px;
+        border-radius: 12px;
+        width: fit-content;
+        text-transform: uppercase;
+    }
+    .bb-mini-alumni {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    .bb-mini-student {
+        background: #eef2ff;
+        color: #4f46e5;
+    }
+    .bb-mini-teacher {
+        background: #f3e8ff;
+        color: #7c3aed;
+    }
+    .bb-suggest-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 6px;
+        border-radius: 10px;
+        transition: background 0.15s ease;
+    }
+    .bb-suggest-item:hover {
+        background: var(--bb-bg);
+    }
+    .bb-suggest-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, var(--bb-primary), #7c73f0);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 16px;
+    }
+    .bb-suggest-info {
+        flex-grow: 1;
+        min-width: 0;
+    }
+    .bb-suggest-name {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--bb-ink);
+        margin: 0 0 1px;
+    }
+    .bb-suggest-role {
+        font-size: 11.5px;
+        color: var(--bb-muted);
+        margin: 0;
+    }
+    .bb-connect-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        flex-shrink: 0;
+        border: 1.5px solid var(--bb-primary);
+        background: #fff;
+        color: var(--bb-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 15px;
+        transition: all 0.15s ease;
+    }
+    .bb-connect-btn:hover {
+        background: var(--bb-primary);
+        color: #fff;
+    }
+    .bb-right-sidebar {
+        position: sticky;
+        top: 70px;
+        max-height: calc(100vh - 85px);
+        overflow-y: auto;
+        padding-bottom: 10px;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+    }
+    .bb-right-sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .bb-right-sidebar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+    .bb-friend-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        padding: 9px 18px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        margin-right: 6px;
+    }
+    .bb-friend-add {
+        background: #4f46e5;
+        color: #fff;
+    }
+    .bb-friend-add:hover {
+        background: #4338ca;
+    }
+    .bb-friend-pending {
+        background: #eef2ff;
+        color: #4f46e5;
+        border: 1.5px solid #c7d2fe;
+    }
+    .bb-friend-pending:hover {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+    .bb-friend-cancel-hint {
+        font-size: 0.78rem;
+        opacity: 0.75;
+    }
+    .bb-friend-accept {
+        background: #059669;
+        color: #fff;
+    }
+    .bb-friend-decline {
+        background: #f3f4f8;
+        color: #374151;
+    }
+    .bb-friend-already {
+        background: #f3f4f8;
+        color: #374151;
+    }
+    .bb-friend-blocked {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    .bb-search-wrap {
+        position: relative;
+    }
+    .bb-search-box {
+        background: #f0f2f5;
+        border-radius: 50px;
+        padding: 0.45rem 1rem;
+        display: flex;
+        align-items: center;
+        width: 260px;
+        transition: width 0.2s ease;
+    }
+    .bb-search-box:focus-within {
+        width: 320px;
+        background: #e4e6eb;
+    }
+    .bb-search-box input {
+        background: transparent;
+        border: none;
+        outline: none;
+        margin-left: 8px;
+        font-size: 0.9rem;
+        width: 100%;
+    }
+    .bb-search-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 360px;
+        background: #fff;
+        border-radius: 14px;
+        z-index: 9999;
+        display: none;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(16, 24, 40, 0.14);
+        border: 1px solid #eceef1;
+    }
+    .bb-search-dropdown.show {
+        display: block;
+        animation: sdIn 0.18s ease;
+    }
+    @keyframes sdIn {
+        from {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .bb-sd-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #6b7280;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 12px 14px 6px;
+    }
+    .bb-sd-item {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 9px 14px;
+        cursor: pointer;
+        transition: background 0.12s;
+        text-decoration: none;
+    }
+    .bb-sd-item:hover,
+    .bb-sd-item.active {
+        background: #f3f4f8;
+    }
+    .bb-sd-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        overflow: hidden;
+        background: linear-gradient(135deg, #4f46e5, #7c73f0);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 17px;
+    }
+    .bb-sd-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .bb-sd-info {
+        flex-grow: 1;
+        min-width: 0;
+    }
+    .bb-sd-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #1e1f24;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .bb-sd-sub {
+        font-size: 0.78rem;
+        color: #6b7280;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 1px;
+    }
+    .bb-sd-topic {
+        font-size: 0.74rem;
+        color: #4f46e5;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .bb-sd-rolechip {
+        font-size: 9.5px;
+        font-weight: 700;
+        padding: 1px 7px;
+        border-radius: 12px;
+        flex-shrink: 0;
+    }
+    .bb-sd-student {
+        background: #eef2ff;
+        color: #4f46e5;
+    }
+    .bb-sd-alumni {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    .bb-sd-teacher {
+        background: #f3e8ff;
+        color: #7c3aed;
+    }
+    .bb-sd-footer {
+        border-top: 1px solid #eceef1;
+        padding: 10px 14px;
+        font-size: 0.86rem;
+        font-weight: 700;
+        color: #4f46e5;
+        text-align: center;
+        text-decoration: none;
+        display: block;
+        transition: background 0.12s;
+    }
+    .bb-sd-footer:hover {
+        background: #f3f4f8;
+    }
+    .bb-sd-spinner {
+        text-align: center;
+        padding: 20px;
+        color: #6b7280;
+        font-size: 0.88rem;
+    }
+    .bb-sd-empty {
+        text-align: center;
+        padding: 20px 14px;
+        color: #9ca3af;
+        font-size: 0.86rem;
+    }
+    .bb-emoji-btn {
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: #65676b;
+        font-size: 20px;
+        padding: 4px 8px;
+        border-radius: 8px;
+        transition:
+            background 0.15s,
+            color 0.15s;
+        display: inline-flex;
+        align-items: center;
+    }
+    .bb-emoji-btn:hover {
+        background: #f0f2f5;
+        color: #f59e0b;
+    }
+    #bbEmojiPopover {
+        position: absolute;
+        z-index: 3000;
+        display: none;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    #bbEmojiPopover emoji-picker {
+        --background: #fff;
+        --border-color: #e4e6eb;
+        --indicator-color: #4f46e5;
+        --num-columns: 8;
+        --emoji-size: 1.3rem;
+        height: 340px;
+    }
+    .comment-like-btn {
+        color: #65676b;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    .comment-like-btn:hover {
+        text-decoration: underline;
+    }
+    .comment-like-btn.liked {
+        color: #4f46e5;
+    }
+    .comment-like-count {
+        font-size: 11px;
+    }
+    .reply-row {
+        padding-left: 6px;
+    }
+    .replies-zone {
+        border-left: 2px solid #eceef1;
+        padding-left: 10px;
+        margin-left: 6px;
+    }
+    .reply-input-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .reply-input-box {
+        flex-grow: 1;
+        border: 1px solid #e4e6eb;
+        border-radius: 20px;
+        background: #f0f2f5;
+        padding: 6px 14px;
+        font-size: 12.5px;
+        outline: none;
+    }
+    .reply-input-box:focus {
+        border-color: #4f46e5;
+        background: #fff;
+    }
+    .reply-send-btn {
+        border: none;
+        background: transparent;
+        color: #4f46e5;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 2px 6px;
+    }
+    .reply-send-btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
+    .comment-mention {
+        color: #4f46e5;
+        font-weight: 600;
+    }
+    .reply-field {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-grow: 1;
+        background: #f0f2f5;
+        border: 1px solid #e4e6eb;
+        border-radius: 20px;
+        padding: 2px 6px 2px 12px;
+    }
+    .reply-field:focus-within {
+        border-color: #4f46e5;
+        background: #fff;
+    }
+    .reply-field .reply-input-box {
+        border: none;
+        background: transparent;
+        padding: 5px 4px;
+    }
+    .reply-mention-tag {
+        display: inline-flex;
+        align-items: center;
+        background: #e0e7ff;
+        color: #4f46e5;
+        font-weight: 600;
+        font-size: 11.5px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        white-space: nowrap;
+    }
 
-/* ===== NOTIFICATION ===== */
-.bb-notif-item { display:flex;align-items:flex-start;gap:11px;padding:12px 16px;text-decoration:none;color:inherit;transition:background .12s;border-bottom:1px solid #f3f4f8; }
-.bb-notif-item:hover { background:#f3f4f8; }
-.bb-notif-unread { background:#eef2ff; }
-.bb-notif-avatar { width:42px;height:42px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;overflow:hidden; }
-.bb-notif-body { flex-grow:1;min-width:0; }
-.bb-notif-msg { font-size:13px;color:#1e1f24;line-height:1.4;margin-bottom:3px; }
-.bb-notif-time { font-size:11.5px;color:#6b7280; }
-.bb-notif-empty { text-align:center;padding:32px 16px;color:#9ca3af; }
-.bb-notif-empty i { font-size:2rem;display:block;margin-bottom:8px; }
+    /* ===== CHAT BOX ===== */
+    .bb-chat-box {
+        width: 320px;
+        background: #fff;
+        border-radius: 12px 12px 0 0;
+        box-shadow: 0 -2px 20px rgba(16, 24, 40, 0.16);
+        display: flex;
+        flex-direction: column;
+        max-height: 460px;
+        transition: max-height 0.25s ease;
+        border: 1px solid #e4e6eb;
+        border-bottom: none;
+        overflow: hidden;
+    }
+    .bb-chat-box.minimized {
+        max-height: 52px;
+    }
+    .bb-chat-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        cursor: pointer;
+        flex-shrink: 0;
+        background: #fff;
+        border-bottom: 1px solid #f0f2f5;
+        border-radius: 12px 12px 0 0;
+    }
+    .bb-chat-head:hover {
+        background: #f3f4f8;
+    }
+    .bb-chat-head-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #4f46e5, #7c73f0);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        overflow: hidden;
+        position: relative;
+    }
+    .bb-chat-head-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .bb-chat-online-dot {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #22c55e;
+        border: 2px solid #fff;
+    }
+    .bb-chat-head-info {
+        flex-grow: 1;
+        min-width: 0;
+    }
+    .bb-chat-head-name {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #1e1f24;
+        margin: 0;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .bb-chat-head-status {
+        font-size: 11px;
+        color: #6b7280;
+        margin: 0;
+    }
+    .bb-chat-head-actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+    .bb-chat-head-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: #6b7280;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        transition: background 0.12s;
+    }
+    .bb-chat-head-btn:hover {
+        background: #e4e6eb;
+    }
+    .bb-chat-search {
+        padding: 8px 10px;
+        border-bottom: 1px solid #f0f2f5;
+        flex-shrink: 0;
+    }
+    .bb-chat-search-input {
+        width: 100%;
+        border: none;
+        background: #f0f2f5;
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 12.5px;
+        outline: none;
+    }
+    .bb-chat-messages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        scrollbar-width: thin;
+    }
+    .bb-chat-msg {
+        max-width: 80%;
+        padding: 8px 12px;
+        border-radius: 18px;
+        font-size: 13px;
+        line-height: 1.45;
+        word-break: break-word;
+    }
+    .bb-chat-msg.mine {
+        background: #4f46e5;
+        color: #fff;
+        align-self: flex-end;
+        border-radius: 18px 18px 4px 18px;
+    }
+    .bb-chat-msg.theirs {
+        background: #f0f2f5;
+        color: #1e1f24;
+        align-self: flex-start;
+        border-radius: 18px 18px 18px 4px;
+    }
+    .bb-chat-footer {
+        padding: 8px 10px;
+        border-top: 1px solid #f0f2f5;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-shrink: 0;
+    }
+    .bb-chat-input {
+        flex-grow: 1;
+        border: none;
+        background: #f0f2f5;
+        border-radius: 20px;
+        padding: 8px 14px;
+        font-size: 13px;
+        outline: none;
+        resize: none;
+        max-height: 80px;
+        overflow-y: auto;
+    }
+    .bb-chat-send-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: none;
+        background: #4f46e5;
+        color: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .bb-chat-send-btn:hover {
+        background: #4338ca;
+    }
+    .bb-chat-attach-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: #6b7280;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .bb-chat-no-msg {
+        text-align: center;
+        color: #9ca3af;
+        font-size: 12px;
+        padding: 20px 0;
+    }
+    #postsFeedContainer .bb-post-head {
+        flex-wrap: nowrap;
+    }
+    
+    /* ===== NOTIFICATION ===== */
+    .bb-notif-item {
+        display: flex;
+        align-items: center;        /* ✅ flex-start থেকে center করলাম */
+        gap: 12px;
+        padding: 12px 16px;
+        text-decoration: none;
+        color: inherit;
+        transition: background .12s;
+        border-bottom: 1px solid #f3f4f6;
+        cursor: pointer;
+    }
+    .bb-notif-item:hover { background: #f5f7ff !important; text-decoration: none; }
+    .bb-notif-unread     { background: #eef2ff !important; }
+    
+    /* Notification scrollbar */
+    #notifList::-webkit-scrollbar       { width: 4px; }
+    #notifList::-webkit-scrollbar-track { background: transparent; }
+    #notifList::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    #notifList::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    
+    /* Bell shake animation */
+    @keyframes bellShake {
+        0%,100% { transform: rotate(0); }
+        20%      { transform: rotate(-15deg); }
+        40%      { transform: rotate(15deg); }
+        60%      { transform: rotate(-10deg); }
+        80%      { transform: rotate(10deg); }
+    }
+    .bell-shake { animation: bellShake .5s ease; }
+    
+    .bb-notif-empty { text-align: center; padding: 40px 16px; color: #9ca3af; }
+    .bb-notif-empty i { font-size: 2rem; display: block; margin-bottom: 8px; }
+</style>
 
-/* ===== CHAT BOX ===== */
-.bb-chat-box { width:320px;background:#fff;border-radius:12px 12px 0 0;box-shadow:0 -2px 20px rgba(16,24,40,.16);display:flex;flex-direction:column;max-height:460px;transition:max-height .25s ease;border:1px solid #e4e6eb;border-bottom:none;overflow:hidden; }
-.bb-chat-box.minimized { max-height:52px; }
-.bb-chat-head { display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;flex-shrink:0;background:#fff;border-bottom:1px solid #f0f2f5;border-radius:12px 12px 0 0; }
-.bb-chat-head:hover { background:#f3f4f8; }
-.bb-chat-head-avatar { width:36px;height:36px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;overflow:hidden;position:relative; }
-.bb-chat-head-avatar img { width:100%;height:100%;object-fit:cover; }
-.bb-chat-online-dot { position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:#22c55e;border:2px solid #fff; }
-.bb-chat-head-info { flex-grow:1;min-width:0; }
-.bb-chat-head-name { font-size:13.5px;font-weight:700;color:#1e1f24;margin:0;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-.bb-chat-head-status { font-size:11px;color:#6b7280;margin:0; }
-.bb-chat-head-actions { display:flex;gap:4px;flex-shrink:0; }
-.bb-chat-head-btn { width:28px;height:28px;border-radius:50%;border:none;background:transparent;color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:background .12s; }
-.bb-chat-head-btn:hover { background:#e4e6eb; }
-.bb-chat-search { padding:8px 10px;border-bottom:1px solid #f0f2f5;flex-shrink:0; }
-.bb-chat-search-input { width:100%;border:none;background:#f0f2f5;border-radius:20px;padding:6px 12px;font-size:12.5px;outline:none; }
-.bb-chat-messages { flex-grow:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin; }
-.bb-chat-msg { max-width:80%;padding:8px 12px;border-radius:18px;font-size:13px;line-height:1.45;word-break:break-word; }
-.bb-chat-msg.mine { background:#4f46e5;color:#fff;align-self:flex-end;border-radius:18px 18px 4px 18px; }
-.bb-chat-msg.theirs { background:#f0f2f5;color:#1e1f24;align-self:flex-start;border-radius:18px 18px 18px 4px; }
-.bb-chat-footer { padding:8px 10px;border-top:1px solid #f0f2f5;display:flex;align-items:center;gap:7px;flex-shrink:0; }
-.bb-chat-input { flex-grow:1;border:none;background:#f0f2f5;border-radius:20px;padding:8px 14px;font-size:13px;outline:none;resize:none;max-height:80px;overflow-y:auto; }
-.bb-chat-send-btn { width:34px;height:34px;border-radius:50%;border:none;background:#4f46e5;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-.bb-chat-send-btn:hover { background:#4338ca; }
-.bb-chat-attach-btn { width:32px;height:32px;border-radius:50%;border:none;background:transparent;color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center; }
-.bb-chat-no-msg { text-align:center;color:#9ca3af;font-size:12px;padding:20px 0; }
-#postsFeedContainer .bb-post-head { flex-wrap: nowrap; }
-    </style>
+    
 </head>
 
 @php $role = Auth::user()->role; @endphp
@@ -273,42 +1542,93 @@
                 <i class="bi {{ $role === 'alumni' ? 'bi-mortarboard-fill' : 'bi-backpack-fill' }}"></i>
                 {{ ucfirst($role) }} Feed
             </span>
+            <a href="{{ route('profile.show') }}" class="create-post-avatar" style="text-decoration:none;">
+                        @if(Auth::user()->profile_picture)
+                            <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" alt="me" class="cpa-img">
+                        @else
+                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                        @endif
+                    </a>
             <a href="#" class="nav-icon-btn d-md-none"><i class="bi bi-search"></i></a>
             <a href="#" class="nav-icon-btn"><i class="bi bi-messenger"></i></a>
 
             {{-- NOTIFICATION BELL --}}
             <div class="position-relative" id="notifWrap">
-                <button class="nav-icon-btn border-0" onclick="toggleNotifDropdown()">
-                    <i class="bi bi-bell-fill"></i>
-                    <span id="notifBadge" class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-danger"
-                          style="font-size:9px;padding:3px 5px;min-width:16px;display:none;">0</span>
-                </button>
-                <div id="notifDropdown" style="display:none;position:absolute;right:0;top:calc(100% + 8px);width:360px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(16,24,40,.14);border:1px solid #eceef1;z-index:9999;overflow:hidden;">
-                    <div style="padding:12px 16px 8px;border-bottom:1px solid #eceef1;display:flex;align-items:center;justify-content:space-between;">
-                        <span style="font-size:15px;font-weight:700;color:#1e1f24;">Notifications</span>
-                        <button onclick="markAllRead()" style="font-size:12px;font-weight:600;color:#4f46e5;border:none;background:transparent;cursor:pointer;">Mark all read</button>
-                    </div>
-                    <div id="notifList" style="max-height:420px;overflow-y:auto;">
-                        <div class="text-center py-4 text-muted small">Loading...</div>
+ 
+            {{-- Bell button --}}
+            <button class="nav-icon-btn border-0 position-relative" id="notifBellBtn" onclick="toggleNotifDropdown()">
+                <i class="bi bi-bell-fill" style="font-size:20px;"></i>
+                <span id="notifBadge"
+                    style="display:none;position:absolute;top:-4px;right:-4px;
+                            min-width:18px;height:18px;padding:0 4px;border-radius:9px;
+                            background:#dc2626;color:#fff;font-size:10px;font-weight:700;
+                            line-height:18px;text-align:center;border:2px solid #fff;">0</span>
+            </button>
+        
+            {{-- Dropdown panel --}}
+            <div id="notifDropdown"
+                style="display:none;position:absolute;right:0;top:calc(100% + 10px);
+                        width:380px;max-width:calc(100vw - 24px);
+                        background:#fff;border-radius:16px;
+                        box-shadow:0 8px 40px rgba(16,24,40,.16);
+                        border:1px solid #e5e7eb;z-index:9999;overflow:hidden;">
+        
+                {{-- Header --}}
+                <div style="padding:14px 16px 10px;border-bottom:1px solid #f3f4f6;
+                            display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:17px;font-weight:800;color:#111827;letter-spacing:-.3px;">Notifications</span>
+                    <button onclick="markAllRead()"
+                            style="font-size:12px;font-weight:600;color:#4f46e5;
+                                border:none;background:transparent;cursor:pointer;padding:4px 8px;
+                                border-radius:6px;transition:background .15s;"
+                            onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background='transparent'">
+                        Mark all read
+                    </button>
+                </div>
+        
+                {{-- List --}}
+                <div id="notifList" style="max-height:460px;overflow-y:auto;scroll-behavior:smooth;">
+                    <div style="padding:32px 16px;text-align:center;color:#9ca3af;font-size:13px;">
+                        <i class="bi bi-arrow-clockwise" style="font-size:20px;display:block;margin-bottom:6px;"></i>
+                        Loading…
                     </div>
                 </div>
+        
+                {{-- Footer --}}
+                <div style="padding:10px 16px;border-top:1px solid #f3f4f6;text-align:center;">
+                    <a href="{{ route('home') }}" style="font-size:13px;font-weight:600;color:#4f46e5;text-decoration:none;">
+                        See all notifications
+                    </a>
+                </div>
             </div>
+        </div>
+            {{-- END NOTIFICATION --}}
 
-            <div class="dropdown">
-                <button class="nav-icon-btn border-0" data-bs-toggle="dropdown"><i class="bi bi-person-fill"></i></button>
-                <ul class="dropdown-menu dropdown-menu-end shadow">
-                    <li><span class="dropdown-item-text fw-bold text-dark">{{ Auth::user()->name }}</span></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a href="{{ route('profile.show') }}" class="dropdown-item"><i class="bi bi-person-circle me-2"></i>View Profile</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <form action="{{ route('logout') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
+                        {{-- Profile dropdown --}}
+                        <div class="dropdown">
+                            <button class="nav-icon-btn border-0" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-fill"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li><span class="dropdown-item-text fw-bold text-dark">{{ Auth::user()->name }}</span></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a href="{{ route('profile.show') }}" class="dropdown-item"><i class="bi bi-person-circle me-2"></i>View Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="{{ route('logout') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+
+                    </div>{{-- ms-auto div end --}}
+                </div>
+            </nav>
+
         </div>
     </div>
 </nav>
@@ -652,37 +1972,36 @@
                             @else {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }} @endif
                         </div>
                         <div>
-                            <h6 class="m-0 fw-bold" style="font-size:14px;"></h6>
-                    <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
-<div class="dropdown mt-1">
-    <button class="btn btn-light btn-sm border py-1 px-2 dropdown-toggle"
-            style="font-size:11px;font-weight:600;"
-            data-bs-toggle="dropdown" id="editPrivacyBtn">
-        <i class="bi bi-globe-americas text-primary me-1"></i>
-        <span id="editPrivacyLabel">Public</span>
-    </button>
-    <ul class="dropdown-menu shadow border-0 rounded-3" style="font-size:13px;min-width:160px;">
-        <li>
-            <a class="dropdown-item py-2" href="#"
-               onclick="setEditPrivacy('public','bi-globe-americas text-primary','Public')">
-                <i class="bi bi-globe-americas text-primary me-2"></i> Public
-            </a>
-        </li>
-        <li>
-            <a class="dropdown-item py-2" href="#"
-               onclick="setEditPrivacy('friends','bi-people-fill text-success','Friends')">
-                <i class="bi bi-people-fill text-success me-2"></i> Friends
-            </a>
-        </li>
-        <li>
-            <a class="dropdown-item py-2" href="#"
-               onclick="setEditPrivacy('only_me','bi-lock-fill text-warning','Only Me')">
-                <i class="bi bi-lock-fill text-warning me-2"></i> Only Me
-            </a>
-        </li>
-    </ul>
-</div>
-<input type="hidden" id="editPrivacyInput" value="public">
+                            <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
+                        <div class="dropdown mt-1">
+                            <button class="btn btn-light btn-sm border py-1 px-2 dropdown-toggle"
+                                    style="font-size:11px;font-weight:600;"
+                                    data-bs-toggle="dropdown" id="editPrivacyBtn">
+                                <i class="bi bi-globe-americas text-primary me-1"></i>
+                                <span id="editPrivacyLabel">Public</span>
+                            </button>
+                            <ul class="dropdown-menu shadow border-0 rounded-3" style="font-size:13px;min-width:160px;">
+                                <li>
+                                    <a class="dropdown-item py-2" href="#"
+                                    onclick="setEditPrivacy('public','bi-globe-americas text-primary','Public')">
+                                        <i class="bi bi-globe-americas text-primary me-2"></i> Public
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="#"
+                                    onclick="setEditPrivacy('friends','bi-people-fill text-success','Friends')">
+                                        <i class="bi bi-people-fill text-success me-2"></i> Friends
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" href="#"
+                                    onclick="setEditPrivacy('only_me','bi-lock-fill text-warning','Only Me')">
+                                        <i class="bi bi-lock-fill text-warning me-2"></i> Only Me
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <input type="hidden" id="editPrivacyInput" value="public">
                         </div>
                     </div>
                     <div id="editPostInputWrapper" class="p-1 rounded bg-transparent mb-2">
@@ -720,22 +2039,125 @@
 </div>
 
 {{-- Share Modal --}}
+{{-- ===== SHARE MODAL (Facebook Style) ===== --}}
 <div class="modal fade" id="fbShareModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-3 border-0 shadow">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold mx-auto" style="font-size:17px;">Share Post</h5>
-                <button type="button" class="btn-close ms-0" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-dialog-centered" style="max-width:500px;">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+ 
+            <div class="modal-header border-bottom py-3">
+                <h5 class="modal-title fw-bold mx-auto" style="font-size:17px;">Share</h5>
+                <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" onclick="resetShareModal()"></button>
             </div>
+ 
             <form id="fbShareForm">
-                <div class="modal-body">
+                <div class="modal-body p-0">
                     <input type="hidden" id="targetSharePostId">
-                    <textarea id="shareComment" class="form-control border-0 shadow-none ps-0" rows="2" placeholder="Say something..." style="resize:none;font-size:14px;"></textarea>
-                    <div id="modalPostPreview" class="p-3 border rounded bg-white text-start mt-2"></div>
+                    <input type="hidden" id="sharePostType" value="post"> {{-- post / job --}}
+ 
+                    {{-- User info + privacy --}}
+                    <div class="d-flex align-items-center gap-2 px-3 pt-3 pb-2">
+                        <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;">
+                            @if(Auth::user()->profile_picture)
+                                <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" style="width:100%;height:100%;object-fit:cover;">
+                            @else
+                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                            @endif
+                        </div>
+                        <div>
+                            <div style="font-size:14px;font-weight:700;color:#1e1f24;">{{ Auth::user()->name }}</div>
+                            <div class="d-flex align-items-center gap-1 mt-1">
+                                {{-- Feed button --}}
+                                <span style="font-size:11px;font-weight:600;background:#eef2ff;color:#4f46e5;padding:3px 10px;border-radius:20px;">
+                                    <i class="bi bi-house-door-fill me-1"></i>Feed
+                                </span>
+                                {{-- Privacy dropdown --}}
+                                <div class="dropdown">
+                                    <button class="btn btn-light btn-sm border py-1 px-2 dropdown-toggle"
+                                            style="font-size:11px;font-weight:600;"
+                                            data-bs-toggle="dropdown" id="sharePrivacyBtn">
+                                        <i class="bi bi-people-fill text-success me-1"></i>
+                                        <span id="sharePrivacyLabel">Friends</span>
+                                    </button>
+                                    <ul class="dropdown-menu shadow border-0 rounded-3" style="font-size:13px;min-width:160px;">
+                                        <li><a class="dropdown-item py-2" href="#" onclick="setSharePrivacy('public','bi-globe-americas text-primary','Public')">
+                                            <i class="bi bi-globe-americas text-primary me-2"></i> Public</a></li>
+                                        <li><a class="dropdown-item py-2" href="#" onclick="setSharePrivacy('friends','bi-people-fill text-success','Friends')">
+                                            <i class="bi bi-people-fill text-success me-2"></i> Friends</a></li>
+                                        <li><a class="dropdown-item py-2" href="#" onclick="setSharePrivacy('only_me','bi-lock-fill text-warning','Only Me')">
+                                            <i class="bi bi-lock-fill text-warning me-2"></i> Only Me</a></li>
+                                    </ul>
+                                </div>
+                                <input type="hidden" id="sharePrivacyInput" value="friends">
+                            </div>
+                        </div>
+                    </div>
+ 
+                    {{-- Caption textarea --}}
+                    <div class="px-3 pb-2">
+                        <textarea id="shareComment"
+                                  class="form-control border-0 shadow-none"
+                                  rows="3"
+                                  placeholder="Say something about this..."
+                                  style="resize:none;font-size:15px;padding:4px 0;"></textarea>
+                    </div>
+ 
+                    {{-- Post preview --}}
+                    <div id="modalPostPreview" class="mx-3 mb-3 border rounded-3 overflow-hidden bg-light" style="font-size:13px;"></div>
+ 
+                    <hr class="my-0">
+ 
+                    {{-- Send in Messenger --}}
+<div class="px-3 py-3">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <span style="font-size:14px;font-weight:700;color:#1e1f24;">Send in Messenger</span>
+    </div>
+
+    {{-- Search input —  নতুন যোগ করো --}}
+    <div class="position-relative mb-2">
+        <input type="text"
+               id="messengerSearchInput"
+               placeholder="Search friends..."
+               oninput="searchMessengerContacts()"
+               class="form-control form-control-sm rounded-pill"
+               style="font-size:12.5px;padding-left:32px;border-color:#e4e6eb;">
+        <i class="bi bi-search position-absolute"
+           style="left:11px;top:50%;transform:translateY(-50%);font-size:12px;color:#9ca3af;pointer-events:none;"></i>
+    </div>
+
+    <div id="messengerContacts" class="d-flex gap-3 overflow-auto pb-2" style="scrollbar-width:none;">
+        <div class="text-center text-muted small py-2">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+        </div>
+    </div>
+</div>
+ 
+                    <hr class="my-0">
+ 
+                    {{-- Share to options --}}
+                    <div class="px-3 py-2">
+                        <div style="font-size:14px;font-weight:700;color:#1e1f24;margin-bottom:10px;">Share to</div>
+ 
+                        {{-- Copy link --}}
+                        <button type="button" class="w-100 d-flex align-items-center gap-3 btn btn-light rounded-3 mb-2 p-3 text-start"
+                                onclick="copyPostLink()">
+                            <div style="width:40px;height:40px;border-radius:50%;background:#e4e6eb;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
+                                <i class="bi bi-link-45deg"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:14px;font-weight:700;color:#1e1f24;">Copy Link</div>
+                                <div style="font-size:12px;color:#6b7280;">Anyone with the link can view</div>
+                            </div>
+                        </button>
+                    </div>
+ 
                 </div>
-                <div class="modal-footer border-top-0 pt-0">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" onclick="closeShareModal()">Cancel</button>
-                    <button type="submit" id="shareSubmitBtn" class="btn btn-primary btn-sm px-4">Share Now</button>
+ 
+                {{-- Footer --}}
+                <div class="modal-footer border-top py-2 px-3">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" onclick="resetShareModal()">Cancel</button>
+                    <button type="submit" id="shareSubmitBtn" class="btn btn-primary px-4 fw-bold">
+                        <i class="bi bi-share-fill me-1"></i> Share Now
+                    </button>
                 </div>
             </form>
         </div>
@@ -858,242 +2280,1020 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+
+{{-- UPDATE MAIN JS DATA START --}}
 <script>
-// ==========================================
-// GLOBAL STATE
-// ==========================================
-let selectedMediaFiles=[],bootstrapEditModal=null,bootstrapShareModal=null,bootstrapLightboxModal=null,bootstrapCommentModal=null;
-let isUploading=false,removedImages=[],removedVideos=[],editSelectedFiles=[];
-let lastSelectedBg='',lastEditSelectedBg='',commentEditState={editing:false,commentId:null};
-let _mutualModal=null,_reportModal=null;
-
-document.addEventListener('DOMContentLoaded',function(){
-    if('scrollRestoration' in history)history.scrollRestoration='manual';
-    if(window.location.hash&&window.location.hash.startsWith('#postCard-')){const targetId=window.location.hash.substring(1);const tryHighlight=(attempt=0)=>{const target=document.getElementById(targetId);if(target){target.scrollIntoView({behavior:'smooth',block:'center'});target.style.transition='box-shadow .35s ease';target.style.boxShadow='0 0 0 3px #4f46e5';setTimeout(()=>{target.style.boxShadow='';},2500);return;}if(attempt<15)setTimeout(()=>tryHighlight(attempt+1),600);};setTimeout(()=>tryHighlight(0),500);}
-    if(sessionStorage.getItem('scrollToTop')){sessionStorage.removeItem('scrollToTop');window.scrollTo({top:0,behavior:'smooth'});}
-    bootstrapEditModal=new bootstrap.Modal(document.getElementById('editPostModal'));
-    bootstrapShareModal=new bootstrap.Modal(document.getElementById('fbShareModal'));
-    bootstrapLightboxModal=new bootstrap.Modal(document.getElementById('imageLightboxModal'));
-    const cmEl=document.getElementById('commentModal');if(cmEl)bootstrapCommentModal=new bootstrap.Modal(cmEl);
-    const mmEl=document.getElementById('mutualFriendsModal');if(mmEl)_mutualModal=new bootstrap.Modal(mmEl);
-    const rmEl=document.getElementById('reportModal');if(rmEl)_reportModal=new bootstrap.Modal(rmEl);
-    document.getElementById('lightboxCarousel').addEventListener('slide.bs.carousel',()=>{document.querySelectorAll('#lightboxInner video').forEach(v=>v.pause());});
-    document.getElementById('imageLightboxModal').addEventListener('hidden.bs.modal',()=>{document.querySelectorAll('#lightboxInner video').forEach(v=>v.pause());});
-    document.getElementById('lightboxCarousel').addEventListener('slid.bs.carousel',ev=>{const c=document.getElementById('lightboxCounter');if(c&&c.dataset.total)c.textContent=`${ev.to+1} / ${c.dataset.total}`;});
-    document.getElementById('postContent').addEventListener('input',function(){const b=document.getElementById('bg_color_input');if(this.value.length>80){if(b&&b.value)resetPostBg(false);}else{if(lastSelectedBg&&(!b||!b.value))selectPostBg(lastSelectedBg);}});
-    document.getElementById('editPostContent').addEventListener('input',function(){const b=document.getElementById('edit_bg_color_input');if(this.value.length>80){if(b&&b.value)resetEditPostBg(false);}else{if(lastEditSelectedBg&&(!b||!b.value))selectEditPostBg(lastEditSelectedBg);}});
-    function primeVideoThumbnails(scope=document){scope.querySelectorAll('video.bb-inline-video,video.bb-tile-media').forEach(v=>{if(v.dataset.primed)return;v.dataset.primed='1';v.preload='metadata';v.addEventListener('loadedmetadata',()=>{try{if(v.currentTime===0)v.currentTime=0.1;}catch(e){}},{once:true});});}
-    primeVideoThumbnails();window.bbPrimeVideos=primeVideoThumbnails;
-});
-window.addEventListener('beforeunload',e=>{if(isUploading){e.preventDefault();e.returnValue='';}});
-
-// LIGHTBOX
-function openLightbox(mediaJson,index=0){try{const items=typeof mediaJson==='string'?JSON.parse(mediaJson):mediaJson;const inner=document.getElementById('lightboxInner');if(!inner)return;inner.innerHTML='';items.forEach((item,i)=>{const slide=document.createElement('div');slide.className=`carousel-item ${i===index?'active':''}`;if(item.type==='image'){const img=document.createElement('img');img.src=item.url;img.className='d-block w-100 object-fit-contain';img.style.maxHeight='82vh';slide.appendChild(img);}else{const wrap=document.createElement('div');wrap.style.cssText='position:relative;z-index:20;display:flex;justify-content:center;';const video=document.createElement('video');video.src=item.url;video.controls=true;video.className='d-block w-100 object-fit-contain';video.style.cssText='max-height:82vh;position:relative;z-index:20;';['click','mousedown','mouseup','pointerdown','pointerup','touchstart','touchend'].forEach(evt=>video.addEventListener(evt,e=>e.stopPropagation()));wrap.appendChild(video);slide.appendChild(wrap);}inner.appendChild(slide);});const carouselEl=document.getElementById('lightboxCarousel');let ci=bootstrap.Carousel.getInstance(carouselEl);if(!ci)ci=new bootstrap.Carousel(carouselEl,{ride:false,touch:false,interval:false});if(index>0)ci.to(index);const navBar=document.getElementById('lightboxNavBar'),counter=document.getElementById('lightboxCounter');if(items.length<=1){if(navBar)navBar.style.display='none';}else{if(navBar)navBar.style.display='';if(counter){counter.dataset.total=items.length;counter.textContent=`${index+1} / ${items.length}`;}}if(bootstrapLightboxModal)bootstrapLightboxModal.show();}catch(e){console.error('Lightbox error:',e);}}
-function lightboxPrev(){document.querySelectorAll('#lightboxInner video').forEach(v=>v.pause());const ci=bootstrap.Carousel.getInstance(document.getElementById('lightboxCarousel'));if(ci)ci.prev();}
-function lightboxNext(){document.querySelectorAll('#lightboxInner video').forEach(v=>v.pause());const ci=bootstrap.Carousel.getInstance(document.getElementById('lightboxCarousel'));if(ci)ci.next();}
-
-// POST COLOR
-function toggleColorPlates(){const z=document.getElementById('colorPlatesZone');if(z)z.classList.toggle('d-none');}
-function selectPostBg(cls){const w=document.getElementById('postInputWrapper'),t=document.getElementById('postContent'),b=document.getElementById('bg_color_input');if(w&&t){w.className=`p-4 rounded text-center text-white fw-bold d-flex align-items-center justify-content-center fb-colored-post-render ${cls}`;w.style.minHeight='200px';t.style.cssText='font-size:22px;text-align:center;color:#fff;';t.placeholder="What's on your mind?";}if(b)b.value=cls;lastSelectedBg=cls;selectedMediaFiles=[];renderMediaPreviews();}
-function resetPostBg(clearMemory=true){const w=document.getElementById('postInputWrapper'),t=document.getElementById('postContent'),b=document.getElementById('bg_color_input');if(w){w.className='p-1 rounded bg-transparent';w.style.minHeight='auto';}if(t){t.style.cssText='font-size:14px;text-align:left;color:inherit;';t.placeholder='Start a post...';}if(b)b.value='';if(clearMemory)lastSelectedBg='';}
-
-// MEDIA PREVIEW
-const imageInput=document.getElementById('postImageInput'),previewContainer=document.getElementById('imagePreviewContainer');
-document.getElementById('triggerUploadBtn')?.addEventListener('click',()=>imageInput.click());
-imageInput?.addEventListener('change',function(){const files=Array.from(this.files);for(let f of files){if(f.size>100*1024*1024){Swal.fire({icon:'error',title:'File too large!',text:`"${f.name}" max 100MB.`});this.value='';return;}}resetPostBg();files.forEach(f=>selectedMediaFiles.push(f));renderMediaPreviews();this.value='';});
-function renderMediaPreviews(){if(!previewContainer)return;previewContainer.innerHTML='';if(!selectedMediaFiles.length){previewContainer.classList.add('d-none');return;}previewContainer.classList.remove('d-none');selectedMediaFiles.forEach((file,idx)=>{const col=document.createElement('div');col.className='col-4 col-md-3 position-relative';col.style.height='100px';let el;if(file.type.startsWith('video/')){el=document.createElement('video');el.muted=true;const pi=document.createElement('div');pi.className='position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle';pi.style.cssText='width:32px;height:32px;background:rgba(0,0,0,0.6);pointer-events:none;z-index:5;';pi.innerHTML='<i class="bi bi-play-fill text-white" style="font-size:.9rem;margin-left:2px;"></i>';col.appendChild(pi);}else{el=document.createElement('img');}el.src=URL.createObjectURL(file);el.className='w-100 h-100 object-fit-cover rounded border';const xBtn=document.createElement('button');xBtn.type='button';xBtn.className='btn btn-dark btn-sm position-absolute top-0 end-0 m-1 rounded-circle';xBtn.style.cssText='background:rgba(0,0,0,0.7);border:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;z-index:10;padding:0;';xBtn.innerHTML='<i class="bi bi-x-lg" style="font-size:10px;color:#fff;"></i>';xBtn.addEventListener('click',e=>{e.preventDefault();selectedMediaFiles.splice(idx,1);renderMediaPreviews();});col.appendChild(el);col.appendChild(xBtn);previewContainer.appendChild(col);});}
-
-// POST SUBMIT
-document.getElementById('ajaxPostForm')?.addEventListener('submit',function(e){e.preventDefault();const content=document.getElementById('postContent').value.trim(),bgColor=document.getElementById('bg_color_input').value,modal=bootstrap.Modal.getInstance(document.getElementById('createPostModal'));if(!content&&!selectedMediaFiles.length){Swal.fire({icon:'warning',title:'Empty Post!',text:'Please write something first!'});return;}const captured=[...selectedMediaFiles];if(modal)modal.hide();document.getElementById('postContent').value='';resetPostBg();selectedMediaFiles=[];renderMediaPreviews();const pid='opt-'+Date.now(),uName='{{ Auth::user()->name }}',uInit='{{ strtoupper(substr(Auth::user()->name ?? "U", 0, 1)) }}';const html=`<div class="card mb-3 border-0 rounded-3 shadow-sm" id="${pid}"><div class="card-body p-3"><div class="d-flex align-items-center gap-2 mb-3"><div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:38px;height:38px;">${uInit}</div><div><h6 class="m-0 fw-bold" style="font-size:14px;">${uName}</h6><small class="text-muted" style="font-size:11px;"><span class="spinner-border spinner-border-sm text-primary me-1" style="width:10px;height:10px;"></span>Posting...</small></div></div>${bgColor?`<div class="p-4 rounded text-center text-white fw-bold ${bgColor}" style="min-height:160px;font-size:22px;opacity:.85;"><p class="mb-0">${content.replace(/\n/g,'<br>')}</p></div>`:`<p class="mb-0 text-muted" style="font-size:14px;">${content.replace(/\n/g,'<br>')}</p>`}${captured.length?`<div class="mt-2 p-3 bg-light rounded text-center text-muted small"><i class="bi bi-cloud-upload text-primary fs-4 d-block mb-1"></i>${captured.length} file uploading...</div>`:''}<div class="progress mt-3" style="height:4px;"><div id="bar-${pid}" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:5%;"></div></div></div></div>`;const feed=document.getElementById('postsFeedContainer');if(feed)feed.insertAdjacentHTML('afterbegin',html);
-
-const fd=new FormData();
-fd.append('_token',document.querySelector('meta[name="csrf-token"]').content);
-fd.append('content',content);
-fd.append('bg_color',bgColor);
-fd.append('privacy', document.getElementById('privacyInput')?.value || 'public');
-captured.forEach(f=>fd.append('media[]',f));
-
-const xhr=new XMLHttpRequest();xhr.open('POST','{{ route("posts.store") }}',true);xhr.setRequestHeader('Accept','application/json');isUploading=true;xhr.upload.addEventListener('progress',ev=>{if(ev.lengthComputable){const bar=document.getElementById(`bar-${pid}`);if(bar)bar.style.width=(Math.round(ev.loaded/ev.total*90)+5)+'%';}});xhr.onreadystatechange=function(){if(xhr.readyState!==4)return;isUploading=false;if(xhr.status===200||xhr.status===201){const bar=document.getElementById(`bar-${pid}`);if(bar){bar.style.width='100%';bar.classList.replace('bg-primary','bg-success');bar.classList.remove('progress-bar-animated');}let res={};try{res=JSON.parse(xhr.responseText);}catch(e){}setTimeout(()=>{const optCard=document.getElementById(pid);if(res.html){if(optCard)optCard.outerHTML=res.html;else{const fc=document.getElementById('postsFeedContainer');if(fc)fc.insertAdjacentHTML('afterbegin',res.html);}if(window.bbPrimeVideos)window.bbPrimeVideos();}else{if(optCard)optCard.remove();}document.getElementById('emptyFeedState')?.remove();Swal.mixin({toast:true,position:'top-end',showConfirmButton:false,timer:1800,timerProgressBar:true}).fire({icon:'success',title:res.message||'Posted!'});},600);}else{document.getElementById(pid)?.remove();Swal.fire({icon:'error',title:'Post not published!',text:'There was an issue uploading the post.'});}};xhr.send(fd);});
-
-// SAVE / LIKE / DELETE / SHARE
-function toggleSave(postId){fetch(`/posts/${postId}/save`,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}}).then(r=>r.json()).then(d=>{if(!d.success)return;const btn=document.getElementById(`saveBtn-${postId}`),icon=document.getElementById(`saveIcon-${postId}`),text=document.getElementById(`saveText-${postId}`);if(d.saved){if(btn)btn.className='bb-action-btn active-save';if(icon)icon.className='bi bi-bookmark-fill';if(text)text.innerText='Saved';}else{if(btn)btn.className='bb-action-btn';if(icon)icon.className='bi bi-bookmark';if(text)text.innerText='Save';}Swal.mixin({toast:true,position:'top-end',showConfirmButton:false,timer:2000,timerProgressBar:true}).fire({icon:d.saved?'success':'info',title:d.message});}).catch(()=>Swal.fire({icon:'error',title:'Something went wrong!'}));}
-function toggleLike(postId){fetch(`/posts/${postId}/like`,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}}).then(r=>r.json()).then(d=>{if(!d.success)return;const btn=document.getElementById(`likeBtn-${postId}`),zone=document.getElementById(`like-zone-${postId}`);btn.className=d.liked?'bb-action-btn active-like':'bb-action-btn';btn.innerHTML=d.liked?'<i class="bi bi-hand-thumbs-up-fill"></i> <span>Like</span>':'<i class="bi bi-hand-thumbs-up"></i> <span>Like</span>';if(zone)zone.innerHTML=d.like_count>0?`<span class="bb-like-bubble"><i class="bi bi-hand-thumbs-up-fill"></i></span> <span class="like-count-text">${d.like_count}</span>`:'';})}
-function deletePost(id){Swal.fire({title:'Are you sure?',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33'}).then(r=>{if(!r.isConfirmed)return;fetch(`/posts/${id}`,{method:'DELETE',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content}}).then(r=>r.json()).then(d=>{if(!d.success)return;const card=document.getElementById(`postCard-${id}`);if(card){card.style.transition='opacity .3s ease';card.style.opacity='0';setTimeout(()=>card.remove(),300);}Swal.mixin({toast:true,position:'top-end',showConfirmButton:false,timer:1500}).fire({icon:'success',title:'Post deleted'});});});}
-function openShareModal(postId){document.getElementById('targetSharePostId').value=postId;document.getElementById('shareComment').value='';const card=document.getElementById(`postCard-${postId}`);if(!card)return;const author=card.querySelector('.author-name-zone')?.innerText||'User',avatar=card.querySelector('.author-avatar-zone')?.innerHTML||'U',colored=card.getAttribute('data-bg-color'),caption=card.querySelector('.dynamic-caption')?.innerHTML||'',grid=card.querySelector('.dynamic-media-container-zone');let capHtml=`<div style="font-size:13px;"><p class="mb-0">${caption}</p></div>`;if(colored&&colored!=='null'&&colored!=='')capHtml=`<div class="p-3 rounded text-center text-white fw-bold ${colored}" style="min-height:80px;font-size:16px;"><p class="mb-0">${caption}</p></div>`;let gridHtml='';if(grid){const clone=grid.cloneNode(true);clone.querySelectorAll('img,video').forEach(el=>{el.removeAttribute('onclick');if(el.tagName==='VIDEO')el.removeAttribute('controls');});gridHtml=`<div class="mt-2 rounded overflow-hidden">${clone.outerHTML}</div>`;}document.getElementById('modalPostPreview').innerHTML=`<div class="d-flex align-items-center gap-2 mb-2"><div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:32px;height:32px;font-size:12px;">${avatar}</div><h6 class="m-0 fw-bold" style="font-size:13px;">${author}</h6></div>${capHtml}${gridHtml}`;bootstrapShareModal?.show();}
-function closeShareModal(){bootstrapShareModal?.hide();}
-document.getElementById('fbShareForm')?.addEventListener('submit',function(e){e.preventDefault();const pId=document.getElementById('targetSharePostId').value,comment=document.getElementById('shareComment').value.trim(),btn=document.getElementById('shareSubmitBtn');btn.disabled=true;Swal.mixin({toast:true,position:'top-end',showConfirmButton:false}).fire({icon:'info',title:'Sharing...'});fetch(`/posts/${pId}/share`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},body:JSON.stringify({content:comment})}).then(r=>r.json()).then(d=>{if(d.success){bootstrapShareModal?.hide();Swal.mixin({toast:true,position:'top-end',showConfirmButton:false}).fire({icon:'success',title:'Shared!',timer:1200});if(d.html){const fc=document.getElementById('postsFeedContainer');if(fc){fc.insertAdjacentHTML('afterbegin',d.html);if(window.bbPrimeVideos)window.bbPrimeVideos();document.getElementById('emptyFeedState')?.remove();}}btn.disabled=false;}else{btn.disabled=false;Swal.fire({icon:'error',title:'Failed!'});}}).catch(()=>{btn.disabled=false;Swal.fire({icon:'error',title:'Network Error!'});});});
-
-// EDIT POST
-function toggleEditColorPlates(){document.getElementById('editColorPlatesZone')?.classList.toggle('d-none');}
-function selectEditPostBg(cls){const w=document.getElementById('editPostInputWrapper'),t=document.getElementById('editPostContent'),b=document.getElementById('edit_bg_color_input');if(w&&t){w.className=`p-4 rounded text-center text-white fw-bold d-flex align-items-center justify-content-center fb-colored-post-render ${cls}`;w.style.minHeight='200px';t.style.cssText='font-size:22px;text-align:center;color:#fff;';t.className='form-control border-0 bg-transparent shadow-none w-100';}if(b)b.value=cls;lastEditSelectedBg=cls;document.querySelectorAll('#editMediaPreviewContainer [data-server-path]').forEach(el=>{const p=el.getAttribute('data-server-path'),tp=el.getAttribute('data-type');if(tp==='image')removedImages.push(p);else removedVideos.push(p);});editSelectedFiles=[];const pc=document.getElementById('editMediaPreviewContainer');if(pc)pc.innerHTML='';}
-function resetEditPostBg(clearMemory=true){const w=document.getElementById('editPostInputWrapper'),t=document.getElementById('editPostContent'),b=document.getElementById('edit_bg_color_input');if(w){w.className='p-1 rounded bg-transparent';w.style.minHeight='auto';}if(t)t.style.cssText='font-size:14px;text-align:left;color:inherit;';if(b)b.value='';if(clearMemory)lastEditSelectedBg='';}
-function prepareEditModal(el){const id=el.getAttribute('data-id'),content=el.getAttribute('data-content'),imgs=el.getAttribute('data-images'),vids=el.getAttribute('data-video'),bg=el.getAttribute('data-bg-color'),isShared=el.getAttribute('data-is-shared')==='1';removedImages=[];removedVideos=[];editSelectedFiles=[];lastEditSelectedBg='';document.getElementById('editPostId').value=id;document.getElementById('editPostContent').value=content||'';document.getElementById('editMediaInput').value='';const pc=document.getElementById('editMediaPreviewContainer');if(pc)pc.innerHTML='';const ms=document.getElementById('editMediaSection'),cz=document.getElementById('editColorPlatesZone');if(isShared){if(ms)ms.classList.add('d-none');if(cz)cz.classList.add('d-none');resetEditPostBg();
-
-// Privacy load করো
-const editPrivacy = el.getAttribute('data-privacy') || 'public';
-const privacyMap = {
-    'public':  ['bi-globe-americas text-primary', 'Public'],
-    'friends': ['bi-people-fill text-success',    'Friends'],
-    'only_me': ['bi-lock-fill text-warning',      'Only Me'],
-};
-const [ic, lb] = privacyMap[editPrivacy] || privacyMap['public'];
-setEditPrivacy(editPrivacy, ic, lb);
-
-bootstrapEditModal?.show();return;}else{if(ms)ms.classList.remove('d-none');}bg&&bg!=='null'&&bg.trim()?selectEditPostBg(bg):resetEditPostBg();if(imgs&&imgs!=='null'&&imgs.trim()){try{const arr=JSON.parse(imgs);if(Array.isArray(arr))arr.forEach(i=>renderEditPreviewItem(i,'image',false));}catch(e){}}if(vids&&vids!=='null'&&vids.trim()){try{const p=JSON.parse(vids),arr=Array.isArray(p)?p:[p];arr.forEach(v=>{if(v&&v.trim())renderEditPreviewItem(v,'video',false);});}catch(e){if(typeof vids==='string'&&vids.trim())renderEditPreviewItem(vids.trim(),'video',false);}}bootstrapEditModal?.show();const editPrivacy = el.getAttribute('data-privacy') || 'public';
-    setEditPrivacy(editPrivacy);
-    
-    bootstrapEditModal?.show();}
-function renderEditPreviewItem(pathOrFile,type,isNew=false){const container=document.getElementById('editMediaPreviewContainer');if(!container)return;const col=document.createElement('div');col.className='col-4 position-relative';col.style.height='110px';if(!isNew){col.setAttribute('data-server-path',pathOrFile);col.setAttribute('data-type',type);}const src=isNew?URL.createObjectURL(pathOrFile):`{{ asset('storage') }}/${pathOrFile}`;let mediaEl;if(type==='image'){mediaEl=document.createElement('img');mediaEl.src=src;mediaEl.className='w-100 h-100 rounded border';mediaEl.style.cssText='object-fit:cover;cursor:pointer;';mediaEl.addEventListener('click',()=>openLightbox(JSON.stringify([{type:'image',url:src}]),0));}else{mediaEl=document.createElement('video');mediaEl.src=src;mediaEl.muted=true;mediaEl.preload='metadata';mediaEl.className='w-100 h-100 rounded border';mediaEl.style.cssText='object-fit:cover;cursor:pointer;';mediaEl.addEventListener('click',function(e){e.stopPropagation();if(!this.hasAttribute('data-expanded')){this.setAttribute('data-expanded','1');this.controls=true;this.muted=false;this.style.objectFit='contain';col.style.height='160px';const ov=col.querySelector('.edit-play-overlay');if(ov)ov.style.display='none';this.play().catch(()=>{});}});const ov=document.createElement('div');ov.className='edit-play-overlay position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle';ov.style.cssText='width:36px;height:36px;background:rgba(0,0,0,0.65);pointer-events:none;z-index:5;';ov.innerHTML='<i class="bi bi-play-fill text-white" style="font-size:1rem;margin-left:2px;"></i>';col.appendChild(ov);}const xBtn=document.createElement('button');xBtn.type='button';xBtn.className='btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-0 d-flex align-items-center justify-content-center';xBtn.style.cssText='width:22px;height:22px;font-size:11px;z-index:10;';xBtn.innerHTML='<i class="bi bi-x-lg"></i>';xBtn.addEventListener('click',function(e){e.stopPropagation();if(!isNew){if(type==='image')removedImages.push(pathOrFile);else removedVideos.push(pathOrFile);}else{const idx=editSelectedFiles.indexOf(pathOrFile);if(idx>-1)editSelectedFiles.splice(idx,1);}col.remove();});col.appendChild(mediaEl);col.appendChild(xBtn);container.appendChild(col);}
-document.getElementById('editMediaInput')?.addEventListener('change',function(){Array.from(this.files).forEach(f=>{editSelectedFiles.push(f);renderEditPreviewItem(f,f.type.startsWith('video/')?'video':'image',true);});this.value='';});
-document.getElementById('editPostForm')?.addEventListener('submit',function(e){e.preventDefault();const id=document.getElementById('editPostId')?.value;if(!id)return;const btn=document.getElementById('editSubmitBtn');if(btn)btn.disabled=true;const fd=new FormData();fd.append('_token',document.querySelector('meta[name="csrf-token"]').content);fd.append('content',document.getElementById('editPostContent')?.value||'');fd.append('bg_color',document.getElementById('edit_bg_color_input')?.value||'');fd.append('privacy', document.getElementById('editPrivacyInput')?.value || 'public');fd.append('removed_images',JSON.stringify(removedImages));fd.append('removed_videos',JSON.stringify(removedVideos));editSelectedFiles.forEach(f=>fd.append('media[]',f));const xhr=new XMLHttpRequest();xhr.open('POST',`/posts/${id}`,true);xhr.setRequestHeader('Accept','application/json');xhr.onreadystatechange=function(){if(xhr.readyState!==4)return;if(xhr.status===200||xhr.status===201){let res={};try{res=JSON.parse(xhr.responseText);}catch(e){}const old=document.getElementById(`postCard-${id}`);if(old&&res.html){old.outerHTML=res.html;if(window.bbPrimeVideos)window.bbPrimeVideos();}bootstrapEditModal?.hide();Swal.mixin({toast:true,position:'top-end',showConfirmButton:false,timer:1500}).fire({icon:'success',title:'Post updated!'});if(btn)btn.disabled=false;}else{if(btn)btn.disabled=false;Swal.fire({icon:'error',title:'Update Failed!'});}};xhr.send(fd);});
-
-// JOB DELETE / SAVE
-function deleteJob(id){Swal.fire({title:'Delete this job?',icon:'warning',showCancelButton:true,confirmButtonColor:'#ef4444',confirmButtonText:'Delete'}).then(r=>{if(!r.isConfirmed)return;fetch(`/jobs/${id}`,{method:'DELETE',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}}).then(r=>r.json()).then(d=>{if(!d.success)return;const card=document.getElementById(`jobCard-${id}`);if(card){card.style.transition='opacity .3s';card.style.opacity='0';setTimeout(()=>card.remove(),300);}Swal.mixin({toast:true,position:'top-end',showConfirmButton:false,timer:1500}).fire({icon:'success',title:'Job deleted'});});});}
-function toggleJobSave(id){const btn=document.getElementById(`jobSaveBtn-${id}`);if(btn&&btn.dataset.busy==='1')return;if(btn)btn.dataset.busy='1';fetch(`/jobs/${id}/save`,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}}).then(r=>r.json()).then(d=>{if(btn)btn.dataset.busy='0';if(!d.success)return;if(btn){btn.classList.toggle('saved',d.saved);const ic=btn.querySelector('i');if(ic)ic.className=d.saved?'bi bi-bookmark-fill':'bi bi-bookmark';btn.title=d.saved?'Saved':'Save job';}Swal.mixin({toast:true,position:'top-end',showConfirmButton:false,timer:1600,timerProgressBar:true}).fire({icon:d.saved?'success':'info',title:d.message});}).catch(()=>{const b=document.getElementById(`jobSaveBtn-${id}`);if(b)b.dataset.busy='0';Swal.fire({icon:'error',title:'Something went wrong'});});}
-
-// INFINITE SCROLL
-let feedLoading=false,feedPage=1;
-function loadMorePosts(){const meta=document.getElementById('feedMeta');if(!meta)return;if(feedLoading||meta.dataset.hasMore==='0')return;feedLoading=true;feedPage++;const loader=document.getElementById('feedLoader');if(loader)loader.classList.remove('d-none');fetch(`{{ route('feed.load') }}?page=${feedPage}&filter=${currentFeedFilter}`,{headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}}).then(r=>r.json()).then(data=>{const container=document.getElementById('postsFeedContainer');if(container&&data.html&&data.html.trim()){container.insertAdjacentHTML('beforeend',data.html);if(window.bbPrimeVideos)window.bbPrimeVideos(container);}meta.dataset.hasMore=data.has_more?'1':'0';if(loader)loader.classList.add('d-none');if(!data.has_more){const em=document.getElementById('feedEndMessage');if(em)em.classList.remove('d-none');}feedLoading=false;}).catch(()=>{if(loader)loader.classList.add('d-none');feedLoading=false;});}
-window.addEventListener('scroll',()=>{if(window.innerHeight+window.scrollY>=document.body.offsetHeight-300)loadMorePosts();});
-
-// COMMENT MODAL
-function openCommentModal(postId){const list=document.getElementById('commentModalList'),preview=document.getElementById('commentModalPostPreview'),viewMore=document.getElementById('commentModalViewMore'),countEl=document.getElementById('commentModalCount');document.getElementById('commentModalPostId').value=postId;commentEditState={editing:false,commentId:null};document.getElementById('commentModalInput').value='';document.getElementById('commentModalInput').placeholder='Write a comment...';document.getElementById('commentEditNotice')?.classList.add('d-none');const card=document.getElementById(`postCard-${postId}`);if(card&&preview){const author=card.querySelector('.author-name-zone')?.innerText||'User',avatar=card.querySelector('.author-avatar-zone')?.innerHTML||'U',colored=card.getAttribute('data-bg-color'),caption=card.querySelector('.dynamic-caption')?.innerHTML||'';let capHtml=`<p class="mb-0" style="font-size:14px;">${caption}</p>`;if(colored&&colored!=='null'&&colored!=='')capHtml=`<div class="p-3 rounded text-center text-white fw-bold ${colored}" style="min-height:80px;font-size:16px;"><p class="mb-0">${caption}</p></div>`;preview.innerHTML=`<div class="d-flex align-items-center gap-2 mb-2"><div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:38px;height:38px;font-size:14px;">${avatar}</div><h6 class="m-0 fw-bold" style="font-size:14px;">${author}</h6></div>${capHtml}`;}if(list)list.innerHTML=`<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary"></div><div class="small mt-2">Loading comments...</div></div>`;if(viewMore)viewMore.classList.add('d-none');if(countEl)countEl.innerText='';bootstrapCommentModal?.show();fetch(`/posts/${postId}/comments/load?offset=0`,{headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}}).then(r=>r.json()).then(data=>{if(!data.success){if(list)list.innerHTML='<div class="text-center text-muted py-4 small">Could not load comments.</div>';return;}if(list)list.innerHTML=data.html.trim()?data.html:'<div class="text-center text-muted py-4 small" id="modalNoComment">No comments yet. Be the first!</div>';if(countEl){const tt=card?.querySelector(`#comment-count-${postId}`)?.innerText||'';countEl.innerText=tt;}if(viewMore){const btn=document.getElementById('commentModalViewMoreBtn');if(data.has_more){btn.setAttribute('data-offset',data.next_offset);btn.setAttribute('data-post-id',postId);viewMore.classList.remove('d-none');}else viewMore.classList.add('d-none');}}).catch(()=>{if(list)list.innerHTML='<div class="text-center text-muted py-4 small">Network error.</div>';});}
-document.getElementById('commentModalViewMoreBtn')?.addEventListener('click',function(){const postId=this.getAttribute('data-post-id'),offset=this.getAttribute('data-offset'),original=this.innerHTML;this.disabled=true;this.innerHTML='<span class="spinner-border spinner-border-sm me-1" style="width:12px;height:12px;"></span> Loading...';fetch(`/posts/${postId}/comments/load?offset=${offset}`,{headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}}).then(r=>r.json()).then(data=>{const list=document.getElementById('commentModalList');if(list&&data.html.trim())list.insertAdjacentHTML('beforeend',data.html);if(data.has_more){this.setAttribute('data-offset',data.next_offset);this.disabled=false;this.innerHTML=original;}else document.getElementById('commentModalViewMore').classList.add('d-none');}).catch(()=>{this.disabled=false;this.innerHTML=original;});});
-document.getElementById('commentModalForm')?.addEventListener('submit',function(e){e.preventDefault();const postId=document.getElementById('commentModalPostId').value,input=document.getElementById('commentModalInput'),text=input.value.trim();if(!text)return;if(commentEditState.editing&&commentEditState.commentId){const cid=commentEditState.commentId;fetch(`/comments/${cid}`,{method:'PUT',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},body:JSON.stringify({content:text})}).then(r=>r.json()).then(d=>{if(!d.success)return;const span=document.getElementById(`comment-text-${cid}`);if(span)span.innerText=text;const meta=document.querySelector(`.comment-meta-${cid}`);if(meta)meta.innerHTML=`${d.updated_at||'just now'}<span class="comment-edited-tag-${cid}"> · Edited</span>`;commentEditState={editing:false,commentId:null};input.value='';input.placeholder='Write a comment...';document.getElementById('commentEditNotice')?.classList.add('d-none');});return;}input.value='';fetch(`/posts/${postId}/comments`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},body:JSON.stringify({content:text})}).then(r=>r.json()).then(d=>{if(!d.success)return;document.getElementById('modalNoComment')?.remove();const html=`<div class="comment-thread" id="comment-thread-${d.comment_id}"><div class="d-flex gap-2 mb-2 align-items-start comment-row" id="comment-container-${d.comment_id}"><div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:32px;height:32px;font-size:13px;">${d.user_picture?`<img src="${d.user_picture}" style="width:100%;height:100%;object-fit:cover;">`:d.user_initial}</div><div class="flex-grow-1"><div class="d-flex align-items-start justify-content-between"><div class="bg-light px-3 py-2 rounded-4 d-inline-block border" style="max-width:100%;"><strong class="d-block text-dark" style="font-size:12.5px;">${d.user_name}</strong><span id="comment-text-${d.comment_id}" style="font-size:13px;word-break:break-word;">${d.content}</span></div><div class="dropdown flex-shrink-0"><button type="button" class="btn btn-link btn-sm text-muted p-0 border-0 shadow-none ms-1" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button><ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:100px;"><li><a class="dropdown-item py-1" style="font-size:.85rem;" href="javascript:void(0)" onclick="editComment(event,${d.comment_id})"><i class="bi bi-pencil me-1"></i> Edit</a></li><li><a class="dropdown-item py-1 text-danger" style="font-size:.85rem;" href="javascript:void(0)" onclick="deleteComment(${d.comment_id},${postId})"><i class="bi bi-trash me-1"></i> Delete</a></li></ul></div></div><div class="d-flex align-items-center gap-3 ms-2 mt-1" style="font-size:11.5px;"><span class="comment-like-btn" id="comment-like-${d.comment_id}" onclick="toggleCommentLike(${d.comment_id})" style="cursor:pointer;font-weight:600;">Like</span><span class="comment-reply-btn" onclick="openReplyBox(${d.comment_id})" style="cursor:pointer;font-weight:600;color:#65676b;">Reply</span><span class="text-muted comment-meta-${d.comment_id}">${d.created_at}<span class="comment-edited-tag-${d.comment_id}"></span></span><span class="comment-like-count text-muted" id="comment-like-count-${d.comment_id}" style="display:none;"><i class="bi bi-hand-thumbs-up-fill text-primary"></i> <span class="clc-num">0</span></span></div><div class="reply-box-zone mt-2 d-none" id="reply-box-${d.comment_id}"></div><div class="replies-zone mt-2" id="replies-zone-${d.comment_id}"></div></div></div></div>`;document.getElementById('commentModalList')?.insertAdjacentHTML('afterbegin',html);const fc=document.getElementById(`comment-count-${postId}`);if(fc&&d.comment_count!==undefined)fc.innerText=`${d.comment_count} comments`;const mc=document.getElementById('commentModalCount');if(mc&&d.comment_count!==undefined)mc.innerText=`${d.comment_count} comments`;});});
-function editComment(event,cid){const span=document.getElementById(`comment-text-${cid}`);if(!span)return;const input=document.getElementById('commentModalInput');if(!input)return;commentEditState={editing:true,commentId:cid};input.value=span.innerText;input.placeholder='Editing comment...';input.focus();document.getElementById('commentEditNotice')?.classList.remove('d-none');}
-function cancelCommentEdit(){commentEditState={editing:false,commentId:null};const input=document.getElementById('commentModalInput');if(input){input.value='';input.placeholder='Write a comment...';}document.getElementById('commentEditNotice')?.classList.add('d-none');}
-function deleteComment(cid,postId){Swal.fire({title:'Delete comment?',icon:'warning',showCancelButton:true,confirmButtonColor:'#ef4444'}).then(r=>{if(!r.isConfirmed)return;fetch(`/comments/${cid}`,{method:'DELETE',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}}).then(r=>r.json()).then(d=>{if(!d.success)return;document.getElementById(`comment-container-${cid}`)?.remove();const fc=document.getElementById(`comment-count-${postId}`);if(fc&&d.comment_count!==undefined)fc.innerText=`${d.comment_count} comments`;const mc=document.getElementById('commentModalCount');if(mc&&d.comment_count!==undefined)mc.innerText=`${d.comment_count} comments`;if(commentEditState.commentId==cid){commentEditState={editing:false,commentId:null};const input=document.getElementById('commentModalInput');if(input){input.value='';input.placeholder='Write a comment...';}document.getElementById('commentEditNotice')?.classList.add('d-none');}});});}
-
-window.MY_PROFILE_PIC = @json(Auth::user()->profile_picture ? asset('storage/'.Auth::user()->profile_picture) : null);
-window.MY_INITIAL     = @json(strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)));
-
-function toggleCommentLike(commentId){fetch(`/comments/${commentId}/like`,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}}).then(r=>r.json()).then(d=>{if(!d.success)return;const btn=document.getElementById(`comment-like-${commentId}`),cw=document.getElementById(`comment-like-count-${commentId}`);if(btn){btn.classList.toggle('liked',d.liked);btn.innerText=d.liked?'Liked':'Like';}if(cw){const num=cw.querySelector('.clc-num');if(num)num.innerText=d.like_count;cw.style.display=d.like_count>0?'':'none';}});}
-function openReplyBox(parentId,mentionName){const zone=document.getElementById(`reply-box-${parentId}`);if(!zone)return;let input=document.getElementById(`reply-input-${parentId}`);const myPic=window.MY_PROFILE_PIC,myInit=window.MY_INITIAL||'U';const avatar=myPic?`<img src="${myPic}" style="width:100%;height:100%;object-fit:cover;">`:myInit;if(zone.classList.contains('d-none')||zone.dataset.open!=='1'){zone.innerHTML=`<div class="reply-input-wrap"><div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:28px;height:28px;font-size:12px;">${avatar}</div><div class="reply-field flex-grow-1"><span class="reply-mention-tag" id="reply-mention-${parentId}" style="display:none;"></span><input type="text" class="reply-input-box" id="reply-input-${parentId}" placeholder="Write a reply..." autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();submitReply(${parentId});}else if(event.key==='Backspace'&&this.value===''){clearReplyMention(${parentId});}"></div><button type="button" class="bb-emoji-btn p-0" data-target="#reply-input-${parentId}" title="Emoji" style="font-size:15px;"><i class="bi bi-emoji-smile"></i></button><button type="button" class="reply-send-btn" onclick="submitReply(${parentId})" title="Send"><i class="bi bi-send-fill"></i></button></div>`;zone.classList.remove('d-none');zone.dataset.open='1';input=document.getElementById(`reply-input-${parentId}`);}const tag=document.getElementById(`reply-mention-${parentId}`);if(mentionName&&tag){tag.textContent='@'+mentionName;tag.style.display='inline-flex';tag.dataset.mention=mentionName;}setTimeout(()=>input?.focus(),50);}
-function clearReplyMention(parentId){const tag=document.getElementById(`reply-mention-${parentId}`);if(tag){tag.style.display='none';tag.textContent='';tag.dataset.mention='';}}
-function submitReply(parentId){const input=document.getElementById(`reply-input-${parentId}`);if(!input)return;const text=input.value.trim(),tag=document.getElementById(`reply-mention-${parentId}`),mention=tag&&tag.dataset.mention?tag.dataset.mention:'';if(!text&&!mention)return;const finalText=mention?`@${mention} ${text}`:text;const postId=document.getElementById('commentModalPostId').value;input.disabled=true;fetch(`/posts/${postId}/comments`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},body:JSON.stringify({content:finalText,parent_id:parentId})}).then(r=>r.json()).then(d=>{if(!d.success){input.disabled=false;return;}const rz=document.getElementById(`replies-zone-${parentId}`);const avatar=d.user_picture?`<img src="${d.user_picture}" style="width:100%;height:100%;object-fit:cover;">`:d.user_initial;const dc=highlightMentions(d.content);const html=`<div class="d-flex gap-2 mb-2 align-items-start comment-row reply-row" id="comment-container-${d.comment_id}"><div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:28px;height:28px;font-size:12px;">${avatar}</div><div class="flex-grow-1"><div class="d-flex align-items-start justify-content-between"><div class="bg-light px-3 py-2 rounded-4 d-inline-block border" style="max-width:100%;"><strong class="d-block text-dark" style="font-size:12px;">${d.user_name}</strong><span id="comment-text-${d.comment_id}" style="font-size:12.5px;word-break:break-word;">${dc}</span></div><div class="dropdown flex-shrink-0"><button type="button" class="btn btn-link btn-sm text-muted p-0 border-0 shadow-none ms-1" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button><ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:100px;"><li><a class="dropdown-item py-1" style="font-size:.85rem;" href="javascript:void(0)" onclick="editComment(event,${d.comment_id})"><i class="bi bi-pencil me-1"></i> Edit</a></li><li><a class="dropdown-item py-1 text-danger" style="font-size:.85rem;" href="javascript:void(0)" onclick="deleteComment(${d.comment_id},${postId})"><i class="bi bi-trash me-1"></i> Delete</a></li></ul></div></div><div class="d-flex align-items-center gap-3 ms-2 mt-1" style="font-size:11px;"><span class="comment-like-btn" id="comment-like-${d.comment_id}" onclick="toggleCommentLike(${d.comment_id})" style="cursor:pointer;font-weight:600;">Like</span><span class="comment-reply-btn" onclick="openReplyBox(${parentId},'${d.user_name.replace(/'/g,"\\'")}'))" style="cursor:pointer;font-weight:600;color:#65676b;">Reply</span><span class="text-muted comment-meta-${d.comment_id}">${d.created_at}<span class="comment-edited-tag-${d.comment_id}"></span></span><span class="comment-like-count text-muted" id="comment-like-count-${d.comment_id}" style="display:none;"><i class="bi bi-hand-thumbs-up-fill text-primary"></i> <span class="clc-num">0</span></span></div></div></div>`;rz?.insertAdjacentHTML('beforeend',html);const zone=document.getElementById(`reply-box-${parentId}`);if(zone){zone.classList.add('d-none');zone.dataset.open='0';zone.innerHTML='';}const fc=document.getElementById(`comment-count-${postId}`);if(fc&&d.comment_count!==undefined)fc.innerText=`${d.comment_count} comments`;const mc=document.getElementById('commentModalCount');if(mc&&d.comment_count!==undefined)mc.innerText=`${d.comment_count} comments`;}).catch(()=>{input.disabled=false;});}
-function highlightMentions(text){return text.replace(/@([\w\u0980-\u09FF.]+(?:\s[\w\u0980-\u09FF.]+)?)/g,'<span class="comment-mention">@$1</span>');}
-
-// FRIEND ACTIONS
-function friendAction(action,userId,btnEl){const endpoints={send:'/friends/send',accept:'/friends/accept',decline:'/friends/decline',cancel:'/friends/cancel',unfriend:'/friends/unfriend',block:'/friends/block',unblock:'/friends/unblock'};const confirmMsg={unfriend:'Remove this person from your friends?',block:"Block this user? They won't be able to find you.",cancel:'Cancel this friend request?'};if(['unfriend','block','cancel'].includes(action)&&!confirm(confirmMsg[action]))return;if(btnEl)btnEl.disabled=true;fetch(endpoints[action],{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify({user_id:userId})}).then(r=>r.json()).then(d=>{if(btnEl)btnEl.disabled=false;if(!d.success){alert(d.message||'Something went wrong.');return;}const wrap=document.getElementById('friendBtnWrap-'+userId);if(wrap)updateFriendBtn(wrap,d.status,userId);if(action==='accept'||action==='decline'){const card=document.getElementById('freq-'+userId);if(card){card.style.transition='opacity .3s';card.style.opacity='0';setTimeout(()=>card.remove(),300);}}if(typeof Swal!=='undefined')Swal.mixin({toast:true,position:'top-end',showConfirmButton:false,timer:2000,timerProgressBar:true}).fire({icon:'success',title:d.message});}).catch(()=>{if(btnEl)btnEl.disabled=false;alert('Network error.');});}
-function suggestAction(action,userId,btnEl){const endpoint=action==='send'?'/friends/send':'/friends/cancel';if(action==='cancel'&&!confirm('Cancel this friend request?'))return;if(btnEl)btnEl.disabled=true;fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify({user_id:userId})}).then(r=>r.json()).then(d=>{if(btnEl)btnEl.disabled=false;if(!d.success){alert(d.message||'Error');return;}if(action==='send'){btnEl.style.background='#4f46e5';btnEl.style.borderColor='#4f46e5';btnEl.style.color='#fff';btnEl.innerHTML='<i class="bi bi-check-lg"></i>';btnEl.title='Cancel Request';btnEl.onclick=function(){suggestAction('cancel',userId,this);};}else{btnEl.style.background='';btnEl.style.borderColor='';btnEl.style.color='';btnEl.innerHTML='<i class="bi bi-person-plus"></i>';btnEl.title='Add Friend';btnEl.onclick=function(){suggestAction('send',userId,this);};}if(typeof Swal!=='undefined')Swal.mixin({toast:true,position:'top-end',showConfirmButton:false,timer:2000,timerProgressBar:true}).fire({icon:'success',title:d.message});}).catch(()=>{if(btnEl)btnEl.disabled=false;alert('Network error.');});}
-function updateFriendBtn(wrap,status,userId){const btns={none:`<button class="bb-friend-btn bb-friend-add" onclick="friendAction('send',${userId},this)"><i class="bi bi-person-plus-fill"></i> Add Friend</button>`,pending_sent:`<button class="bb-friend-btn bb-friend-pending" onclick="friendAction('cancel',${userId},this)"><i class="bi bi-person-check-fill"></i> Request Sent <span class="bb-friend-cancel-hint">· Cancel</span></button>`,pending_received:`<button class="bb-friend-btn bb-friend-accept" onclick="friendAction('accept',${userId},this)"><i class="bi bi-check-lg"></i> Accept</button><button class="bb-friend-btn bb-friend-decline" onclick="friendAction('decline',${userId},this)"><i class="bi bi-x-lg"></i> Decline</button>`,accepted:`<div class="dropdown d-inline-block"><button class="bb-friend-btn bb-friend-already dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-people-fill"></i> Friends</button><ul class="dropdown-menu shadow border-0 rounded-3"><li><button class="dropdown-item text-danger py-2" onclick="friendAction('unfriend',${userId},this)"><i class="bi bi-person-x me-2"></i> Unfriend</button></li><li><button class="dropdown-item py-2" onclick="friendAction('block',${userId},this)"><i class="bi bi-slash-circle me-2"></i> Block</button></li></ul></div>`,blocked:`<button class="bb-friend-btn bb-friend-blocked" onclick="friendAction('unblock',${userId},this)"><i class="bi bi-slash-circle"></i> Blocked · Unblock</button>`};if(btns[status])wrap.innerHTML=btns[status];}
-
-// ACTIVE NOW REFRESH
-function refreshActiveNow(){fetch('/active-now',{headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json()).then(d=>{if(d.html!==undefined){const z=document.getElementById('activeNowZone');if(z)z.innerHTML=d.html;}}).catch(()=>{});}
-refreshActiveNow();
-setInterval(refreshActiveNow,30000);
-
-// NOTIFICATION
-let notifOpen=false;
-function toggleNotifDropdown(){const drop=document.getElementById('notifDropdown');notifOpen=!notifOpen;drop.style.display=notifOpen?'block':'none';if(notifOpen)loadNotifications();}
-function loadNotifications(){fetch('/notifications',{headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json()).then(d=>{document.getElementById('notifList').innerHTML=d.html;document.getElementById('notifBadge').style.display='none';}).catch(()=>{});}
-function markAllRead(){fetch('/notifications/read-all',{method:'POST',headers:{'Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content}}).then(()=>loadNotifications());}
-document.addEventListener('click',function(e){const wrap=document.getElementById('notifWrap');if(wrap&&!wrap.contains(e.target)){document.getElementById('notifDropdown').style.display='none';notifOpen=false;}});
-function pollNotifications(){fetch('/notifications/poll',{headers:{'Accept':'application/json'}}).then(r=>r.json()).then(d=>{const badge=document.getElementById('notifBadge');if(d.count>0){badge.textContent=d.count>99?'99+':d.count;badge.style.display='';}else badge.style.display='none';}).catch(()=>{});}
-pollNotifications();
-setInterval(pollNotifications,15000);
-
-// MUTUAL FRIENDS MODAL
-function showMutualFriends(userId,name){if(!_mutualModal)return;document.getElementById('mutualModalTitle').textContent='Mutual Friends with '+name;document.getElementById('mutualModalBody').innerHTML='<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>';_mutualModal.show();fetch('/friends/'+userId+'/mutual',{headers:{'Accept':'application/json'}}).then(r=>r.json()).then(d=>{if(!d.mutuals||!d.mutuals.length){document.getElementById('mutualModalBody').innerHTML='<p class="text-muted text-center small py-2">No mutual friends found.</p>';return;}let html='';d.mutuals.forEach(m=>{const pic=m.profile_picture?`<img src="/storage/${m.profile_picture}" style="width:100%;height:100%;object-fit:cover;">`:m.name.charAt(0).toUpperCase();html+=`<a href="/profile/${m.id}" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f8;text-decoration:none;"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;overflow:hidden;flex-shrink:0;">${pic}</div><div><div style="font-size:13.5px;font-weight:700;color:#1e1f24;">${m.name}</div><div style="font-size:11.5px;color:#6b7280;">${m.department||m.role}</div></div></a>`;});document.getElementById('mutualModalBody').innerHTML=html;});}
-
-// REPORT MODAL
-function openReport(type,id,name){if(!_reportModal)return;document.getElementById('rType').value=type;document.getElementById('rId').value=id;document.getElementById('rTargetName').textContent=name||'';document.getElementById('rReason').value='';document.getElementById('rReasons').classList.remove('d-none');document.getElementById('rDetailsSection').classList.add('d-none');_reportModal.show();}
-function rSelectReason(r){document.getElementById('rReason').value=r;document.getElementById('rReasons').classList.add('d-none');document.getElementById('rDetailsSection').classList.remove('d-none');}
-function rSubmit(){fetch('/report',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify({type:document.getElementById('rType').value,id:document.getElementById('rId').value,reason:document.getElementById('rReason').value,details:document.getElementById('rDetails').value})}).then(r=>r.json()).then(d=>{if(_reportModal)_reportModal.hide();Swal.mixin({toast:true,position:'top-end',showConfirmButton:false,timer:2500,timerProgressBar:true}).fire({icon:d.success?'success':'warning',title:d.message});});}
-
-// CHAT BOX
-const openChatBoxes={};
-function openChatBox(userId,name,pic,lastSeen,isOnline){if(openChatBoxes[userId]){openChatBoxes[userId].classList.remove('minimized');return;}const container=document.getElementById('chatBoxesContainer');const box=document.createElement('div');box.className='bb-chat-box';box.id='chatbox-'+userId;const avatarContent=pic?`<img src="${pic}">`:name.charAt(0).toUpperCase();const onlineDot=isOnline==='1'?'<span class="bb-chat-online-dot"></span>':'';const statusText=isOnline==='1'?'<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> Active now':lastSeen;box.innerHTML=`<div class="bb-chat-head" onclick="toggleChatMinimize(${userId})"><div class="bb-chat-head-avatar">${avatarContent}${onlineDot}</div><div class="bb-chat-head-info"><p class="bb-chat-head-name">${escHtml(name)}</p><p class="bb-chat-head-status">${statusText}</p></div><div class="bb-chat-head-actions" onclick="event.stopPropagation()"><a href="/profile/${userId}" class="bb-chat-head-btn" target="_blank"><i class="bi bi-person-fill" style="font-size:13px;"></i></a><button class="bb-chat-head-btn" onclick="toggleChatMinimize(${userId})"><i class="bi bi-dash-lg"></i></button><button class="bb-chat-head-btn" onclick="closeChatBox(${userId})"><i class="bi bi-x-lg"></i></button></div></div><div class="bb-chat-search"><input type="text" class="bb-chat-search-input" placeholder="Search in conversation..." oninput="filterChatMessages(${userId},this.value)"></div><div class="bb-chat-messages" id="chatmsg-${userId}"><div class="bb-chat-no-msg"><i class="bi bi-chat-dots" style="font-size:2rem;display:block;margin-bottom:8px;color:#d1d5db;"></i>Start a conversation with ${escHtml(name)}</div></div><div class="bb-chat-footer"><button class="bb-chat-attach-btn" onclick="triggerChatAttach(${userId})"><i class="bi bi-images"></i></button><button class="bb-chat-attach-btn" onclick="triggerChatFile(${userId})"><i class="bi bi-paperclip"></i></button><input type="file" id="chatattach-${userId}" class="d-none" multiple accept="image/*,video/*" onchange="handleChatAttach(${userId},this)"><input type="file" id="chatfile-${userId}" class="d-none" onchange="handleChatFile(${userId},this)"><textarea class="bb-chat-input" id="chatinput-${userId}" placeholder="Aa" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg(${userId});}" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea><button class="bb-chat-head-btn" style="font-size:17px;cursor:pointer;" onclick="toggleChatEmoji(${userId})"><i class="bi bi-emoji-smile"></i></button><button class="bb-chat-send-btn" onclick="sendChatMsg(${userId})"><i class="bi bi-send-fill" style="font-size:13px;"></i></button></div>`;container.appendChild(box);openChatBoxes[userId]=box;setTimeout(()=>document.getElementById('chatinput-'+userId)?.focus(),100);}
-function toggleChatMinimize(userId){openChatBoxes[userId]?.classList.toggle('minimized');}
-function closeChatBox(userId){openChatBoxes[userId]?.remove();delete openChatBoxes[userId];}
-function sendChatMsg(userId){const input=document.getElementById('chatinput-'+userId);if(!input)return;const text=input.value.trim();if(!text)return;appendChatMsg(userId,text,true);input.value='';input.style.height='auto';}
-function appendChatMsg(userId,text,isMine=true){const zone=document.getElementById('chatmsg-'+userId);if(!zone)return;zone.querySelector('.bb-chat-no-msg')?.remove();const div=document.createElement('div');div.className='bb-chat-msg '+(isMine?'mine':'theirs');div.textContent=text;zone.appendChild(div);zone.scrollTop=zone.scrollHeight;}
-function filterChatMessages(userId,q){document.getElementById('chatmsg-'+userId)?.querySelectorAll('.bb-chat-msg').forEach(m=>{m.style.display=!q||m.textContent.toLowerCase().includes(q.toLowerCase())?'':'none';});}
-function triggerChatAttach(userId){document.getElementById('chatattach-'+userId)?.click();}
-function triggerChatFile(userId){document.getElementById('chatfile-'+userId)?.click();}
-function handleChatAttach(userId,input){Array.from(input.files).forEach(f=>{if(f.type.startsWith('video/')&&f.size>25*1024*1024){Swal.fire({icon:'warning',title:'Video too large!',text:'Max 25MB.'});input.value='';return;}appendChatMsg(userId,`📎 ${f.name}`,true);});input.value='';}
-function handleChatFile(userId,input){const f=input.files[0];if(!f)return;appendChatMsg(userId,`📄 ${f.name}`,true);input.value='';}
-function toggleChatEmoji(userId){}
-function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-// LIVE SEARCH + RECENT
-(function(){
-    const input=document.getElementById('bbLiveSearch'),dropdown=document.getElementById('bbSearchDropdown');
-    if(!input||!dropdown)return;
-    let timer=null,activeIdx=-1;
-    input.addEventListener('focus',function(){if(this.value.trim().length<2)showRecent();});
-    input.addEventListener('input',function(){clearTimeout(timer);const q=this.value.trim();if(q.length<2){showRecent();return;}dropdown.innerHTML='<div class="bb-sd-spinner"><i class="bi bi-search me-1"></i> Searching...</div>';dropdown.classList.add('show');timer=setTimeout(()=>doSearch(q),320);});
-    input.addEventListener('keydown',function(e){const items=dropdown.querySelectorAll('.bb-sd-item');if(e.key==='ArrowDown'){e.preventDefault();activeIdx=Math.min(activeIdx+1,items.length-1);hl(items);}else if(e.key==='ArrowUp'){e.preventDefault();activeIdx=Math.max(activeIdx-1,0);hl(items);}else if(e.key==='Enter'){e.preventDefault();if(activeIdx>=0&&items[activeIdx])items[activeIdx].click();else go();}else if(e.key==='Escape'){close();input.blur();}});
-    document.addEventListener('click',e=>{if(!input.contains(e.target)&&!dropdown.contains(e.target))close();});
-    function close(){dropdown.classList.remove('show');dropdown.innerHTML='';activeIdx=-1;}
-    function go(){const q=input.value.trim();if(q)window.location.href='/search?q='+encodeURIComponent(q);}
-    function hl(items){items.forEach((el,i)=>el.classList.toggle('active',i===activeIdx));}
-    function showRecent(){fetch('/search/recent',{headers:{'Accept':'application/json'}}).then(r=>r.json()).then(d=>{if(!d.searches||!d.searches.length){close();return;}let html=`<div class="bb-sd-label" style="display:flex;align-items:center;justify-content:space-between;"><span>Recent Searches</span><button onclick="clearAllRecent(event)" style="font-size:11px;font-weight:600;color:#4f46e5;border:none;background:transparent;cursor:pointer;padding:0;">Clear all</button></div>`;d.searches.forEach(s=>{html+=`<div class="bb-sd-item" onclick="window.location.href='/search?q=${encodeURIComponent(s.query)}'"><div class="bb-sd-avatar" style="background:#f3f4f8;color:#6b7280;font-size:16px;"><i class="bi bi-clock-history"></i></div><div class="bb-sd-info"><div class="bb-sd-name">${esc(s.query)}</div></div><button onclick="deleteRecent(event,${s.id})" style="border:none;background:transparent;color:#9ca3af;cursor:pointer;padding:2px 6px;border-radius:6px;" title="Remove"><i class="bi bi-x-lg" style="font-size:11px;"></i></button></div>`;});dropdown.innerHTML=html;dropdown.classList.add('show');}).catch(()=>close());}
-    window.deleteRecent=function(e,id){e.stopPropagation();fetch(`/search/recent/${id}`,{method:'DELETE',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}}).then(()=>showRecent());};
-    window.clearAllRecent=function(e){e.stopPropagation();fetch('/search/recent',{method:'DELETE',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'}}).then(()=>close());};
-    async function doSearch(q){try{const res=await fetch('/search/live?q='+encodeURIComponent(q),{headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}});const data=await res.json();render(data.results||[],q);}catch(e){dropdown.innerHTML='<div class="bb-sd-empty">Something went wrong.</div>';}}
-    function render(results,q){activeIdx=-1;if(!results.length){dropdown.innerHTML='<div class="bb-sd-empty"><i class="bi bi-search me-1"></i> No results for "'+esc(q)+'"</div>';return;}let html='<div class="bb-sd-label">People</div>';results.forEach(r=>{const av=r.avatar?`<img src="${esc(r.avatar)}" alt="">`:esc(r.initial||'U');const top=r.topic?`<div class="bb-sd-topic"><i class="bi bi-journal-text"></i> ${esc(r.topic.substring(0,55))}${r.topic.length>55?'…':''}</div>`:'';html+=`<a href="/search?q=${encodeURIComponent(r.name)}" class="bb-sd-item"><div class="bb-sd-avatar">${av}</div><div class="bb-sd-info"><div class="bb-sd-name">${hlq(esc(r.name),q)}</div>${r.sub?`<div class="bb-sd-sub">${esc(r.sub)}</div>`:''}${top}</div><span class="bb-sd-rolechip bb-sd-${r.role}">${esc(r.role_label||r.role)}</span></a>`;});html+=`<a href="/search?q=${encodeURIComponent(q)}" class="bb-sd-footer"><i class="bi bi-search me-1"></i> See all results for "${esc(q)}"</a>`;dropdown.innerHTML=html;dropdown.classList.add('show');}
-    function hlq(text,q){if(!q)return text;return text.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:#dbeafe;padding:0 2px;border-radius:2px;">$1</mark>');}
-    function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-})();
+// ============================================================
+// STUDENT DASHBOARD — MAIN JAVASCRIPT
+// resources/views/student/dashboard.blade.php
+// ============================================================
 
 
-// EMOJI PICKER
-(function(){
-    const popover=document.getElementById('bbEmojiPopover'),picker=popover.querySelector('emoji-picker');
-    let currentTarget=null;
-    picker.addEventListener('emoji-click',e=>{const emoji=e.detail.unicode;if(!currentTarget)return;const el=currentTarget,start=el.selectionStart??el.value.length,end=el.selectionEnd??el.value.length;el.value=el.value.slice(0,start)+emoji+el.value.slice(end);const pos=start+emoji.length;el.focus();try{el.setSelectionRange(pos,pos);}catch(err){}el.dispatchEvent(new Event('input',{bubbles:true}));});
-    document.addEventListener('click',function(ev){const btn=ev.target.closest('.bb-emoji-btn');if(btn){ev.preventDefault();const target=document.querySelector(btn.getAttribute('data-target'));if(!target)return;if(popover.style.display==='block'&&currentTarget===target){popover.style.display='none';currentTarget=null;return;}currentTarget=target;const r=btn.getBoundingClientRect();popover.style.display='block';let top=r.bottom+window.scrollY+6;if(r.bottom+350>window.innerHeight)top=r.top+window.scrollY-350-6;let left=r.left+window.scrollX-150;if(left<8)left=8;if(left+320>window.innerWidth)left=window.innerWidth-328;popover.style.top=top+'px';popover.style.left=left+'px';return;}if(popover.style.display==='block'&&!popover.contains(ev.target)){popover.style.display='none';currentTarget=null;}});
-})();
+// ============================================================
+// SECTION 1: GLOBAL STATE
+// সব var (let নয়) — TDZ error এড়াতে
+// ============================================================
+var selectedMediaFiles   = [];
+var bootstrapEditModal   = null;
+var bootstrapShareModal  = null;
+var bootstrapLightboxModal = null;
+var bootstrapCommentModal = null;
+var isUploading          = false;
+var removedImages        = [];
+var removedVideos        = [];
+var editSelectedFiles    = [];
+var lastSelectedBg       = '';
+var lastEditSelectedBg   = '';
+var commentEditState     = { editing: false, commentId: null };
+var _mutualModal         = null;
+var _reportModal         = null;
+var feedLoading          = false;
+var feedPage             = 1;
+var currentFeedFilter    = 'all';
 
-function setPrivacy(value, iconClass, label) {
-    document.getElementById('privacyInput').value = value;
-    document.getElementById('privacyLabel').textContent = label;
-    const btn = document.getElementById('privacyBtn');
-    btn.querySelector('i').className = 'bi ' + iconClass + ' me-1';
-}
 
-function setEditPrivacy(value, iconClass, label) {
-    document.getElementById('editPrivacyInput').value = value;
-    document.getElementById('editPrivacyLabel').textContent = label;
-    const btn = document.getElementById('editPrivacyBtn');
-    if (btn) btn.querySelector('i').className = 'bi ' + iconClass + ' me-1';
-}
+// ============================================================
+// SECTION 2: DOM READY INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', function () {
 
-// Feed Filter
-let currentFeedFilter = 'all';
+    // Scroll restore
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
-function setFeedFilter(filter) {
-    currentFeedFilter = filter;
+    // Hash anchor highlight (notification থেকে আসলে)
+    if (window.location.hash && window.location.hash.startsWith('#postCard-')) {
+        var targetId = window.location.hash.substring(1);
+        var tryHighlight = function (attempt) {
+            attempt = attempt || 0;
+            var target = document.getElementById(targetId);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                target.style.transition = 'box-shadow .35s ease';
+                target.style.boxShadow  = '0 0 0 3px #4f46e5';
+                setTimeout(function () { target.style.boxShadow = ''; }, 2500);
+                return;
+            }
+            if (attempt < 15) setTimeout(function () { tryHighlight(attempt + 1); }, 600);
+        };
+        setTimeout(function () { tryHighlight(0); }, 500);
+    }
 
-    // Button active state
-    const btns = { all: 'filterAll', friends: 'filterFriends', public: 'filterPublic' };
-    Object.entries(btns).forEach(([key, id]) => {
-        const btn = document.getElementById(id);
-        if (!btn) return;
-        if (key === filter) {
-            btn.style.background = '#4f46e5';
-            btn.style.color = '#fff';
-            btn.style.border = 'none';
-        } else {
-            btn.style.background = '#fff';
-            btn.style.color = '#6b7280';
-            btn.style.border = '1.5px solid #eceef1';
+    // Session scroll top
+    if (sessionStorage.getItem('scrollToTop')) {
+        sessionStorage.removeItem('scrollToTop');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Bootstrap modal instances
+    bootstrapEditModal      = new bootstrap.Modal(document.getElementById('editPostModal'));
+    bootstrapShareModal     = new bootstrap.Modal(document.getElementById('fbShareModal'));
+    bootstrapLightboxModal  = new bootstrap.Modal(document.getElementById('imageLightboxModal'));
+
+    var cmEl = document.getElementById('commentModal');
+    if (cmEl) bootstrapCommentModal = new bootstrap.Modal(cmEl);
+
+    var mmEl = document.getElementById('mutualFriendsModal');
+    if (mmEl) _mutualModal = new bootstrap.Modal(mmEl);
+
+    var rmEl = document.getElementById('reportModal');
+    if (rmEl) _reportModal = new bootstrap.Modal(rmEl);
+
+    // Lightbox: video pause on slide
+    document.getElementById('lightboxCarousel').addEventListener('slide.bs.carousel', function () {
+        document.querySelectorAll('#lightboxInner video').forEach(function (v) { v.pause(); });
+    });
+    document.getElementById('imageLightboxModal').addEventListener('hidden.bs.modal', function () {
+        document.querySelectorAll('#lightboxInner video').forEach(function (v) { v.pause(); });
+    });
+    document.getElementById('lightboxCarousel').addEventListener('slid.bs.carousel', function (ev) {
+        var counter = document.getElementById('lightboxCounter');
+        if (counter && counter.dataset.total) {
+            counter.textContent = (ev.to + 1) + ' / ' + counter.dataset.total;
         }
     });
 
-    // Feed reload
-    feedPage = 1;
+    // Post content — bg color auto reset
+    document.getElementById('postContent').addEventListener('input', function () {
+        var b = document.getElementById('bg_color_input');
+        if (this.value.length > 80) {
+            if (b && b.value) resetPostBg(false);
+        } else {
+            if (lastSelectedBg && (!b || !b.value)) selectPostBg(lastSelectedBg);
+        }
+    });
+
+    // Edit post content — bg color auto reset
+    document.getElementById('editPostContent').addEventListener('input', function () {
+        var b = document.getElementById('edit_bg_color_input');
+        if (this.value.length > 80) {
+            if (b && b.value) resetEditPostBg(false);
+        } else {
+            if (lastEditSelectedBg && (!b || !b.value)) selectEditPostBg(lastEditSelectedBg);
+        }
+    });
+
+    // Video thumbnail prime
+    primeVideoThumbnails();
+    window.bbPrimeVideos = primeVideoThumbnails;
+});
+
+// Upload চলাকালীন page leave warning
+window.addEventListener('beforeunload', function (e) {
+    if (isUploading) { e.preventDefault(); e.returnValue = ''; }
+});
+
+
+// ============================================================
+// SECTION 3: VIDEO THUMBNAIL
+// ============================================================
+function primeVideoThumbnails(scope) {
+    scope = scope || document;
+    scope.querySelectorAll('video.bb-inline-video, video.bb-tile-media').forEach(function (v) {
+        if (v.dataset.primed) return;
+        v.dataset.primed = '1';
+        v.preload = 'metadata';
+        v.addEventListener('loadedmetadata', function () {
+            try { if (v.currentTime === 0) v.currentTime = 0.1; } catch (e) {}
+        }, { once: true });
+    });
+}
+
+
+// ============================================================
+// SECTION 4: LIGHTBOX
+// ============================================================
+function openLightbox(mediaJson, index) {
+    index = index || 0;
+    try {
+        var items  = typeof mediaJson === 'string' ? JSON.parse(mediaJson) : mediaJson;
+        var inner  = document.getElementById('lightboxInner');
+        if (!inner) return;
+        inner.innerHTML = '';
+
+        items.forEach(function (item, i) {
+            var slide = document.createElement('div');
+            slide.className = 'carousel-item' + (i === index ? ' active' : '');
+
+            if (item.type === 'image') {
+                var img = document.createElement('img');
+                img.src       = item.url;
+                img.className = 'd-block w-100 object-fit-contain';
+                img.style.maxHeight = '82vh';
+                slide.appendChild(img);
+            } else {
+                var wrap  = document.createElement('div');
+                wrap.style.cssText = 'position:relative;z-index:20;display:flex;justify-content:center;';
+                var video = document.createElement('video');
+                video.src       = item.url;
+                video.controls  = true;
+                video.className = 'd-block w-100 object-fit-contain';
+                video.style.cssText = 'max-height:82vh;position:relative;z-index:20;';
+                ['click','mousedown','mouseup','pointerdown','pointerup','touchstart','touchend'].forEach(function (evt) {
+                    video.addEventListener(evt, function (e) { e.stopPropagation(); });
+                });
+                wrap.appendChild(video);
+                slide.appendChild(wrap);
+            }
+            inner.appendChild(slide);
+        });
+
+        var carouselEl = document.getElementById('lightboxCarousel');
+        var ci = bootstrap.Carousel.getInstance(carouselEl);
+        if (!ci) ci = new bootstrap.Carousel(carouselEl, { ride: false, touch: false, interval: false });
+        if (index > 0) ci.to(index);
+
+        var navBar  = document.getElementById('lightboxNavBar');
+        var counter = document.getElementById('lightboxCounter');
+        if (items.length <= 1) {
+            if (navBar) navBar.style.display = 'none';
+        } else {
+            if (navBar) navBar.style.display = '';
+            if (counter) {
+                counter.dataset.total = items.length;
+                counter.textContent   = (index + 1) + ' / ' + items.length;
+            }
+        }
+        if (bootstrapLightboxModal) bootstrapLightboxModal.show();
+    } catch (e) {
+        console.error('Lightbox error:', e);
+    }
+}
+
+function lightboxPrev() {
+    document.querySelectorAll('#lightboxInner video').forEach(function (v) { v.pause(); });
+    var ci = bootstrap.Carousel.getInstance(document.getElementById('lightboxCarousel'));
+    if (ci) ci.prev();
+}
+
+function lightboxNext() {
+    document.querySelectorAll('#lightboxInner video').forEach(function (v) { v.pause(); });
+    var ci = bootstrap.Carousel.getInstance(document.getElementById('lightboxCarousel'));
+    if (ci) ci.next();
+}
+
+
+// ============================================================
+// SECTION 5: CREATE POST — COLOR BG
+// ============================================================
+function toggleColorPlates() {
+    var z = document.getElementById('colorPlatesZone');
+    if (z) z.classList.toggle('d-none');
+}
+
+function selectPostBg(cls) {
+    var w = document.getElementById('postInputWrapper');
+    var t = document.getElementById('postContent');
+    var b = document.getElementById('bg_color_input');
+    if (w && t) {
+        w.className    = 'p-4 rounded text-center text-white fw-bold d-flex align-items-center justify-content-center fb-colored-post-render ' + cls;
+        w.style.minHeight = '200px';
+        t.style.cssText   = 'font-size:22px;text-align:center;color:#fff;';
+        t.placeholder     = "What's on your mind?";
+    }
+    if (b) b.value = cls;
+    lastSelectedBg   = cls;
+    selectedMediaFiles = [];
+    renderMediaPreviews();
+}
+
+function resetPostBg(clearMemory) {
+    if (clearMemory === undefined) clearMemory = true;
+    var w = document.getElementById('postInputWrapper');
+    var t = document.getElementById('postContent');
+    var b = document.getElementById('bg_color_input');
+    if (w) { w.className = 'p-1 rounded bg-transparent'; w.style.minHeight = 'auto'; }
+    if (t) { t.style.cssText = 'font-size:14px;text-align:left;color:inherit;'; t.placeholder = 'Start a post...'; }
+    if (b) b.value = '';
+    if (clearMemory) lastSelectedBg = '';
+}
+
+
+// ============================================================
+// SECTION 6: CREATE POST — MEDIA PREVIEW
+// ============================================================
+var imageInput       = document.getElementById('postImageInput');
+var previewContainer = document.getElementById('imagePreviewContainer');
+
+document.getElementById('triggerUploadBtn')?.addEventListener('click', function () {
+    imageInput.click();
+});
+
+imageInput?.addEventListener('change', function () {
+    var files = Array.from(this.files);
+    for (var i = 0; i < files.length; i++) {
+        if (files[i].size > 100 * 1024 * 1024) {
+            Swal.fire({ icon: 'error', title: 'File too large!', text: '"' + files[i].name + '" max 100MB.' });
+            this.value = '';
+            return;
+        }
+    }
+    resetPostBg();
+    files.forEach(function (f) { selectedMediaFiles.push(f); });
+    renderMediaPreviews();
+    this.value = '';
+});
+
+function renderMediaPreviews() {
+    if (!previewContainer) return;
+    previewContainer.innerHTML = '';
+    if (!selectedMediaFiles.length) {
+        previewContainer.classList.add('d-none');
+        return;
+    }
+    previewContainer.classList.remove('d-none');
+
+    selectedMediaFiles.forEach(function (file, idx) {
+        var col = document.createElement('div');
+        col.className  = 'col-4 col-md-3 position-relative';
+        col.style.height = '100px';
+
+        var el;
+        if (file.type.startsWith('video/')) {
+            el = document.createElement('video');
+            el.muted = true;
+            var pi = document.createElement('div');
+            pi.className = 'position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle';
+            pi.style.cssText = 'width:32px;height:32px;background:rgba(0,0,0,0.6);pointer-events:none;z-index:5;';
+            pi.innerHTML = '<i class="bi bi-play-fill text-white" style="font-size:.9rem;margin-left:2px;"></i>';
+            col.appendChild(pi);
+        } else {
+            el = document.createElement('img');
+        }
+        el.src       = URL.createObjectURL(file);
+        el.className = 'w-100 h-100 object-fit-cover rounded border';
+
+        var xBtn = document.createElement('button');
+        xBtn.type      = 'button';
+        xBtn.className = 'btn btn-dark btn-sm position-absolute top-0 end-0 m-1 rounded-circle';
+        xBtn.style.cssText = 'background:rgba(0,0,0,0.7);border:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;z-index:10;padding:0;';
+        xBtn.innerHTML = '<i class="bi bi-x-lg" style="font-size:10px;color:#fff;"></i>';
+        xBtn.addEventListener('click', (function (i) {
+            return function (e) {
+                e.preventDefault();
+                selectedMediaFiles.splice(i, 1);
+                renderMediaPreviews();
+            };
+        })(idx));
+
+        col.appendChild(el);
+        col.appendChild(xBtn);
+        previewContainer.appendChild(col);
+    });
+}
+
+
+// ============================================================
+// SECTION 7: CREATE POST SUBMIT (OPTIMISTIC UI)
+// ============================================================
+document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    var content  = document.getElementById('postContent').value.trim();
+    var bgColor  = document.getElementById('bg_color_input').value;
+    var privacy  = document.getElementById('privacyInput')?.value || 'public';
+    var modal    = bootstrap.Modal.getInstance(document.getElementById('createPostModal'));
+
+    if (!content && !selectedMediaFiles.length) {
+        Swal.fire({ icon: 'warning', title: 'Empty Post!', text: 'Please write something first!' });
+        return;
+    }
+
+    var captured = selectedMediaFiles.slice();
+    if (modal) modal.hide();
+    document.getElementById('postContent').value = '';
+    resetPostBg();
+    selectedMediaFiles = [];
+    renderMediaPreviews();
+
+    var pid   = 'opt-' + Date.now();
+    var uName = '{{ Auth::user()->name }}';
+    var uInit = '{{ strtoupper(substr(Auth::user()->name ?? "U", 0, 1)) }}';
+
+    var html = '<div class="card mb-3 border-0 rounded-3 shadow-sm" id="' + pid + '">'
+             + '<div class="card-body p-3">'
+             + '<div class="d-flex align-items-center gap-2 mb-3">'
+             + '<div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:38px;height:38px;">' + uInit + '</div>'
+             + '<div><h6 class="m-0 fw-bold" style="font-size:14px;">' + uName + '</h6>'
+             + '<small class="text-muted" style="font-size:11px;"><span class="spinner-border spinner-border-sm text-primary me-1" style="width:10px;height:10px;"></span>Posting...</small></div></div>'
+             + (bgColor
+                ? '<div class="p-4 rounded text-center text-white fw-bold ' + bgColor + '" style="min-height:160px;font-size:22px;opacity:.85;"><p class="mb-0">' + content.replace(/\n/g, '<br>') + '</p></div>'
+                : '<p class="mb-0 text-muted" style="font-size:14px;">' + content.replace(/\n/g, '<br>') + '</p>')
+             + (captured.length ? '<div class="mt-2 p-3 bg-light rounded text-center text-muted small"><i class="bi bi-cloud-upload text-primary fs-4 d-block mb-1"></i>' + captured.length + ' file uploading...</div>' : '')
+             + '<div class="progress mt-3" style="height:4px;"><div id="bar-' + pid + '" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:5%;"></div></div>'
+             + '</div></div>';
+
+    var feed = document.getElementById('postsFeedContainer');
+    if (feed) feed.insertAdjacentHTML('afterbegin', html);
+
+    var fd = new FormData();
+    fd.append('_token',   document.querySelector('meta[name="csrf-token"]').content);
+    fd.append('content',  content);
+    fd.append('bg_color', bgColor);
+    fd.append('privacy',  privacy);
+    captured.forEach(function (f) { fd.append('media[]', f); });
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '{{ route("posts.store") }}', true);
+    xhr.setRequestHeader('Accept', 'application/json');
+    isUploading = true;
+
+    xhr.upload.addEventListener('progress', function (ev) {
+        if (ev.lengthComputable) {
+            var bar = document.getElementById('bar-' + pid);
+            if (bar) bar.style.width = (Math.round(ev.loaded / ev.total * 90) + 5) + '%';
+        }
+    });
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        isUploading = false;
+
+        if (xhr.status === 200 || xhr.status === 201) {
+            var bar = document.getElementById('bar-' + pid);
+            if (bar) {
+                bar.style.width = '100%';
+                bar.classList.replace('bg-primary', 'bg-success');
+                bar.classList.remove('progress-bar-animated');
+            }
+            var res = {};
+            try { res = JSON.parse(xhr.responseText); } catch (ex) {}
+
+            setTimeout(function () {
+                var optCard = document.getElementById(pid);
+                if (res.html) {
+                    if (optCard) optCard.outerHTML = res.html;
+                    else {
+                        var fc = document.getElementById('postsFeedContainer');
+                        if (fc) fc.insertAdjacentHTML('afterbegin', res.html);
+                    }
+                    if (window.bbPrimeVideos) window.bbPrimeVideos();
+                } else {
+                    if (optCard) optCard.remove();
+                }
+                document.getElementById('emptyFeedState')?.remove();
+                Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1800, timerProgressBar: true })
+                    .fire({ icon: 'success', title: res.message || 'Posted!' });
+            }, 600);
+        } else {
+            document.getElementById(pid)?.remove();
+            Swal.fire({ icon: 'error', title: 'Post not published!', text: 'There was an issue uploading the post.' });
+        }
+    };
+    xhr.send(fd);
+});
+
+
+// ============================================================
+// SECTION 8: LIKE / SAVE / DELETE POST
+// ============================================================
+function toggleLike(postId) {
+    fetch('/posts/' + postId + '/like', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (!d.success) return;
+        var btn  = document.getElementById('likeBtn-' + postId);
+        var zone = document.getElementById('like-zone-' + postId);
+        btn.className = d.liked ? 'bb-action-btn active-like' : 'bb-action-btn';
+        btn.innerHTML = d.liked
+            ? '<i class="bi bi-hand-thumbs-up-fill"></i> <span>Like</span>'
+            : '<i class="bi bi-hand-thumbs-up"></i> <span>Like</span>';
+        if (zone) zone.innerHTML = d.like_count > 0
+            ? '<span class="bb-like-bubble"><i class="bi bi-hand-thumbs-up-fill"></i></span> <span class="like-count-text">' + d.like_count + '</span>'
+            : '';
+    });
+}
+
+function toggleSave(postId) {
+    fetch('/posts/' + postId + '/save', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (!d.success) return;
+        var btn  = document.getElementById('saveBtn-' + postId);
+        var icon = document.getElementById('saveIcon-' + postId);
+        var text = document.getElementById('saveText-' + postId);
+        if (d.saved) {
+            if (btn)  btn.className  = 'bb-action-btn active-save';
+            if (icon) icon.className = 'bi bi-bookmark-fill';
+            if (text) text.innerText = 'Saved';
+        } else {
+            if (btn)  btn.className  = 'bb-action-btn';
+            if (icon) icon.className = 'bi bi-bookmark';
+            if (text) text.innerText = 'Save';
+        }
+        Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true })
+            .fire({ icon: d.saved ? 'success' : 'info', title: d.message });
+    })
+    .catch(function () { Swal.fire({ icon: 'error', title: 'Something went wrong!' }); });
+}
+
+function deletePost(id) {
+    Swal.fire({ title: 'Are you sure?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33' })
+    .then(function (r) {
+        if (!r.isConfirmed) return;
+        fetch('/posts/' + id, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (!d.success) return;
+            var card = document.getElementById('postCard-' + id);
+            if (card) {
+                card.style.transition = 'opacity .3s ease';
+                card.style.opacity    = '0';
+                setTimeout(function () { card.remove(); }, 300);
+            }
+            Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 })
+                .fire({ icon: 'success', title: 'Post deleted' });
+        });
+    });
+}
+
+
+// ============================================================
+// SECTION 9: SHARE MODAL
+// ============================================================
+function setSharePrivacy(value, iconClass, label) {
+    document.getElementById('sharePrivacyInput').value = value;
+    document.getElementById('sharePrivacyLabel').textContent = label;
+    var btn = document.getElementById('sharePrivacyBtn');
+    if (btn) btn.querySelector('i').className = 'bi ' + iconClass + ' me-1';
+}
+
+function openShareModal(postId, type) {
+    type = type || 'post';
+    document.getElementById('targetSharePostId').value = postId;
+    document.getElementById('sharePostType').value     = type;
+    document.getElementById('shareComment').value      = '';
+    setSharePrivacy('friends', 'bi-people-fill text-success', 'Friends');
+
+    var card    = document.getElementById('postCard-' + postId) || document.getElementById('jobCard-' + postId);
+    var preview = document.getElementById('modalPostPreview');
+
+    if (card && preview) {
+        if (type === 'job') {
+            var title   = card.querySelector('.bb-jobcard-title')?.innerText   || '';
+            var company = card.querySelector('.bb-jobcard-company')?.innerText || '';
+            var tag     = card.querySelector('.bb-jobcard-tag')?.innerText     || '';
+            preview.innerHTML = '<div class="p-3">'
+                + '<div class="d-flex align-items-center gap-2 mb-1"><i class="bi bi-briefcase-fill text-primary"></i>'
+                + '<span style="font-size:13px;font-weight:700;">' + title + '</span></div>'
+                + '<div style="font-size:12px;color:#6b7280;">' + company + '</div>'
+                + (tag ? '<span style="font-size:11px;background:#eef2ff;color:#4f46e5;padding:2px 8px;border-radius:6px;font-weight:600;">' + tag + '</span>' : '')
+                + '</div>';
+        } else {
+            var author  = card.querySelector('.author-name-zone')?.innerText         || 'User';
+            var avatar  = card.querySelector('.author-avatar-zone')?.innerHTML       || '';
+            var colored = card.getAttribute('data-bg-color');
+            var caption = card.querySelector('.dynamic-caption')?.innerHTML          || '';
+            var grid    = card.querySelector('.dynamic-media-container-zone');
+
+            var capHtml = '<p class="mb-0" style="font-size:13px;color:#374151;">' + caption + '</p>';
+            if (colored && colored !== 'null' && colored !== '') {
+                capHtml = '<div class="p-3 rounded text-center text-white fw-bold ' + colored + '" style="min-height:70px;font-size:15px;"><p class="mb-0">' + caption + '</p></div>';
+            }
+
+            var gridHtml = '';
+            if (grid) {
+                var clone = grid.cloneNode(true);
+                clone.querySelectorAll('img,video').forEach(function (el) {
+                    el.removeAttribute('onclick');
+                    if (el.tagName === 'VIDEO') el.removeAttribute('controls');
+                });
+                gridHtml = '<div class="overflow-hidden" style="max-height:200px;">' + clone.outerHTML + '</div>';
+            }
+
+            preview.innerHTML = '<div class="p-3 pb-2">'
+                + '<div class="d-flex align-items-center gap-2 mb-2">'
+                + '<div style="width:28px;height:28px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">' + avatar + '</div>'
+                + '<span style="font-size:13px;font-weight:700;">' + author + '</span></div>'
+                + capHtml + '</div>' + gridHtml;
+        }
+    }
+
+    loadMessengerContacts();
+    bootstrapShareModal?.show();
+}
+
+function closeShareModal() {
+    bootstrapShareModal?.hide();
+    resetShareModal();
+}
+
+function resetShareModal() {
+    document.getElementById('shareComment').value = '';
+    setSharePrivacy('friends', 'bi-people-fill text-success', 'Friends');
+}
+
+// Messenger contacts সব cache করে রাখি — search filter এর জন্য
+var _messengerContactsCache = [];
+
+function loadMessengerContacts() {
+    var zone = document.getElementById('messengerContacts');
+    if (!zone) return;
+    zone.innerHTML = '<div class="text-center text-muted small py-2"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+
+    fetch('/friends/messenger-contacts', { headers: { 'Accept': 'application/json' } })
+    .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    })
+    .then(function (d) {
+        if (!d.contacts || !d.contacts.length) {
+            zone.innerHTML = '<div class="text-muted small py-2 text-center"><i class="bi bi-people" style="font-size:1.5rem;display:block;margin-bottom:4px;opacity:.4;"></i>No friends yet</div>';
+            return;
+        }
+        _messengerContactsCache = d.contacts;
+        renderMessengerContacts(d.contacts);
+    })
+    .catch(function (err) {
+        console.warn('Messenger contacts error:', err);
+        zone.innerHTML = '<div class="text-muted small py-2 text-center">Could not load contacts</div>';
+    });
+}
+
+function renderMessengerContacts(contacts) {
+    var zone = document.getElementById('messengerContacts');
+    if (!zone) return;
+    if (!contacts.length) {
+        zone.innerHTML = '<div class="text-muted small py-2 text-center">No match found</div>';
+        return;
+    }
+    var html = '';
+    contacts.forEach(function (c) {
+        var pic = c.profile_picture
+            ? '<img src="/storage/' + c.profile_picture + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+            : '<span style="font-size:16px;font-weight:700;">' + c.name.charAt(0).toUpperCase() + '</span>';
+        html += '<div class="text-center flex-shrink-0" style="cursor:pointer;width:64px;" onclick="sendToMessenger(' + c.id + ', \'' + c.name.replace(/'/g, "\\'") + '\')">'
+              + '<div style="width:52px;height:52px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">' + pic + '</div>'
+              + '<div style="font-size:11px;font-weight:600;color:#1e1f24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + c.name.split(' ')[0] + '</div>'
+              + '</div>';
+    });
+    zone.innerHTML = html;
+}
+
+// Share modal এর search button এ এই function call করো
+function searchMessengerContacts() {
+    var input = document.getElementById('messengerSearchInput');
+    if (!input) return;
+    var q = input.value.trim().toLowerCase();
+    if (!q) { renderMessengerContacts(_messengerContactsCache); return; }
+    var filtered = _messengerContactsCache.filter(function (c) {
+        return c.name.toLowerCase().includes(q);
+    });
+    renderMessengerContacts(filtered);
+}
+
+function sendToMessenger(userId, name) {
+    var postId = document.getElementById('targetSharePostId').value;
+    var type   = document.getElementById('sharePostType').value;
+    if (typeof openChatBox === 'function') {
+        openChatBox(userId, name, '', '', '0');
+        setTimeout(function () {
+            var input = document.getElementById('chatinput-' + userId);
+            if (input) {
+                var link = window.location.origin + (type === 'job' ? '/jobs/' + postId : '/#postCard-' + postId);
+                input.value = '📎 Check this out: ' + link;
+                input.dispatchEvent(new Event('input'));
+            }
+        }, 300);
+    }
+    bootstrapShareModal?.hide();
+    Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true })
+        .fire({ icon: 'success', title: 'Sent to ' + name + '!' });
+}
+
+function copyPostLink() {
+    var postId = document.getElementById('targetSharePostId').value;
+    var type   = document.getElementById('sharePostType').value;
+    var link   = window.location.origin + (type === 'job' ? '/jobs/' + postId : '/#postCard-' + postId);
+    navigator.clipboard.writeText(link)
+    .then(function () {
+        Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true })
+            .fire({ icon: 'success', title: 'Link copied!' });
+    })
+    .catch(function () { prompt('Copy this link:', link); });
+}
+
+function openJobShareModal(jobId) {
+    openShareModal(jobId, 'job');
+}
+
+document.getElementById('fbShareForm')?.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var postId  = document.getElementById('targetSharePostId').value;
+    var type    = document.getElementById('sharePostType').value;
+    var comment = document.getElementById('shareComment').value.trim();
+    var privacy = document.getElementById('sharePrivacyInput').value;
+    var btn     = document.getElementById('shareSubmitBtn');
+
+    if (type === 'job') { copyPostLink(); bootstrapShareModal?.hide(); return; }
+
+    btn.disabled = true;
+    Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false }).fire({ icon: 'info', title: 'Sharing...' });
+
+    fetch('/posts/' + postId + '/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+        body: JSON.stringify({ content: comment, privacy: privacy })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        btn.disabled = false;
+        if (!d.success) { Swal.fire({ icon: 'error', title: 'Failed!', text: d.message || 'Could not share.' }); return; }
+        bootstrapShareModal?.hide();
+        resetShareModal();
+        Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true })
+            .fire({ icon: 'success', title: 'Shared to your feed!' });
+        if (d.html) {
+            var feedC = document.getElementById('postsFeedContainer') || document.getElementById('profilePostsContainer');
+            if (feedC) {
+                feedC.insertAdjacentHTML('afterbegin', d.html);
+                if (window.bbPrimeVideos) window.bbPrimeVideos();
+                feedC.querySelector('.bb-posts-empty')?.remove();
+                feedC.querySelector('#emptyFeedState')?.remove();
+            }
+        }
+    })
+    .catch(function () { btn.disabled = false; Swal.fire({ icon: 'error', title: 'Network Error!' }); });
+});
+
+
+// ============================================================
+// SECTION 10: EDIT POST
+// ============================================================
+function toggleEditColorPlates() {
+    document.getElementById('editColorPlatesZone')?.classList.toggle('d-none');
+}
+
+function selectEditPostBg(cls) {
+    var w = document.getElementById('editPostInputWrapper');
+    var t = document.getElementById('editPostContent');
+    var b = document.getElementById('edit_bg_color_input');
+    if (w && t) {
+        w.className    = 'p-4 rounded text-center text-white fw-bold d-flex align-items-center justify-content-center fb-colored-post-render ' + cls;
+        w.style.minHeight = '200px';
+        t.style.cssText   = 'font-size:22px;text-align:center;color:#fff;';
+        t.className       = 'form-control border-0 bg-transparent shadow-none w-100';
+    }
+    if (b) b.value = cls;
+    lastEditSelectedBg = cls;
+
+    // bg select করলে existing media সরিয়ে দাও
+    document.querySelectorAll('#editMediaPreviewContainer [data-server-path]').forEach(function (el) {
+        var p  = el.getAttribute('data-server-path');
+        var tp = el.getAttribute('data-type');
+        if (tp === 'image') removedImages.push(p); else removedVideos.push(p);
+    });
+    editSelectedFiles = [];
+    var pc = document.getElementById('editMediaPreviewContainer');
+    if (pc) pc.innerHTML = '';
+}
+
+function resetEditPostBg(clearMemory) {
+    if (clearMemory === undefined) clearMemory = true;
+    var w = document.getElementById('editPostInputWrapper');
+    var t = document.getElementById('editPostContent');
+    var b = document.getElementById('edit_bg_color_input');
+    if (w) { w.className = 'p-1 rounded bg-transparent'; w.style.minHeight = 'auto'; }
+    if (t) t.style.cssText = 'font-size:14px;text-align:left;color:inherit;';
+    if (b) b.value = '';
+    if (clearMemory) lastEditSelectedBg = '';
+}
+
+// Edit modal খুলুন — privacy সহ সব data সেট করে
+function prepareEditModal(el) {
+    var id       = el.getAttribute('data-id');
+    var content  = el.getAttribute('data-content');
+    var imgs     = el.getAttribute('data-images');
+    var vids     = el.getAttribute('data-video');
+    var bg       = el.getAttribute('data-bg-color');
+    var isShared = el.getAttribute('data-is-shared') === '1';
+
+    removedImages = []; removedVideos = []; editSelectedFiles = []; lastEditSelectedBg = '';
+
+    document.getElementById('editPostId').value      = id;
+    document.getElementById('editPostContent').value = content || '';
+    document.getElementById('editMediaInput').value  = '';
+
+    var pc = document.getElementById('editMediaPreviewContainer');
+    if (pc) pc.innerHTML = '';
+
+    var ms = document.getElementById('editMediaSection');
+    var cz = document.getElementById('editColorPlatesZone');
+
+    // Privacy সেট করো (সবসময়)
+    var editPrivacy = el.getAttribute('data-privacy') || 'public';
+    var privacyMap  = {
+        'public':  ['bi-globe-americas text-primary', 'Public'],
+        'friends': ['bi-people-fill text-success',    'Friends'],
+        'only_me': ['bi-lock-fill text-warning',      'Only Me']
+    };
+    var pm = privacyMap[editPrivacy] || privacyMap['public'];
+    setEditPrivacy(editPrivacy, pm[0], pm[1]);
+
+    // Shared post — media ও color section লুকাও
+    if (isShared) {
+        if (ms) ms.classList.add('d-none');
+        if (cz) cz.classList.add('d-none');
+        resetEditPostBg();
+        bootstrapEditModal?.show();
+        return;
+    }
+
+    if (ms) ms.classList.remove('d-none');
+    (bg && bg !== 'null' && bg.trim()) ? selectEditPostBg(bg) : resetEditPostBg();
+
+    if (imgs && imgs !== 'null' && imgs.trim()) {
+        try {
+            var arr = JSON.parse(imgs);
+            if (Array.isArray(arr)) arr.forEach(function (i) { renderEditPreviewItem(i, 'image', false); });
+        } catch (ex) {}
+    }
+    if (vids && vids !== 'null' && vids.trim()) {
+        try {
+            var p   = JSON.parse(vids);
+            var arr = Array.isArray(p) ? p : [p];
+            arr.forEach(function (v) { if (v && v.trim()) renderEditPreviewItem(v, 'video', false); });
+        } catch (ex) {
+            if (typeof vids === 'string' && vids.trim()) renderEditPreviewItem(vids.trim(), 'video', false);
+        }
+    }
+
+    bootstrapEditModal?.show();
+}
+
+function renderEditPreviewItem(pathOrFile, type, isNew) {
+    var container = document.getElementById('editMediaPreviewContainer');
+    if (!container) return;
+
+    var col = document.createElement('div');
+    col.className  = 'col-4 position-relative';
+    col.style.height = '110px';
+    if (!isNew) {
+        col.setAttribute('data-server-path', pathOrFile);
+        col.setAttribute('data-type', type);
+    }
+
+    var src     = isNew ? URL.createObjectURL(pathOrFile) : '{{ asset("storage") }}/' + pathOrFile;
+    var mediaEl;
+
+    if (type === 'image') {
+        mediaEl = document.createElement('img');
+        mediaEl.src       = src;
+        mediaEl.className = 'w-100 h-100 rounded border';
+        mediaEl.style.cssText = 'object-fit:cover;cursor:pointer;';
+        mediaEl.addEventListener('click', function () {
+            openLightbox(JSON.stringify([{ type: 'image', url: src }]), 0);
+        });
+    } else {
+        mediaEl = document.createElement('video');
+        mediaEl.src     = src;
+        mediaEl.muted   = true;
+        mediaEl.preload = 'metadata';
+        mediaEl.className = 'w-100 h-100 rounded border';
+        mediaEl.style.cssText = 'object-fit:cover;cursor:pointer;';
+        mediaEl.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (!this.hasAttribute('data-expanded')) {
+                this.setAttribute('data-expanded', '1');
+                this.controls = true;
+                this.muted    = false;
+                this.style.objectFit = 'contain';
+                col.style.height = '160px';
+                var ov = col.querySelector('.edit-play-overlay');
+                if (ov) ov.style.display = 'none';
+                this.play().catch(function () {});
+            }
+        });
+        var ov = document.createElement('div');
+        ov.className = 'edit-play-overlay position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center rounded-circle';
+        ov.style.cssText = 'width:36px;height:36px;background:rgba(0,0,0,0.65);pointer-events:none;z-index:5;';
+        ov.innerHTML = '<i class="bi bi-play-fill text-white" style="font-size:1rem;margin-left:2px;"></i>';
+        col.appendChild(ov);
+    }
+
+    var xBtn = document.createElement('button');
+    xBtn.type      = 'button';
+    xBtn.className = 'btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-0 d-flex align-items-center justify-content-center';
+    xBtn.style.cssText = 'width:22px;height:22px;font-size:11px;z-index:10;';
+    xBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+    xBtn.addEventListener('click', (function (pof, t, n, colRef) {
+        return function (e) {
+            e.stopPropagation();
+            if (!n) {
+                if (t === 'image') removedImages.push(pof); else removedVideos.push(pof);
+            } else {
+                var idx = editSelectedFiles.indexOf(pof);
+                if (idx > -1) editSelectedFiles.splice(idx, 1);
+            }
+            colRef.remove();
+        };
+    })(pathOrFile, type, isNew, col));
+
+    col.appendChild(mediaEl);
+    col.appendChild(xBtn);
+    container.appendChild(col);
+}
+
+document.getElementById('editMediaInput')?.addEventListener('change', function () {
+    Array.from(this.files).forEach(function (f) {
+        editSelectedFiles.push(f);
+        renderEditPreviewItem(f, f.type.startsWith('video/') ? 'video' : 'image', true);
+    });
+    this.value = '';
+});
+
+document.getElementById('editPostForm')?.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var id  = document.getElementById('editPostId')?.value;
+    if (!id) return;
+    var btn = document.getElementById('editSubmitBtn');
+    if (btn) btn.disabled = true;
+
+    var fd = new FormData();
+    fd.append('_token',         document.querySelector('meta[name="csrf-token"]').content);
+    fd.append('content',        document.getElementById('editPostContent')?.value || '');
+    fd.append('bg_color',       document.getElementById('edit_bg_color_input')?.value || '');
+    fd.append('privacy',        document.getElementById('editPrivacyInput')?.value || 'public');
+    fd.append('removed_images', JSON.stringify(removedImages));
+    fd.append('removed_videos', JSON.stringify(removedVideos));
+    editSelectedFiles.forEach(function (f) { fd.append('media[]', f); });
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/posts/' + id, true);
+    xhr.setRequestHeader('Accept', 'application/json');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        if (xhr.status === 200 || xhr.status === 201) {
+            var res = {};
+            try { res = JSON.parse(xhr.responseText); } catch (ex) {}
+            var oldCard = document.getElementById('postCard-' + id);
+            if (oldCard && res.html) { oldCard.outerHTML = res.html; if (window.bbPrimeVideos) window.bbPrimeVideos(); }
+            bootstrapEditModal?.hide();
+            Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 })
+                .fire({ icon: 'success', title: 'Post updated!' });
+            if (btn) btn.disabled = false;
+        } else {
+            if (btn) btn.disabled = false;
+            Swal.fire({ icon: 'error', title: 'Update Failed!' });
+        }
+    };
+    xhr.send(fd);
+});
+
+
+// ============================================================
+// SECTION 11: JOB DELETE / SAVE
+// ============================================================
+function deleteJob(id) {
+    Swal.fire({ title: 'Delete this job?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Delete' })
+    .then(function (r) {
+        if (!r.isConfirmed) return;
+        fetch('/jobs/' + id, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (!d.success) return;
+            var card = document.getElementById('jobCard-' + id);
+            if (card) { card.style.transition = 'opacity .3s'; card.style.opacity = '0'; setTimeout(function () { card.remove(); }, 300); }
+            Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 })
+                .fire({ icon: 'success', title: 'Job deleted' });
+        });
+    });
+}
+
+function toggleJobSave(id) {
+    var btn = document.getElementById('jobSaveBtn-' + id);
+    if (btn && btn.dataset.busy === '1') return;
+    if (btn) btn.dataset.busy = '1';
+
+    fetch('/jobs/' + id + '/save', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (btn) btn.dataset.busy = '0';
+        if (!d.success) return;
+        if (btn) {
+            btn.classList.toggle('saved', d.saved);
+            var ic = btn.querySelector('i');
+            if (ic) ic.className = d.saved ? 'bi bi-bookmark-fill' : 'bi bi-bookmark';
+            btn.title = d.saved ? 'Saved' : 'Save job';
+        }
+        Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1600, timerProgressBar: true })
+            .fire({ icon: d.saved ? 'success' : 'info', title: d.message });
+    })
+    .catch(function () {
+        var b = document.getElementById('jobSaveBtn-' + id);
+        if (b) b.dataset.busy = '0';
+        Swal.fire({ icon: 'error', title: 'Something went wrong' });
+    });
+}
+
+
+// ============================================================
+// SECTION 12: FEED FILTER + INFINITE SCROLL
+// ============================================================
+function setFeedFilter(filter) {
+    currentFeedFilter = filter;
+
+    var btnMap = { all: 'filterAll', friends: 'filterFriends', public: 'filterPublic' };
+    Object.entries(btnMap).forEach(function (entry) {
+        var key = entry[0], id = entry[1];
+        var btn = document.getElementById(id);
+        if (!btn) return;
+        if (key === filter) {
+            btn.style.background = '#4f46e5';
+            btn.style.color      = '#fff';
+            btn.style.border     = 'none';
+        } else {
+            btn.style.background = '#fff';
+            btn.style.color      = '#6b7280';
+            btn.style.border     = '1.5px solid #eceef1';
+        }
+    });
+
+    feedPage    = 1;
     feedLoading = false;
     document.getElementById('feedMeta').dataset.hasMore = '1';
     document.getElementById('feedEndMessage')?.classList.add('d-none');
 
-    fetch(`{{ route('feed.load') }}?page=1&filter=${filter}`, {
+    fetch('{{ route("feed.load") }}?page=1&filter=' + filter, {
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
     })
-    .then(r => r.json())
-    .then(data => {
-        const container = document.getElementById('postsFeedContainer');
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        var container = document.getElementById('postsFeedContainer');
         if (container) container.innerHTML = data.html || '';
         document.getElementById('feedMeta').dataset.hasMore = data.has_more ? '1' : '0';
         if (!data.has_more) document.getElementById('feedEndMessage')?.classList.remove('d-none');
@@ -1101,6 +3301,945 @@ function setFeedFilter(filter) {
     });
 }
 
+function loadMorePosts() {
+    var meta = document.getElementById('feedMeta');
+    if (!meta) return;
+    if (feedLoading || meta.dataset.hasMore === '0') return;
+    feedLoading = true;
+    feedPage++;
+
+    var loader = document.getElementById('feedLoader');
+    if (loader) loader.classList.remove('d-none');
+
+    fetch('{{ route("feed.load") }}?page=' + feedPage + '&filter=' + currentFeedFilter, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        var container = document.getElementById('postsFeedContainer');
+        if (container && data.html && data.html.trim()) {
+            container.insertAdjacentHTML('beforeend', data.html);
+            if (window.bbPrimeVideos) window.bbPrimeVideos(container);
+        }
+        meta.dataset.hasMore = data.has_more ? '1' : '0';
+        if (loader) loader.classList.add('d-none');
+        if (!data.has_more) {
+            var em = document.getElementById('feedEndMessage');
+            if (em) em.classList.remove('d-none');
+        }
+        feedLoading = false;
+    })
+    .catch(function () {
+        if (loader) loader.classList.add('d-none');
+        feedLoading = false;
+    });
+}
+
+window.addEventListener('scroll', function () {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) loadMorePosts();
+});
+
+
+// ============================================================
+// SECTION 13: COMMENT MODAL
+// ============================================================
+function openCommentModal(postId) {
+    var list     = document.getElementById('commentModalList');
+    var preview  = document.getElementById('commentModalPostPreview');
+    var viewMore = document.getElementById('commentModalViewMore');
+    var countEl  = document.getElementById('commentModalCount');
+
+    document.getElementById('commentModalPostId').value = postId;
+    commentEditState = { editing: false, commentId: null };
+    document.getElementById('commentModalInput').value       = '';
+    document.getElementById('commentModalInput').placeholder = 'Write a comment...';
+    document.getElementById('commentEditNotice')?.classList.add('d-none');
+
+    var card = document.getElementById('postCard-' + postId);
+    if (card && preview) {
+        var author  = card.querySelector('.author-name-zone')?.innerText   || 'User';
+        var avatar  = card.querySelector('.author-avatar-zone')?.innerHTML || 'U';
+        var colored = card.getAttribute('data-bg-color');
+        var caption = card.querySelector('.dynamic-caption')?.innerHTML    || '';
+        var capHtml = '<p class="mb-0" style="font-size:14px;">' + caption + '</p>';
+        if (colored && colored !== 'null' && colored !== '') {
+            capHtml = '<div class="p-3 rounded text-center text-white fw-bold ' + colored + '" style="min-height:80px;font-size:16px;"><p class="mb-0">' + caption + '</p></div>';
+        }
+        preview.innerHTML = '<div class="d-flex align-items-center gap-2 mb-2">'
+            + '<div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:38px;height:38px;font-size:14px;">' + avatar + '</div>'
+            + '<h6 class="m-0 fw-bold" style="font-size:14px;">' + author + '</h6></div>' + capHtml;
+    }
+
+    if (list) list.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary"></div><div class="small mt-2">Loading comments...</div></div>';
+    if (viewMore) viewMore.classList.add('d-none');
+    if (countEl) countEl.innerText = '';
+
+    bootstrapCommentModal?.show();
+
+    fetch('/posts/' + postId + '/comments/load?offset=0', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        if (!data.success) { if (list) list.innerHTML = '<div class="text-center text-muted py-4 small">Could not load comments.</div>'; return; }
+        if (list) list.innerHTML = data.html.trim() ? data.html : '<div class="text-center text-muted py-4 small" id="modalNoComment">No comments yet. Be the first!</div>';
+        if (countEl) { var tt = card?.querySelector('#comment-count-' + postId)?.innerText || ''; countEl.innerText = tt; }
+        if (viewMore) {
+            var vBtn = document.getElementById('commentModalViewMoreBtn');
+            if (data.has_more) {
+                vBtn.setAttribute('data-offset',  data.next_offset);
+                vBtn.setAttribute('data-post-id', postId);
+                viewMore.classList.remove('d-none');
+            } else {
+                viewMore.classList.add('d-none');
+            }
+        }
+    })
+    .catch(function () { if (list) list.innerHTML = '<div class="text-center text-muted py-4 small">Network error.</div>'; });
+}
+
+document.getElementById('commentModalViewMoreBtn')?.addEventListener('click', function () {
+    var postId   = this.getAttribute('data-post-id');
+    var offset   = this.getAttribute('data-offset');
+    var original = this.innerHTML;
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width:12px;height:12px;"></span> Loading...';
+    var self = this;
+
+    fetch('/posts/' + postId + '/comments/load?offset=' + offset, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        var list = document.getElementById('commentModalList');
+        if (list && data.html.trim()) list.insertAdjacentHTML('beforeend', data.html);
+        if (data.has_more) {
+            self.setAttribute('data-offset', data.next_offset);
+            self.disabled  = false;
+            self.innerHTML = original;
+        } else {
+            document.getElementById('commentModalViewMore').classList.add('d-none');
+        }
+    })
+    .catch(function () { self.disabled = false; self.innerHTML = original; });
+});
+
+document.getElementById('commentModalForm')?.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var postId = document.getElementById('commentModalPostId').value;
+    var input  = document.getElementById('commentModalInput');
+    var text   = input.value.trim();
+    if (!text) return;
+
+    // Edit mode
+    if (commentEditState.editing && commentEditState.commentId) {
+        var cid = commentEditState.commentId;
+        fetch('/comments/' + cid, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+            body: JSON.stringify({ content: text })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (!d.success) return;
+            var span = document.getElementById('comment-text-' + cid);
+            if (span) span.innerText = text;
+            var meta = document.querySelector('.comment-meta-' + cid);
+            if (meta) meta.innerHTML = (d.updated_at || 'just now') + '<span class="comment-edited-tag-' + cid + '"> · Edited</span>';
+            commentEditState = { editing: false, commentId: null };
+            input.value = ''; input.placeholder = 'Write a comment...';
+            document.getElementById('commentEditNotice')?.classList.add('d-none');
+        });
+        return;
+    }
+
+    // New comment
+    input.value = '';
+    fetch('/posts/' + postId + '/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+        body: JSON.stringify({ content: text })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (!d.success) return;
+        document.getElementById('modalNoComment')?.remove();
+        var avatar = d.user_picture ? '<img src="' + d.user_picture + '" style="width:100%;height:100%;object-fit:cover;">' : d.user_initial;
+        var html = '<div class="comment-thread" id="comment-thread-' + d.comment_id + '">'
+                 + '<div class="d-flex gap-2 mb-2 align-items-start comment-row" id="comment-container-' + d.comment_id + '">'
+                 + '<div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:32px;height:32px;font-size:13px;">' + avatar + '</div>'
+                 + '<div class="flex-grow-1">'
+                 + '<div class="d-flex align-items-start justify-content-between">'
+                 + '<div class="bg-light px-3 py-2 rounded-4 d-inline-block border" style="max-width:100%;">'
+                 + '<strong class="d-block text-dark" style="font-size:12.5px;">' + d.user_name + '</strong>'
+                 + '<span id="comment-text-' + d.comment_id + '" style="font-size:13px;word-break:break-word;">' + d.content + '</span></div>'
+                 + '<div class="dropdown flex-shrink-0"><button type="button" class="btn btn-link btn-sm text-muted p-0 border-0 shadow-none ms-1" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>'
+                 + '<ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:100px;">'
+                 + '<li><a class="dropdown-item py-1" style="font-size:.85rem;" href="javascript:void(0)" onclick="editComment(event,' + d.comment_id + ')"><i class="bi bi-pencil me-1"></i> Edit</a></li>'
+                 + '<li><a class="dropdown-item py-1 text-danger" style="font-size:.85rem;" href="javascript:void(0)" onclick="deleteComment(' + d.comment_id + ',' + postId + ')"><i class="bi bi-trash me-1"></i> Delete</a></li>'
+                 + '</ul></div></div>'
+                 + '<div class="d-flex align-items-center gap-3 ms-2 mt-1" style="font-size:11.5px;">'
+                 + '<span class="comment-like-btn" id="comment-like-' + d.comment_id + '" onclick="toggleCommentLike(' + d.comment_id + ')" style="cursor:pointer;font-weight:600;">Like</span>'
+                 + '<span class="comment-reply-btn" onclick="openReplyBox(' + d.comment_id + ')" style="cursor:pointer;font-weight:600;color:#65676b;">Reply</span>'
+                 + '<span class="text-muted comment-meta-' + d.comment_id + '">' + d.created_at + '<span class="comment-edited-tag-' + d.comment_id + '"></span></span>'
+                 + '<span class="comment-like-count text-muted" id="comment-like-count-' + d.comment_id + '" style="display:none;"><i class="bi bi-hand-thumbs-up-fill text-primary"></i> <span class="clc-num">0</span></span>'
+                 + '</div>'
+                 + '<div class="reply-box-zone mt-2 d-none" id="reply-box-' + d.comment_id + '"></div>'
+                 + '<div class="replies-zone mt-2" id="replies-zone-' + d.comment_id + '"></div>'
+                 + '</div></div></div>';
+
+        document.getElementById('commentModalList')?.insertAdjacentHTML('afterbegin', html);
+        var fc = document.getElementById('comment-count-' + postId);
+        if (fc && d.comment_count !== undefined) fc.innerText = d.comment_count + ' comments';
+        var mc = document.getElementById('commentModalCount');
+        if (mc && d.comment_count !== undefined) mc.innerText = d.comment_count + ' comments';
+    });
+});
+
+function editComment(event, cid) {
+    var span = document.getElementById('comment-text-' + cid);
+    if (!span) return;
+    var input = document.getElementById('commentModalInput');
+    if (!input) return;
+    commentEditState = { editing: true, commentId: cid };
+    input.value       = span.innerText;
+    input.placeholder = 'Editing comment...';
+    input.focus();
+    document.getElementById('commentEditNotice')?.classList.remove('d-none');
+}
+
+function cancelCommentEdit() {
+    commentEditState = { editing: false, commentId: null };
+    var input = document.getElementById('commentModalInput');
+    if (input) { input.value = ''; input.placeholder = 'Write a comment...'; }
+    document.getElementById('commentEditNotice')?.classList.add('d-none');
+}
+
+function deleteComment(cid, postId) {
+    Swal.fire({ title: 'Delete comment?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444' })
+    .then(function (r) {
+        if (!r.isConfirmed) return;
+        fetch('/comments/' + cid, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (!d.success) return;
+            document.getElementById('comment-container-' + cid)?.remove();
+            var fc = document.getElementById('comment-count-' + postId);
+            if (fc && d.comment_count !== undefined) fc.innerText = d.comment_count + ' comments';
+            var mc = document.getElementById('commentModalCount');
+            if (mc && d.comment_count !== undefined) mc.innerText = d.comment_count + ' comments';
+            if (commentEditState.commentId == cid) {
+                commentEditState = { editing: false, commentId: null };
+                var input = document.getElementById('commentModalInput');
+                if (input) { input.value = ''; input.placeholder = 'Write a comment...'; }
+                document.getElementById('commentEditNotice')?.classList.add('d-none');
+            }
+        });
+    });
+}
+
+
+// ============================================================
+// SECTION 14: COMMENT LIKE + REPLY
+// ============================================================
+window.MY_PROFILE_PIC = @json(Auth::user()->profile_picture ? asset('storage/'.Auth::user()->profile_picture) : null);
+window.MY_INITIAL     = @json(strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)));
+
+function toggleCommentLike(commentId) {
+    fetch('/comments/' + commentId + '/like', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (!d.success) return;
+        var btn = document.getElementById('comment-like-' + commentId);
+        var cw  = document.getElementById('comment-like-count-' + commentId);
+        if (btn) { btn.classList.toggle('liked', d.liked); btn.innerText = d.liked ? 'Liked' : 'Like'; }
+        if (cw) {
+            var num = cw.querySelector('.clc-num');
+            if (num) num.innerText = d.like_count;
+            cw.style.display = d.like_count > 0 ? '' : 'none';
+        }
+    });
+}
+
+function openReplyBox(parentId, mentionName) {
+    var zone  = document.getElementById('reply-box-' + parentId);
+    if (!zone) return;
+    var input = document.getElementById('reply-input-' + parentId);
+    var myPic = window.MY_PROFILE_PIC;
+    var myInit = window.MY_INITIAL || 'U';
+    var avatar = myPic ? '<img src="' + myPic + '" style="width:100%;height:100%;object-fit:cover;">' : myInit;
+
+    if (zone.classList.contains('d-none') || zone.dataset.open !== '1') {
+        zone.innerHTML = '<div class="reply-input-wrap">'
+            + '<div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:28px;height:28px;font-size:12px;">' + avatar + '</div>'
+            + '<div class="reply-field flex-grow-1">'
+            + '<span class="reply-mention-tag" id="reply-mention-' + parentId + '" style="display:none;"></span>'
+            + '<input type="text" class="reply-input-box" id="reply-input-' + parentId + '" placeholder="Write a reply..." autocomplete="off"'
+            + ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();submitReply(' + parentId + ');}else if(event.key===\'Backspace\'&&this.value===\'\'){clearReplyMention(' + parentId + ');}">'
+            + '</div>'
+            + '<button type="button" class="bb-emoji-btn p-0" data-target="#reply-input-' + parentId + '" title="Emoji" style="font-size:15px;"><i class="bi bi-emoji-smile"></i></button>'
+            + '<button type="button" class="reply-send-btn" onclick="submitReply(' + parentId + ')" title="Send"><i class="bi bi-send-fill"></i></button>'
+            + '</div>';
+        zone.classList.remove('d-none');
+        zone.dataset.open = '1';
+        input = document.getElementById('reply-input-' + parentId);
+    }
+
+    var tag = document.getElementById('reply-mention-' + parentId);
+    if (mentionName && tag) {
+        tag.textContent    = '@' + mentionName;
+        tag.style.display  = 'inline-flex';
+        tag.dataset.mention = mentionName;
+    }
+    setTimeout(function () { if (input) input.focus(); }, 50);
+}
+
+function clearReplyMention(parentId) {
+    var tag = document.getElementById('reply-mention-' + parentId);
+    if (tag) { tag.style.display = 'none'; tag.textContent = ''; tag.dataset.mention = ''; }
+}
+
+function submitReply(parentId) {
+    var input   = document.getElementById('reply-input-' + parentId);
+    if (!input) return;
+    var text    = input.value.trim();
+    var tag     = document.getElementById('reply-mention-' + parentId);
+    var mention = tag && tag.dataset.mention ? tag.dataset.mention : '';
+    if (!text && !mention) return;
+
+    var finalText = mention ? '@' + mention + ' ' + text : text;
+    var postId    = document.getElementById('commentModalPostId').value;
+    input.disabled = true;
+
+    fetch('/posts/' + postId + '/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+        body: JSON.stringify({ content: finalText, parent_id: parentId })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (!d.success) { input.disabled = false; return; }
+        var rz     = document.getElementById('replies-zone-' + parentId);
+        var avatar = d.user_picture ? '<img src="' + d.user_picture + '" style="width:100%;height:100%;object-fit:cover;">' : d.user_initial;
+        var dc     = highlightMentions(d.content);
+
+        var html = '<div class="d-flex gap-2 mb-2 align-items-start comment-row reply-row" id="comment-container-' + d.comment_id + '">'
+                 + '<div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0 overflow-hidden" style="width:28px;height:28px;font-size:12px;">' + avatar + '</div>'
+                 + '<div class="flex-grow-1">'
+                 + '<div class="d-flex align-items-start justify-content-between">'
+                 + '<div class="bg-light px-3 py-2 rounded-4 d-inline-block border" style="max-width:100%;">'
+                 + '<strong class="d-block text-dark" style="font-size:12px;">' + d.user_name + '</strong>'
+                 + '<span id="comment-text-' + d.comment_id + '" style="font-size:12.5px;word-break:break-word;">' + dc + '</span></div>'
+                 + '<div class="dropdown flex-shrink-0"><button type="button" class="btn btn-link btn-sm text-muted p-0 border-0 shadow-none ms-1" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>'
+                 + '<ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:100px;">'
+                 + '<li><a class="dropdown-item py-1" style="font-size:.85rem;" href="javascript:void(0)" onclick="editComment(event,' + d.comment_id + ')"><i class="bi bi-pencil me-1"></i> Edit</a></li>'
+                 + '<li><a class="dropdown-item py-1 text-danger" style="font-size:.85rem;" href="javascript:void(0)" onclick="deleteComment(' + d.comment_id + ',' + postId + ')"><i class="bi bi-trash me-1"></i> Delete</a></li>'
+                 + '</ul></div></div>'
+                 + '<div class="d-flex align-items-center gap-3 ms-2 mt-1" style="font-size:11px;">'
+                 + '<span class="comment-like-btn" id="comment-like-' + d.comment_id + '" onclick="toggleCommentLike(' + d.comment_id + ')" style="cursor:pointer;font-weight:600;">Like</span>'
+                 + '<span class="comment-reply-btn" onclick="openReplyBox(' + parentId + ',\'' + d.user_name.replace(/'/g, "\\'") + '\')" style="cursor:pointer;font-weight:600;color:#65676b;">Reply</span>'
+                 + '<span class="text-muted comment-meta-' + d.comment_id + '">' + d.created_at + '<span class="comment-edited-tag-' + d.comment_id + '"></span></span>'
+                 + '<span class="comment-like-count text-muted" id="comment-like-count-' + d.comment_id + '" style="display:none;"><i class="bi bi-hand-thumbs-up-fill text-primary"></i> <span class="clc-num">0</span></span>'
+                 + '</div></div></div>';
+
+        if (rz) rz.insertAdjacentHTML('beforeend', html);
+
+        var zone = document.getElementById('reply-box-' + parentId);
+        if (zone) { zone.classList.add('d-none'); zone.dataset.open = '0'; zone.innerHTML = ''; }
+
+        var fc = document.getElementById('comment-count-' + postId);
+        if (fc && d.comment_count !== undefined) fc.innerText = d.comment_count + ' comments';
+        var mc = document.getElementById('commentModalCount');
+        if (mc && d.comment_count !== undefined) mc.innerText = d.comment_count + ' comments';
+    })
+    .catch(function () { input.disabled = false; });
+}
+
+function highlightMentions(text) {
+    return text.replace(/@([\w\u0980-\u09FF.]+(?:\s[\w\u0980-\u09FF.]+)?)/g, '<span class="comment-mention">@$1</span>');
+}
+
+
+// ============================================================
+// SECTION 15: FRIEND ACTIONS
+// ============================================================
+function friendAction(action, userId, btnEl) {
+    var endpoints = {
+        send:     '/friends/send',
+        accept:   '/friends/accept',
+        decline:  '/friends/decline',
+        cancel:   '/friends/cancel',
+        unfriend: '/friends/unfriend',
+        block:    '/friends/block',
+        unblock:  '/friends/unblock'
+    };
+    var confirmMsg = {
+        unfriend: 'Remove this person from your friends?',
+        block:    "Block this user? They won't be able to find you.",
+        cancel:   'Cancel this friend request?'
+    };
+    if (['unfriend', 'block', 'cancel'].includes(action) && !confirm(confirmMsg[action])) return;
+    if (btnEl) btnEl.disabled = true;
+
+    fetch(endpoints[action], {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: JSON.stringify({ user_id: userId })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (btnEl) btnEl.disabled = false;
+        if (!d.success) { alert(d.message || 'Something went wrong.'); return; }
+        var wrap = document.getElementById('friendBtnWrap-' + userId);
+        if (wrap) updateFriendBtn(wrap, d.status, userId);
+        if (action === 'accept' || action === 'decline') {
+            var card = document.getElementById('freq-' + userId);
+            if (card) { card.style.transition = 'opacity .3s'; card.style.opacity = '0'; setTimeout(function () { card.remove(); }, 300); }
+        }
+        if (typeof Swal !== 'undefined') Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true }).fire({ icon: 'success', title: d.message });
+    })
+    .catch(function () { if (btnEl) btnEl.disabled = false; alert('Network error.'); });
+}
+
+function suggestAction(action, userId, btnEl) {
+    var endpoint = action === 'send' ? '/friends/send' : '/friends/cancel';
+    if (action === 'cancel' && !confirm('Cancel this friend request?')) return;
+    if (btnEl) btnEl.disabled = true;
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: JSON.stringify({ user_id: userId })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (btnEl) btnEl.disabled = false;
+        if (!d.success) { alert(d.message || 'Error'); return; }
+        if (action === 'send') {
+            btnEl.style.background  = '#4f46e5';
+            btnEl.style.borderColor = '#4f46e5';
+            btnEl.style.color       = '#fff';
+            btnEl.innerHTML         = '<i class="bi bi-check-lg"></i>';
+            btnEl.title             = 'Cancel Request';
+            btnEl.onclick           = function () { suggestAction('cancel', userId, this); };
+        } else {
+            btnEl.style.background  = '';
+            btnEl.style.borderColor = '';
+            btnEl.style.color       = '';
+            btnEl.innerHTML         = '<i class="bi bi-person-plus"></i>';
+            btnEl.title             = 'Add Friend';
+            btnEl.onclick           = function () { suggestAction('send', userId, this); };
+        }
+        if (typeof Swal !== 'undefined') Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true }).fire({ icon: 'success', title: d.message });
+    })
+    .catch(function () { if (btnEl) btnEl.disabled = false; alert('Network error.'); });
+}
+
+function updateFriendBtn(wrap, status, userId) {
+    var btns = {
+        none:             '<button class="bb-friend-btn bb-friend-add" onclick="friendAction(\'send\',' + userId + ',this)"><i class="bi bi-person-plus-fill"></i> Add Friend</button>',
+        pending_sent:     '<button class="bb-friend-btn bb-friend-pending" onclick="friendAction(\'cancel\',' + userId + ',this)"><i class="bi bi-person-check-fill"></i> Request Sent <span class="bb-friend-cancel-hint">· Cancel</span></button>',
+        pending_received: '<button class="bb-friend-btn bb-friend-accept" onclick="friendAction(\'accept\',' + userId + ',this)"><i class="bi bi-check-lg"></i> Accept</button>'
+                        + '<button class="bb-friend-btn bb-friend-decline" onclick="friendAction(\'decline\',' + userId + ',this)"><i class="bi bi-x-lg"></i> Decline</button>',
+        accepted:         '<div class="dropdown d-inline-block"><button class="bb-friend-btn bb-friend-already dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-people-fill"></i> Friends</button>'
+                        + '<ul class="dropdown-menu shadow border-0 rounded-3">'
+                        + '<li><button class="dropdown-item text-danger py-2" onclick="friendAction(\'unfriend\',' + userId + ',this)"><i class="bi bi-person-x me-2"></i> Unfriend</button></li>'
+                        + '<li><button class="dropdown-item py-2" onclick="friendAction(\'block\',' + userId + ',this)"><i class="bi bi-slash-circle me-2"></i> Block</button></li>'
+                        + '</ul></div>',
+        blocked:          '<button class="bb-friend-btn bb-friend-blocked" onclick="friendAction(\'unblock\',' + userId + ',this)"><i class="bi bi-slash-circle"></i> Blocked · Unblock</button>'
+    };
+    if (btns[status]) wrap.innerHTML = btns[status];
+}
+
+
+// ============================================================
+// SECTION 16: ACTIVE NOW
+// ============================================================
+function refreshActiveNow() {
+    fetch('/active-now', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        // শুধু তখনই update করো যখন html আছে এবং empty নয়
+        if (d.html !== undefined && d.html !== null && d.html.trim() !== '') {
+            var z = document.getElementById('activeNowZone');
+            if (z) z.innerHTML = d.html;
+        }
+        // html empty হলে existing content রাখো — blank করবে না
+    })
+    .catch(function () {
+        // network error হলেও existing content রাখো
+    });
+}
+
+// Page load এ ৫ সেকেন্ড delay — Blade render content কে সাথে সাথে overwrite করবে না
+// User কে আগে initial content দেখাবে, তারপর refresh হবে
+setTimeout(function () {
+    refreshActiveNow();
+}, 5000);
+
+setInterval(refreshActiveNow, 30000);
+
+
+// ============================================================
+// SECTION 17: NOTIFICATIONS
+// ============================================================
+
+var notifOpen    = false;
+var notifLoaded  = false;
+var lastNotifCount = 0;
+ 
+function toggleNotifDropdown() {
+    var drop = document.getElementById('notifDropdown');
+    notifOpen = !notifOpen;
+    drop.style.display = notifOpen ? 'block' : 'none';
+ 
+    if (notifOpen) {
+        loadNotifications();
+        updateBadge(0); // dropdown açılınca badge sıfırla
+    }
+}
+ 
+function loadNotifications() {
+    var list = document.getElementById('notifList');
+    list.innerHTML = '<div style="padding:32px 16px;text-align:center;color:#9ca3af;font-size:13px;">'
+        + '<i class="bi bi-arrow-clockwise" style="font-size:20px;display:block;margin-bottom:6px;"></i>Loading…</div>';
+ 
+    fetch('/notifications', {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        list.innerHTML = d.html;
+    })
+    .catch(function () {
+        list.innerHTML = '<div style="padding:24px;text-align:center;color:#9ca3af;font-size:13px;">Could not load notifications.</div>';
+    });
+}
+ 
+function markAllRead() {
+    fetch('/notifications/read-all', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(function () {
+        // DOM এ unread highlight সরিয়ে দাও
+        document.querySelectorAll('#notifList a').forEach(function (el) {
+            if (el.style.background === 'rgb(238, 242, 255)' || el.style.background === '#eef2ff') {
+                el.style.background = '#fff';
+            }
+        });
+        // Blue unread dot গুলো সরাও
+        document.querySelectorAll('#notifList span[style*="background:#2563eb"]').forEach(function (el) {
+            el.remove();
+        });
+        updateBadge(0);
+    });
+}
+ 
+function updateBadge(count) {
+    var badge = document.getElementById('notifBadge');
+    var bell  = document.getElementById('notifBellBtn');
+    lastNotifCount = count;
+ 
+    if (count > 0) {
+        badge.textContent   = count > 99 ? '99+' : count;
+        badge.style.display = 'block';
+        // Bell shake
+        if (bell) {
+            bell.classList.add('bell-shake');
+            setTimeout(function () { bell.classList.remove('bell-shake'); }, 600);
+        }
+    } else {
+        badge.style.display = 'none';
+    }
+}
+ 
+// Click outside → close
+document.addEventListener('click', function (e) {
+    var wrap = document.getElementById('notifWrap');
+    if (wrap && !wrap.contains(e.target) && notifOpen) {
+        document.getElementById('notifDropdown').style.display = 'none';
+        notifOpen = false;
+    }
+});
+ 
+// Poll every 15s
+function pollNotifications() {
+    fetch('/notifications/poll', {
+        headers: { 'Accept': 'application/json' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        var newCount = d.count || 0;
+        // নতুন notification এলে dropdown open থাকলে reload
+        if (newCount > lastNotifCount && notifOpen) {
+            loadNotifications();
+        }
+        updateBadge(newCount);
+    })
+    .catch(function () {});
+}
+ 
+// Page load এ একবার
+pollNotifications();
+setInterval(pollNotifications, 15000);
+
+
+// ============================================================
+// SECTION 18: MUTUAL FRIENDS MODAL
+// ============================================================
+function showMutualFriends(userId, name) {
+    if (!_mutualModal) return;
+    document.getElementById('mutualModalTitle').textContent  = 'Mutual Friends with ' + name;
+    document.getElementById('mutualModalBody').innerHTML     = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+    _mutualModal.show();
+
+    fetch('/friends/' + userId + '/mutual', { headers: { 'Accept': 'application/json' } })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (!d.mutuals || !d.mutuals.length) {
+            document.getElementById('mutualModalBody').innerHTML = '<p class="text-muted text-center small py-2">No mutual friends found.</p>';
+            return;
+        }
+        var html = '';
+        d.mutuals.forEach(function (m) {
+            var pic = m.profile_picture
+                ? '<img src="/storage/' + m.profile_picture + '" style="width:100%;height:100%;object-fit:cover;">'
+                : m.name.charAt(0).toUpperCase();
+            html += '<a href="/profile/' + m.id + '" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f8;text-decoration:none;">'
+                  + '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;overflow:hidden;flex-shrink:0;">' + pic + '</div>'
+                  + '<div><div style="font-size:13.5px;font-weight:700;color:#1e1f24;">' + m.name + '</div>'
+                  + '<div style="font-size:11.5px;color:#6b7280;">' + (m.department || m.role) + '</div></div>'
+                  + '</a>';
+        });
+        document.getElementById('mutualModalBody').innerHTML = html;
+    });
+}
+
+
+// ============================================================
+// SECTION 19: REPORT
+// ============================================================
+function openReport(type, id, name) {
+    if (!_reportModal) return;
+    document.getElementById('rType').value = type;
+    document.getElementById('rId').value   = id;
+    document.getElementById('rTargetName').textContent = name || '';
+    document.getElementById('rReason').value = '';
+    document.getElementById('rReasons').classList.remove('d-none');
+    document.getElementById('rDetailsSection').classList.add('d-none');
+    _reportModal.show();
+}
+
+function rSelectReason(r) {
+    document.getElementById('rReason').value = r;
+    document.getElementById('rReasons').classList.add('d-none');
+    document.getElementById('rDetailsSection').classList.remove('d-none');
+}
+
+function rSubmit() {
+    fetch('/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: JSON.stringify({
+            type:    document.getElementById('rType').value,
+            id:      document.getElementById('rId').value,
+            reason:  document.getElementById('rReason').value,
+            details: document.getElementById('rDetails').value
+        })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (_reportModal) _reportModal.hide();
+        Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2500, timerProgressBar: true })
+            .fire({ icon: d.success ? 'success' : 'warning', title: d.message });
+    });
+}
+
+
+// ============================================================
+// SECTION 20: CHAT BOX
+// ============================================================
+var openChatBoxes = {};
+
+function openChatBox(userId, name, pic, lastSeen, isOnline) {
+    if (openChatBoxes[userId]) { openChatBoxes[userId].classList.remove('minimized'); return; }
+
+    var container     = document.getElementById('chatBoxesContainer');
+    var box           = document.createElement('div');
+    box.className     = 'bb-chat-box';
+    box.id            = 'chatbox-' + userId;
+
+    var avatarContent = pic ? '<img src="' + pic + '">' : name.charAt(0).toUpperCase();
+    var onlineDot     = isOnline === '1' ? '<span class="bb-chat-online-dot"></span>' : '';
+    var statusText    = isOnline === '1' ? '<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> Active now' : lastSeen;
+
+    box.innerHTML = '<div class="bb-chat-head" onclick="toggleChatMinimize(' + userId + ')">'
+        + '<div class="bb-chat-head-avatar">' + avatarContent + onlineDot + '</div>'
+        + '<div class="bb-chat-head-info"><p class="bb-chat-head-name">' + escHtml(name) + '</p><p class="bb-chat-head-status">' + statusText + '</p></div>'
+        + '<div class="bb-chat-head-actions" onclick="event.stopPropagation()">'
+        + '<a href="/profile/' + userId + '" class="bb-chat-head-btn" target="_blank"><i class="bi bi-person-fill" style="font-size:13px;"></i></a>'
+        + '<button class="bb-chat-head-btn" onclick="toggleChatMinimize(' + userId + ')"><i class="bi bi-dash-lg"></i></button>'
+        + '<button class="bb-chat-head-btn" onclick="closeChatBox(' + userId + ')"><i class="bi bi-x-lg"></i></button>'
+        + '</div></div>'
+        + '<div class="bb-chat-search"><input type="text" class="bb-chat-search-input" placeholder="Search in conversation..." oninput="filterChatMessages(' + userId + ',this.value)"></div>'
+        + '<div class="bb-chat-messages" id="chatmsg-' + userId + '">'
+        + '<div class="bb-chat-no-msg"><i class="bi bi-chat-dots" style="font-size:2rem;display:block;margin-bottom:8px;color:#d1d5db;"></i>Start a conversation with ' + escHtml(name) + '</div>'
+        + '</div>'
+        + '<div class="bb-chat-footer">'
+        + '<button class="bb-chat-attach-btn" title="Photo/video" onclick="triggerChatAttach(' + userId + ')"><i class="bi bi-images"></i></button>'
+        + '<button class="bb-chat-attach-btn" title="File" onclick="triggerChatFile(' + userId + ')"><i class="bi bi-paperclip"></i></button>'
+        + '<input type="file" id="chatattach-' + userId + '" class="d-none" multiple accept="image/*,video/*" onchange="handleChatAttach(' + userId + ',this)">'
+        + '<input type="file" id="chatfile-' + userId + '" class="d-none" onchange="handleChatFile(' + userId + ',this)">'
+        + '<textarea class="bb-chat-input" id="chatinput-' + userId + '" placeholder="Aa" rows="1"'
+        + ' onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendChatMsg(' + userId + ');}"'
+        + ' oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,80)+\'px\'"></textarea>'
+        + '<button class="bb-chat-head-btn" style="background:transparent;border:none;color:#6b7280;font-size:17px;cursor:pointer;" title="Emoji" onclick="toggleChatEmoji(' + userId + ')"><i class="bi bi-emoji-smile"></i></button>'
+        + '<button class="bb-chat-send-btn" onclick="sendChatMsg(' + userId + ')"><i class="bi bi-send-fill" style="font-size:13px;"></i></button>'
+        + '</div>';
+
+    container.appendChild(box);
+    openChatBoxes[userId] = box;
+    setTimeout(function () { document.getElementById('chatinput-' + userId)?.focus(); }, 100);
+}
+
+function toggleChatMinimize(userId) { openChatBoxes[userId]?.classList.toggle('minimized'); }
+function closeChatBox(userId)        { openChatBoxes[userId]?.remove(); delete openChatBoxes[userId]; }
+
+function sendChatMsg(userId) {
+    var input = document.getElementById('chatinput-' + userId);
+    if (!input) return;
+    var text = input.value.trim();
+    if (!text) return;
+    appendChatMsg(userId, text, true);
+    input.value  = '';
+    input.style.height = 'auto';
+}
+
+function appendChatMsg(userId, text, isMine) {
+    var zone = document.getElementById('chatmsg-' + userId);
+    if (!zone) return;
+    zone.querySelector('.bb-chat-no-msg')?.remove();
+    var div       = document.createElement('div');
+    div.className = 'bb-chat-msg ' + (isMine ? 'mine' : 'theirs');
+    div.textContent = text;
+    zone.appendChild(div);
+    zone.scrollTop = zone.scrollHeight;
+}
+
+function filterChatMessages(userId, q) {
+    document.getElementById('chatmsg-' + userId)?.querySelectorAll('.bb-chat-msg').forEach(function (m) {
+        m.style.display = !q || m.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+    });
+}
+
+function triggerChatAttach(userId) { document.getElementById('chatattach-' + userId)?.click(); }
+function triggerChatFile(userId)   { document.getElementById('chatfile-' + userId)?.click(); }
+
+function handleChatAttach(userId, input) {
+    Array.from(input.files).forEach(function (f) {
+        if (f.type.startsWith('video/') && f.size > 25 * 1024 * 1024) {
+            Swal.fire({ icon: 'warning', title: 'Video too large!', text: 'Max 25MB.' });
+            input.value = ''; return;
+        }
+        appendChatMsg(userId, '📎 ' + f.name, true);
+    });
+    input.value = '';
+}
+
+function handleChatFile(userId, input) {
+    var f = input.files[0];
+    if (!f) return;
+    appendChatMsg(userId, '📄 ' + f.name, true);
+    input.value = '';
+}
+
+function toggleChatEmoji(userId) { /* emoji picker integration */ }
+
+function escHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+
+// ============================================================
+// SECTION 21: LIVE SEARCH
+// ============================================================
+(function () {
+    var input    = document.getElementById('bbLiveSearch');
+    var dropdown = document.getElementById('bbSearchDropdown');
+    if (!input || !dropdown) return;
+
+    var timer = null, activeIdx = -1;
+
+    input.addEventListener('focus', function () {
+        if (this.value.trim().length < 2) showRecent();
+    });
+
+    input.addEventListener('input', function () {
+        clearTimeout(timer);
+        var q = this.value.trim();
+        if (q.length < 2) { showRecent(); return; }
+        dropdown.innerHTML = '<div class="bb-sd-spinner"><i class="bi bi-search me-1"></i> Searching...</div>';
+        dropdown.classList.add('show');
+        timer = setTimeout(function () { doSearch(q); }, 320);
+    });
+
+    input.addEventListener('keydown', function (e) {
+        var items = dropdown.querySelectorAll('.bb-sd-item');
+        if (e.key === 'ArrowDown')  { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1); hl(items); }
+        else if (e.key === 'ArrowUp')   { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); hl(items); }
+        else if (e.key === 'Enter')  { e.preventDefault(); if (activeIdx >= 0 && items[activeIdx]) items[activeIdx].click(); else go(); }
+        else if (e.key === 'Escape') { close(); input.blur(); }
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) close();
+    });
+
+    function close()   { dropdown.classList.remove('show'); dropdown.innerHTML = ''; activeIdx = -1; }
+    function go()      { var q = input.value.trim(); if (q) window.location.href = '/search?q=' + encodeURIComponent(q); }
+    function hl(items) { items.forEach(function (el, i) { el.classList.toggle('active', i === activeIdx); }); }
+
+    function showRecent() {
+        fetch('/search/recent', { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (!d.searches || !d.searches.length) { close(); return; }
+            var html = '<div class="bb-sd-label" style="display:flex;align-items:center;justify-content:space-between;"><span>Recent Searches</span>'
+                     + '<button onclick="clearAllRecent(event)" style="font-size:11px;font-weight:600;color:#4f46e5;border:none;background:transparent;cursor:pointer;padding:0;">Clear all</button></div>';
+            d.searches.forEach(function (s) {
+                html += '<div class="bb-sd-item" onclick="window.location.href=\'/search?q=' + encodeURIComponent(s.query) + '\'">'
+                      + '<div class="bb-sd-avatar" style="background:#f3f4f8;color:#6b7280;font-size:16px;"><i class="bi bi-clock-history"></i></div>'
+                      + '<div class="bb-sd-info"><div class="bb-sd-name">' + esc(s.query) + '</div></div>'
+                      + '<button onclick="deleteRecent(event,' + s.id + ')" style="border:none;background:transparent;color:#9ca3af;cursor:pointer;padding:2px 6px;border-radius:6px;" title="Remove"><i class="bi bi-x-lg" style="font-size:11px;"></i></button>'
+                      + '</div>';
+            });
+            dropdown.innerHTML = html;
+            dropdown.classList.add('show');
+        })
+        .catch(function () { close(); });
+    }
+
+    window.deleteRecent = function (e, id) {
+        e.stopPropagation();
+        fetch('/search/recent/' + id, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } })
+        .then(function () { showRecent(); });
+    };
+    window.clearAllRecent = function (e) {
+        e.stopPropagation();
+        fetch('/search/recent', { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } })
+        .then(function () { close(); });
+    };
+
+    function doSearch(q) {
+        fetch('/search/live?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function (r) { return r.json(); })
+        .then(function (data) { render(data.results || [], q); })
+        .catch(function () { dropdown.innerHTML = '<div class="bb-sd-empty">Something went wrong.</div>'; });
+    }
+
+    function render(results, q) {
+        activeIdx = -1;
+        if (!results.length) { dropdown.innerHTML = '<div class="bb-sd-empty"><i class="bi bi-search me-1"></i> No results for "' + esc(q) + '"</div>'; return; }
+        var html = '<div class="bb-sd-label">People</div>';
+        results.forEach(function (r) {
+            var av  = r.avatar ? '<img src="' + esc(r.avatar) + '" alt="">' : esc(r.initial || 'U');
+            var top = r.topic ? '<div class="bb-sd-topic"><i class="bi bi-journal-text"></i> ' + esc(r.topic.substring(0, 55)) + (r.topic.length > 55 ? '…' : '') + '</div>' : '';
+            html += '<a href="/search?q=' + encodeURIComponent(r.name) + '" class="bb-sd-item">'
+                  + '<div class="bb-sd-avatar">' + av + '</div>'
+                  + '<div class="bb-sd-info"><div class="bb-sd-name">' + hlq(esc(r.name), q) + '</div>'
+                  + (r.sub ? '<div class="bb-sd-sub">' + esc(r.sub) + '</div>' : '') + top + '</div>'
+                  + '<span class="bb-sd-rolechip bb-sd-' + r.role + '">' + esc(r.role_label || r.role) + '</span>'
+                  + '</a>';
+        });
+        html += '<a href="/search?q=' + encodeURIComponent(q) + '" class="bb-sd-footer"><i class="bi bi-search me-1"></i> See all results for "' + esc(q) + '"</a>';
+        dropdown.innerHTML = html;
+        dropdown.classList.add('show');
+    }
+
+    function hlq(text, q) {
+        if (!q) return text;
+        return text.replace(new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark style="background:#dbeafe;padding:0 2px;border-radius:2px;">$1</mark>');
+    }
+    function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+})();
+
+// ============================================================
+// SECTION 23: EMOJI PICKER
+// ============================================================
+(function () {
+    var popover = document.getElementById('bbEmojiPopover');
+    var picker  = popover.querySelector('emoji-picker');
+    var currentTarget = null;
+
+    picker.addEventListener('emoji-click', function (e) {
+        var emoji = e.detail.unicode;
+        if (!currentTarget) return;
+        var el    = currentTarget;
+        var start = el.selectionStart != null ? el.selectionStart : el.value.length;
+        var end   = el.selectionEnd   != null ? el.selectionEnd   : el.value.length;
+        el.value  = el.value.slice(0, start) + emoji + el.value.slice(end);
+        var pos   = start + emoji.length;
+        el.focus();
+        try { el.setSelectionRange(pos, pos); } catch (err) {}
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    document.addEventListener('click', function (ev) {
+        var btn = ev.target.closest('.bb-emoji-btn');
+        if (btn) {
+            ev.preventDefault();
+            var target = document.querySelector(btn.getAttribute('data-target'));
+            if (!target) return;
+            if (popover.style.display === 'block' && currentTarget === target) {
+                popover.style.display = 'none'; currentTarget = null; return;
+            }
+            currentTarget = target;
+            var r    = btn.getBoundingClientRect();
+            popover.style.display = 'block';
+            var top  = r.bottom + window.scrollY + 6;
+            if (r.bottom + 350 > window.innerHeight) top = r.top + window.scrollY - 350 - 6;
+            var left = r.left + window.scrollX - 150;
+            if (left < 8) left = 8;
+            if (left + 320 > window.innerWidth) left = window.innerWidth - 328;
+            popover.style.top  = top  + 'px';
+            popover.style.left = left + 'px';
+            return;
+        }
+        if (popover.style.display === 'block' && !popover.contains(ev.target)) {
+            popover.style.display = 'none'; currentTarget = null;
+        }
+    });
+})();
+
+
+// ============================================================
+// SECTION 24: PRIVACY HELPERS
+// ============================================================
+function setPrivacy(value, iconClass, label) {
+    document.getElementById('privacyInput').value = value;
+    document.getElementById('privacyLabel').textContent = label;
+    var btn = document.getElementById('privacyBtn');
+    if (btn) btn.querySelector('i').className = 'bi ' + iconClass + ' me-1';
+}
+
+function setEditPrivacy(value, iconClass, label) {
+    document.getElementById('editPrivacyInput').value = value;
+    if (label) document.getElementById('editPrivacyLabel').textContent = label;
+    var btn = document.getElementById('editPrivacyBtn');
+    if (btn && iconClass) btn.querySelector('i').className = 'bi ' + iconClass + ' me-1';
+}
 </script>
+{{-- UPDATE MAIN JS DATA END --}}
+
 </body>
 </html>

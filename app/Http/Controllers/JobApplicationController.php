@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use App\Models\JobPost;
 use App\Models\JobApplication;
+use App\Models\BbNotification;
 
 class JobApplicationController extends Controller
 {
@@ -15,7 +17,7 @@ class JobApplicationController extends Controller
     // ==========================================
     public function apply(Request $request, $jobId)
     {
-        $job = JobPost::findOrFail($jobId);
+        $job  = JobPost::findOrFail($jobId);
         $user = Auth::user();
 
         // নিজের পোস্ট করা job এ নিজে apply করা যাবে না
@@ -48,11 +50,21 @@ class JobApplicationController extends Controller
                 'applied_at'      => now(),
             ]);
 
+            // Job poster কে notification
+            BbNotification::send(
+                $job->user_id,
+                Auth::id(),
+                'job_apply',
+                Auth::user()->name . ' applied to your job: ' . Str::limit($job->title, 50),
+                'job',
+                $job->id
+            );
+
             return response()->json([
-                'success'  => true,
-                'message'  => 'Application tracked! Continue on the company site.',
-                'method'   => 'external',
-                'app_id'   => $application->id,
+                'success' => true,
+                'message' => 'Application tracked! Continue on the company site.',
+                'method'  => 'external',
+                'app_id'  => $application->id,
             ]);
         }
 
@@ -63,7 +75,7 @@ class JobApplicationController extends Controller
                 'applicant_email' => 'required|email:rfc|max:255',
                 'phone'           => 'nullable|string|max:30',
                 'cover_note'      => 'nullable|string|max:2000',
-                'resume'          => 'nullable|file|mimes:pdf,doc,docx|max:5120', // 5MB
+                'resume'          => 'nullable|file|mimes:pdf,doc,docx|max:5120',
             ], [
                 'resume.mimes' => 'Resume must be a PDF or Word file.',
                 'resume.max'   => 'Resume cannot exceed 5MB.',
@@ -90,6 +102,16 @@ class JobApplicationController extends Controller
             'applied_at'      => now(),
         ]);
 
+        // Job poster কে notification
+        BbNotification::send(
+            $job->user_id,
+            Auth::id(),
+            'job_apply',
+            Auth::user()->name . ' applied to your job: ' . Str::limit($job->title, 50),
+            'job',
+            $job->id
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Application submitted successfully!',
@@ -105,12 +127,11 @@ class JobApplicationController extends Controller
     {
         $user = Auth::user();
 
-        // আগে application বের করি, তারপর গার্ড চেক করি
         $application = JobApplication::where('user_id', $user->id)
             ->where('job_post_id', $jobId)
             ->firstOrFail();
 
-        // External apply withdraw করা যায় না — Borobhai প্রতিষ্ঠানে কিছু submit করেনি, শুধু track
+        // External apply withdraw করা যায় না
         if ($application->apply_method === 'external') {
             return response()->json([
                 'success' => false,
@@ -144,11 +165,9 @@ class JobApplicationController extends Controller
         $user = Auth::user();
 
         $query = JobApplication::with(['jobPost' => function ($q) {
-                $q->withTrashed(); // auto-deleted (archived) job ও দেখাবে
-            }])
-            ->where('user_id', $user->id);
+            $q->withTrashed();
+        }])->where('user_id', $user->id);
 
-        // search — job title বা company দিয়ে (archived job ও মিলবে)
         $search = trim((string) $request->input('q', ''));
         if ($search !== '') {
             $query->whereHas('jobPost', function ($q) use ($search) {
@@ -160,19 +179,14 @@ class JobApplicationController extends Controller
             });
         }
 
-        // filter
         $filter = $request->input('filter');
         if ($filter && in_array($filter, ['pending', 'reviewed', 'shortlisted', 'accepted', 'rejected'])) {
             $query->where('status', $filter);
         }
 
-        // pagination (search/filter সহ পেজ লিংকে থাকবে)
-        $applications = $query->latest('applied_at')
-            ->paginate(10)
-            ->withQueryString();
+        $applications = $query->latest('applied_at')->paginate(10)->withQueryString();
 
-        // stats (সবসময় পুরো হিসাব — search/filter এর বাইরে)
-        $all = JobApplication::where('user_id', $user->id)->get();
+        $all   = JobApplication::where('user_id', $user->id)->get();
         $stats = [
             'total'       => $all->count(),
             'pending'     => $all->whereIn('status', ['pending', 'reviewed'])->count(),
@@ -184,22 +198,19 @@ class JobApplicationController extends Controller
     }
 
     // ==========================================
-    // Alumni — নিজের job এ যারা আবেদন করেছে (search + filter + pagination)
+    // Alumni — নিজের job এ যারা আবেদন করেছে
     // ==========================================
     public function applicants(Request $request, $jobId)
     {
         $job = JobPost::withTrashed()->findOrFail($jobId);
 
-        // শুধু job এর মালিক দেখতে পারবে
         if ($job->user_id !== Auth::id()) {
             abort(403);
         }
 
-        // আবেদনকারীদের query (search/filter/pagination এর জন্য আলাদা)
-        $query = $job->applications()->with('user');
-
-        // search — আবেদনকারীর নাম বা ইমেইল দিয়ে
+        $query  = $job->applications()->with('user');
         $search = trim((string) $request->input('q', ''));
+
         if ($search !== '') {
             $query->where(function ($qq) use ($search) {
                 $qq->where('applicant_name', 'like', "%{$search}%")
@@ -207,15 +218,12 @@ class JobApplicationController extends Controller
             });
         }
 
-        // filter — status অনুযায়ী
         $filter = $request->input('status');
         if ($filter && in_array($filter, ['pending', 'reviewed', 'shortlisted', 'accepted', 'rejected'])) {
             $query->where('status', $filter);
         }
 
         $applicants = $query->latest('applied_at')->paginate(10)->withQueryString();
-
-        // মোট সংখ্যা (filter এর বাইরে — header এ দেখানোর জন্য)
         $totalCount = $job->applications()->count();
 
         return view('jobs.applicants', compact('job', 'applicants', 'search', 'filter', 'totalCount'));
@@ -228,12 +236,11 @@ class JobApplicationController extends Controller
     {
         $application = JobApplication::with(['jobPost' => fn($q) => $q->withTrashed()])->findOrFail($appId);
 
-        // শুধু job এর মালিক
         if (!$application->jobPost || $application->jobPost->user_id !== Auth::id()) {
             abort(403);
         }
 
-        // External apply এর status alumni বদলাতে পারবে না — প্রতিষ্ঠান নিজের সিস্টেমে handle করে
+        // External apply এর status alumni বদলাতে পারবে না
         if ($application->apply_method === 'external') {
             return response()->json([
                 'success' => false,
@@ -247,6 +254,16 @@ class JobApplicationController extends Controller
 
         $application->status = $data['status'];
         $application->save();
+
+        // Applicant কে status change notification
+        BbNotification::send(
+            $application->user_id,
+            Auth::id(),
+            'job_status',
+            'Your application for "' . Str::limit($application->jobPost->title, 40) . '" status changed to: ' . ucfirst($data['status']) . '.',
+            'job',
+            $application->job_post_id
+        );
 
         return response()->json([
             'success'     => true,

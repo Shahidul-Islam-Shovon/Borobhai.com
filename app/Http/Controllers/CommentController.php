@@ -6,6 +6,8 @@ use App\Models\Post;
 use App\Models\Comment;
 use App\Models\CommentLike;
 use Illuminate\Http\Request;
+use App\Models\BbNotification;
+use Illuminate\Support\Facades\Auth;
 
 class CommentController extends Controller
 {
@@ -25,6 +27,31 @@ class CommentController extends Controller
             'parent_id' => $request->parent_id ?: null,
         ]);
 
+        // Post owner কে notification (নিজের post এ comment করলে skip হবে)
+        BbNotification::send(
+            $post->user_id,
+            Auth::id(),
+            'post_comment',
+            Auth::user()->name . ' commented on your post.',
+            'post',
+            $post->id
+        );
+
+        // Reply হলে parent comment owner কেও notification
+        if ($request->parent_id) {
+            $parentComment = Comment::find($request->parent_id);
+            if ($parentComment && $parentComment->user_id !== Auth::id()) {
+                BbNotification::send(
+                    $parentComment->user_id,
+                    Auth::id(),
+                    'comment_reply',
+                    Auth::user()->name . ' replied to your comment.',
+                    'post',
+                    $post->id
+                );
+            }
+        }
+
         // মোট কমেন্ট = মূল কমেন্ট + reply (সব)
         $totalCount = $post->comments()->count();
 
@@ -37,7 +64,7 @@ class CommentController extends Controller
             'comment_count' => $totalCount,
             'created_at'    => $comment->created_at->diffForHumans(),
             'user_initial'  => strtoupper(substr($comment->user->name, 0, 1)),
-            'user_picture'  => auth()->user()->profile_picture ? asset('storage/'.auth()->user()->profile_picture) : null,
+            'user_picture'  => auth()->user()->profile_picture ? asset('storage/' . auth()->user()->profile_picture) : null,
         ]);
     }
 
@@ -46,7 +73,7 @@ class CommentController extends Controller
     // ==========================================
     public function toggleLike(Comment $comment)
     {
-        $userId = auth()->id();
+        $userId   = auth()->id();
         $existing = CommentLike::where('comment_id', $comment->id)->where('user_id', $userId)->first();
 
         if ($existing) {
@@ -55,6 +82,16 @@ class CommentController extends Controller
         } else {
             CommentLike::create(['comment_id' => $comment->id, 'user_id' => $userId]);
             $liked = true;
+
+            // Comment owner কে notification
+            BbNotification::send(
+                $comment->user_id,
+                Auth::id(),
+                'comment_like',
+                Auth::user()->name . ' liked your comment.',
+                'post',
+                $comment->post_id
+            );
         }
 
         return response()->json([
@@ -73,12 +110,12 @@ class CommentController extends Controller
 
         // শুধু মূল কমেন্ট (parent_id null), সর্বশেষ আগে
         $comments = Comment::where('post_id', $postId)
-                        ->whereNull('parent_id')
-                        ->with(['user', 'likes', 'replies.user', 'replies.likes'])
-                        ->latest()
-                        ->skip($offset)
-                        ->take(10)
-                        ->get();
+            ->whereNull('parent_id')
+            ->with(['user', 'likes', 'replies.user', 'replies.likes'])
+            ->latest()
+            ->skip($offset)
+            ->take(10)
+            ->get();
 
         // মোট মূল কমেন্ট (offset হিসাবের জন্য)
         $totalParents = Comment::where('post_id', $postId)->whereNull('parent_id')->count();
@@ -90,10 +127,10 @@ class CommentController extends Controller
         }
 
         return response()->json([
-            'success'    => true,
-            'html'       => $html,
-            'has_more'   => $loadedSoFar < $totalParents,
-            'next_offset'=> $loadedSoFar,
+            'success'     => true,
+            'html'        => $html,
+            'has_more'    => $loadedSoFar < $totalParents,
+            'next_offset' => $loadedSoFar,
         ]);
     }
 
@@ -126,7 +163,7 @@ class CommentController extends Controller
         }
 
         $post = $comment->post;
-        $comment->delete();  // reply গুলো cascade এ মুছবে
+        $comment->delete(); // reply গুলো cascade এ মুছবে
 
         return response()->json([
             'success'       => true,

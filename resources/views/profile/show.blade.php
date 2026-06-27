@@ -1530,10 +1530,25 @@
                             @endif
                         </div>
                         <div>
-                            <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
-                            <span class="badge bg-light text-muted border py-1 px-2" style="font-size:10px;">
-                                <i class="bi bi-globe-americas me-1"></i>Public
-                            </span>
+                            <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>                           
+                    <div class="dropdown mt-1">
+                        <button class="btn btn-light btn-sm border py-1 px-2 dropdown-toggle"
+                                style="font-size:11px;font-weight:600;"
+                                data-bs-toggle="dropdown" id="privacyBtn">
+                            <i class="bi bi-globe-americas text-primary me-1"></i>
+                            <span id="privacyLabel">Public</span>
+                        </button>
+                        <ul class="dropdown-menu shadow border-0 rounded-3" style="font-size:13px;min-width:160px;">
+                            <li><a class="dropdown-item py-2" href="#" onclick="setPrivacy('public','bi-globe-americas text-primary','Public')">
+                                <i class="bi bi-globe-americas text-primary me-2"></i> Public</a></li>
+                            <li><a class="dropdown-item py-2" href="#" onclick="setPrivacy('friends','bi-people-fill text-success','Friends')">
+                                <i class="bi bi-people-fill text-success me-2"></i> Friends</a></li>
+                            <li><a class="dropdown-item py-2" href="#" onclick="setPrivacy('only_me','bi-lock-fill text-warning','Only Me')">
+                                <i class="bi bi-lock-fill text-warning me-2"></i> Only Me</a></li>
+                        </ul>
+                    </div>
+                    <input type="hidden" name="privacy" id="privacyInput" value="public">
+                           
                         </div>
                     </div>
                     <div id="postInputWrapper" class="p-1 rounded bg-transparent">
@@ -1599,10 +1614,25 @@
                             @endif
                         </div>
                         <div>
-                            <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
-                            <span class="badge bg-light text-muted border py-1 px-2" style="font-size:10px;">
-                                <i class="bi bi-globe-americas me-1"></i>Public
-                            </span>
+                           <h6 class="m-0 fw-bold" style="font-size:14px;">{{ Auth::user()->name }}</h6>
+
+                            <div class="dropdown mt-1">
+                        <button class="btn btn-light btn-sm border py-1 px-2 dropdown-toggle"
+                                style="font-size:11px;font-weight:600;"
+                                data-bs-toggle="dropdown" id="editPrivacyBtn">
+                            <i class="bi bi-globe-americas text-primary me-1"></i>
+                            <span id="editPrivacyLabel">Public</span>
+                        </button>
+                        <ul class="dropdown-menu shadow border-0 rounded-3" style="font-size:13px;min-width:160px;">
+                            <li><a class="dropdown-item py-2" href="#" onclick="setEditPrivacy('public','bi-globe-americas text-primary','Public')">
+                                <i class="bi bi-globe-americas text-primary me-2"></i> Public</a></li>
+                            <li><a class="dropdown-item py-2" href="#" onclick="setEditPrivacy('friends','bi-people-fill text-success','Friends')">
+                                <i class="bi bi-people-fill text-success me-2"></i> Friends</a></li>
+                            <li><a class="dropdown-item py-2" href="#" onclick="setEditPrivacy('only_me','bi-lock-fill text-warning','Only Me')">
+                                <i class="bi bi-lock-fill text-warning me-2"></i> Only Me</a></li>
+                        </ul>
+                    </div>
+                    <input type="hidden" id="editPrivacyInput" value="public">
                         </div>
                     </div>
                     <div id="editPostInputWrapper" class="p-1 rounded bg-transparent mb-2">
@@ -1651,23 +1681,118 @@
 </div>
 
 {{-- Share Modal --}}
+{{-- ===== SHARE MODAL (Facebook Style) ===== --}}
 <div class="modal fade" id="fbShareModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-3 border-0 shadow">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold mx-auto" style="font-size:17px;">Share Post</h5>
-                <button type="button" class="btn-close ms-0" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-dialog-centered" style="max-width:500px;">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+ 
+            <div class="modal-header border-bottom py-3">
+                <h5 class="modal-title fw-bold mx-auto" style="font-size:17px;">Share</h5>
+                <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" onclick="resetShareModal()"></button>
             </div>
+ 
             <form id="fbShareForm">
-                <div class="modal-body">
+                <div class="modal-body p-0">
                     <input type="hidden" id="targetSharePostId">
-                    <textarea id="shareComment" class="form-control border-0 shadow-none ps-0" rows="2"
-                              placeholder="Say something..." style="resize:none;font-size:14px;"></textarea>
-                    <div id="modalPostPreview" class="p-3 border rounded bg-white text-start mt-2"></div>
+                    <input type="hidden" id="sharePostType" value="post"> {{-- post / job --}}
+ 
+                    {{-- User info + privacy --}}
+                    <div class="d-flex align-items-center gap-2 px-3 pt-3 pb-2">
+                        <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;">
+                            @if(Auth::user()->profile_picture)
+                                <img src="{{ asset('storage/'.Auth::user()->profile_picture) }}" style="width:100%;height:100%;object-fit:cover;">
+                            @else
+                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                            @endif
+                        </div>
+                        <div>
+                            <div style="font-size:14px;font-weight:700;color:#1e1f24;">{{ Auth::user()->name }}</div>
+                            <div class="d-flex align-items-center gap-1 mt-1">
+                                {{-- Feed button --}}
+                                <span style="font-size:11px;font-weight:600;background:#eef2ff;color:#4f46e5;padding:3px 10px;border-radius:20px;">
+                                    <i class="bi bi-house-door-fill me-1"></i>Feed
+                                </span>
+                                {{-- Privacy dropdown --}}
+                                <div class="dropdown">
+                                    <button class="btn btn-light btn-sm border py-1 px-2 dropdown-toggle"
+                                            style="font-size:11px;font-weight:600;"
+                                            data-bs-toggle="dropdown" id="sharePrivacyBtn">
+                                        <i class="bi bi-people-fill text-success me-1"></i>
+                                        <span id="sharePrivacyLabel">Friends</span>
+                                    </button>
+                                    <ul class="dropdown-menu shadow border-0 rounded-3" style="font-size:13px;min-width:160px;">
+                                        <li><a class="dropdown-item py-2" href="#" onclick="setSharePrivacy('public','bi-globe-americas text-primary','Public')">
+                                            <i class="bi bi-globe-americas text-primary me-2"></i> Public</a></li>
+                                        <li><a class="dropdown-item py-2" href="#" onclick="setSharePrivacy('friends','bi-people-fill text-success','Friends')">
+                                            <i class="bi bi-people-fill text-success me-2"></i> Friends</a></li>
+                                        <li><a class="dropdown-item py-2" href="#" onclick="setSharePrivacy('only_me','bi-lock-fill text-warning','Only Me')">
+                                            <i class="bi bi-lock-fill text-warning me-2"></i> Only Me</a></li>
+                                    </ul>
+                                </div>
+                                <input type="hidden" id="sharePrivacyInput" value="friends">
+                            </div>
+                        </div>
+                    </div>
+ 
+                    {{-- Caption textarea --}}
+                    <div class="px-3 pb-2">
+                        <textarea id="shareComment"
+                                  class="form-control border-0 shadow-none"
+                                  rows="3"
+                                  placeholder="Say something about this..."
+                                  style="resize:none;font-size:15px;padding:4px 0;"></textarea>
+                    </div>
+ 
+                    {{-- Post preview --}}
+                    <div id="modalPostPreview" class="mx-3 mb-3 border rounded-3 overflow-hidden bg-light" style="font-size:13px;"></div>
+ 
+                    <hr class="my-0">
+ 
+                    {{-- Send in Messenger --}}
+                    <div class="px-3 py-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span style="font-size:14px;font-weight:700;color:#1e1f24;">Send in Messenger</span>
+                            <button type="button" class="btn btn-light btn-sm rounded-circle" style="width:32px;height:32px;padding:0;" title="Search contacts">
+                                <i class="bi bi-search" style="font-size:13px;"></i>
+                            </button>
+                        </div>
+ 
+                        {{-- Friend circles for messenger --}}
+                        <div id="messengerContacts" class="d-flex gap-3 overflow-auto pb-2" style="scrollbar-width:none;">
+                            {{-- JS দিয়ে load হবে --}}
+                            <div class="text-center text-muted small py-2">
+                                <div class="spinner-border spinner-border-sm text-primary"></div>
+                            </div>
+                        </div>
+                    </div>
+ 
+                    <hr class="my-0">
+ 
+                    {{-- Share to options --}}
+                    <div class="px-3 py-2">
+                        <div style="font-size:14px;font-weight:700;color:#1e1f24;margin-bottom:10px;">Share to</div>
+ 
+                        {{-- Copy link --}}
+                        <button type="button" class="w-100 d-flex align-items-center gap-3 btn btn-light rounded-3 mb-2 p-3 text-start"
+                                onclick="copyPostLink()">
+                            <div style="width:40px;height:40px;border-radius:50%;background:#e4e6eb;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
+                                <i class="bi bi-link-45deg"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:14px;font-weight:700;color:#1e1f24;">Copy Link</div>
+                                <div style="font-size:12px;color:#6b7280;">Anyone with the link can view</div>
+                            </div>
+                        </button>
+                    </div>
+ 
                 </div>
-                <div class="modal-footer border-top-0 pt-0">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" onclick="closeShareModal()">Cancel</button>
-                    <button type="submit" id="shareSubmitBtn" class="btn btn-primary btn-sm px-4">Share Now</button>
+ 
+                {{-- Footer --}}
+                <div class="modal-footer border-top py-2 px-3">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" onclick="resetShareModal()">Cancel</button>
+                    <button type="submit" id="shareSubmitBtn" class="btn btn-primary px-4 fw-bold">
+                        <i class="bi bi-share-fill me-1"></i> Share Now
+                    </button>
                 </div>
             </form>
         </div>
@@ -2339,6 +2464,7 @@ document.getElementById('ajaxPostForm')?.addEventListener('submit', function (e)
     fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
     fd.append('content', content);
     fd.append('bg_color', bgColor);
+    fd.append('privacy', document.getElementById('privacyInput')?.value || 'public');
     captured.forEach(f => fd.append('media[]', f));
 
     const xhr = new XMLHttpRequest();
@@ -2473,67 +2599,231 @@ function deletePost(id) {
 // ==========================================
 // SHARE
 // ==========================================
-function openShareModal(postId) {
+
+
+// Share privacy
+function setSharePrivacy(value, iconClass, label) {
+    document.getElementById('sharePrivacyInput').value = value;
+    document.getElementById('sharePrivacyLabel').textContent = label;
+    const btn = document.getElementById('sharePrivacyBtn');
+    if (btn) btn.querySelector('i').className = 'bi ' + iconClass + ' me-1';
+}
+ 
+// Share modal open
+function openShareModal(postId, type = 'post') {
     document.getElementById('targetSharePostId').value = postId;
+    document.getElementById('sharePostType').value = type;
     document.getElementById('shareComment').value = '';
-    const card = document.getElementById(`postCard-${postId}`);
-    if (!card) return;
-    const author   = card.querySelector('.author-name-zone')?.innerText || 'User';
-    const avatar   = card.querySelector('.author-avatar-zone')?.innerHTML || 'U';
-    const colored  = card.getAttribute('data-bg-color');
-    const caption  = card.querySelector('.dynamic-caption')?.innerHTML || '';
-    const grid     = card.querySelector('.dynamic-media-container-zone');
-
-    let capHtml = `<div style="font-size:13px;"><p class="mb-0">${caption}</p></div>`;
-    if (colored && colored !== 'null' && colored !== '')
-        capHtml = `<div class="p-3 rounded text-center text-white fw-bold ${colored}" style="min-height:80px;font-size:16px;"><p class="mb-0">${caption}</p></div>`;
-
-    let gridHtml = '';
-    if (grid) {
-        const clone = grid.cloneNode(true);
-        clone.querySelectorAll('img,video').forEach(el => {
-            el.removeAttribute('onclick');
-            if (el.tagName === 'VIDEO') el.removeAttribute('controls');
-        });
-        gridHtml = `<div class="mt-2 rounded overflow-hidden">${clone.outerHTML}</div>`;
+ 
+    // Privacy reset
+    setSharePrivacy('friends', 'bi-people-fill text-success', 'Friends');
+ 
+    // Post preview
+    const card = document.getElementById(`postCard-${postId}`) || document.getElementById(`jobCard-${postId}`);
+    const preview = document.getElementById('modalPostPreview');
+    if (card && preview) {
+        if (type === 'job') {
+            // Job card preview
+            const title   = card.querySelector('.bb-jobcard-title')?.innerText || '';
+            const company = card.querySelector('.bb-jobcard-company')?.innerText || '';
+            const tag     = card.querySelector('.bb-jobcard-tag')?.innerText || '';
+            preview.innerHTML = `
+            <div class="p-3">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="bi bi-briefcase-fill text-primary"></i>
+                    <span style="font-size:13px;font-weight:700;">${title}</span>
+                </div>
+                <div style="font-size:12px;color:#6b7280;">${company}</div>
+                ${tag ? `<span style="font-size:11px;background:#eef2ff;color:#4f46e5;padding:2px 8px;border-radius:6px;font-weight:600;">${tag}</span>` : ''}
+            </div>`;
+        } else {
+            // Normal post preview
+            const author  = card.querySelector('.author-name-zone')?.innerText || 'User';
+            const avatar  = card.querySelector('.author-avatar-zone')?.innerHTML || '';
+            const colored = card.getAttribute('data-bg-color');
+            const caption = card.querySelector('.dynamic-caption')?.innerHTML || '';
+            const grid    = card.querySelector('.dynamic-media-container-zone');
+ 
+            let capHtml = `<p class="mb-0" style="font-size:13px;color:#374151;">${caption}</p>`;
+            if (colored && colored !== 'null' && colored !== '') {
+                capHtml = `<div class="p-3 rounded text-center text-white fw-bold ${colored}" style="min-height:70px;font-size:15px;"><p class="mb-0">${caption}</p></div>`;
+            }
+ 
+            let gridHtml = '';
+            if (grid) {
+                const clone = grid.cloneNode(true);
+                clone.querySelectorAll('img,video').forEach(el => {
+                    el.removeAttribute('onclick');
+                    if (el.tagName === 'VIDEO') el.removeAttribute('controls');
+                });
+                gridHtml = `<div class="overflow-hidden" style="max-height:200px;">${clone.outerHTML}</div>`;
+            }
+ 
+            preview.innerHTML = `
+            <div class="p-3 pb-2">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div style="width:28px;height:28px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">${avatar}</div>
+                    <span style="font-size:13px;font-weight:700;">${author}</span>
+                </div>
+                ${capHtml}
+            </div>
+            ${gridHtml}`;
+        }
     }
-
-    document.getElementById('modalPostPreview').innerHTML = `
-    <div class="d-flex align-items-center gap-2 mb-2">
-      <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:32px;height:32px;font-size:12px;">${avatar}</div>
-      <h6 class="m-0 fw-bold" style="font-size:13px;">${author}</h6>
-    </div>${capHtml}${gridHtml}`;
-
+ 
+    // Messenger contacts load
+    loadMessengerContacts();
+ 
     bootstrapShareModal?.show();
 }
-function closeShareModal() { bootstrapShareModal?.hide(); }
-
+ 
+function closeShareModal() {
+    bootstrapShareModal?.hide();
+    resetShareModal();
+}
+ 
+function resetShareModal() {
+    document.getElementById('shareComment').value = '';
+    setSharePrivacy('friends', 'bi-people-fill text-success', 'Friends');
+}
+ 
+// Messenger contacts (friends list)
+function loadMessengerContacts() {
+    const zone = document.getElementById('messengerContacts');
+    if (!zone) return;
+ 
+    zone.innerHTML = '<div class="text-center text-muted small py-2"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+ 
+    fetch('/friends/messenger-contacts', {
+        headers: { 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.contacts || !d.contacts.length) {
+            zone.innerHTML = '<div class="text-muted small py-2">No friends yet</div>';
+            return;
+        }
+        let html = '';
+        d.contacts.forEach(c => {
+            const pic = c.profile_picture
+                ? `<img src="/storage/${c.profile_picture}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+                : `<span style="font-size:16px;font-weight:700;">${c.name.charAt(0).toUpperCase()}</span>`;
+            html += `
+            <div class="text-center flex-shrink-0" style="cursor:pointer;width:64px;" onclick="sendToMessenger(${c.id}, '${c.name.replace(/'/g,"\\'")}')">
+                <div style="width:52px;height:52px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">
+                    ${pic}
+                </div>
+                <div style="font-size:11px;font-weight:600;color:#1e1f24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name.split(' ')[0]}</div>
+            </div>`;
+        });
+        zone.innerHTML = html;
+    })
+    .catch(() => {
+        zone.innerHTML = '<div class="text-muted small py-2">Could not load contacts</div>';
+    });
+}
+ 
+// Send to messenger (chat box open)
+function sendToMessenger(userId, name) {
+    const postId = document.getElementById('targetSharePostId').value;
+    const type   = document.getElementById('sharePostType').value;
+ 
+    // Chat box open করি
+    if (typeof openChatBox === 'function') {
+        openChatBox(userId, name, '', '', '0');
+        // message pre-fill
+        setTimeout(() => {
+            const input = document.getElementById('chatinput-' + userId);
+            if (input) {
+                const link = window.location.origin + (type === 'job' ? '/jobs/' + postId : '/#postCard-' + postId);
+                input.value = '📎 Check this out: ' + link;
+                input.dispatchEvent(new Event('input'));
+            }
+        }, 300);
+    }
+ 
+    bootstrapShareModal?.hide();
+ 
+    Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:2000, timerProgressBar:true })
+        .fire({ icon:'success', title:`Sent to ${name}!` });
+}
+ 
+// Copy link
+function copyPostLink() {
+    const postId = document.getElementById('targetSharePostId').value;
+    const type   = document.getElementById('sharePostType').value;
+    const link   = window.location.origin + (type === 'job' ? '/jobs/' + postId : '/#postCard-' + postId);
+ 
+    navigator.clipboard.writeText(link).then(() => {
+        Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:2000, timerProgressBar:true })
+            .fire({ icon:'success', title:'Link copied!' });
+    }).catch(() => {
+        prompt('Copy this link:', link);
+    });
+}
+ 
+// Share form submit (share to feed)
 document.getElementById('fbShareForm')?.addEventListener('submit', function (e) {
     e.preventDefault();
-    const pId = document.getElementById('targetSharePostId').value;
+    const postId  = document.getElementById('targetSharePostId').value;
+    const type    = document.getElementById('sharePostType').value;
     const comment = document.getElementById('shareComment').value.trim();
-    const btn = document.getElementById('shareSubmitBtn');
+    const privacy = document.getElementById('sharePrivacyInput').value;
+    const btn     = document.getElementById('shareSubmitBtn');
+ 
+    // Job share — feed এ শেয়ার হবে না, শুধু link copy
+    if (type === 'job') {
+        copyPostLink();
+        bootstrapShareModal?.hide();
+        return;
+    }
+ 
     btn.disabled = true;
-    const Toast = Swal.mixin({toast:true,position:'top-end',showConfirmButton:false});
-    Toast.fire({icon:'info',title:'Sharing...'});
-    fetch(`/posts/${pId}/share`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},body:JSON.stringify({content:comment})})
-    .then(r=>r.json()).then(d=>{
-        if(d.success){
-            bootstrapShareModal?.hide();
-            Toast.fire({icon:'success',title:'Shared!',timer:1200});
-            if (d.html) {
-                const feedC = document.getElementById('profilePostsContainer') || document.getElementById('postsFeedContainer');
-                if (feedC) {
-                    feedC.insertAdjacentHTML('afterbegin', d.html);
-                    if (window.bbPrimeVideos) window.bbPrimeVideos();
-                    feedC.querySelector('.bb-posts-empty')?.remove();
-                }
-            }
-            btn.disabled = false;
+    Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false })
+        .fire({ icon:'info', title:'Sharing...' });
+ 
+    fetch(`/posts/${postId}/share`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ content: comment, privacy: privacy })
+    })
+    .then(r => r.json())
+    .then(d => {
+        btn.disabled = false;
+        if (!d.success) {
+            Swal.fire({ icon:'error', title:'Failed!', text: d.message || 'Could not share.' });
+            return;
         }
-        else { btn.disabled=false; Swal.fire({icon:'error',title:'Failed!',text:'There was an error sharing the post.'}); }
-    }).catch(()=>{ btn.disabled=false; Swal.fire({icon:'error',title:'Network Error!'}); });
+        bootstrapShareModal?.hide();
+        resetShareModal();
+        Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:2000, timerProgressBar:true })
+            .fire({ icon:'success', title:'Shared to your feed!' });
+ 
+        if (d.html) {
+            const feedC = document.getElementById('postsFeedContainer') || document.getElementById('profilePostsContainer');
+            if (feedC) {
+                feedC.insertAdjacentHTML('afterbegin', d.html);
+                if (window.bbPrimeVideos) window.bbPrimeVideos();
+                feedC.querySelector('.bb-posts-empty')?.remove();
+                feedC.querySelector('#emptyFeedState')?.remove();
+            }
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        Swal.fire({ icon:'error', title:'Network Error!' });
+    });
 });
+ 
+// Job share button (job-card.blade.php এ)
+function openJobShareModal(jobId) {
+    openShareModal(jobId, 'job');
+}
+
 
 // ==========================================
 // EDIT POST: COLOR
@@ -2597,6 +2887,15 @@ function prepareEditModal(el) {
         return;
     } else {
         if (mediaSection) mediaSection.classList.remove('d-none');
+        // ✅ এটা যোগ করো:
+        const editPrivacy2 = el.getAttribute('data-privacy') || 'public';
+        const privacyMap2 = {
+            'public':  ['bi-globe-americas text-primary', 'Public'],
+            'friends': ['bi-people-fill text-success',    'Friends'],
+            'only_me': ['bi-lock-fill text-warning',      'Only Me'],
+        };
+        const [ic2, lb2] = privacyMap2[editPrivacy2] || privacyMap2['public'];
+        setEditPrivacy(editPrivacy2, ic2, lb2);
     }
 
     bg && bg!=='null' && bg.trim() ? selectEditPostBg(bg) : resetEditPostBg();
@@ -2702,6 +3001,7 @@ document.getElementById('editPostForm')?.addEventListener('submit', function (e)
     fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
     fd.append('content', document.getElementById('editPostContent')?.value||'');
     fd.append('bg_color', document.getElementById('edit_bg_color_input')?.value||'');
+    fd.append('privacy',document.getElementById('editPrivacyInput')?.value||'public');
     fd.append('removed_images', JSON.stringify(removedImages));
     fd.append('removed_videos', JSON.stringify(removedVideos));
     editSelectedFiles.forEach(f=>fd.append('media[]',f));
@@ -3563,6 +3863,11 @@ function openReplyBox(parentId, mentionName) {
 
     setTimeout(() => input?.focus(), 50);
 }
+
+
+function setPrivacy(value,iconClass,label){document.getElementById('privacyInput').value=value;document.getElementById('privacyLabel').textContent=label;const btn=document.getElementById('privacyBtn');btn.querySelector('i').className='bi '+iconClass+' me-1';}
+
+function setEditPrivacy(value,iconClass,label){document.getElementById('editPrivacyInput').value=value;if(label)document.getElementById('editPrivacyLabel').textContent=label;const btn=document.getElementById('editPrivacyBtn');if(btn&&iconClass)btn.querySelector('i').className='bi '+iconClass+' me-1';}
 
 function clearReplyMention(parentId) {
     const tag = document.getElementById(`reply-mention-${parentId}`);

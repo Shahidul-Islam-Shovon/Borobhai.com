@@ -37,14 +37,17 @@ class Friendship extends Model
     /**
      * দুজন friend কিনা
      */
-    public static function areFriends($userId, $otherId): bool
+    public static function areFriends(int $userId, int $otherId): bool
     {
-        return self::where('status', 'accepted')
+        return static::where('status', 'accepted')
             ->where(function ($q) use ($userId, $otherId) {
-                $q->where('sender_id', $userId)->where('receiver_id', $otherId);
-            })->orWhere(function ($q) use ($userId, $otherId) {
-                $q->where('sender_id', $otherId)->where('receiver_id', $userId);
-            })->exists();
+                $q->where(function ($inner) use ($userId, $otherId) {
+                    $inner->where('sender_id', $userId)->where('receiver_id', $otherId);
+                })->orWhere(function ($inner) use ($userId, $otherId) {
+                    $inner->where('sender_id', $otherId)->where('receiver_id', $userId);
+                });
+            })
+            ->exists();
     }
 
     /**
@@ -102,13 +105,37 @@ class Friendship extends Model
         $myFriends    = static::friendIds($userId);
         $otherFriends = static::friendIds($otherUserId);
         $mutualIds    = array_intersect($myFriends, $otherFriends);
-
+    
         if (empty($mutualIds)) return collect();
-
+    
         return \App\Models\User::whereIn('id', $mutualIds)
             ->select('id', 'name', 'role', 'department', 'profile_picture')
             ->limit(10)
             ->get();
     }
+
+    // public function messengerContacts()
+    // {
+    //     $userId = Auth::id();
+
+    //     $contacts = \App\Models\User::whereIn('id', function($q) use ($userId) {
+    //         $q->select('sender_id')
+    //         ->from('friendships')
+    //         ->where('receiver_id', $userId)
+    //         ->where('status', 'accepted')
+    //         ->union(
+    //             \DB::table('friendships')
+    //                 ->select('receiver_id')
+    //                 ->where('sender_id', $userId)
+    //                 ->where('status', 'accepted')
+    //         );
+    //     })
+    //     ->select('id', 'name', 'profile_picture')
+    //     ->orderBy('name')
+    //     ->limit(20)
+    //     ->get();
+
+    //     return response()->json(['contacts' => $contacts]);
+    // }
 
 }

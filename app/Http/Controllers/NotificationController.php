@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\BbNotification;
@@ -10,65 +11,104 @@ class NotificationController extends Controller
     // ==========================================
     // Notification list (dropdown)
     // ==========================================
-    public function index()
+   public function index()
     {
         $meId = Auth::id();
         $notifications = BbNotification::where('user_id', $meId)
             ->with('actor:id,name,profile_picture,role')
             ->latest()
-            ->limit(20)
+            ->limit(30)
             ->get();
 
-        // সব unread → read mark করি
-        BbNotification::where('user_id', $meId)->where('is_read', false)->update(['is_read' => true]);
+        BbNotification::where('user_id', $meId)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
 
         $html = '';
         foreach ($notifications as $n) {
             $actor   = $n->actor;
-            $pic     = $actor->profile_picture
+            $pic     = $actor?->profile_picture
                 ? asset('storage/' . $actor->profile_picture)
                 : null;
-            $initial = strtoupper(substr($actor->name, 0, 1));
-            $avatar  = $pic
-                ? '<img src="'.$pic.'" style="width:100%;height:100%;object-fit:cover;">'
-                : $initial;
+            $initial = strtoupper(substr($actor?->name ?? 'U', 0, 1));
 
-            $timeAgo = $n->created_at->diffForHumans();
+            // ✅ FIX: Fixed pixel size, proper centering
+            if ($pic) {
+                $avatar = '<img src="' . $pic . '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">';
+            } else {
+                $avatar = $initial;
+            }
+
+            $timeAgo     = $n->created_at->diffForHumans();
             $unreadClass = $n->is_read ? '' : 'bb-notif-unread';
 
-            // Link — type অনুযায়ী
             $link = match ($n->notifiable_type) {
-                'post'    => '#postCard-' . $n->notifiable_id,
+                'post'    => url('/#postCard-' . $n->notifiable_id),
                 'job'     => route('jobs.show', $n->notifiable_id),
-                'comment' => '#postCard-' . $n->notifiable_id,
-                'user'    => route('profile.view', $n->actor_id),
+                'comment' => url('/#postCard-' . $n->notifiable_id),
+                'user'    => route('profile.view', $n->notifiable_id ?? $n->actor_id),
                 default   => route('home'),
             };
 
             $icon = match ($n->type) {
-                'friend_request' => '<i class="bi bi-person-plus-fill text-primary"></i>',
-                'friend_accept'  => '<i class="bi bi-people-fill text-success"></i>',
-                'post_like'      => '<i class="bi bi-hand-thumbs-up-fill text-primary"></i>',
-                'post_comment'   => '<i class="bi bi-chat-fill text-info"></i>',
-                'comment_like'   => '<i class="bi bi-hand-thumbs-up-fill text-warning"></i>',
-                'post_share'     => '<i class="bi bi-share-fill text-primary"></i>',
-                'job_apply'      => '<i class="bi bi-briefcase-fill text-success"></i>',
-                'job_status'     => '<i class="bi bi-briefcase-fill text-warning"></i>',
-                default          => '<i class="bi bi-bell-fill text-muted"></i>',
+                'friend_request'       => '<i class="bi bi-person-plus-fill text-primary"></i>',
+                'friend_accept'        => '<i class="bi bi-people-fill text-success"></i>',
+                'post_like'            => '<i class="bi bi-hand-thumbs-up-fill text-primary"></i>',
+                'post_comment'         => '<i class="bi bi-chat-fill text-info"></i>',
+                'comment_reply'        => '<i class="bi bi-reply-fill text-info"></i>',
+                'comment_like'         => '<i class="bi bi-hand-thumbs-up-fill text-warning"></i>',
+                'post_share'           => '<i class="bi bi-share-fill text-primary"></i>',
+                'new_job'              => '<i class="bi bi-briefcase-fill text-success"></i>',
+                'job_apply'            => '<i class="bi bi-file-earmark-person-fill text-success"></i>',
+                'job_status'           => '<i class="bi bi-briefcase-fill text-warning"></i>',
+                'job_deadline_soon'    => '<i class="bi bi-clock-fill text-warning"></i>',
+                'job_deadline_expired' => '<i class="bi bi-hourglass-bottom text-danger"></i>',
+                'report_submitted'     => '<i class="bi bi-flag-fill text-danger"></i>',
+                'new_message'          => '<i class="bi bi-chat-dots-fill text-primary"></i>',
+                default                => '<i class="bi bi-bell-fill text-muted"></i>',
             };
 
             $html .= '
-            <a href="'.$link.'" class="bb-notif-item '.$unreadClass.'" style="text-decoration:none;">
-                <div class="bb-notif-avatar" style="overflow:hidden;">'.$avatar.'</div>
-                <div class="bb-notif-body">
-                    <div class="bb-notif-msg">'.e($n->message).'</div>
-                    <div class="bb-notif-time">'.$icon.' '.$timeAgo.'</div>
+            <a href="' . $link . '" class="bb-notif-item ' . $unreadClass . '" style="text-decoration:none;">
+                <div style="
+                    width:44px;
+                    height:44px;
+                    min-width:44px;
+                    border-radius:50%;
+                    overflow:hidden;
+                    background:linear-gradient(135deg,#4f46e5,#7c73f0);
+                    color:#fff;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-weight:700;
+                    font-size:17px;
+                    flex-shrink:0;
+                ">' . $avatar . '</div>
+                <div class="bb-notif-body" style="flex:1;min-width:0;">
+                    <div class="bb-notif-msg" style="
+                        font-size:13.5px;
+                        color:#1e1f24;
+                        line-height:1.45;
+                        word-break:break-word;
+                        margin-bottom:3px;
+                    ">' . e($n->message) . '</div>
+                    <div class="bb-notif-time" style="
+                        font-size:11.5px;
+                        color:#6b7280;
+                        display:flex;
+                        align-items:center;
+                        gap:5px;
+                    ">' . $icon . ' ' . $timeAgo . '</div>
                 </div>
             </a>';
         }
 
         if (!$html) {
-            $html = '<div class="bb-notif-empty"><i class="bi bi-bell-slash"></i><p>No notifications yet</p></div>';
+            $html = '<div class="bb-notif-empty">
+                <i class="bi bi-bell-slash fs-3 d-block mb-2"></i>
+                <p class="mb-0">No notifications yet</p>
+            </div>';
         }
 
         return response()->json(['html' => $html]);
