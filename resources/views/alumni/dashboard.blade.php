@@ -3091,37 +3091,18 @@ function loadMessengerContacts() {
     if (!zone) return;
     zone.innerHTML = '<div class="text-center text-muted small py-2"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
 
-    fetch('/active-now', { headers: { 'Accept': 'application/json' } })
-    .then(function(r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-    })
-    .then(function(d) {
-        // active-now শুধু html দেয়, তাই friends থেকে আলাদাভাবে নিতে হবে
-        // DOM থেকে activeNowZone এর data parse করো
-        var contacts = [];
-        document.querySelectorAll('#activeNowZone .bb-active-item').forEach(function(el) {
-            var onclickAttr = el.getAttribute('onclick') || '';
-            var match = onclickAttr.match(/openChatBox\((\d+),\s*'([^']+)',\s*'([^']*)'/);
-            if (!match) return;
-            var avatar = el.querySelector('.bb-active-avatar');
-            var img    = avatar ? avatar.querySelector('img') : null;
-            contacts.push({
-                id:              parseInt(match[1]),
-                name:            match[2],
-                profile_picture: img ? img.src.replace(window.location.origin + '/storage/', '') : null
-            });
-        });
-
-        if (!contacts.length) {
-            zone.innerHTML = '<div class="text-muted small py-2 text-center">No friends active right now</div>';
+    fetch('/friends/messenger-contacts', { headers: { 'Accept': 'application/json' } })
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function (d) {
+        if (!d.contacts || !d.contacts.length) {
+            zone.innerHTML = '<div class="text-muted small py-2 text-center"><i class="bi bi-people" style="font-size:1.5rem;display:block;margin-bottom:4px;opacity:.4;"></i>No friends yet</div>';
             return;
         }
-        _messengerContactsCache = contacts;
-        renderMessengerContacts(contacts);
+        _messengerContactsCache = d.contacts;
+        renderMessengerContacts(d.contacts);
     })
-    .catch(function(err) {
-        console.warn('Messenger contacts:', err);
+    .catch(function (err) {
+        console.warn('Messenger contacts error:', err);
         zone.innerHTML = '<div class="text-muted small py-2 text-center">Could not load contacts</div>';
     });
 }
@@ -4012,14 +3993,14 @@ function refreshActiveNow() {
     fetch('/active-now', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        if (d.html !== undefined) {
+        if (d.html !== undefined && d.html !== null && d.html.trim() !== '') {
             var z = document.getElementById('activeNowZone');
             if (z) z.innerHTML = d.html;
         }
     })
     .catch(function () {});
 }
-refreshActiveNow();
+setTimeout(refreshActiveNow, 5000);
 setInterval(refreshActiveNow, 30000);
 
 

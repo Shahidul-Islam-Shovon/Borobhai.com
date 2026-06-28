@@ -150,16 +150,13 @@ class PostController extends Controller
                 ->take($need)
                 ->get();
 
-        // Jobs — শুধু 'all' filter এ
-        $jobs = collect();
-        if ($filter === 'all') {
-            $jobs = JobPost::with('user')
-                    ->withCount(['savedByUsers as is_saved_by_me' => fn($q) => $q->where('user_id', Auth::id())])
-                    ->visible()
-                    ->latest('created_at')
-                    ->take($need)
-                    ->get();
-        }
+        // Jobs — universal, সব filter এ দেখাবে (যেই পোস্ট করুক)
+        $jobs = JobPost::with('user')
+                ->withCount(['savedByUsers as is_saved_by_me' => fn($q) => $q->where('user_id', Auth::id())])
+                ->visible()
+                ->latest('created_at')
+                ->take($need)
+                ->get();
 
         $items = collect();
         foreach ($posts as $p) {
@@ -411,7 +408,7 @@ class PostController extends Controller
 
         $activeUsers = \App\Models\User::whereIn('id', $friendIds)
             ->whereNotIn('id', $blockedIds)
-            ->where('last_seen', '>=', now()->subMinutes(10))
+            ->where('last_seen', '>=', now()->subHours(3))   // ✅ ৩ ঘণ্টা — recently active
             ->select('id', 'name', 'role', 'profile_picture', 'last_seen')
             ->orderByDesc('last_seen')
             ->limit(8)
@@ -419,7 +416,7 @@ class PostController extends Controller
 
         if ($activeUsers->isEmpty()) {
             return response()->json([
-                'html' => '<div class="text-muted small px-2 py-3 text-center">No friends active right now.</div>'
+                'html' => '<div class="text-muted small px-2 py-3 text-center">No friends active recently.</div>'
             ]);
         }
 
@@ -476,7 +473,7 @@ class PostController extends Controller
         return 'Active ' . $lastSeen->format('M d');
     }
 
-    public function messengerContacts()
+   public function messengerContacts()
     {
         $meId       = Auth::id();
         $friendIds  = Friendship::friendIds($meId);
@@ -486,7 +483,7 @@ class PostController extends Controller
             ->whereNotIn('id', $blockedIds)
             ->select('id', 'name', 'profile_picture', 'last_seen')
             ->orderByDesc('last_seen')
-            ->limit(20)
+            ->limit(100)
             ->get()
             ->map(fn($u) => [
                 'id'              => $u->id,
@@ -497,7 +494,6 @@ class PostController extends Controller
 
         return response()->json(['contacts' => $contacts]);
     }
-
-    
+        
 
 }
