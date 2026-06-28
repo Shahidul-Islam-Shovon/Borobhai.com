@@ -10,10 +10,10 @@ class BbNotification extends Model
     protected $fillable = [
         'user_id', 'actor_id', 'type',
         'notifiable_type', 'notifiable_id',
-        'message', 'is_read',
+        'message', 'is_read', 'seen',
     ];
 
-    protected $casts = ['is_read' => 'boolean'];
+    protected $casts = ['is_read' => 'boolean', 'seen' => 'boolean'];
 
     public function user()   { return $this->belongsTo(User::class); }
     public function actor()  { return $this->belongsTo(User::class, 'actor_id'); }

@@ -1632,18 +1632,41 @@
     }
     /* ===== NOTIFICATION ===== */
     .bb-notif-item {
-        display: flex;
-        align-items: center;        /* ✅ flex-start থেকে center করলাম */
-        gap: 12px;
-        padding: 12px 16px;
-        text-decoration: none;
-        color: inherit;
-        transition: background .12s;
-        border-bottom: 1px solid #f3f4f6;
-        cursor: pointer;
+        display:flex; align-items:flex-start; gap:12px;
+        padding:11px 14px; cursor:pointer; position:relative;
+        transition:background .12s; border-bottom:1px solid #f3f4f6;
     }
-    .bb-notif-item:hover { background: #f5f7ff !important; text-decoration: none; }
-    .bb-notif-unread     { background: #eef2ff !important; }
+    .bb-notif-item:hover  { background:#f5f7ff; }
+    .bb-notif-unread      { background:#eef2ff; }
+    .bb-notif-unread .bb-notif-msg { font-weight:600; }
+
+    .bb-notif-avatar {
+        width:46px; height:46px; min-width:46px; border-radius:50%;
+        overflow:hidden; background:linear-gradient(135deg,#4f46e5,#7c73f0);
+        color:#fff; display:flex; align-items:center; justify-content:center;
+        font-weight:700; font-size:17px; flex-shrink:0;
+    }
+    .bb-notif-body { flex:1; min-width:0; }
+    .bb-notif-msg  { font-size:13.5px; color:#1e1f24; line-height:1.45; word-break:break-word; margin-bottom:3px; }
+    .bb-notif-time { font-size:11.5px; color:#6b7280; display:flex; align-items:center; gap:5px; }
+    .bb-notif-dot  { width:9px; height:9px; border-radius:50%; background:#2563eb; flex-shrink:0; align-self:center; margin-left:4px; }
+
+    .bb-notif-loading { padding:32px 16px; text-align:center; color:#9ca3af; font-size:13px; }
+    .bb-notif-loading i { display:block; font-size:20px; margin-bottom:6px; }
+
+    #notifList::-webkit-scrollbar       { width:4px; }
+    #notifList::-webkit-scrollbar-track { background:transparent; }
+    #notifList::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:4px; }
+    #notifList::-webkit-scrollbar-thumb:hover { background:#9ca3af; }
+
+    @keyframes bellShake {
+        0%,100% { transform:rotate(0); }
+        20% { transform:rotate(-15deg); } 40% { transform:rotate(15deg); }
+        60% { transform:rotate(-10deg); } 80% { transform:rotate(10deg); }
+    }
+    .bell-shake { animation:bellShake .5s ease; }
+    .bb-notif-empty   { text-align:center; padding:40px 16px; color:#9ca3af; }
+    .bb-notif-empty i { font-size:2rem; display:block; margin-bottom:8px; }
     
     /* Notification scrollbar */
     #notifList::-webkit-scrollbar       { width: 4px; }
@@ -1752,7 +1775,7 @@
         
                 {{-- Footer --}}
                 <div style="padding:10px 16px;border-top:1px solid #f3f4f6;text-align:center;">
-                    <a href="{{ route('home') }}" style="font-size:13px;font-weight:600;color:#4f46e5;text-decoration:none;">
+                   <a href="{{ route('notifications.all') }}" style="font-size:13px;font-weight:600;color:#4f46e5;text-decoration:none;">
                         See all notifications
                     </a>
                 </div>
@@ -2524,6 +2547,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Hash anchor highlight (notification থেকে আসলে)
     if (window.location.hash && window.location.hash.startsWith('#postCard-')) {
+        (function () {
+            var oc = new URLSearchParams(location.search).get('open_comments');
+            if (oc && typeof openCommentModal === 'function') {
+                setTimeout(function(){ openCommentModal(oc); }, 800);
+                history.replaceState(null, '', location.pathname);
+            }
+        })();
         var targetId = window.location.hash.substring(1);
         var tryHighlight = function (attempt) {
             attempt = attempt || 0;
@@ -3996,109 +4026,120 @@ setInterval(refreshActiveNow, 30000);
 // ============================================================
 // SECTION 17: NOTIFICATIONS
 // ============================================================
-var notifOpen    = false;
-var notifLoaded  = false;
-var lastNotifCount = 0;
- 
+
+// ============================================================
+// SECTION 17: NOTIFICATIONS (Facebook-style)
+// ============================================================
+var notifOpen = false, lastNotifCount = 0;
+
 function toggleNotifDropdown() {
     var drop = document.getElementById('notifDropdown');
     notifOpen = !notifOpen;
     drop.style.display = notifOpen ? 'block' : 'none';
- 
-    if (notifOpen) {
-        loadNotifications();
-        updateBadge(0); // dropdown açılınca badge sıfırla
-    }
+    if (notifOpen) { loadNotifications(); updateBadge(0); } // খুললেই badge clear
 }
- 
+function closeNotifPanel() {
+    document.getElementById('notifDropdown').style.display = 'none';
+    notifOpen = false;
+}
 function loadNotifications() {
     var list = document.getElementById('notifList');
-    list.innerHTML = '<div style="padding:32px 16px;text-align:center;color:#9ca3af;font-size:13px;">'
-        + '<i class="bi bi-arrow-clockwise" style="font-size:20px;display:block;margin-bottom:6px;"></i>Loading…</div>';
- 
-    fetch('/notifications', {
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    list.innerHTML = '<div class="bb-notif-loading"><i class="bi bi-arrow-clockwise"></i>Loading…</div>';
+    fetch('/notifications', { headers:{ 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' } })
+    .then(r=>r.json())
+    .then(d=>{
+        list.innerHTML = (d.html && d.html.trim())
+            ? d.html
+            : '<div class="bb-notif-empty"><i class="bi bi-bell-slash"></i><p class="mb-0">No notifications yet</p></div>';
     })
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-        list.innerHTML = d.html;
-    })
-    .catch(function () {
-        list.innerHTML = '<div style="padding:24px;text-align:center;color:#9ca3af;font-size:13px;">Could not load notifications.</div>';
-    });
+    .catch(()=>{ list.innerHTML='<div class="bb-notif-empty"><p class="mb-0">Could not load.</p></div>'; });
 }
- 
+
+// একটা item: read + close + navigate
+function onNotifClick(el) {
+    var id = el.dataset.id;
+    if (el.dataset.read === '0') {
+        el.classList.remove('bb-notif-unread');
+        el.querySelector('.bb-notif-dot')?.remove();
+        el.dataset.read = '1';
+        fetch('/notifications/' + id + '/read', {
+            method:'POST',
+            headers:{ 'Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content }
+        }).catch(()=>{});
+    }
+    closeNotifPanel();
+    routeNotification(el.dataset.action, el.dataset.target);
+}
+
+function routeNotification(action, target) {
+    var onHome = (location.pathname === '/' || location.pathname === '');
+    if (action === 'profile') { location.href = '/profile/' + target; return; }
+    if (action === 'job')     { location.href = '/jobs/' + target;    return; }
+    if (action === 'home')    { if (!onHome) location.href = '/'; return; }
+    if (action === 'comments') {
+        if (onHome && typeof openCommentModal === 'function') openCommentModal(target);
+        else location.href = '/?open_comments=' + target;
+        return;
+    }
+    if (action === 'post') {
+        if (onHome) jumpToPost(target);
+        else location.href = '/#postCard-' + target;
+    }
+}
+function jumpToPost(postId) {
+    var n = 0;
+    (function go(){
+        var t = document.getElementById('postCard-' + postId);
+        if (t) {
+            t.scrollIntoView({behavior:'smooth', block:'center'});
+            t.style.transition='box-shadow .35s ease';
+            t.style.boxShadow='0 0 0 3px #4f46e5';
+            setTimeout(()=>t.style.boxShadow='', 2500);
+            return;
+        }
+        if (n++ < 15) setTimeout(go, 500);
+    })();
+}
+
 function markAllRead() {
     fetch('/notifications/read-all', {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
+        method:'POST',
+        headers:{ 'Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content }
     })
-    .then(function () {
-        // DOM এ unread highlight সরিয়ে দাও
-        document.querySelectorAll('#notifList a').forEach(function (el) {
-            if (el.style.background === 'rgb(238, 242, 255)' || el.style.background === '#eef2ff') {
-                el.style.background = '#fff';
-            }
-        });
-        // Blue unread dot গুলো সরাও
-        document.querySelectorAll('#notifList span[style*="background:#2563eb"]').forEach(function (el) {
-            el.remove();
+    .then(()=>{
+        document.querySelectorAll('#notifList .bb-notif-item').forEach(function(el){
+            el.classList.remove('bb-notif-unread');
+            el.querySelector('.bb-notif-dot')?.remove();
+            el.dataset.read = '1';
         });
         updateBadge(0);
     });
 }
- 
+
 function updateBadge(count) {
     var badge = document.getElementById('notifBadge');
     var bell  = document.getElementById('notifBellBtn');
     lastNotifCount = count;
- 
     if (count > 0) {
-        badge.textContent   = count > 99 ? '99+' : count;
+        badge.textContent = count > 99 ? '99+' : count;
         badge.style.display = 'block';
-        // Bell shake
-        if (bell) {
-            bell.classList.add('bell-shake');
-            setTimeout(function () { bell.classList.remove('bell-shake'); }, 600);
-        }
-    } else {
-        badge.style.display = 'none';
-    }
+        if (bell) { bell.classList.add('bell-shake'); setTimeout(()=>bell.classList.remove('bell-shake'),600); }
+    } else { badge.style.display = 'none'; }
 }
- 
-// Click outside → close
-document.addEventListener('click', function (e) {
+
+document.addEventListener('click', function(e){
     var wrap = document.getElementById('notifWrap');
-    if (wrap && !wrap.contains(e.target) && notifOpen) {
-        document.getElementById('notifDropdown').style.display = 'none';
-        notifOpen = false;
-    }
+    if (wrap && !wrap.contains(e.target) && notifOpen) closeNotifPanel();
 });
- 
-// Poll every 15s
+
 function pollNotifications() {
-    fetch('/notifications/poll', {
-        headers: { 'Accept': 'application/json' }
-    })
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-        var newCount = d.count || 0;
-        // নতুন notification এলে dropdown open থাকলে reload
-        if (newCount > lastNotifCount && notifOpen) {
-            loadNotifications();
-        }
-        updateBadge(newCount);
-    })
-    .catch(function () {});
+    fetch('/notifications/poll', { headers:{ 'Accept':'application/json' } })
+    .then(r=>r.json())
+    .then(d=>{ var c = d.count || 0; if (c > 0 && notifOpen) loadNotifications(); updateBadge(c); })
+    .catch(()=>{});
 }
- 
-// Page load এ একবার
 pollNotifications();
 setInterval(pollNotifications, 15000);
-
 
 // ============================================================
 // SECTION 18: MUTUAL FRIENDS MODAL

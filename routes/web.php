@@ -159,9 +159,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/report',                      [ReportController::class, 'store'])->name('report.store');
 
     // ---------- NOTIFICATIONS ----------
-    Route::get('/notifications',                [NotificationController::class, 'index'])->name('notifications.index');
-    Route::get('/notifications/poll',           [NotificationController::class, 'poll'])->name('notifications.poll');
-    Route::post('/notifications/read-all',      [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
+    Route::get('/notifications',            [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/all',        [NotificationController::class, 'all'])->name('notifications.all');
+    Route::get('/notifications/poll',       [NotificationController::class, 'poll'])->name('notifications.poll');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markOneRead'])->name('notifications.read');
+    Route::post('/notifications/read-all',  [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
 });
 
 // ---------- VIDEO STREAMING ----------

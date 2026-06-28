@@ -27,15 +27,17 @@ class CommentController extends Controller
             'parent_id' => $request->parent_id ?: null,
         ]);
 
-        // Post owner কে notification (নিজের post এ comment করলে skip হবে)
-        BbNotification::send(
-            $post->user_id,
-            Auth::id(),
-            'post_comment',
-            Auth::user()->name . ' commented on your post.',
-            'post',
-            $post->id
-        );
+        // Post owner কে notification — নিজের post এ comment করলে skip
+        if ($post->user_id !== Auth::id()) {
+            BbNotification::send(
+                $post->user_id,
+                Auth::id(),
+                'post_comment',
+                Auth::user()->name . ' commented on your post.',
+                'post',
+                $post->id
+            );
+        }
 
         // Reply হলে parent comment owner কেও notification
         if ($request->parent_id) {
