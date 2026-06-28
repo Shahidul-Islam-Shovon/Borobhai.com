@@ -412,6 +412,8 @@ const APPLY_CSRF = document.querySelector('meta[name="csrf-token"]').content;
 
 // back button (bfcache) থেকে এলে stale state এড়াতে reload
 window.addEventListener('pageshow', function (e) {
+    // external apply চলাকালীন reload করব না — নাহলে confirm banner চলে যায়
+    if (window._externalApplyActive) return;
     if (e.persisted) location.reload();
 });
 const applyToast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:2400, timerProgressBar:true });
@@ -521,9 +523,11 @@ function confirmExternalLeave(){
     const { applyType, applyHref } = pendingExternal;
     leaveModalObj?.hide();
 
+    // external apply চলছে — pageshow reload বন্ধ রাখি
+    window._externalApplyActive = true;
+
     openExternalTarget(applyType, applyHref);
 
-    // apply card এর নিচে সুন্দর confirm banner দেখাই — user নিজে confirm করবে
     const banner = document.getElementById('confirmBanner');
     if (banner) {
         banner.classList.add('show');
@@ -531,13 +535,22 @@ function confirmExternalLeave(){
     }
 }
 
-// external target (link নতুন ট্যাবে / email mail client) খোলে
+// OPEN external link/email in new tab (Gmail web for mailto)
 function openExternalTarget(applyType, applyHref){
     if (applyType === 'email') {
-        const mailWin = window.open(applyHref, '_blank');
-        if (!mailWin) { window.location.href = applyHref; }
+        var raw     = applyHref.replace(/^mailto:/i, '');
+        var email   = raw.split('?')[0];
+        var subject = '';
+        var m = raw.match(/[?&]subject=([^&]*)/i);
+        if (m) subject = decodeURIComponent(m[1].replace(/\+/g, ' '));
+
+        var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to='
+                     + encodeURIComponent(email)
+                     + '&su=' + encodeURIComponent(subject);
+
+        window.open(gmailUrl, '_blank');   // ← noopener বাদ, fallback বাদ
     } else {
-        window.open(applyHref, '_blank', 'noopener,noreferrer');
+        window.open(applyHref, '_blank');
     }
 }
 

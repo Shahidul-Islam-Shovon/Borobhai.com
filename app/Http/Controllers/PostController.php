@@ -494,6 +494,40 @@ class PostController extends Controller
 
         return response()->json(['contacts' => $contacts]);
     }
+
+    // ==========================================
+    // LIVE COUNTS — screen এ থাকা posts এর fresh like/comment count
+    // ==========================================
+    public function liveCounts(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (is_string($ids)) $ids = explode(',', $ids);
+        $ids = array_filter(array_map('intval', (array) $ids));
+
+        if (empty($ids)) return response()->json(['counts' => []]);
+
+        $meId = Auth::id();
+
+        $posts = Post::whereIn('id', $ids)
+            ->withCount(['likes', 'comments'])
+            ->get();
+
+        $myLikes = \DB::table('likes')
+            ->where('user_id', $meId)
+            ->whereIn('post_id', $ids)
+            ->pluck('post_id')->toArray();
+
+        $counts = [];
+        foreach ($posts as $p) {
+            $counts[$p->id] = [
+                'likes'    => $p->likes_count,
+                'comments' => $p->comments_count,
+                'liked'    => in_array($p->id, $myLikes),
+            ];
+        }
+
+        return response()->json(['counts' => $counts]);
+    }
         
 
 }

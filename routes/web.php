@@ -104,6 +104,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/{id}/share',            [PostController::class, 'share'])->name('posts.share');
     Route::post('/posts/{post}/save',           [SavedPostController::class, 'toggle'])->name('posts.save');
     Route::get('/saved',                        [SavedPostController::class, 'index'])->name('saved.index');
+    //LIVE COUNTS
+    Route::get('/feed/live-counts', [PostController::class, 'liveCounts'])->name('feed.liveCounts');
 
     // ---------- JOBS ----------
     Route::post('/jobs',                        [JobController::class, 'store'])->name('jobs.store');

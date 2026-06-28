@@ -2536,27 +2536,60 @@ var feedLoading          = false;
 var feedPage             = 1;
 var currentFeedFilter    = 'all';
 
-
 // ============================================================
 // SECTION 2: DOM READY INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', function () {
 
-    // Scroll restore
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
-    // Hash anchor highlight (notification থেকে আসলে)
-    if (window.location.hash && window.location.hash.startsWith('#postCard-')) {
-        (function () {
-            var oc = new URLSearchParams(location.search).get('open_comments');
-            if (oc && typeof openCommentModal === 'function') {
-                setTimeout(function(){ openCommentModal(oc); }, 800);
-                history.replaceState(null, '', location.pathname);
+    var params = new URLSearchParams(location.search);
+    var openComments = params.get('open_comments');
+    var gotoPost     = params.get('goto_post');
+
+    // URL এখনই পরিষ্কার করি — reload এ আর trigger হবে না
+    if (openComments || gotoPost) {
+        history.replaceState(null, '', location.pathname);
+    }
+
+    // ── goto_post: post এ scroll + highlight ──────────────────
+    if (gotoPost) {
+        var tries = 0;
+        (function tryScroll() {
+            var card = document.getElementById('postCard-' + gotoPost);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.style.transition = 'box-shadow .35s ease';
+                card.style.boxShadow  = '0 0 0 3px #4f46e5';
+                setTimeout(function () { card.style.boxShadow = ''; }, 2500);
+                return;
             }
+            // Post এখনো DOM এ নেই (infinite scroll লোড হয়নি) — অপেক্ষা করি
+            if (tries++ < 30) setTimeout(tryScroll, 500);
         })();
+    }
+
+    // ── open_comments: comment modal খোলা ────────────────────
+    if (openComments) {
+        var tries2 = 0;
+        (function tryOpen() {
+            var card = document.getElementById('postCard-' + openComments);
+            if (card && typeof openCommentModal === 'function') {
+                // আগে post এ scroll করি, তারপর modal
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(function () { openCommentModal(openComments); }, 400);
+                return;
+            }
+            if (tries2++ < 30) setTimeout(tryOpen, 500);
+        })();
+    }
+
+    // ── Legacy hash support (#postCard-X) ────────────────────
+    if (window.location.hash && window.location.hash.startsWith('#postCard-')) {
         var targetId = window.location.hash.substring(1);
-        var tryHighlight = function (attempt) {
-            attempt = attempt || 0;
+        history.replaceState(null, '', location.pathname);
+        var tries3 = 0;
+        (function tryHash() {
             var target = document.getElementById(targetId);
             if (target) {
                 target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2565,9 +2598,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTimeout(function () { target.style.boxShadow = ''; }, 2500);
                 return;
             }
-            if (attempt < 15) setTimeout(function () { tryHighlight(attempt + 1); }, 600);
-        };
-        setTimeout(function () { tryHighlight(0); }, 500);
+            if (tries3++ < 15) setTimeout(tryHash, 600);
+        })();
     }
 
     // Session scroll top
@@ -3589,13 +3621,31 @@ function openCommentModal(postId) {
         var avatar  = card.querySelector('.author-avatar-zone')?.innerHTML || 'U';
         var colored = card.getAttribute('data-bg-color');
         var caption = card.querySelector('.dynamic-caption')?.innerHTML    || '';
-        var capHtml = '<p class="mb-0" style="font-size:14px;">' + caption + '</p>';
+
+         var capHtml = '<p class="mb-0" style="font-size:14px;">' + caption + '</p>';
         if (colored && colored !== 'null' && colored !== '') {
             capHtml = '<div class="p-3 rounded text-center text-white fw-bold ' + colored + '" style="min-height:80px;font-size:16px;"><p class="mb-0">' + caption + '</p></div>';
         }
+
+        // পোস্টের media grid clone করি (থাকলে)
+        var mediaHtml = '';
+        var mediaGrid = card.querySelector('.dynamic-media-container-zone');
+        if (mediaGrid) {
+            var mClone = mediaGrid.cloneNode(true);
+            mClone.querySelectorAll('img,video').forEach(function (el) {
+                el.removeAttribute('onclick');
+                if (el.tagName === 'VIDEO') el.removeAttribute('controls');
+            });
+            mClone.querySelectorAll('.bb-play-badge,.bb-expand-btn,.bb-more-overlay').forEach(function (el) {
+                el.removeAttribute('onclick');
+            });
+            mediaHtml = '<div class="rounded overflow-hidden mt-2" style="max-height:240px;">' + mClone.outerHTML + '</div>';
+        }
+
         preview.innerHTML = '<div class="d-flex align-items-center gap-2 mb-2">'
             + '<div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:38px;height:38px;font-size:14px;">' + avatar + '</div>'
-            + '<h6 class="m-0 fw-bold" style="font-size:14px;">' + author + '</h6></div>' + capHtml;
+            + '<h6 class="m-0 fw-bold" style="font-size:14px;">' + author + '</h6></div>'
+            + capHtml + mediaHtml;
     }
 
     if (list) list.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary"></div><div class="small mt-2">Loading comments...</div></div>';
@@ -3624,7 +3674,9 @@ function openCommentModal(postId) {
         }
     })
     .catch(function () { if (list) list.innerHTML = '<div class="text-center text-muted py-4 small">Network error.</div>'; });
+
 }
+
 
 document.getElementById('commentModalViewMoreBtn')?.addEventListener('click', function () {
     var postId   = this.getAttribute('data-post-id');
@@ -4005,6 +4057,72 @@ setInterval(refreshActiveNow, 30000);
 
 
 // ============================================================
+// SECTION 16B: LIVE LIKE / COMMENT COUNTS (Facebook-style)
+// ============================================================
+function syncLiveCounts() {
+    // screen এ থাকা সব post card এর id সংগ্রহ
+    var cards = document.querySelectorAll('[id^="postCard-"]');
+    if (!cards.length) return;
+
+    var ids = [];
+    cards.forEach(function (c) {
+        var id = c.id.replace('postCard-', '');
+        if (id) ids.push(id);
+    });
+    if (!ids.length) return;
+
+    fetch('/feed/live-counts?ids=' + ids.join(','), {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (!d.counts) return;
+        Object.keys(d.counts).forEach(function (pid) {
+            var c = d.counts[pid];
+
+            // --- like count ---
+            var zone = document.getElementById('like-zone-' + pid);
+            if (zone) {
+                var numEl = zone.querySelector('.like-count-text');
+                if (c.likes > 0) {
+                    if (numEl) {
+                        if (numEl.innerText != c.likes) numEl.innerText = c.likes;
+                    } else {
+                        zone.innerHTML = '<span class="bb-like-bubble"><i class="bi bi-hand-thumbs-up-fill"></i></span> <span class="like-count-text">' + c.likes + '</span>';
+                    }
+                } else if (numEl) {
+                    zone.innerHTML = '';
+                }
+            }
+
+            // --- like button state (অন্য device এ নিজে like দিলে sync) ---
+            var btn = document.getElementById('likeBtn-' + pid);
+            if (btn) {
+                var isActive = btn.classList.contains('active-like');
+                if (c.liked && !isActive) {
+                    btn.className = 'bb-action-btn active-like';
+                    btn.innerHTML = '<i class="bi bi-hand-thumbs-up-fill"></i> <span>Like</span>';
+                } else if (!c.liked && isActive) {
+                    btn.className = 'bb-action-btn';
+                    btn.innerHTML = '<i class="bi bi-hand-thumbs-up"></i> <span>Like</span>';
+                }
+            }
+
+            // --- comment count ---
+            var cc = document.getElementById('comment-count-' + pid);
+            if (cc) {
+                var newText = c.comments + ' comments';
+                if (cc.innerText !== newText) cc.innerText = newText;
+            }
+        });
+    })
+    .catch(function () {});
+}
+
+// প্রতি 6 সেকেন্ডে নীরবে sync 
+setInterval(syncLiveCounts, 6000);
+
+// ============================================================
 // SECTION 17: NOTIFICATIONS
 // ============================================================
 
@@ -4067,6 +4185,8 @@ function routeNotification(action, target) {
         else location.href = '/#postCard-' + target;
     }
 }
+
+// JUMP
 function jumpToPost(postId) {
     var n = 0;
     (function go(){
@@ -4076,6 +4196,8 @@ function jumpToPost(postId) {
             t.style.transition='box-shadow .35s ease';
             t.style.boxShadow='0 0 0 3px #4f46e5';
             setTimeout(()=>t.style.boxShadow='', 2500);
+            // hash পরিষ্কার করি — URL এ #postCard-X আটকে না থাকে
+            if (location.hash) history.replaceState(null, '', location.pathname + location.search);
             return;
         }
         if (n++ < 15) setTimeout(go, 500);

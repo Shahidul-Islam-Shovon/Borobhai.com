@@ -149,9 +149,8 @@ function routeFromPage(action, target) {
     if (action === 'job')      { location.href = '/jobs/' + target;    return; }
     if (action === 'home')     { location.href = '/';                  return; }
     if (action === 'comments') { location.href = '/?open_comments=' + target; return; }
-    if (action === 'post')     { location.href = '/#postCard-' + target; }
+    if (action === 'post')     { location.href = '/?goto_post=' + target; }   // ← hash এর বদলে query
 }
-
 function pageMarkAllRead() {
     fetch('/notifications/read-all', {
         method:'POST',
