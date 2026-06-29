@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Hashidable;
 
 class Document extends Model
+
 {
+    use Hashidable;
+    
     protected $fillable = [
         'user_id', 'title', 'type', 'description', 'topic',
         'file_path', 'file_name', 'file_type', 'file_size', 'publication_year',

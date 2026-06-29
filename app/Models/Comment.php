@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Hashidable;
 
 class Comment extends Model
 {
+
+    use Hashidable;
+    
     protected $fillable = ['post_id', 'user_id', 'content', 'parent_id'];
 
     public function user()
