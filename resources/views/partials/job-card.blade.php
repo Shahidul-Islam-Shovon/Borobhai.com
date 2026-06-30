@@ -1,5 +1,6 @@
 @php
     use Illuminate\Support\Facades\Auth;
+    $hid = $job->getRouteKey();   // hashid — URL, DOM id, JS arg সব এতেই
     $expired = $job->is_expired;
     $expiringSoon = $job->is_expiring_soon;
     $typeColors = [
@@ -12,30 +13,30 @@
     ];
     $tc = $typeColors[$job->job_type] ?? ['#eef2ff', '#4f46e5', 'bi-briefcase'];
     $isSaved = isset($job->is_saved_by_me) ? ($job->is_saved_by_me > 0) : false;
-    $hasApplied = isset($appliedJobIds) && in_array($job->id, $appliedJobIds);
+    $hasApplied = isset($appliedJobIds) && in_array($job->id, $appliedJobIds); // server-side raw — ঠিক আছে
 @endphp
 
-<div class="bb-jobcard" id="jobCard-{{ $job->id }}">
+<div class="bb-jobcard" id="jobCard-{{ $hid }}">
     <div class="bb-jobcard-top">
         <div class="bb-jobcard-logo" style="background:{{ $tc[0] }};color:{{ $tc[1] }};">
             {{ strtoupper(substr($job->company, 0, 1)) }}
         </div>
         <div class="bb-jobcard-headinfo">
-            <a href="{{ route('jobs.show', $job->id) }}" class="bb-jobcard-title">{{ $job->title }}</a>
+            <a href="{{ route('jobs.show', $job) }}" class="bb-jobcard-title">{{ $job->title }}</a>
             <p class="bb-jobcard-company">{{ $job->company }}@if($job->location) · {{ $job->location }}@endif</p>
             <p class="bb-jobcard-posted"><i class="bi bi-clock"></i> Posted at {{ $job->created_at->format('d M, g:i A') }}</p>
         </div>
         <div class="d-flex align-items-start gap-1">
-            <button class="bb-job-save-btn {{ $isSaved ? 'saved' : '' }}" id="jobSaveBtn-{{ $job->id }}"
-                    onclick="toggleJobSave({{ $job->id }})" title="{{ $isSaved ? 'Saved' : 'Save job' }}">
+            <button class="bb-job-save-btn {{ $isSaved ? 'saved' : '' }}" id="jobSaveBtn-{{ $hid }}"
+                    onclick="toggleJobSave('{{ $hid }}')" title="{{ $isSaved ? 'Saved' : 'Save job' }}">
                 <i class="bi {{ $isSaved ? 'bi-bookmark-fill' : 'bi-bookmark' }}"></i>
             </button>
             @if($job->user_id === Auth::id())
                 <div class="dropdown">
                     <button class="bb-jobcard-more" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:110px;">
-                        <li><a class="dropdown-item py-1 fs-7" href="javascript:void(0)" onclick="editJobById({{ $job->id }})"><i class="bi bi-pencil me-1"></i> Edit</a></li>
-                        <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deleteJob({{ $job->id }})"><i class="bi bi-trash me-1"></i> Delete</a></li>
+                        <li><a class="dropdown-item py-1 fs-7" href="javascript:void(0)" onclick="editJobById('{{ $hid }}')"><i class="bi bi-pencil me-1"></i> Edit</a></li>
+                        <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deleteJob('{{ $hid }}')"><i class="bi bi-trash me-1"></i> Delete</a></li>
                     </ul>
                 </div>
             @endif
@@ -50,16 +51,15 @@
     </div>
 
     @if($expired)
-        {{-- deadline শেষ — শুধু See Details, apply নেই --}}
-        <a href="{{ route('jobs.show', $job->id) }}" class="bb-jobcard-btn" style="background:var(--bb-bg);color:#6b7280;">
+        <a href="{{ route('jobs.show', $job) }}" class="bb-jobcard-btn" style="background:var(--bb-bg);color:#6b7280;">
             <i class="bi bi-eye me-1"></i> See Details
         </a>
     @elseif($hasApplied)
-        <a href="{{ route('jobs.show', $job->id) }}" class="bb-jobcard-btn" style="background:#dcfce7;color:#16a34a;">
+        <a href="{{ route('jobs.show', $job) }}" class="bb-jobcard-btn" style="background:#dcfce7;color:#16a34a;">
             <i class="bi bi-check-circle-fill me-1"></i> Already Applied · View
         </a>
     @else
-        <a href="{{ route('jobs.show', $job->id) }}" class="bb-jobcard-btn">
+        <a href="{{ route('jobs.show', $job) }}" class="bb-jobcard-btn">
             <i class="bi bi-box-arrow-up-right me-1"></i> View Details & Apply
         </a>
     @endif

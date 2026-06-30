@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\HasHashid;
 
 
 class JobApplication extends Model
 {
 
+    use HasHashid;
     
     protected $fillable = [
         'user_id', 'job_post_id', 'applicant_name', 'applicant_email',

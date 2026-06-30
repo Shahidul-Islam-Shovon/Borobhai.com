@@ -5,12 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
-
+use App\Traits\Hashidable;             // ⬅️ ধাপ ১ এর trait — namespace তোমার আসলটার সাথে মিলিয়ে নাও
+use Vinkla\Hashids\Facades\Hashids; 
+use App\Models\Concerns\HasHashid;  // ⬅️ decode করার জন্য
 
 class JobPost extends Model
 {
-    
     use SoftDeletes;
+    use HasHashid;   // ⬅️ এক লাইনেই /jobs/{id} এখন hashid
 
     protected $table = 'job_posts';
 
@@ -23,6 +25,17 @@ class JobPost extends Model
     protected $casts = [
         'deadline' => 'date',
     ];
+
+    // ==========================================
+    // Hashid decode helper — controller এ ব্যবহার হবে
+    // URL এর hashid → আসল int id; ভুল hashid হলে 404
+    // ==========================================
+    public static function decodeHashid($hashid): int
+    {
+        $decoded = Hashids::decode((string) $hashid);
+        abort_if(empty($decoded), 404);
+        return (int) $decoded[0];
+    }
 
     // যে alumni পোস্ট করেছে
     public function user()
@@ -44,37 +57,31 @@ class JobPost extends Model
 
     // ===== Helper / Accessor =====
 
-    // ডেডলাইন কি শেষ?
     public function getIsExpiredAttribute()
     {
         if (!$this->deadline) return false;
         return $this->deadline->endOfDay()->isPast();
     }
 
-    // ডেডলাইন কি ঘনিয়ে আসছে? (আজ থেকে ৩ দিন বা তার কম বাকি)
     public function getIsExpiringSoonAttribute()
     {
         if (!$this->deadline || $this->is_expired) return false;
-        // আজ থেকে deadline পর্যন্ত কত দিন বাকি (signed, false=ভবিষ্যৎ ধনাত্মক)
         $daysLeft = now()->startOfDay()->diffInDays($this->deadline->startOfDay(), false);
         return $daysLeft >= 0 && $daysLeft <= 3;
     }
 
-    // ডেডলাইন শেষ হওয়ার কত দিন পর অটো-ডিলিট হবে (৫ দিন গ্রেস)
     public function getShouldAutoDeleteAttribute()
     {
         if (!$this->deadline) return false;
         return $this->deadline->endOfDay()->addDays(5)->isPast();
     }
 
-    // skills কে array তে (tag দেখানোর জন্য)
     public function getSkillsArrayAttribute()
     {
         if (!$this->skills) return [];
         return array_filter(array_map('trim', explode(',', $this->skills)));
     }
 
-    // ক্যাটাগরি priority (Popular/Internship/Part-time আগে দেখাতে)
     public function getSortPriorityAttribute()
     {
         $type = strtolower($this->job_type ?? '');
@@ -85,10 +92,8 @@ class JobPost extends Model
 
     // ===== Scopes =====
 
-    // শুধু সক্রিয় (auto-delete হওয়ার যোগ্য নয় এমন) job
     public function scopeVisible($query)
     {
-        // deadline null অথবা deadline+5day এখনো future
         return $query->where(function ($q) {
             $q->whereNull('deadline')
               ->orWhereRaw('DATE_ADD(deadline, INTERVAL 5 DAY) >= ?', [now()->toDateString()]);

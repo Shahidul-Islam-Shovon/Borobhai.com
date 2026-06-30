@@ -104,7 +104,7 @@
     </div>
 
     {{-- SEARCH --}}
-    <form method="GET" action="{{ route('jobs.applicants', $job->id) }}" class="ap-search">
+    <form method="GET" action="{{ route('jobs.applicants', $job) }}" class="ap-search">
         @if(!empty($filter))<input type="hidden" name="status" value="{{ $filter }}">@endif
         <div class="ap-search-box">
             <i class="bi bi-search"></i>
@@ -112,7 +112,7 @@
         </div>
         <button type="submit" class="ap-search-btn">Search</button>
         @if(!empty($search))
-            <a href="{{ route('jobs.applicants', $job->id).($filter ? '?status='.$filter : '') }}" class="ap-search-clear" title="Clear"><i class="bi bi-x-lg"></i></a>
+            <a href="{{ route('jobs.applicants', $job).($filter ? '?status='.$filter : '') }}" class="ap-search-clear" title="Clear"><i class="bi bi-x-lg"></i></a>
         @endif
     </form>
 
@@ -122,7 +122,7 @@
             $statuses = ['' => 'All', 'pending' => 'Pending', 'reviewed' => 'Under Review', 'shortlisted' => 'Shortlisted', 'accepted' => 'Accepted', 'rejected' => 'Not Selected'];
         @endphp
         @foreach($statuses as $val => $label)
-            <a href="{{ route('jobs.applicants', $job->id) }}{{ http_build_query(array_filter(['status' => $val ?: null, 'q' => $search ?? null])) ? '?'.http_build_query(array_filter(['status' => $val ?: null, 'q' => $search ?? null])) : '' }}"
+            <a href="{{ route('jobs.applicants', $job) }}{{ http_build_query(array_filter(['status' => $val ?: null, 'q' => $search ?? null])) ? '?'.http_build_query(array_filter(['status' => $val ?: null, 'q' => $search ?? null])) : '' }}"
                class="ap-filter {{ ($filter ?? '') === $val ? 'active' : '' }}">{{ $label }}</a>
         @endforeach
     </div>
@@ -180,7 +180,7 @@
                     </span>
                 @else
                     <div class="ap-status-select">
-                        <select onchange="updateStatus({{ $app->id }}, this.value)">
+                        <select onchange="updateStatus('{{ $app->getRouteKey() }}', this.value)">
                             <option value="pending"     {{ $app->status === 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="reviewed"    {{ $app->status === 'reviewed' ? 'selected' : '' }}>Under Review</option>
                             <option value="shortlisted" {{ $app->status === 'shortlisted' ? 'selected' : '' }}>Shortlisted</option>

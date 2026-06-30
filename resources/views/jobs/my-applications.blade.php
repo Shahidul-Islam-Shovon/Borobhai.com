@@ -157,7 +157,7 @@
                             <span class="ma-title" style="color:var(--bb-ink);">{{ $app->jobPost->title }}</span>
                             <p class="ma-company">{{ $app->jobPost->company }}@if($app->jobPost->location) · {{ $app->jobPost->location }}@endif <span style="color:#9ca3af;font-size:11.5px;">· <i class="bi bi-archive"></i> Archived</span></p>
                         @else
-                            <a href="{{ route('jobs.show', $app->jobPost->id) }}" class="ma-title">{{ $app->jobPost->title }}</a>
+                            <a href="{{ route('jobs.show', $app->jobPost) }}" class="ma-title">{{ $app->jobPost->title }}</a>
                             <p class="ma-company">{{ $app->jobPost->company }}@if($app->jobPost->location) · {{ $app->jobPost->location }}@endif</p>
                         @endif
                     @else
@@ -189,10 +189,10 @@
 
             <div class="ma-actions">
                 @if($app->jobPost && !$app->jobPost->trashed())
-                    <a href="{{ route('jobs.show', $app->jobPost->id) }}" class="ma-btn ma-btn-view"><i class="bi bi-box-arrow-up-right"></i> View Job</a>
+                    <a href="{{ route('jobs.show', $app->jobPost) }}" class="ma-btn ma-btn-view"><i class="bi bi-box-arrow-up-right"></i> View Job</a>
                 @endif
                 @if($app->apply_method === 'inapp' && in_array($app->status, ['pending', 'reviewed']) && (!$app->jobPost || !$app->jobPost->trashed()))
-                    <button class="ma-btn ma-btn-withdraw" onclick="withdrawApp({{ $app->job_post_id }}, {{ $app->id }})"><i class="bi bi-x-circle"></i> Withdraw</button>
+                    <button class="ma-btn ma-btn-withdraw" onclick="withdrawApp('{{ $app->jobPost->getRouteKey() }}', {{ $app->id }})"><i class="bi bi-x-circle"></i> Withdraw</button>
                 @endif
             </div>
         </div>

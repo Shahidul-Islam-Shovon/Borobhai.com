@@ -10,7 +10,7 @@
                 <div class="ja-top">
                     <div class="ja-logo" style="{{ $logoColor }}">{{ strtoupper(substr($job->company,0,1)) }}</div>
                     <div class="flex-grow-1" style="min-width:0;">
-                        <a href="{{ route('jobs.show', $job->id) }}" class="ja-title">{{ $job->title }}</a>
+                        <a href="{{ route('jobs.show', $job) }}" class="ja-title">{{ $job->title }}</a>
                         <p class="ja-company">{{ $job->company }}@if($job->location) · {{ $job->location }}@endif</p>
                     </div>
                 </div>
@@ -26,7 +26,7 @@
                     @endif
                 </div>
                 <div class="ja-foot">
-                    <a href="{{ route('jobs.show', $job->id) }}" class="ja-view">View Details & Apply</a>
+                    <a href="{{ route('jobs.show', $job) }}" class="ja-view">View Details & Apply</a>
                 </div>
             </div>
         @endforeach

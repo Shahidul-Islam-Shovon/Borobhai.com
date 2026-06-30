@@ -116,7 +116,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/jobs/{id}/apply',             [JobApplicationController::class, 'apply'])->name('jobs.apply');
     Route::post('/jobs/{id}/withdraw',          [JobApplicationController::class, 'withdraw'])->name('jobs.withdraw');
     Route::get('/jobs/{id}/applicants',         [JobApplicationController::class, 'applicants'])->name('jobs.applicants');
-    Route::post('/applications/{id}/status',    [JobApplicationController::class, 'updateStatus'])->name('jobs.application.status');
+
+    // পরে
+    Route::post('/applications/{application}/status', [JobApplicationController::class, 'updateStatus'])->name('jobs.application.status');
+
     Route::delete('/jobs/{id}',                 [JobController::class, 'destroy'])->name('jobs.delete');
     Route::get('/jobs/{id}',                    [JobController::class, 'show'])->name('jobs.show');
 

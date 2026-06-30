@@ -115,9 +115,18 @@ class NotificationController extends Controller
             'post_like', 'post_share'                        => ['post', $n->notifiable_id],
             'post_comment', 'comment_reply', 'comment_like'  => ['comments', $n->notifiable_id],
             'new_job', 'job_apply', 'job_status',
-            'job_deadline_soon', 'job_deadline_expired'      => ['job', $n->notifiable_id],
+            'job_deadline_soon', 'job_deadline_expired'      => ['job', $this->jobHashid($n->notifiable_id)],
             default                                          => ['home', 0],
         };
+    }
+
+    // raw job id → hashid string, route এ বসানোর জন্য
+    // job ডিলিট হয়ে গেলে notification থেকে যেতে পারে — তখন find() null দেবে,
+    // সেক্ষেত্রে raw id fallback করছি (লিংক কাজ নাও করতে পারে, কিন্তু পেজ crash করবে না)
+    private function jobHashid($rawId): string
+    {
+        $job = \App\Models\JobPost::find($rawId);
+        return $job ? $job->getRouteKey() : (string) $rawId;
     }
 
     private function iconFor($type): string

@@ -250,7 +250,7 @@
                     <strong><i class="bi bi-person-badge"></i> This is your job posting</strong>
                     Manage and review applicants here.
                 </div>
-                <a href="{{ route('jobs.applicants', $job->id) }}" class="jp-apply-btn"><i class="bi bi-people-fill"></i> View Applicants</a>
+                <a href="{{ route('jobs.applicants', $job) }}" class="jp-apply-btn"><i class="bi bi-people-fill"></i> View Applicants</a>
             @elseif($expired)
                 <div class="jp-apply-info">
                     <strong>Applications closed</strong>
@@ -265,7 +265,7 @@
                 <div class="d-flex gap-2 flex-wrap">
                     <a href="{{ route('jobs.myApplications') }}" class="jp-apply-btn" style="background:#eef2ff;color:var(--bb-primary);box-shadow:none;"><i class="bi bi-clock-history"></i> View in History</a>
                     @if(($myAppMethod ?? 'inapp') === 'inapp' && in_array($myAppStatus, ['pending', 'reviewed']))
-                        <button class="jp-apply-btn" style="background:#fef2f2;color:#dc2626;box-shadow:none;" onclick="withdrawApplication({{ $job->id }})"><i class="bi bi-x-circle"></i> Withdraw</button>
+                        <button class="jp-apply-btn" style="background:#fef2f2;color:#dc2626;box-shadow:none;" onclick="withdrawApplication('{{ $job->getRouteKey() }}')"><i class="bi bi-x-circle"></i> Withdraw</button>
                     @endif
                 </div>
             @else
@@ -281,7 +281,7 @@
                             : (str_starts_with($job->apply_value, 'http') ? $job->apply_value : 'https://'.$job->apply_value);
                     @endphp
                     <button class="jp-apply-btn" style="background:#fff;color:var(--bb-primary);border:1.5px solid var(--bb-primary);box-shadow:none;"
-                            data-job-id="{{ $job->id }}"
+                            data-job-id="{{ $job->getRouteKey() }}"
                             data-apply-type="{{ $job->apply_type }}"
                             data-apply-href="{{ $applyHref }}"
                             onclick="applyExternalBtn(this)">
@@ -437,7 +437,7 @@ function submitApply(){
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Submitting...';
     const fd = new FormData(form);
 
-    fetch("{{ route('jobs.apply', $job->id) }}", {
+    fetch("{{ route('jobs.apply', $job) }}", {
         method:'POST', headers:{'X-CSRF-TOKEN':APPLY_CSRF,'Accept':'application/json'}, body:fd
     })
     .then(r=>r.json())

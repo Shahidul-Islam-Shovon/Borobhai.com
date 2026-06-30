@@ -1950,7 +1950,7 @@
                 <div class="bb-side-body">
                     @forelse($recentJobs ?? [] as $job)
                         @php $jt=strtolower($job->job_type); $lc=str_contains($jt,'intern')?'background:#fff7ed;color:#ea580c;':(str_contains($jt,'part')?'background:#eff6ff;color:#2563eb;':'background:var(--bb-primary-soft);color:var(--bb-primary);'); @endphp
-                        <a href="{{ route('jobs.show', $job->id) }}" class="bb-job-item">
+                        <a href="{{ route('jobs.show', $job) }}" class="bb-job-item">
                             <div class="bb-job-logo" style="{{ $lc }}">{{ strtoupper(substr($job->company,0,1)) }}</div>
                             <div class="bb-job-info">
                                 <h6 class="bb-job-title">{{ \Illuminate\Support\Str::limit($job->title, 28) }}</h6>
@@ -2052,6 +2052,7 @@
             </div>
 
         </div>
+
     </div>
 </div>
 

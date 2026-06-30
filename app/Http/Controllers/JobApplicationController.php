@@ -17,20 +17,18 @@ class JobApplicationController extends Controller
     // ==========================================
     public function apply(Request $request, $jobId)
     {
-        $job  = JobPost::findOrFail($jobId);
+        $realJobId = JobPost::decodeHashid($jobId);   // ⬅️ decode
+        $job  = JobPost::findOrFail($realJobId);
         $user = Auth::user();
 
-        // নিজের পোস্ট করা job এ নিজে apply করা যাবে না
         if ($job->user_id === $user->id) {
             return response()->json(['success' => false, 'message' => 'You cannot apply to your own job posting.'], 403);
         }
 
-        // ডেডলাইন শেষ হলে আবেদন বন্ধ
         if ($job->is_expired) {
             return response()->json(['success' => false, 'message' => 'The deadline for this job has passed.'], 422);
         }
 
-        // আগে আবেদন করেছে কিনা
         $already = JobApplication::where('user_id', $user->id)->where('job_post_id', $job->id)->first();
         if ($already) {
             return response()->json(['success' => false, 'message' => 'You have already applied to this job.'], 409);
@@ -38,7 +36,6 @@ class JobApplicationController extends Controller
 
         $method = $request->input('apply_method', 'inapp');
 
-        // external হলে শুধু track — বিস্তারিত লাগবে না
         if ($method === 'external') {
             $application = JobApplication::create([
                 'user_id'         => $user->id,
@@ -50,7 +47,6 @@ class JobApplicationController extends Controller
                 'applied_at'      => now(),
             ]);
 
-            // Job poster কে notification
             BbNotification::send(
                 $job->user_id,
                 Auth::id(),
@@ -68,7 +64,6 @@ class JobApplicationController extends Controller
             ]);
         }
 
-        // in-app — পূর্ণ validation
         try {
             $data = $request->validate([
                 'applicant_name'  => 'required|string|max:255',
@@ -102,7 +97,6 @@ class JobApplicationController extends Controller
             'applied_at'      => now(),
         ]);
 
-        // Job poster কে notification
         BbNotification::send(
             $job->user_id,
             Auth::id(),
@@ -125,13 +119,13 @@ class JobApplicationController extends Controller
     // ==========================================
     public function withdraw($jobId)
     {
+        $realJobId = JobPost::decodeHashid($jobId);   // ⬅️ decode
         $user = Auth::user();
 
         $application = JobApplication::where('user_id', $user->id)
-            ->where('job_post_id', $jobId)
+            ->where('job_post_id', $realJobId)
             ->firstOrFail();
 
-        // External apply withdraw করা যায় না
         if ($application->apply_method === 'external') {
             return response()->json([
                 'success' => false,
@@ -139,7 +133,6 @@ class JobApplicationController extends Controller
             ], 422);
         }
 
-        // alumni এগিয়ে নিলে (shortlisted/accepted/rejected) আর withdraw নয়
         if (!in_array($application->status, ['pending', 'reviewed'])) {
             return response()->json([
                 'success' => false,
@@ -147,7 +140,6 @@ class JobApplicationController extends Controller
             ], 422);
         }
 
-        // resume মুছে দাও
         if ($application->resume_path && Storage::disk('public')->exists($application->resume_path)) {
             Storage::disk('public')->delete($application->resume_path);
         }
@@ -202,7 +194,8 @@ class JobApplicationController extends Controller
     // ==========================================
     public function applicants(Request $request, $jobId)
     {
-        $job = JobPost::withTrashed()->findOrFail($jobId);
+        $realJobId = JobPost::decodeHashid($jobId);              // ⬅️ decode
+        $job = JobPost::withTrashed()->findOrFail($realJobId);
 
         if ($job->user_id !== Auth::id()) {
             abort(403);
@@ -229,18 +222,17 @@ class JobApplicationController extends Controller
         return view('jobs.applicants', compact('job', 'applicants', 'search', 'filter', 'totalCount'));
     }
 
-    // ==========================================
-    // Alumni — আবেদনের status পরিবর্তন
-    // ==========================================
-    public function updateStatus(Request $request, $appId)
+
+    public function updateStatus(Request $request, JobApplication $application)
     {
-        $application = JobApplication::with(['jobPost' => fn($q) => $q->withTrashed()])->findOrFail($appId);
+        // আগে with()->findOrFail() দিয়ে trashed job সহ load হতো,
+        // route binding এ সেটা হয় না — তাই আলাদা করে load করছি
+        $application->loadMissing(['jobPost' => fn($q) => $q->withTrashed()]);
 
         if (!$application->jobPost || $application->jobPost->user_id !== Auth::id()) {
             abort(403);
         }
 
-        // External apply এর status alumni বদলাতে পারবে না
         if ($application->apply_method === 'external') {
             return response()->json([
                 'success' => false,
@@ -255,7 +247,6 @@ class JobApplicationController extends Controller
         $application->status = $data['status'];
         $application->save();
 
-        // Applicant কে status change notification
         BbNotification::send(
             $application->user_id,
             Auth::id(),

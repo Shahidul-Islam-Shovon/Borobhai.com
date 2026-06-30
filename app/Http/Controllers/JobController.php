@@ -16,7 +16,6 @@ class JobController extends Controller
     // ==========================================
     public function store(Request $request)
     {
-        // শুধু alumni job পোস্ট করতে পারবে
         if (Auth::user()->role !== 'alumni') {
             return response()->json(['success' => false, 'message' => 'Only alumni can post jobs.'], 403);
         }
@@ -25,12 +24,10 @@ class JobController extends Controller
             'deadline' => $request->deadline ?: null,
         ]);
 
-        // apply_value কে type অনুযায়ী যাচাই (email হলে valid email, link হলে valid URL)
         $applyRule = $request->apply_type === 'email'
             ? 'required|email:rfc|max:255'
             : 'required|url|max:255';
 
-        // link হলে http(s) না থাকলে যোগ করি (যাতে url validation পাস করে)
         if ($request->apply_type === 'link' && $request->filled('apply_value')) {
             $val = trim($request->apply_value);
             if (!preg_match('#^https?://#i', $val)) {
@@ -40,7 +37,7 @@ class JobController extends Controller
 
         try {
             $data = $request->validate([
-                'id'           => 'nullable|integer',
+                'id'           => 'nullable|string',   // ⬅️ এখন hashid string (raw int নয়)
                 'title'        => 'required|string|max:255',
                 'company'      => 'required|string|max:255',
                 'location'     => 'nullable|string|max:255',
@@ -63,21 +60,21 @@ class JobController extends Controller
             return response()->json(['success' => false, 'errors' => $e->errors()], 422);
         }
 
-        // এডিট না নতুন
         $isNew = !$request->filled('id');
 
         if (!$isNew) {
-            $job = JobPost::where('id', $request->id)->where('user_id', Auth::id())->firstOrFail();
+            // edit — hidden field এর hashid decode করে নিজের job খুঁজি
+            $realId = JobPost::decodeHashid($request->id);
+            $job = JobPost::where('id', $realId)->where('user_id', Auth::id())->firstOrFail();
         } else {
             $job = new JobPost();
             $job->user_id = Auth::id();
         }
 
-        $job->fill($data);
+        $job->fill($data);          // 'id' fillable নয় → নিরাপদে উপেক্ষা হবে
         $job->status = 'active';
         $job->save();
 
-        // নতুন job হলে সব friends দের notify করো
         if ($isNew) {
             $friendIds = Friendship::friendIds(Auth::id());
             foreach ($friendIds as $friendId) {
@@ -95,16 +92,13 @@ class JobController extends Controller
         $fresh = $job->fresh();
         $fresh->load('user');
 
-        // ফিডের জন্য job card HTML
-        $html = view('partials.job-card', ['job' => $fresh])->render();
-
-        // profile Job Posts সেকশনের item HTML
+        $html        = view('partials.job-card', ['job' => $fresh])->render();
         $profileHtml = view('partials.myjob-item', ['job' => $fresh])->render();
 
         return response()->json([
             'success'      => true,
             'message'      => 'Job posted successfully!',
-            'job_id'       => $job->id,
+            'job_id'       => $job->getRouteKey(),   // ⬅️ hashid (DOM card targeting consistent থাকবে)
             'html'         => $html,
             'profile_html' => $profileHtml,
         ]);
@@ -117,14 +111,14 @@ class JobController extends Controller
     {
         self::cleanupExpired();
 
-        $job = JobPost::with('user')->findOrFail($id);
+        $jobId = JobPost::decodeHashid($id);          // ⬅️ hashid → real id
+        $job   = JobPost::with('user')->findOrFail($jobId);
 
         if ($job->should_auto_delete) {
             $job->delete();
             abort(404);
         }
 
-        // user আগে আবেদন করেছে কিনা + status + method
         $myApplication = \App\Models\JobApplication::where('user_id', Auth::id())
             ->where('job_post_id', $job->id)->first();
 
@@ -144,7 +138,6 @@ class JobController extends Controller
 
         $query = JobPost::with('user')->visible();
 
-        // search — title, company, location, skills দিয়ে
         $search = trim((string) $request->input('q', ''));
         if ($search !== '') {
             $query->where(function ($qq) use ($search) {
@@ -155,14 +148,12 @@ class JobController extends Controller
             });
         }
 
-        // filter — job type অনুযায়ী
         $type       = $request->input('type');
         $validTypes = ['Internship', 'Part-time', 'Full-time', 'Remote', 'Contract', 'Freelance'];
         if ($type && in_array($type, $validTypes)) {
             $query->where('job_type', $type);
         }
 
-        // sort — default (Internship/Part-time আগে), অথবা newest/deadline
         $sort = $request->input('sort', 'default');
         if ($sort === 'newest') {
             $query->latest();
@@ -178,7 +169,6 @@ class JobController extends Controller
 
         $jobs = $query->paginate(12)->withQueryString();
 
-        // AJAX হলে শুধু job cards + pagination + meta ফেরত দাও
         if ($request->ajax() || $request->wantsJson()) {
             $cardsHtml = view('jobs.partials.all-cards', compact('jobs', 'search', 'type'))->render();
             return response()->json([
@@ -198,7 +188,8 @@ class JobController extends Controller
     // ==========================================
     public function toggleSave($id)
     {
-        $job      = JobPost::withTrashed()->findOrFail($id);
+        $jobId    = JobPost::decodeHashid($id);                 // ⬅️ decode
+        $job      = JobPost::withTrashed()->findOrFail($jobId);
         $user     = Auth::user();
         $existing = $job->savedByUsers()->where('user_id', $user->id)->exists();
 
@@ -222,11 +213,13 @@ class JobController extends Controller
     // ==========================================
     public function getJob($id)
     {
-        $job = JobPost::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $jobId = JobPost::decodeHashid($id);                    // ⬅️ decode
+        $job   = JobPost::where('id', $jobId)->where('user_id', Auth::id())->firstOrFail();
+
         return response()->json([
             'success' => true,
             'job'     => [
-                'id'           => $job->id,
+                'id'           => $job->getRouteKey(),          // ⬅️ hashid (edit form এ raw id যাবে না)
                 'title'        => $job->title,
                 'company'      => $job->company,
                 'location'     => $job->location,
@@ -249,13 +242,14 @@ class JobController extends Controller
     // ==========================================
     public function destroy($id)
     {
-        $job = JobPost::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $jobId = JobPost::decodeHashid($id);                    // ⬅️ decode
+        $job   = JobPost::where('id', $jobId)->where('user_id', Auth::id())->firstOrFail();
         $job->delete();
         return response()->json(['success' => true, 'message' => 'Job deleted']);
     }
 
     // ==========================================
-    // মেয়াদোত্তীর্ণ (৫ দিন গ্রেস শেষ) job গুলো পরিষ্কার
+    // মেয়াদোত্তীর্ণ job পরিষ্কার
     // ==========================================
     public static function cleanupExpired()
     {
