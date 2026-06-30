@@ -1695,12 +1695,13 @@
 <body class="{{ $role === 'teacher' ? 'bb-teacher-feed' : '' }}">
 
 
-<div id="bbJumpOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(243,244,248,.45);backdrop-filter:blur(6px) saturate(120%);-webkit-backdrop-filter:blur(6px) saturate(120%);align-items:center;justify-content:center;flex-direction:column;">
+<div id="bbJumpOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(243,244,248,.30);backdrop-filter:blur(2px) saturate(110%);-webkit-backdrop-filter:blur(3.5px) saturate(110%);align-items:center;justify-content:center;flex-direction:column;">
     <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:28px 36px;border-radius:20px;background:rgba(255,255,255,.55);box-shadow:0 8px 40px rgba(79,70,229,.18);border:1px solid rgba(255,255,255,.6);">
         <div style="width:54px;height:54px;border:5px solid rgba(79,70,229,.15);border-top-color:#4f46e5;border-radius:50%;animation:bbSpin .8s linear infinite;"></div>
-        <div id="bbJumpText" style="font-size:14.5px;font-weight:700;color:#4f46e5;letter-spacing:.2px;">Taking you to your post…</div>
+        <div id="bbJumpText" style="font-size:14.5px;font-weight:700;color:#4f46e5;letter-spacing:.2px;">Please Wait We Taking You To Tour Post…</div>
     </div>
 </div>
+
 <style>
 @keyframes bbSpin { to { transform: rotate(360deg); } }
 </style>
@@ -1986,7 +1987,7 @@
                 <div class="bb-side-body" id="activeNowZone">
                     @forelse($activeUsers ?? [] as $au)
                         @php
-                            $isOnline = $au->last_seen && $au->last_seen >= now()->subMinutes(10);
+                            $isOnline = $au->last_seen && $au->last_seen >= now()->subSeconds(40);
                             $lastSeenText = \App\Http\Controllers\PostController::formatLastSeen($au->last_seen);
                             $dotColor = $isOnline ? '#22c55e' : '#9ca3af';
                         @endphp
@@ -4752,6 +4753,8 @@ function setEditPrivacy(value, iconClass, label) {
 
 </script>
 {{-- UPDATE MAIN JS DATA END --}}
+
+@include('partials.mobile-nav')
 
 </body>
 </html>

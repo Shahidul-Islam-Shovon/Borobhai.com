@@ -25,7 +25,7 @@ class FriendController extends Controller
                 $u->mutual = Friendship::mutualCount($meId, $u->id);
                 // last seen format
                 $u->last_seen_text = $this->formatLastSeen($u->last_seen);
-                $u->is_online = $u->last_seen && $u->last_seen >= now()->subMinutes(10);
+                $u->is_online = $u->last_seen && $u->last_seen >= now()->subSeconds(40);
                 return $u;
             });
 
@@ -190,7 +190,7 @@ class FriendController extends Controller
                     'id'              => $u->id,
                     'name'            => $u->name,
                     'profile_picture' => $u->profile_picture,
-                    'is_online'       => $u->last_seen && $u->last_seen >= now()->subMinutes(10),
+                    'is_online'       => $u->last_seen && $u->last_seen >= now()->subSeconds(40),
                 ];
             });
 

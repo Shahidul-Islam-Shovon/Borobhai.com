@@ -517,7 +517,7 @@ class PostController extends Controller
                 'hashid'          => $u->hashid,
                 'name'            => $u->name,
                 'profile_picture' => $u->profile_picture,
-                'is_online'       => $u->last_seen && $u->last_seen >= now()->subMinutes(10),
+                'is_online'       => $u->last_seen && $u->last_seen >= now()->subSeconds(40),
             ]);
 
         return response()->json(['contacts' => $contacts]);
