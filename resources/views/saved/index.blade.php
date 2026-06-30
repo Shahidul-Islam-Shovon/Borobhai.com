@@ -66,7 +66,7 @@
                         @if($archived)
                             <span class="fw-bold mb-1 d-block text-dark" style="font-size:14px;">{{ $job->title }}</span>
                         @else
-                            <a href="{{ route('jobs.show', $job->id) }}" class="fw-bold mb-1 d-block text-dark text-decoration-none" style="font-size:14px;">{{ $job->title }}</a>
+                            <a href="{{ route('jobs.show', $job) }}" class="fw-bold mb-1 d-block text-dark text-decoration-none" style="font-size:14px;">{{ $job->title }}</a>
                         @endif
                         <p class="text-muted mb-1" style="font-size:13px;">{{ $job->company }}@if($job->location) · {{ $job->location }}@endif</p>
                         <div class="d-flex align-items-center gap-2 flex-wrap">

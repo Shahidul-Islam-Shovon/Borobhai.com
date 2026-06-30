@@ -151,6 +151,8 @@ function routeFromPage(action, target) {
     if (action === 'comments') { location.href = '/?open_comments=' + target; return; }
     if (action === 'post')     { location.href = '/?goto_post=' + target; }   // ← hash এর বদলে query
 }
+
+
 function pageMarkAllRead() {
     fetch('/notifications/read-all', {
         method:'POST',

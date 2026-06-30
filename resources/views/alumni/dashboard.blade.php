@@ -1694,6 +1694,17 @@
 @php $role = Auth::user()->role; @endphp
 <body class="{{ $role === 'teacher' ? 'bb-teacher-feed' : '' }}">
 
+
+<div id="bbJumpOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(243,244,248,.45);backdrop-filter:blur(6px) saturate(120%);-webkit-backdrop-filter:blur(6px) saturate(120%);align-items:center;justify-content:center;flex-direction:column;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:28px 36px;border-radius:20px;background:rgba(255,255,255,.55);box-shadow:0 8px 40px rgba(79,70,229,.18);border:1px solid rgba(255,255,255,.6);">
+        <div style="width:54px;height:54px;border:5px solid rgba(79,70,229,.15);border-top-color:#4f46e5;border-radius:50%;animation:bbSpin .8s linear infinite;"></div>
+        <div id="bbJumpText" style="font-size:14.5px;font-weight:700;color:#4f46e5;letter-spacing:.2px;">Taking you to your post…</div>
+    </div>
+</div>
+<style>
+@keyframes bbSpin { to { transform: rotate(360deg); } }
+</style>
+
 {{-- ==================== NAVBAR ==================== --}}
 <nav class="navbar navbar-expand-md sticky-top">
     <div class="container-fluid">
@@ -2554,34 +2565,41 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ── goto_post: post এ scroll + highlight ──────────────────
-    if (gotoPost) {
+     if (gotoPost) {
+        showJumpOverlay('Taking you to the post…');
         var tries = 0;
         (function tryScroll() {
             var card = document.getElementById('postCard-' + gotoPost);
             if (card) {
+                hideJumpOverlay();
                 card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 card.style.transition = 'box-shadow .35s ease';
                 card.style.boxShadow  = '0 0 0 3px #4f46e5';
                 setTimeout(function () { card.style.boxShadow = ''; }, 2500);
                 return;
             }
-            // Post এখনো DOM এ নেই (infinite scroll লোড হয়নি) — অপেক্ষা করি
-            if (tries++ < 30) setTimeout(tryScroll, 500);
+            // Post এখনো DOM এ নেই — আরও feed এনে খুঁজি
+            if (typeof loadMorePosts === 'function') loadMorePosts();
+            if (tries++ < 30) setTimeout(tryScroll, 600);
+            else hideJumpOverlay();
         })();
     }
 
     // ── open_comments: comment modal খোলা ────────────────────
     if (openComments) {
+        showJumpOverlay('Opening comments…');
         var tries2 = 0;
         (function tryOpen() {
             var card = document.getElementById('postCard-' + openComments);
             if (card && typeof openCommentModal === 'function') {
-                // আগে post এ scroll করি, তারপর modal
+                hideJumpOverlay();
                 card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 setTimeout(function () { openCommentModal(openComments); }, 400);
                 return;
             }
-            if (tries2++ < 30) setTimeout(tryOpen, 500);
+            if (typeof loadMorePosts === 'function') loadMorePosts();
+            if (tries2++ < 30) setTimeout(tryOpen, 600);
+            else hideJumpOverlay();
         })();
     }
 
@@ -2589,17 +2607,21 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.location.hash && window.location.hash.startsWith('#postCard-')) {
         var targetId = window.location.hash.substring(1);
         history.replaceState(null, '', location.pathname);
+        showJumpOverlay('Taking you to the post…');
         var tries3 = 0;
         (function tryHash() {
             var target = document.getElementById(targetId);
             if (target) {
+                hideJumpOverlay();
                 target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 target.style.transition = 'box-shadow .35s ease';
                 target.style.boxShadow  = '0 0 0 3px #4f46e5';
                 setTimeout(function () { target.style.boxShadow = ''; }, 2500);
                 return;
             }
-            if (tries3++ < 15) setTimeout(tryHash, 600);
+            if (typeof loadMorePosts === 'function') loadMorePosts();
+            if (tries3++ < 30) setTimeout(tryHash, 600);
+            else hideJumpOverlay();
         })();
     }
 
@@ -4184,31 +4206,64 @@ function routeNotification(action, target) {
     if (action === 'job')     { location.href = '/jobs/' + target;    return; }
     if (action === 'home')    { if (!onHome) location.href = '/'; return; }
     if (action === 'comments') {
-        if (onHome && typeof openCommentModal === 'function') openCommentModal(target);
+        if (onHome) jumpAndComment(target);
         else location.href = '/?open_comments=' + target;
         return;
     }
     if (action === 'post') {
         if (onHome) jumpToPost(target);
-        else location.href = '/#postCard-' + target;
+        else location.href = '/?goto_post=' + target;
     }
 }
 
+function showJumpOverlay(text) {
+    var ov = document.getElementById('bbJumpOverlay');
+    var tx = document.getElementById('bbJumpText');
+    if (tx && text) tx.innerText = text;
+    if (ov) ov.style.display = 'flex';
+}
+function hideJumpOverlay() {
+    var ov = document.getElementById('bbJumpOverlay');
+    if (ov) ov.style.display = 'none';
+}
+
+
 // JUMP
 function jumpToPost(postId) {
+    showJumpOverlay('Taking you to the post…');
     var n = 0;
     (function go(){
         var t = document.getElementById('postCard-' + postId);
         if (t) {
+            hideJumpOverlay();
             t.scrollIntoView({behavior:'smooth', block:'center'});
             t.style.transition='box-shadow .35s ease';
             t.style.boxShadow='0 0 0 3px #4f46e5';
             setTimeout(()=>t.style.boxShadow='', 2500);
-            // hash পরিষ্কার করি — URL এ #postCard-X আটকে না থাকে
             if (location.hash) history.replaceState(null, '', location.pathname + location.search);
             return;
         }
-        if (n++ < 15) setTimeout(go, 500);
+        if (typeof loadMorePosts === 'function') loadMorePosts();
+        if (n++ < 30) setTimeout(go, 600);
+        else hideJumpOverlay();
+    })();
+}
+
+// আগে post এ scroll (দরকারে আরও feed load) তারপর comment modal — caption/media সহ
+function jumpAndComment(postId) {
+    showJumpOverlay('Opening comments…');
+    var n = 0;
+    (function go(){
+        var t = document.getElementById('postCard-' + postId);
+        if (t && typeof openCommentModal === 'function') {
+            hideJumpOverlay();
+            t.scrollIntoView({behavior:'smooth', block:'center'});
+            setTimeout(function(){ openCommentModal(postId); }, 400);
+            return;
+        }
+        if (typeof loadMorePosts === 'function') loadMorePosts();
+        if (n++ < 30) setTimeout(go, 600);
+        else hideJumpOverlay();
     })();
 }
 
@@ -4693,6 +4748,8 @@ function setEditPrivacy(value, iconClass, label) {
     var btn = document.getElementById('editPrivacyBtn');
     if (btn && iconClass) btn.querySelector('i').className = 'bi ' + iconClass + ' me-1';
 }
+
+
 </script>
 {{-- UPDATE MAIN JS DATA END --}}
 
