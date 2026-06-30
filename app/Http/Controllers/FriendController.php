@@ -357,10 +357,10 @@ class FriendController extends Controller
     public static function formatLastSeen($lastSeen): string
     {
         if (!$lastSeen) return 'Never';
-        $lastSeen = \Carbon\Carbon::parse($lastSeen);
-        $diffMin  = now()->diffInMinutes($lastSeen);
-        $diffHour = now()->diffInHours($lastSeen);
-        $diffDay  = now()->diffInDays($lastSeen);
+         $lastSeen = \Carbon\Carbon::parse($lastSeen);
+        $diffMin  = (int) abs(now()->diffInMinutes($lastSeen));
+        $diffHour = (int) abs(now()->diffInHours($lastSeen));
+        $diffDay  = (int) abs(now()->diffInDays($lastSeen));
 
         if ($diffMin < 10)  return 'Active now';
         if ($diffMin < 60)  return 'Active ' . $diffMin . 'm ago';

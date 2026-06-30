@@ -97,6 +97,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/{user}',               [ProfileController::class, 'show'])->name('profile.view');
 
     // ---------- FEED ----------
+
+    Route::post('/presence/offline', [PostController::class, 'goOffline'])->name('presence.offline');
+
     Route::get('/feed/load',                    [PostController::class, 'loadMore'])->name('feed.load');
     Route::post('/posts',                       [PostController::class, 'store'])->name('posts.store');
     Route::post('/posts/{id}',                  [PostController::class, 'update'])->name('posts.update');

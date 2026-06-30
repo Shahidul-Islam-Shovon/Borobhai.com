@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -119,6 +120,13 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request)
     {
+
+    // logout করলেই সাথে সাথে offline (Active Now থেকে সরে যাবে)
+        if (Auth::id()) {
+            \DB::table('users')->where('id', Auth::id())
+            ->update(['last_seen' => now()->subHours(5)]);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

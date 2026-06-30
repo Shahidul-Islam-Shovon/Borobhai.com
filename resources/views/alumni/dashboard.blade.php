@@ -1729,7 +1729,7 @@
             @else
                 <span class="bb-role-badge d-none d-sm-inline-flex bb-role-student"><i class="bi bi-backpack-fill"></i> Student Feed</span>
             @endif
-            <a href="#" class="nav-icon-btn d-md-none"><i class="bi bi-search"></i></a>
+            <a href="{{ route('search.index') }}" class="nav-icon-btn d-md-none"><i class="bi bi-search"></i></a>
             <a href="#" class="nav-icon-btn"><i class="bi bi-messenger"></i></a>
 
             {{-- NOTIFICATION BELL --}}
@@ -1941,7 +1941,7 @@
         {{-- ==================== RIGHT SIDEBAR ==================== --}}
         <div class="col-md-3 d-none d-md-block bb-right-sidebar">
 
-            @if($role === 'alumni')
+            @if($role === 'teacher' || $role === 'alumni')
             <div class="bb-side-card mb-3">
                 <div class="bb-side-head">
                     <span class="bb-side-title"><i class="bi bi-briefcase-fill text-primary"></i> Recent Jobs</span>
@@ -1980,7 +1980,7 @@
                             $dotColor = $isOnline ? '#22c55e' : '#9ca3af';
                         @endphp
                         <a href="#" class="bb-active-item"
-                           onclick="event.preventDefault(); openChatBox({{ $au->id }}, '{{ e($au->name) }}', '{{ $au->profile_picture ? asset('storage/'.$au->profile_picture) : '' }}', '{{ $lastSeenText }}', '{{ $isOnline ? '1' : '0' }}')">
+                           onclick="event.preventDefault(); openChatBox({{ $au->id }}, '{{ e($au->name) }}', '{{ $au->profile_picture ? asset('storage/'.$au->profile_picture) : '' }}', '{{ $lastSeenText }}', '{{ $isOnline ? '1' : '0' }}', '{{ $au->hashid }}')">
                             <div class="bb-active-avatar">
                                 @if($au->profile_picture)
                                     <img src="{{ asset('storage/'.$au->profile_picture) }}" style="width:100%;height:100%;object-fit:cover;">
@@ -1991,8 +1991,8 @@
                             </div>
                             <div class="bb-active-meta">
                                 <span class="bb-active-name">{{ $au->name }}</span>
-                                <span class="bb-mini-badge bb-mini-{{ $au->role }}">
-                                    @if($isOnline)<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i>@endif
+                                <span class="bb-mini-badge" style="background:{{ $isOnline ? '#dcfce7' : '#f3f4f6' }};color:{{ $isOnline ? '#16a34a' : '#6b7280' }};">
+                                    @if($isOnline)<i class="bi bi-circle-fill" style="font-size:7px;color:#16a34a;"></i>@endif
                                     {{ $lastSeenText }}
                                 </span>
                             </div>
@@ -3152,7 +3152,7 @@ function renderMessengerContacts(contacts) {
         var pic = c.profile_picture
             ? '<img src="/storage/' + c.profile_picture + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
             : '<span style="font-size:16px;font-weight:700;">' + c.name.charAt(0).toUpperCase() + '</span>';
-        html += '<div class="text-center flex-shrink-0" style="cursor:pointer;width:64px;" onclick="sendToMessenger(' + c.id + ', \'' + c.name.replace(/'/g, "\\'") + '\')">'
+        html += '<div class="text-center flex-shrink-0" style="cursor:pointer;width:64px;" onclick="sendToMessenger(' + c.id + ', \'' + c.name.replace(/'/g, "\\'") + '\', \'' + (c.hashid || c.id) + '\')">'
               + '<div style="width:52px;height:52px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;">' + pic + '</div>'
               + '<div style="font-size:11px;font-weight:600;color:#1e1f24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + c.name.split(' ')[0] + '</div>'
               + '</div>';
@@ -3171,11 +3171,11 @@ function searchMessengerContacts() {
     renderMessengerContacts(filtered);
 }
 
-function sendToMessenger(userId, name) {
+function sendToMessenger(userId, name, userHash) {
     var postId = document.getElementById('targetSharePostId').value;
     var type   = document.getElementById('sharePostType').value;
     if (typeof openChatBox === 'function') {
-        openChatBox(userId, name, '', '', '0');
+        openChatBox(userId, name, '', '', '0', userHash || userId);
         setTimeout(function () {
             var input = document.getElementById('chatinput-' + userId);
             if (input) {
@@ -4053,9 +4053,16 @@ function refreshActiveNow() {
     })
     .catch(function () {});
 }
-setTimeout(refreshActiveNow, 5000);
-setInterval(refreshActiveNow, 30000);
+setTimeout(refreshActiveNow, 2000);
+setInterval(refreshActiveNow, 70000);
 
+
+// ব্রাউজার/ট্যাব ক্লোজ হলে offline signal পাঠাও
+window.addEventListener('pagehide', function () {
+    try {
+        navigator.sendBeacon('/presence/offline');
+    } catch (e) {}
+});
 
 // ============================================================
 // SECTION 16B: LIVE LIKE / COMMENT COUNTS (Facebook-style)
@@ -4322,7 +4329,8 @@ function rSubmit() {
 // ============================================================
 var openChatBoxes = {};
 
-function openChatBox(userId, name, pic, lastSeen, isOnline) {
+function openChatBox(userId, name, pic, lastSeen, isOnline, userHash) {
+     userHash = userHash || userId; // fallback: hash না পেলে raw id (পরে মুছবে)
     if (openChatBoxes[userId]) { openChatBoxes[userId].classList.remove('minimized'); return; }
 
     var container     = document.getElementById('chatBoxesContainer');
@@ -4338,7 +4346,7 @@ function openChatBox(userId, name, pic, lastSeen, isOnline) {
         + '<div class="bb-chat-head-avatar">' + avatarContent + onlineDot + '</div>'
         + '<div class="bb-chat-head-info"><p class="bb-chat-head-name">' + escHtml(name) + '</p><p class="bb-chat-head-status">' + statusText + '</p></div>'
         + '<div class="bb-chat-head-actions" onclick="event.stopPropagation()">'
-        + '<a href="/profile/' + userId + '" class="bb-chat-head-btn" target="_blank"><i class="bi bi-person-fill" style="font-size:13px;"></i></a>'
+        + '<a href="/profile/' + userHash + '" class="bb-chat-head-btn" target="_blank"><i class="bi bi-person-fill" style="font-size:13px;"></i></a>'
         + '<button class="bb-chat-head-btn" onclick="toggleChatMinimize(' + userId + ')"><i class="bi bi-dash-lg"></i></button>'
         + '<button class="bb-chat-head-btn" onclick="closeChatBox(' + userId + ')"><i class="bi bi-x-lg"></i></button>'
         + '</div></div>'

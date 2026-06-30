@@ -36,14 +36,14 @@ class User extends Authenticatable
     /**
      * দ্য অ্যাট্রিবিউটস দ্যাট শুড বি কাস্টেড।
      */
-    protected $casts = [
+   protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'suspended_until' => 'datetime',
+        'last_seen' => 'datetime',   // 🆕 active-now compare ঠিক করতে
         'is_super_admin' => 'boolean',
         'skills' => 'array',   // 🆕 JSON ↔ PHP array অটো কনভার্ট
     ];
-
     protected $fillable = [
         'name',
         'email',

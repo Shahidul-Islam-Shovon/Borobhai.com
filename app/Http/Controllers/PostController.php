@@ -54,13 +54,16 @@ class PostController extends Controller
         $canPostJobs = $user->role === 'alumni';
 
         // Active Now — 3 ঘন্টার মধ্যে active friends
+        // Active Now — 3 ঘন্টার মধ্যে active friends (activeNow() এর সাথে মিলিয়ে)
         $activeUsers = \App\Models\User::whereIn('id', $friendIds)
-            ->whereNotIn('id', $blockedIds)
-            ->where('last_seen', '>=', now()->subHours(3))
-            ->select('id', 'name', 'role', 'profile_picture', 'last_seen')
-            ->orderByDesc('last_seen')
-            ->limit(8)
-            ->get();
+        ->whereNotIn('id', $blockedIds)
+        ->where('id', '!=', $meId)
+        ->whereNotNull('last_seen')
+        ->where('last_seen', '>=', now()->subHours(3))
+        ->select('id', 'name', 'role', 'profile_picture', 'last_seen')
+        ->orderByDesc('last_seen')
+        ->limit(8)
+        ->get();
 
         // Suggested Contact
         $suggested = $this->getSuggested($meId, $friendIds, $blockedIds);
@@ -406,9 +409,12 @@ class PostController extends Controller
 
         DB::table('users')->where('id', $meId)->update(['last_seen' => now()]);
 
+        // শুধু ৩ ঘণ্টার মধ্যে active friends (নিজেকে বাদ)
         $activeUsers = \App\Models\User::whereIn('id', $friendIds)
             ->whereNotIn('id', $blockedIds)
-            ->where('last_seen', '>=', now()->subHours(3))   // ✅ ৩ ঘণ্টা — recently active
+            ->where('id', '!=', $meId)
+            ->whereNotNull('last_seen')
+            ->where('last_seen', '>=', now()->subHours(3))
             ->select('id', 'name', 'role', 'profile_picture', 'last_seen')
             ->orderByDesc('last_seen')
             ->limit(8)
@@ -422,35 +428,56 @@ class PostController extends Controller
 
         $html = '';
         foreach ($activeUsers as $au) {
-            $lastSeenText = self::formatLastSeen($au->last_seen);
-            $isOnline     = $au->last_seen >= now()->subMinutes(10);
-            $pic          = $au->profile_picture
+            // last_seen কে Carbon এ রূপান্তর (cast না থাকলেও নিরাপদ)
+            $lastSeenCarbon = \Carbon\Carbon::parse($au->last_seen);
+            $isOnline       = $lastSeenCarbon->gte(now()->subSeconds(40));
+            $lastSeenText   = self::formatLastSeen($au->last_seen);
+
+            $pic = $au->profile_picture
                 ? '<img src="'.asset('storage/'.$au->profile_picture).'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
                 : strtoupper(substr($au->name, 0, 1));
+
             $dotColor   = $isOnline ? '#22c55e' : '#9ca3af';
-            $roleClass  = 'bb-mini-' . $au->role;
+            $badgeBg    = $isOnline ? '#dcfce7' : '#f3f4f6';
+            $badgeColor = $isOnline ? '#16a34a' : '#6b7280';
+
             $badgeContent = $isOnline
-                ? '<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> '.$lastSeenText
+                ? '<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> Active now'
                 : $lastSeenText;
-            $nameJs    = addslashes($au->name);
-            $picUrl    = $au->profile_picture ? asset('storage/'.$au->profile_picture) : '';
+
+            $nameJs     = addslashes($au->name);
+            $picUrl     = $au->profile_picture ? asset('storage/'.$au->profile_picture) : '';
             $isOnlineJs = $isOnline ? '1' : '0';
+            $userHash   = $au->hashid;
 
             $html .= '
             <a href="#" class="bb-active-item" style="text-decoration:none;"
-               onclick="event.preventDefault(); openChatBox('.$au->id.', \''.$nameJs.'\', \''.$picUrl.'\', \''.$lastSeenText.'\', \''.$isOnlineJs.'\')">
+               onclick="event.preventDefault(); openChatBox('.$au->id.', \''.$nameJs.'\', \''.$picUrl.'\', \''.$lastSeenText.'\', \''.$isOnlineJs.'\', \''.$userHash.'\')">
                 <div class="bb-active-avatar" style="overflow:hidden;position:relative;">
                     '.$pic.'
                     <span style="position:absolute;bottom:0;right:0;width:11px;height:11px;border-radius:50%;background:'.$dotColor.';border:2px solid #fff;display:block;"></span>
                 </div>
                 <div class="bb-active-meta">
                     <span class="bb-active-name">'.e($au->name).'</span>
-                    <span class="bb-mini-badge '.$roleClass.'">'.$badgeContent.'</span>
+                    <span class="bb-mini-badge" style="background:'.$badgeBg.';color:'.$badgeColor.';">'.$badgeContent.'</span>
                 </div>
             </a>';
         }
 
         return response()->json(['html' => $html]);
+    }
+
+    
+    // ==========================================
+    // GO OFFLINE (ব্রাউজার ক্লোজ — sendBeacon)
+    // ==========================================
+    public function goOffline()
+    {
+        if (Auth::id()) {
+            DB::table('users')->where('id', Auth::id())
+                ->update(['last_seen' => now()->subHours(5)]);
+        }
+        return response()->json(['ok' => true]);
     }
 
     // ==========================================
@@ -460,12 +487,12 @@ class PostController extends Controller
     {
         if (!$lastSeen) return 'Never';
 
-        $lastSeen = \Carbon\Carbon::parse($lastSeen);
-        $diffMin  = now()->diffInMinutes($lastSeen);
-        $diffHour = now()->diffInHours($lastSeen);
-        $diffDay  = now()->diffInDays($lastSeen);
+         $lastSeen = \Carbon\Carbon::parse($lastSeen);
+        $diffMin  = (int) abs(now()->diffInMinutes($lastSeen));
+        $diffHour = (int) abs(now()->diffInHours($lastSeen));
+        $diffDay  = (int) abs(now()->diffInDays($lastSeen));
 
-        if ($diffMin < 2)   return 'Active now';
+        if ($diffMin < 1)   return 'Active now';
         if ($diffMin < 60)  return 'Active ' . $diffMin . 'm ago';
         if ($diffHour < 24) return 'Active ' . $diffHour . 'h ago';
         if ($diffDay < 7)   return 'Active ' . $diffDay . 'd ago';
@@ -487,6 +514,7 @@ class PostController extends Controller
             ->get()
             ->map(fn($u) => [
                 'id'              => $u->id,
+                'hashid'          => $u->hashid,
                 'name'            => $u->name,
                 'profile_picture' => $u->profile_picture,
                 'is_online'       => $u->last_seen && $u->last_seen >= now()->subMinutes(10),

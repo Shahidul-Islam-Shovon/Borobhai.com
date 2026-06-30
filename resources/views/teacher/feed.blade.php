@@ -563,7 +563,7 @@ textarea.bb-job-input { resize:vertical; }
                     <i class="bi bi-easel2-fill"></i> Teacher Feed
                 </span>
             
-            <a href="#" class="nav-icon-btn d-md-none"><i class="bi bi-search"></i></a>
+            <a href="{{ route('search.index') }}" class="nav-icon-btn d-md-none"><i class="bi bi-search"></i></a>
             <a href="#" class="nav-icon-btn"><i class="bi bi-messenger"></i></a>
             <a href="#" class="nav-icon-btn"><i class="bi bi-bell-fill"></i></a>
             <div class="dropdown">

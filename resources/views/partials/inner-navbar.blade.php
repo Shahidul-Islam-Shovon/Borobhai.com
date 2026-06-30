@@ -4,6 +4,45 @@
 --}}
 @php $authUser = Auth::user(); @endphp
 
+<style>
+/* ===== Inner navbar live search ===== */
+.ibb-search-wrap { position: relative; margin-left: 14px; }
+.ibb-search-box {
+    background:#f0f2f5; border-radius:50px; padding:.45rem 1rem;
+    display:flex; align-items:center; width:280px; transition:width .2s ease;
+}
+.ibb-search-box:focus-within { width:330px; background:#e4e6eb; }
+.ibb-search-box input {
+    background:transparent; border:none; outline:none;
+    margin-left:8px; font-size:.88rem; width:100%;
+}
+.ibb-search-dropdown {
+    position:absolute; top:calc(100% + 8px); left:0; width:360px;
+    background:#fff; border-radius:14px; z-index:9999; display:none;
+    overflow:hidden; box-shadow:0 8px 32px rgba(16,24,40,.14); border:1px solid #eceef1;
+}
+.ibb-search-dropdown.show { display:block; animation:ibbIn .18s ease; }
+@keyframes ibbIn { from{opacity:0;transform:translateY(-6px);} to{opacity:1;transform:translateY(0);} }
+.ibb-sd-label { font-size:11px; font-weight:700; color:#6b7280; letter-spacing:.5px; text-transform:uppercase; padding:12px 14px 6px; }
+.ibb-sd-item { display:flex; align-items:center; gap:11px; padding:9px 14px; cursor:pointer; transition:background .12s; text-decoration:none; }
+.ibb-sd-item:hover, .ibb-sd-item.active { background:#f3f4f8; }
+.ibb-sd-avatar { width:42px; height:42px; border-radius:50%; flex-shrink:0; overflow:hidden; background:linear-gradient(135deg,#4f46e5,#7c73f0); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; }
+.ibb-sd-avatar img { width:100%; height:100%; object-fit:cover; }
+.ibb-sd-info { flex-grow:1; min-width:0; }
+.ibb-sd-name { font-size:.9rem; font-weight:700; color:#1e1f24; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ibb-sd-sub { font-size:.78rem; color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
+.ibb-sd-topic { font-size:.74rem; color:#4f46e5; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ibb-sd-rolechip { font-size:9.5px; font-weight:700; padding:1px 7px; border-radius:12px; flex-shrink:0; }
+.ibb-sd-student { background:#eef2ff; color:#4f46e5; }
+.ibb-sd-alumni  { background:#fef3c7; color:#d97706; }
+.ibb-sd-teacher { background:#f3e8ff; color:#7c3aed; }
+.ibb-sd-footer { border-top:1px solid #eceef1; padding:10px 14px; font-size:.86rem; font-weight:700; color:#4f46e5; text-align:center; text-decoration:none; display:block; transition:background .12s; }
+.ibb-sd-footer:hover { background:#f3f4f8; }
+.ibb-sd-spinner { text-align:center; padding:20px; color:#6b7280; font-size:.88rem; }
+.ibb-sd-empty { text-align:center; padding:20px 14px; color:#9ca3af; font-size:.86rem; }
+@media (max-width:767px){ .ibb-search-box{ width:180px; } .ibb-search-box:focus-within{ width:210px; } .ibb-search-dropdown{ width:300px; } }
+</style>
+
 <nav style="background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.08);padding:.5rem 1rem;position:sticky;top:0;z-index:100;">
     <div class="container-fluid d-flex align-items-center gap-2">
 
@@ -12,23 +51,17 @@
             Borobhai.online
         </a>
 
-        {{-- 🆕 Search box — শুধু desktop/tablet এ ইনলাইন দেখাবে --}}
-        <form action="{{ route('search.index') }}" method="GET" class="d-none d-md-flex"
-              style="background:#f0f2f5;border-radius:50px;padding:.5rem 1rem;align-items:center;width:280px;margin-left:14px;">
-            <i class="bi bi-search" style="color:#6b7280;font-size:.9rem;"></i>
-            <input type="text" name="q" placeholder="Search Borobhai..."
-                   style="background:transparent;border:none;outline:none;margin-left:8px;font-size:.88rem;width:100%;">
-        </form>
+        {{-- 🆕 Live search box (ফিডের মতো) --}}
+        <div class="ibb-search-wrap">
+            <div class="ibb-search-box">
+                <i class="bi bi-search" style="color:#6b7280;font-size:.9rem;"></i>
+                <input type="text" id="ibbLiveSearch" placeholder="Search Borobhai..." autocomplete="off">
+            </div>
+            <div class="ibb-search-dropdown" id="ibbSearchDropdown"></div>
+        </div>
 
         {{-- Right side --}}
         <div class="d-flex align-items-center gap-2 ms-auto">
-
-            {{-- 🆕 মোবাইল সার্চ আইকন — ক্লিক করলে নিচে slide-down সার্চবার খোলে --}}
-            <button type="button" class="d-flex d-md-none"
-                    onclick="document.getElementById('mobileSearchBar').classList.toggle('d-none')"
-                    style="width:38px;height:38px;border-radius:50%;background:#e4e6eb;border:none;align-items:center;justify-content:center;font-size:1.05rem;color:#050505;">
-                <i class="bi bi-search"></i>
-            </button>
 
             {{-- Profile pic + name + role badge --}}
             <div class="d-flex align-items-center gap-2">
@@ -113,12 +146,105 @@
     </div>
 </nav>
 
-{{-- 🆕 Mobile slide-down search bar — শুধু ছোট স্ক্রিনে, টগল হয়ে দেখা যাবে --}}
-<form action="{{ route('search.index') }}" method="GET" id="mobileSearchBar"
-      class="d-none d-md-none" style="background:#fff;padding:10px 14px;border-bottom:1px solid #eceef1;">
-    <div style="background:#f0f2f5;border-radius:50px;padding:.5rem 1rem;display:flex;align-items:center;">
-        <i class="bi bi-search" style="color:#6b7280;font-size:.9rem;"></i>
-        <input type="text" name="q" placeholder="Search Borobhai..." autofocus
-               style="background:transparent;border:none;outline:none;margin-left:8px;font-size:.9rem;width:100%;">
-    </div>
-</form>
+{{-- ===== Inner navbar live search JS (ফিডের SECTION 21 এর মতো) ===== --}}
+<script>
+(function () {
+    var input    = document.getElementById('ibbLiveSearch');
+    var dropdown = document.getElementById('ibbSearchDropdown');
+    if (!input || !dropdown) return;
+
+    var timer = null, activeIdx = -1;
+
+    input.addEventListener('focus', function () {
+        if (this.value.trim().length < 2) showRecent();
+    });
+
+    input.addEventListener('input', function () {
+        clearTimeout(timer);
+        var q = this.value.trim();
+        if (q.length < 2) { showRecent(); return; }
+        dropdown.innerHTML = '<div class="ibb-sd-spinner"><i class="bi bi-search me-1"></i> Searching...</div>';
+        dropdown.classList.add('show');
+        timer = setTimeout(function () { doSearch(q); }, 320);
+    });
+
+    input.addEventListener('keydown', function (e) {
+        var items = dropdown.querySelectorAll('.ibb-sd-item');
+        if (e.key === 'ArrowDown')      { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1); hl(items); }
+        else if (e.key === 'ArrowUp')   { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); hl(items); }
+        else if (e.key === 'Enter')     { e.preventDefault(); if (activeIdx >= 0 && items[activeIdx]) items[activeIdx].click(); else go(); }
+        else if (e.key === 'Escape')    { close(); input.blur(); }
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) close();
+    });
+
+    function close()   { dropdown.classList.remove('show'); dropdown.innerHTML = ''; activeIdx = -1; }
+    function go()      { var q = input.value.trim(); if (q) window.location.href = '/search?q=' + encodeURIComponent(q); }
+    function hl(items) { items.forEach(function (el, i) { el.classList.toggle('active', i === activeIdx); }); }
+
+    function showRecent() {
+        fetch('/search/recent', { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (!d.searches || !d.searches.length) { close(); return; }
+            var html = '<div class="ibb-sd-label" style="display:flex;align-items:center;justify-content:space-between;"><span>Recent Searches</span>'
+                     + '<button onclick="ibbClearAllRecent(event)" style="font-size:11px;font-weight:600;color:#4f46e5;border:none;background:transparent;cursor:pointer;padding:0;">Clear all</button></div>';
+            d.searches.forEach(function (s) {
+                html += '<div class="ibb-sd-item" onclick="window.location.href=\'/search?q=' + encodeURIComponent(s.query) + '\'">'
+                      + '<div class="ibb-sd-avatar" style="background:#f3f4f8;color:#6b7280;font-size:16px;"><i class="bi bi-clock-history"></i></div>'
+                      + '<div class="ibb-sd-info"><div class="ibb-sd-name">' + esc(s.query) + '</div></div>'
+                      + '<button onclick="ibbDeleteRecent(event,' + s.id + ')" style="border:none;background:transparent;color:#9ca3af;cursor:pointer;padding:2px 6px;border-radius:6px;" title="Remove"><i class="bi bi-x-lg" style="font-size:11px;"></i></button>'
+                      + '</div>';
+            });
+            dropdown.innerHTML = html;
+            dropdown.classList.add('show');
+        })
+        .catch(function () { close(); });
+    }
+
+    window.ibbDeleteRecent = function (e, id) {
+        e.stopPropagation();
+        fetch('/search/recent/' + id, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } })
+        .then(function () { showRecent(); });
+    };
+    window.ibbClearAllRecent = function (e) {
+        e.stopPropagation();
+        fetch('/search/recent', { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' } })
+        .then(function () { close(); });
+    };
+
+    function doSearch(q) {
+        fetch('/search/live?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function (r) { return r.json(); })
+        .then(function (data) { render(data.results || [], q); })
+        .catch(function () { dropdown.innerHTML = '<div class="ibb-sd-empty">Something went wrong.</div>'; });
+    }
+
+    function render(results, q) {
+        activeIdx = -1;
+        if (!results.length) { dropdown.innerHTML = '<div class="ibb-sd-empty"><i class="bi bi-search me-1"></i> No results for "' + esc(q) + '"</div>'; return; }
+        var html = '<div class="ibb-sd-label">People</div>';
+        results.forEach(function (r) {
+            var av  = r.avatar ? '<img src="' + esc(r.avatar) + '" alt="">' : esc(r.initial || 'U');
+            var top = r.topic ? '<div class="ibb-sd-topic"><i class="bi bi-journal-text"></i> ' + esc(r.topic.substring(0, 55)) + (r.topic.length > 55 ? '…' : '') + '</div>' : '';
+            html += '<a href="/search?q=' + encodeURIComponent(r.name) + '" class="ibb-sd-item">'
+                  + '<div class="ibb-sd-avatar">' + av + '</div>'
+                  + '<div class="ibb-sd-info"><div class="ibb-sd-name">' + hlq(esc(r.name), q) + '</div>'
+                  + (r.sub ? '<div class="ibb-sd-sub">' + esc(r.sub) + '</div>' : '') + top + '</div>'
+                  + '<span class="ibb-sd-rolechip ibb-sd-' + r.role + '">' + esc(r.role_label || r.role) + '</span>'
+                  + '</a>';
+        });
+        html += '<a href="/search?q=' + encodeURIComponent(q) + '" class="ibb-sd-footer"><i class="bi bi-search me-1"></i> See all results for "' + esc(q) + '"</a>';
+        dropdown.innerHTML = html;
+        dropdown.classList.add('show');
+    }
+
+    function hlq(text, q) {
+        if (!q) return text;
+        return text.replace(new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark style="background:#dbeafe;padding:0 2px;border-radius:2px;">$1</mark>');
+    }
+    function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+})();
+</script>
