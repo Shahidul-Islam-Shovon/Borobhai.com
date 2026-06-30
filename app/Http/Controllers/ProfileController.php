@@ -11,20 +11,26 @@ use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 use App\Models\Post;
+use App\Models\Friendship;
 
 class ProfileController extends Controller
 {
     // ==========================================
     // প্রিমিয়াম প্রোফাইল ভিউ (নিজের বা অন্যের)
+    // {user} = hashid → route model binding দিয়ে auto resolve
     // ==========================================
-    public function show($id = null)
+    public function show(?User $user = null)
     {
         // Profile এ শুধু সাম্প্রতিক ৫টা job দেখাই (বাকি "View all jobs" এ)
-        $user = $id
-            ? User::with(['educations', 'experiences', 'certifications', 'latestEducation', 'currentJob', 'documents',
-                    'jobPosts' => fn($q) => $q->withTrashed()->withCount('applications')->latest()->limit(5)])->findOrFail($id)
-            : User::with(['educations', 'experiences', 'certifications', 'latestEducation', 'currentJob', 'documents',
-                    'jobPosts' => fn($q) => $q->withTrashed()->withCount('applications')->latest()->limit(5)])->find(Auth::id());
+        $with = [
+            'educations', 'experiences', 'certifications', 'latestEducation',
+            'currentJob', 'documents',
+            'jobPosts' => fn($q) => $q->withTrashed()->withCount('applications')->latest()->limit(5),
+        ];
+
+        $user = $user
+            ? $user->load($with)
+            : User::with($with)->find(Auth::id());
 
         $isOwner = Auth::id() === $user->id;
         $postCount = Post::where('user_id', $user->id)->count();
@@ -41,9 +47,9 @@ class ProfileController extends Controller
     // ==========================================
     // ট্যাব কন্টেন্ট (AJAX) — Posts / Photos
     // ==========================================
-    public function tabContent(Request $request, $id = null)
+    public function tabContent(Request $request, ?User $user = null)
     {
-        $user = $id ? User::findOrFail($id) : Auth::user();
+        $user = $user ?: Auth::user();
         $tab  = $request->query('tab', 'posts');
 
         // ----- POSTS ট্যাব -----
@@ -75,11 +81,11 @@ class ProfileController extends Controller
 
         // ----- PHOTOS & VIDEOS ট্যাব -----
         if ($tab === 'media') {
-        $meId        = Auth::id();
-        $isOwner     = $meId === $user->id;
-        $isFriend    = Friendship::areFriends($meId, $user->id);
+            $meId        = Auth::id();
+            $isOwner     = $meId === $user->id;
+            $isFriend    = Friendship::areFriends($meId, $user->id);
 
-             // শুধু owner + friends দেখবে
+            // শুধু owner + friends দেখবে
             if (!$isOwner && !$isFriend) {
                 return response()->json([
                     'success' => true,
@@ -87,6 +93,9 @@ class ProfileController extends Controller
                     'media'   => [],
                 ]);
             }
+
+            $media = [];
+            $seen  = [];
 
             $posts = Post::with('parentPost')
                     ->where('user_id', $user->id)

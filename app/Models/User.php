@@ -3,22 +3,22 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Concerns\HasHashid;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Traits\Hashidable;
+
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
 
-    use Hashidable;
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasHashid;
 
     /**
      * Get the attributes that should be cast.
@@ -33,7 +33,7 @@ class User extends Authenticatable
         ];
     }
 
-        /**
+    /**
      * দ্য অ্যাট্রিবিউটস দ্যাট শুড বি কাস্টেড।
      */
     protected $casts = [
@@ -73,15 +73,15 @@ class User extends Authenticatable
 
 
 
-public function isSuperAdmin()
-{
-    // .env ফাইল থেকে ইমেইল নিয়ে ডাইনামিক চেক
-    if ($this->email === env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com')) {
-        return true;
-    }
+    public function isSuperAdmin()
+    {
+        // .env ফাইল থেকে ইমেইল নিয়ে ডাইনামিক চেক
+        if ($this->email === env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com')) {
+            return true;
+        }
 
-    return (bool) $this->is_super_admin;
-}
+        return (bool) $this->is_super_admin;
+    }
 
     // ==========================================
     // ROLE HELPERS (Teacher সহ)
@@ -147,11 +147,10 @@ public function isSuperAdmin()
     public function savedPosts()
     {
         return $this->belongsToMany(Post::class, 'saved_posts')
-         ->withTimestamps()
-        ->orderByPivot('created_at', 'desc'); // সর্বশেষ সেভ আগে
+            ->withTimestamps()
+            ->orderByPivot('created_at', 'desc'); // সর্বশেষ সেভ আগে
     }
 
-    // এই user যেসব job সেভ করেছে
     // এই user যেসব job সেভ করেছে
     public function savedJobs()
     {
@@ -204,7 +203,7 @@ public function isSuperAdmin()
         return $this->hasOne(Education::class)->latestOfMany();
     }
 
-    
+
     // is_current=true গুলোর মধ্যে latest (start_date বা id দিয়ে)
     public function currentJob()
     {

@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\Hashidable;
+
 
 class Experience extends Model
 {
 
-    use Hashidable;
+    
 
     protected $table = 'experiences';
     protected $fillable = [

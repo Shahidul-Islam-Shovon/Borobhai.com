@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\Hashidable;
+
 
 class Post extends Model
 {
-    use Hashidable;
+    
     use HasFactory;
 
     // এই কলামগুলোতে ডাটা ইনসার্ট করা যাবে

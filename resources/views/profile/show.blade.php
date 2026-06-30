@@ -797,7 +797,7 @@
             <div class="bb-mutual-circles">
                 @foreach($mutualsList->take(6) as $m)
                 <div class="bb-mutual-circle-wrap">
-                    <a href="{{ route('profile.view', $m->id) }}" class="bb-mutual-circle">
+                    <a href="{{ route('profile.view', $m) }}" class="bb-mutual-circle">
                         @if($m->profile_picture)
                             <img src="{{ asset('storage/'.$m->profile_picture) }}" alt="{{ $m->name }}">
                         @else
@@ -821,7 +821,7 @@
                                 </div>
                             </div>
                         </div>
-                        <a href="{{ route('profile.view', $m->id) }}"
+                        <a href="{{ route('profile.view', $m) }}"
                            style="display:block;text-align:center;background:#eef2ff;color:#4f46e5;font-size:12px;font-weight:600;border-radius:8px;padding:6px;">
                             View Profile
                         </a>
@@ -3262,7 +3262,7 @@ function deleteComment(cid, postId) {
 // ==========================================
 // PROFILE TAB SWITCHING (AJAX, lazy load)
 // ==========================================
-const PROFILE_USER_ID = {{ $user->id }};
+const PROFILE_USER_ID = @json($user->hashid);
 const PROFILE_IS_OWNER = {{ $isOwner ? 'true' : 'false' }};
 let postsLoaded = false;
 let mediaLoaded = false;

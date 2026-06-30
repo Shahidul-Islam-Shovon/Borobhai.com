@@ -92,9 +92,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/document',            [DocumentController::class, 'store'])->name('profile.document.store');
     Route::delete('/profile/document/{id}',     [DocumentController::class, 'destroy'])->name('profile.document.delete');
 
-    // ⚠️ {id} routes — static এর পরে
-    Route::get('/profile/{id}/tab/content',     [ProfileController::class, 'tabContent'])->name('profile.tab.user');
-    Route::get('/profile/{id}',                 [ProfileController::class, 'show'])->name('profile.view');
+    // ⚠️ {user} routes (hashid) — static এর পরে
+    Route::get('/profile/{user}/tab/content',   [ProfileController::class, 'tabContent'])->name('profile.tab.user');
+    Route::get('/profile/{user}',               [ProfileController::class, 'show'])->name('profile.view');
 
     // ---------- FEED ----------
     Route::get('/feed/load',                    [PostController::class, 'loadMore'])->name('feed.load');
@@ -154,8 +154,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/block',                   [FriendController::class, 'block'])->name('block');
         Route::post('/unblock',                 [FriendController::class, 'unblock'])->name('unblock');
         Route::post('/not-interested',     [FriendController::class, 'notInterested']);
-        // Route::get('/messenger-contacts',  [FriendController::class, 'messengerContacts']); // ← /friends/ বাদ দাও
-        
     });
 
     // ---------- REPORT ----------

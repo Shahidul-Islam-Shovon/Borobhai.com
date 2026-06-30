@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\Hashidable;
+
 
 class JobApplication extends Model
 {
 
-    use Hashidable;
+    
     protected $fillable = [
         'user_id', 'job_post_id', 'applicant_name', 'applicant_email',
         'phone', 'cover_note', 'resume_path', 'apply_method', 'status', 'applied_at',

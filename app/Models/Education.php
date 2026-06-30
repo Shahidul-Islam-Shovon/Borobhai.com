@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\Hashidable;
+
 
 class Education extends Model
 {
-    use Hashidable;
+    
     protected $table = 'educations';
     protected $fillable = [
         'user_id', 'degree', 'institution', 'field',

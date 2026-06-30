@@ -41,7 +41,7 @@
     {{-- Post Header --}}
     <div class="bb-post-head">
         <div class="bb-head-left">
-            <a href="{{ $isMyPost ? route('profile.show') : route('profile.view', $post->user_id) }}"
+            <a href="{{ $isMyPost ? route('profile.show') : route('profile.view', $post->user) }}"
                class="bb-avatar author-avatar-zone" style="text-decoration:none;">
                 @if($post->user->profile_picture)
                     <img src="{{ asset('storage/'.$post->user->profile_picture) }}" alt="{{ $post->user->name }}" class="bb-avatar-img">
@@ -50,7 +50,7 @@
                 @endif
             </a>
             <div class="bb-head-meta">
-                <a href="{{ $isMyPost ? route('profile.show') : route('profile.view', $post->user_id) }}"
+                <a href="{{ $isMyPost ? route('profile.show') : route('profile.view', $post->user) }}"
                    class="bb-author author-name-zone bb-author-link">{{ $post->user->name }}</a>
 
                 {{-- Role badge --}}

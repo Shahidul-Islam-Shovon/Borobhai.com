@@ -1682,7 +1682,7 @@
                     <div class="bb-side-body">
                         @foreach($pendingRequests as $req)
                         <div class="bb-suggest-item" id="freq-{{ $req->sender->id }}">
-                            <a href="{{ route('profile.view', $req->sender->id) }}" class="bb-suggest-avatar" style="text-decoration:none;overflow:hidden;">
+                            <a href="{{ route('profile.view', $req->sender) }}" class="bb-suggest-avatar" style="text-decoration:none;overflow:hidden;">
                                 @if($req->sender->profile_picture)
                                     <img src="{{ asset('storage/'.$req->sender->profile_picture) }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
                                 @else
@@ -1690,7 +1690,7 @@
                                 @endif
                             </a>
                             <div class="bb-suggest-info">
-                                <a href="{{ route('profile.view', $req->sender->id) }}" class="bb-suggest-name" style="text-decoration:none;">{{ $req->sender->name }}</a>
+                                <a href="{{ route('profile.view', $req->sender) }}" class="bb-suggest-name" style="text-decoration:none;">{{ $req->sender->name }}</a>
                                 <p class="bb-suggest-role">{{ ucfirst($req->sender->role) }}</p>
                                 <div class="d-flex gap-1 mt-1">
                                     <button class="btn btn-primary btn-sm py-0 px-2" style="font-size:11px;" onclick="friendAction('accept', {{ $req->sender->id }}, this)">Accept</button>
@@ -1852,7 +1852,7 @@
                 <div class="bb-side-body" id="suggestedPeopleZone">
                     @forelse($suggested ?? [] as $su)
                     <div class="bb-suggest-item" id="suggest-{{ $su->id }}">
-                        <a href="{{ route('profile.view', $su->id) }}" class="bb-suggest-avatar" style="text-decoration:none;overflow:hidden;">
+                        <a href="{{ route('profile.view', hashid($su->id)) }}" class="bb-suggest-avatar" style="text-decoration:none;overflow:hidden;">
                             @if($su->profile_picture)
                                 <img src="{{ asset('storage/'.$su->profile_picture) }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
                             @else
@@ -1860,7 +1860,7 @@
                             @endif
                         </a>
                         <div class="bb-suggest-info">
-                            <a href="{{ route('profile.view', $su->id) }}" class="bb-suggest-name" style="text-decoration:none;color:inherit;">{{ $su->name }}</a>
+                            <a href="{{ route('profile.view', hashid($su->id)) }}" class="bb-suggest-name" style="text-decoration:none;color:inherit;">{{ $su->name }}</a>
                             @if($su->department || $su->section)
                                 <p class="bb-suggest-role mb-0">{{ $su->department }}@if($su->department && $su->section) · @endif{{ $su->section }}</p>
                             @endif

@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
-use App\Traits\Hashidable;
+
 
 class JobPost extends Model
 {
-    use Hashidable;
+    
     use SoftDeletes;
 
     protected $table = 'job_posts';

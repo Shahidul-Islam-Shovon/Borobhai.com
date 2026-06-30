@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
-use App\Traits\Hashidable;
+
 
 class Friendship extends Model
 {
 
-    use Hashidable;
+    
     protected $fillable = ['sender_id', 'receiver_id', 'status'];
 
     // ===== Relations =====

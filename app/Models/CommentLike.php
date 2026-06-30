@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\Hashidable;
+
 
 class CommentLike extends Model
 
 {
-    use Hashidable;
+    
     
     protected $fillable = ['comment_id', 'user_id'];
 
