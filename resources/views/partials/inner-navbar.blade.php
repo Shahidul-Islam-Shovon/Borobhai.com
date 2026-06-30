@@ -12,8 +12,23 @@
             Borobhai.online
         </a>
 
+        {{-- 🆕 Search box — শুধু desktop/tablet এ ইনলাইন দেখাবে --}}
+        <form action="{{ route('search.index') }}" method="GET" class="d-none d-md-flex"
+              style="background:#f0f2f5;border-radius:50px;padding:.5rem 1rem;align-items:center;width:280px;margin-left:14px;">
+            <i class="bi bi-search" style="color:#6b7280;font-size:.9rem;"></i>
+            <input type="text" name="q" placeholder="Search Borobhai..."
+                   style="background:transparent;border:none;outline:none;margin-left:8px;font-size:.88rem;width:100%;">
+        </form>
+
         {{-- Right side --}}
         <div class="d-flex align-items-center gap-2 ms-auto">
+
+            {{-- 🆕 মোবাইল সার্চ আইকন — ক্লিক করলে নিচে slide-down সার্চবার খোলে --}}
+            <button type="button" class="d-flex d-md-none"
+                    onclick="document.getElementById('mobileSearchBar').classList.toggle('d-none')"
+                    style="width:38px;height:38px;border-radius:50%;background:#e4e6eb;border:none;align-items:center;justify-content:center;font-size:1.05rem;color:#050505;">
+                <i class="bi bi-search"></i>
+            </button>
 
             {{-- Profile pic + name + role badge --}}
             <div class="d-flex align-items-center gap-2">
@@ -97,3 +112,13 @@
         </div>
     </div>
 </nav>
+
+{{-- 🆕 Mobile slide-down search bar — শুধু ছোট স্ক্রিনে, টগল হয়ে দেখা যাবে --}}
+<form action="{{ route('search.index') }}" method="GET" id="mobileSearchBar"
+      class="d-none d-md-none" style="background:#fff;padding:10px 14px;border-bottom:1px solid #eceef1;">
+    <div style="background:#f0f2f5;border-radius:50px;padding:.5rem 1rem;display:flex;align-items:center;">
+        <i class="bi bi-search" style="color:#6b7280;font-size:.9rem;"></i>
+        <input type="text" name="q" placeholder="Search Borobhai..." autofocus
+               style="background:transparent;border:none;outline:none;margin-left:8px;font-size:.9rem;width:100%;">
+    </div>
+</form>

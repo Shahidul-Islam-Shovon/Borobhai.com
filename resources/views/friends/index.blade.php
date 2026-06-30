@@ -133,14 +133,14 @@
                 <div class="fr-card" id="fr-card-{{ $fr->id }}">
                     <div class="fr-card-cover"></div>
                     <div class="fr-card-body">
-                        <a href="{{ route('profile.view', $fr->id) }}" class="fr-card-avatar">
+                        <a href="{{ route('profile.view', $fr) }}" class="fr-card-avatar">
                             @if($fr->profile_picture)
                                 <img src="{{ asset('storage/'.$fr->profile_picture) }}" alt="{{ $fr->name }}">
                             @else
                                 {{ strtoupper(substr($fr->name,0,1)) }}
                             @endif
                         </a>
-                        <a href="{{ route('profile.view', $fr->id) }}" class="fr-card-name">{{ $fr->name }}</a>
+                        <a href="{{ route('profile.view', $fr) }}" class="fr-card-name">{{ $fr->name }}</a>
                         <div class="fr-card-role">
                             <span class="fr-chip chip-{{ $fr->role }}">{{ ucfirst($fr->role) }}</span>
                             @if($sub)
@@ -190,14 +190,14 @@
                 <div class="fr-card" id="fr-card-{{ $u->id }}">
                     <div class="fr-card-cover"></div>
                     <div class="fr-card-body">
-                        <a href="{{ route('profile.view', $u->id) }}" class="fr-card-avatar">
+                        <a href="{{ route('profile.view', $u) }}" class="fr-card-avatar">
                             @if($u->profile_picture)
                                 <img src="{{ asset('storage/'.$u->profile_picture) }}" alt="{{ $u->name }}">
                             @else
                                 {{ strtoupper(substr($u->name,0,1)) }}
                             @endif
                         </a>
-                        <a href="{{ route('profile.view', $u->id) }}" class="fr-card-name">{{ $u->name }}</a>
+                        <a href="{{ route('profile.view', $u) }}" class="fr-card-name">{{ $u->name }}</a>
                         <div class="fr-card-role">
                             <span class="fr-chip chip-{{ $u->role }}">{{ ucfirst($u->role) }}</span>
                             @if($u->department)
@@ -234,14 +234,14 @@
                 <div class="fr-card" id="fr-card-{{ $u->id }}">
                     <div class="fr-card-cover"></div>
                     <div class="fr-card-body">
-                        <a href="{{ route('profile.view', $u->id) }}" class="fr-card-avatar">
+                        <a href="{{ route('profile.view', $u) }}" class="fr-card-avatar">
                             @if($u->profile_picture)
                                 <img src="{{ asset('storage/'.$u->profile_picture) }}" alt="{{ $u->name }}">
                             @else
                                 {{ strtoupper(substr($u->name,0,1)) }}
                             @endif
                         </a>
-                        <a href="{{ route('profile.view', $u->id) }}" class="fr-card-name">{{ $u->name }}</a>
+                        <a href="{{ route('profile.view', $u) }}" class="fr-card-name">{{ $u->name }}</a>
                         <div class="fr-card-role">
                             <span class="fr-chip chip-{{ $u->role }}">{{ ucfirst($u->role) }}</span>
                             @if($u->department)
@@ -422,7 +422,7 @@ function showMutualFriends(userId, name) {
             const pic = m.profile_picture
                 ? `<img src="/storage/${m.profile_picture}" style="width:100%;height:100%;object-fit:cover;">`
                 : m.name.charAt(0).toUpperCase();
-            html += `<a href="/profile/${m.id}"
+            html += `<a href="/profile/${m.hashid}"
                 style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f3f4f8;text-decoration:none;">
                 <div class="fr-modal-avatar">${pic}</div>
                 <div>

@@ -336,7 +336,17 @@ class FriendController extends Controller
 
         $mutuals = User::whereIn('id', $mutualIds)
             ->select('id', 'name', 'role', 'profile_picture', 'department')
-            ->get();
+            ->get()
+            ->map(function ($u) {
+                return [
+                    'id'              => $u->id,
+                    'hashid'          => $u->getRouteKey(),   // 🆕 যোগ করা হলো
+                    'name'            => $u->name,
+                    'role'            => $u->role,
+                    'profile_picture' => $u->profile_picture,
+                    'department'      => $u->department,
+                ];
+            });
 
         return response()->json(['mutuals' => $mutuals, 'count' => count($mutualIds)]);
     }

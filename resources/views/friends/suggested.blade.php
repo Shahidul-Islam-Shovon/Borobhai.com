@@ -89,7 +89,7 @@
         @forelse($users as $u)
         <div class="person-card" id="pcard-{{ $u->id }}">
             <div class="person-card-top">
-                <a href="{{ route('profile.view', $u->id) }}">
+                <a href="{{ route('profile.view', $u) }}">
                     <div class="person-avatar">
                         @if($u->profile_picture)
                             <img src="{{ asset('storage/'.$u->profile_picture) }}">
@@ -98,7 +98,7 @@
                         @endif
                     </div>
                 </a>
-                <a href="{{ route('profile.view', $u->id) }}" style="text-decoration:none;">
+                <a href="{{ route('profile.view', $u) }}" style="text-decoration:none;">
                     <p class="person-name">{{ $u->name }}</p>
                 </a>
 

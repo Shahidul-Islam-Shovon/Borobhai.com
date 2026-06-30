@@ -144,7 +144,7 @@
 
             <div class="sr-card">
                 {{-- Avatar — click করলে profile এ যাবে --}}
-                <a href="{{ route('profile.view', $user->id) }}" class="sr-avatar">
+                <a href="{{ route('profile.view', $user) }}" class="sr-avatar">
                     @if($user->profile_picture)
                         <img src="{{ asset('storage/'.$user->profile_picture) }}" alt="{{ $user->name }}">
                     @else
@@ -154,7 +154,7 @@
 
                 {{-- Info --}}
                 <div class="sr-info">
-                    <a href="{{ route('profile.view', $user->id) }}" class="sr-name">{{ $user->name }}</a>
+                    <a href="{{ route('profile.view', $user) }}" class="sr-name">{{ $user->name }}</a>
                     <span class="sr-rolechip {{ $roleClass }} ms-1">
                         <i class="bi {{ $roleIcon }}"></i> {{ ucfirst($user->role) }}
                     </span>

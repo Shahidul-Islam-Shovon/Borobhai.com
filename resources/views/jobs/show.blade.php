@@ -336,14 +336,14 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="bb-job-label">Phone</label>
-                                <input type="text" name="phone" id="ap_phone" class="bb-job-input" value="{{ Auth::user()->phone ?? '' }}" placeholder="01XXXXXXXXX">
+                                <input type="text" name="phone" id="ap_phone" class="bb-job-input" value="{{ Auth::user()->phone ?? '' }}" placeholder="01XXXXXXXXX" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="bb-job-label">Resume / CV <span class="text-muted" style="font-weight:400;">(PDF/Word, max 5MB)</span></label>
-                                <input type="file" name="resume" id="ap_resume" class="bb-job-input" accept=".pdf,.doc,.docx">
+                                <input type="file" name="resume" id="ap_resume" class="bb-job-input" accept=".pdf,.doc,.docx" required>
                             </div>
                             <div class="col-12">
-                                <label class="bb-job-label">Cover Note <span class="text-muted" style="font-weight:400;">(why you're a good fit)</span></label>
+                                <label class="bb-job-label">Cover Note (If Need) <span class="text-muted" style="font-weight:400;">(why you're a good fit)</span></label>
                                 <textarea name="cover_note" id="ap_cover" class="bb-job-input" rows="4" placeholder="Briefly introduce yourself and explain why you're interested..."></textarea>
                             </div>
                         </div>

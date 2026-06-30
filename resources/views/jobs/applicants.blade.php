@@ -142,7 +142,7 @@
                 <div class="flex-grow-1" style="min-width:0;">
                     <h2 class="ap-name">
                         @if($app->user)
-                            <a href="{{ route('profile.view', $app->user->id) }}" target="_blank">{{ $app->applicant_name }}</a>
+                            <a href="{{ route('profile.view', $app->user) }}" target="_blank">{{ $app->applicant_name }}</a>
                         @else
                             {{ $app->applicant_name }}
                         @endif
