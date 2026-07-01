@@ -53,6 +53,13 @@
         .ja-title { font-size:16px; font-weight:800; color:var(--bb-ink); text-decoration:none; line-height:1.25; letter-spacing:-.2px; }
         .ja-title:hover { color:var(--bb-primary); }
         .ja-company { font-size:12.5px; color:var(--bb-muted); margin:2px 0 0; }
+
+        .ja-applicants { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; margin:3px 0 0; }
+        .ja-applicants i { font-size:12px; }
+        .ja-applicants-link { color:var(--bb-primary); text-decoration:none; background:var(--bb-primary-soft); padding:3px 10px; border-radius:20px; transition:all .15s; }
+        .ja-applicants-link:hover { background:var(--bb-primary); color:#fff; }
+        .ja-applicants-muted { color:var(--bb-muted); }
+
         .ja-meta { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
         .ja-pill { font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:7px; background:var(--bb-bg); color:#4b5563; display:inline-flex; align-items:center; gap:4px; }
         .ja-pill i { font-size:10px; }

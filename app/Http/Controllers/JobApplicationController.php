@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use App\Models\JobPost;
 use App\Models\JobApplication;
 use App\Models\BbNotification;
+use App\Models\JobApplicationStatusLog;
 
 class JobApplicationController extends Controller
 {
@@ -43,9 +44,12 @@ class JobApplicationController extends Controller
                 'applicant_name'  => $user->name,
                 'applicant_email' => $user->email,
                 'apply_method'    => 'external',
+                
                 'status'          => 'pending',
                 'applied_at'      => now(),
+                
             ]);
+            $this->logStatus($application, 'pending');
 
             BbNotification::send(
                 $job->user_id,
@@ -64,16 +68,21 @@ class JobApplicationController extends Controller
             ]);
         }
 
-        try {
+         try {
             $data = $request->validate([
                 'applicant_name'  => 'required|string|max:255',
                 'applicant_email' => 'required|email:rfc|max:255',
-                'phone'           => 'nullable|string|max:30',
+                'phone'           => 'required|string|max:30',
                 'cover_note'      => 'nullable|string|max:2000',
-                'resume'          => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+                'resume'          => 'required|file|mimes:pdf,doc,docx|max:5120',
             ], [
-                'resume.mimes' => 'Resume must be a PDF or Word file.',
-                'resume.max'   => 'Resume cannot exceed 5MB.',
+                'applicant_name.required'  => 'Please enter your full name.',
+                'applicant_email.required' => 'Please enter your email address.',
+                'applicant_email.email'    => 'Please enter a valid email address.',
+                'phone.required'           => 'Please enter your phone number.',
+                'resume.required'          => 'Please attach your resume/CV.',
+                'resume.mimes'             => 'Resume must be a PDF or Word file.',
+                'resume.max'               => 'Resume cannot exceed 5MB.',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['success' => false, 'errors' => $e->errors()], 422);
@@ -96,6 +105,7 @@ class JobApplicationController extends Controller
             'status'          => 'pending',
             'applied_at'      => now(),
         ]);
+        $this->logStatus($application, 'pending');
 
         BbNotification::send(
             $job->user_id,
@@ -113,6 +123,21 @@ class JobApplicationController extends Controller
             'app_id'  => $application->id,
         ]);
     }
+
+
+    // ==========================================
+    // status log এ একটা entry যোগ (timeline এর জন্য)
+    // ==========================================
+    private function logStatus(JobApplication $application, string $status): void
+    {
+        JobApplicationStatusLog::create([
+            'job_application_id' => $application->id,
+            'status'            => $status,
+            'changed_by'        => Auth::id(),
+            'changed_at'        => now(),
+        ]);
+    }
+
 
     // ==========================================
     // আবেদন প্রত্যাহার (withdraw) — শুধু in-app
@@ -156,9 +181,12 @@ class JobApplicationController extends Controller
     {
         $user = Auth::user();
 
-        $query = JobApplication::with(['jobPost' => function ($q) {
-            $q->withTrashed();
-        }])->where('user_id', $user->id);
+        $query = JobApplication::with([
+            'jobPost' => function ($q) {
+                $q->withTrashed();
+            },
+            'statusLogs',
+        ])->where('user_id', $user->id);
 
         $search = trim((string) $request->input('q', ''));
         if ($search !== '') {
@@ -247,6 +275,9 @@ class JobApplicationController extends Controller
         $application->status = $data['status'];
         $application->save();
 
+        // timeline log
+        $this->logStatus($application, $application->status);
+
         BbNotification::send(
             $application->user_id,
             Auth::id(),
@@ -262,5 +293,76 @@ class JobApplicationController extends Controller
             'status'      => $application->status,
             'status_meta' => $application->status_meta,
         ]);
+    }
+
+    // ==========================================
+    // Live status — my-applications পেজে reload ছাড়া status sync
+    // auth user এর in-app application গুলোর fresh status (hashid-keyed)
+    // কোনো raw id বাইরে যায় না — hash secure
+    // ==========================================
+    public function liveStatus()
+    {
+        $meId = Auth::id();
+
+        $apps = JobApplication::where('user_id', $meId)
+            ->where('apply_method', 'inapp')
+            ->get(['id', 'status']);
+
+        $statuses = [];
+        foreach ($apps as $app) {
+            $meta = $app->status_meta;
+            $statuses[$app->getRouteKey()] = [   // getRouteKey() = hashid
+                'status' => $app->status,
+                'label'  => $meta['label'],
+                'color'  => $meta['color'],
+                'bg'     => $meta['bg'],
+                'icon'   => $meta['icon'],
+            ];
+        }
+
+        // stats-ও fresh পাঠাই (উপরের সংখ্যাগুলো live রাখতে)
+        $all = JobApplication::where('user_id', $meId)->get(['status']);
+        $stats = [
+            'total'       => $all->count(),
+            'pending'     => $all->whereIn('status', ['pending', 'reviewed'])->count(),
+            'shortlisted' => $all->whereIn('status', ['shortlisted', 'accepted'])->count(),
+            'rejected'    => $all->where('status', 'rejected')->count(),
+        ];
+
+        return response()->json(['statuses' => $statuses, 'stats' => $stats]);
+    }
+
+    // ==========================================
+    // Applicants পেজ live — owner তার job এর applicant status
+    // reload ছাড়া sync। owner-only guard + hashid — strong secure
+    // ==========================================
+    public function applicantsLive($jobId)
+    {
+        $realJobId = JobPost::decodeHashid($jobId);              // ⬅️ hashid → real id
+        $job = JobPost::withTrashed()->findOrFail($realJobId);
+
+        // শুধু job owner — অন্য কেউ চাইলেও দেখতে পারবে না
+        if ($job->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // শুধু in-app application এর status (external এর status নেই)
+        $apps = $job->applications()
+            ->where('apply_method', 'inapp')
+            ->get(['id', 'status']);
+
+        $statuses = [];
+        foreach ($apps as $app) {
+            $meta = $app->status_meta;
+            $statuses[$app->getRouteKey()] = [   // hashid-keyed, raw id বাইরে যায় না
+                'status' => $app->status,
+                'label'  => $meta['label'],
+                'color'  => $meta['color'],
+                'bg'     => $meta['bg'],
+                'icon'   => $meta['icon'],
+            ];
+        }
+
+        return response()->json(['statuses' => $statuses]);
     }
 }

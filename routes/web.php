@@ -114,6 +114,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/jobs',                        [JobController::class, 'store'])->name('jobs.store');
     Route::get('/jobs',                         [JobController::class, 'all'])->name('jobs.all');
     Route::get('/my-applications',              [JobApplicationController::class, 'myApplications'])->name('jobs.myApplications');
+    Route::get('/my-applications/live-status', [JobApplicationController::class, 'liveStatus'])->name('jobs.myApplications.live');
+    Route::get('/jobs/{id}/applicants/live', [JobApplicationController::class, 'applicantsLive'])->name('jobs.applicants.live');
     Route::get('/jobs/{id}/data',               [JobController::class, 'getJob'])->name('jobs.data');
     Route::post('/jobs/{id}/save',              [JobController::class, 'toggleSave'])->name('jobs.save');
     Route::post('/jobs/{id}/apply',             [JobApplicationController::class, 'apply'])->name('jobs.apply');

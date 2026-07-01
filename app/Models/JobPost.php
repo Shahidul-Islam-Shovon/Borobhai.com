@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 use App\Traits\Hashidable;             // ⬅️ ধাপ ১ এর trait — namespace তোমার আসলটার সাথে মিলিয়ে নাও
-use Vinkla\Hashids\Facades\Hashids; 
-use App\Models\Concerns\HasHashid;  // ⬅️ decode করার জন্য
+use Vinkla\Hashids\Facades\Hashids;
+use App\Models\Concerns\HasHashid;     // ⬅️ decode করার জন্য
 
 class JobPost extends Model
 {
@@ -70,10 +70,20 @@ class JobPost extends Model
         return $daysLeft >= 0 && $daysLeft <= 3;
     }
 
+    // ==========================================
+    // Auto-delete শুধু তখনই — deadline অনেক পুরোনো (৩০ দিন)
+    // আর কেউ apply করেনি। applicant থাকলে কখনো auto-delete নয়
+    // (job history রক্ষা করতে)।
+    // ==========================================
     public function getShouldAutoDeleteAttribute()
     {
         if (!$this->deadline) return false;
-        return $this->deadline->endOfDay()->addDays(5)->isPast();
+
+        // applicant থাকলে কখনোই auto-delete নয় — history রক্ষা
+        if ($this->applications()->exists()) return false;
+
+        // শুধু applicant-শূন্য job, deadline এর ৩০ দিন পর
+        return $this->deadline->endOfDay()->addDays(30)->isPast();
     }
 
     public function getSkillsArrayAttribute()
@@ -92,11 +102,13 @@ class JobPost extends Model
 
     // ===== Scopes =====
 
+    // Feed এ দেখাবে — deadline এর ২ দিন পর পর্যন্ত, তারপর feed থেকে বাদ
+    // (DB তে থাকবে, শুধু feed এ দেখাবে না)
     public function scopeVisible($query)
     {
         return $query->where(function ($q) {
             $q->whereNull('deadline')
-              ->orWhereRaw('DATE_ADD(deadline, INTERVAL 5 DAY) >= ?', [now()->toDateString()]);
+              ->orWhereRaw('DATE_ADD(deadline, INTERVAL 2 DAY) >= ?', [now()->toDateString()]);
         });
     }
 }

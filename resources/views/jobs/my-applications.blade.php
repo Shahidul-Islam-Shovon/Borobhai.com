@@ -91,6 +91,13 @@
         .ma-pagination .page-item .page-link:hover { border-color:var(--bb-primary); color:var(--bb-primary); }
         .ma-pagination .page-item.active .page-link { background:var(--bb-primary); color:#fff; border-color:var(--bb-primary); }
         .ma-pagination .page-item.disabled .page-link { opacity:.45; pointer-events:none; }
+        /* Status timeline */
+        .ma-timeline { margin-top:12px; padding-top:12px; border-top:1px solid var(--bb-line); display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+        .ma-tl-step { display:inline-flex; align-items:center; gap:6px; }
+        .ma-tl-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+        .ma-tl-label { font-size:12px; font-weight:700; }
+        .ma-tl-date { font-size:11px; color:var(--bb-muted); }
+        .ma-tl-line { width:22px; height:2px; background:var(--bb-line); border-radius:2px; margin:0 2px; }
     </style>
 </head>
 <body>
@@ -171,9 +178,12 @@
                         <i class="bi bi-box-arrow-up-right"></i> Applied externally
                     </span>
                 @else
-                    {{-- In-app: alumni যে status দেয় সেটাই --}}
-                    <span class="ma-status" style="background:{{ $meta['bg'] }};color:{{ $meta['color'] }};">
-                        <i class="bi {{ $meta['icon'] }}"></i> {{ $meta['label'] }}
+                    {{-- In-app: alumni যে status দেয় সেটাই (live update হয়) --}}
+                    <span class="ma-status" id="appStatus-{{ $app->getRouteKey() }}"
+                          data-app-hash="{{ $app->getRouteKey() }}"
+                          data-status="{{ $app->status }}"
+                          style="background:{{ $meta['bg'] }};color:{{ $meta['color'] }};">
+                        <i class="bi {{ $meta['icon'] }} ma-status-icon"></i> <span class="ma-status-label">{{ $meta['label'] }}</span>
                     </span>
                 @endif
             </div>
@@ -186,6 +196,21 @@
                     <span><i class="bi bi-paperclip"></i> <a href="{{ $app->resume_url }}" target="_blank" style="color:var(--bb-primary);text-decoration:none;">Resume attached</a></span>
                 @endif
             </div>
+
+            {{-- STATUS TIMELINE — যা যা ঘটল --}}
+            @if($app->apply_method === 'inapp' && $app->statusLogs->count())
+                <div class="ma-timeline">
+                    @foreach($app->statusLogs as $log)
+                        @php $lm = $log->meta; @endphp
+                        <div class="ma-tl-step">
+                            <span class="ma-tl-dot" style="background:{{ $lm['color'] }};"></span>
+                            <span class="ma-tl-label" style="color:{{ $lm['color'] }};">{{ $lm['label'] }}</span>
+                            <span class="ma-tl-date">{{ $log->changed_at->format('d M, g:i A') }}</span>
+                        </div>
+                        @if(!$loop->last)<span class="ma-tl-line"></span>@endif
+                    @endforeach
+                </div>
+            @endif
 
             <div class="ma-actions">
                 @if($app->jobPost && !$app->jobPost->trashed())
@@ -252,6 +277,66 @@ function withdrawApp(jobId, appId){
         .catch(()=>{ Swal.fire({icon:'error', title:'Network error'}); });
     });
 }
+
+// ============================================================
+// LIVE STATUS SYNC — alumni status বদলালে reload ছাড়া এখানে update
+// ============================================================
+function syncApplicationStatuses() {
+    // পেজে দৃশ্যমান কোনো in-app status badge আছে কিনা
+    var badges = document.querySelectorAll('.ma-status[data-app-hash]');
+    if (!badges.length) return;
+
+    fetch("{{ route('jobs.myApplications.live') }}", {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (!d.statuses) return;
+
+        badges.forEach(function (badge) {
+            var hash = badge.getAttribute('data-app-hash');
+            var fresh = d.statuses[hash];
+            if (!fresh) return;
+
+            var current = badge.getAttribute('data-status');
+            if (current === fresh.status) return; // বদলায়নি — স্কিপ
+
+            // status বদলেছে — নীরবে UI update
+            badge.setAttribute('data-status', fresh.status);
+            badge.style.background = fresh.bg;
+            badge.style.color      = fresh.color;
+
+            var iconEl = badge.querySelector('.ma-status-icon');
+            if (iconEl) iconEl.className = 'bi ' + fresh.icon + ' ma-status-icon';
+
+            var labelEl = badge.querySelector('.ma-status-label');
+            if (labelEl) labelEl.textContent = fresh.label;
+
+            // ছোট highlight animation — চোখে পড়ে
+            badge.style.transition = 'transform .3s ease';
+            badge.style.transform  = 'scale(1.12)';
+            setTimeout(function () { badge.style.transform = 'scale(1)'; }, 350);
+
+            // toast জানাই
+            var Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+            Toast.fire({ icon: 'info', title: 'An application status updated: ' + fresh.label });
+        });
+
+        // stats সংখ্যা live update
+        if (d.stats) {
+            var map = { total: '.ma-stat.total', pending: '.ma-stat.pending', shortlisted: '.ma-stat.short', rejected: '.ma-stat.reject' };
+            Object.keys(map).forEach(function (k) {
+                var el = document.querySelector(map[k] + ' .ma-stat-num');
+                if (el && el.textContent.trim() != d.stats[k]) el.textContent = d.stats[k];
+            });
+        }
+    })
+    .catch(function () {});
+}
+
+// প্রতি 6 সেকেন্ডে নীরবে sync
+setInterval(syncApplicationStatuses, 6000);
+
 </script>
 
 </body>

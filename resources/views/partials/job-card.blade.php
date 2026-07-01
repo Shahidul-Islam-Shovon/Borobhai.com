@@ -14,6 +14,7 @@
     $tc = $typeColors[$job->job_type] ?? ['#eef2ff', '#4f46e5', 'bi-briefcase'];
     $isSaved = isset($job->is_saved_by_me) ? ($job->is_saved_by_me > 0) : false;
     $hasApplied = isset($appliedJobIds) && in_array($job->id, $appliedJobIds); // server-side raw — ঠিক আছে
+    $isOwner = $job->user_id === Auth::id();   // নিজের job এ apply নয় — শুধু View Details
 @endphp
 
 <div class="bb-jobcard" id="jobCard-{{ $hid }}">
@@ -31,7 +32,7 @@
                     onclick="toggleJobSave('{{ $hid }}')" title="{{ $isSaved ? 'Saved' : 'Save job' }}">
                 <i class="bi {{ $isSaved ? 'bi-bookmark-fill' : 'bi-bookmark' }}"></i>
             </button>
-            @if($job->user_id === Auth::id())
+            @if($isOwner)
                 <div class="dropdown">
                     <button class="bb-jobcard-more" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:110px;">
@@ -50,7 +51,11 @@
         @if($job->deadline)<span class="bb-jobcard-pill"><i class="bi bi-calendar-event"></i> {{ $job->deadline->format('d M Y') }}</span>@endif
     </div>
 
-    @if($expired)
+    @if($isOwner)
+        <a href="{{ route('jobs.show', $job) }}" class="bb-jobcard-btn" style="background:var(--bb-primary-soft);color:var(--bb-primary);">
+            <i class="bi bi-eye me-1"></i> View Details
+        </a>
+    @elseif($expired)
         <a href="{{ route('jobs.show', $job) }}" class="bb-jobcard-btn" style="background:var(--bb-bg);color:#6b7280;">
             <i class="bi bi-eye me-1"></i> See Details
         </a>

@@ -114,6 +114,8 @@ class JobController extends Controller
         $jobId = JobPost::decodeHashid($id);          // ⬅️ hashid → real id
         $job   = JobPost::with('user')->findOrFail($jobId);
 
+        // applicant থাকলে job কখনো auto-delete হবে না (history রক্ষা),
+        // শুধু applicant-শূন্য + অনেক পুরোনো (৩০ দিন) হলে পরিষ্কার হবে
         if ($job->should_auto_delete) {
             $job->delete();
             abort(404);
@@ -136,7 +138,9 @@ class JobController extends Controller
     {
         self::cleanupExpired();
 
-        $query = JobPost::with('user')->visible();
+        $query = JobPost::with('user')
+            ->withCount('applications')
+            ->visible();
 
         $search = trim((string) $request->input('q', ''));
         if ($search !== '') {
@@ -250,11 +254,14 @@ class JobController extends Controller
 
     // ==========================================
     // মেয়াদোত্তীর্ণ job পরিষ্কার
+    // শুধু applicant-শূন্য + deadline এর ৩০ দিন পার হওয়া job soft-delete হবে।
+    // কেউ apply করে থাকলে job কখনো মুছবে না — job history রক্ষা করতে।
     // ==========================================
     public static function cleanupExpired()
     {
         JobPost::whereNotNull('deadline')
-            ->whereRaw('DATE_ADD(deadline, INTERVAL 5 DAY) < ?', [now()->toDateString()])
+            ->whereRaw('DATE_ADD(deadline, INTERVAL 30 DAY) < ?', [now()->toDateString()])
+            ->whereDoesntHave('applications')
             ->delete();
     }
 }

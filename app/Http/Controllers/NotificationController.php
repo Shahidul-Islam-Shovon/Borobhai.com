@@ -114,7 +114,8 @@ class NotificationController extends Controller
             'friend_request', 'friend_accept', 'new_message' => ['profile', $n->actor_id],
             'post_like', 'post_share'                        => ['post', $n->notifiable_id],
             'post_comment', 'comment_reply', 'comment_like'  => ['comments', $n->notifiable_id],
-            'new_job', 'job_apply', 'job_status',
+            'job_status'                                     => ['myapplications', 0],
+            'new_job', 'job_apply',
             'job_deadline_soon', 'job_deadline_expired'      => ['job', $this->jobHashid($n->notifiable_id)],
             default                                          => ['home', 0],
         };

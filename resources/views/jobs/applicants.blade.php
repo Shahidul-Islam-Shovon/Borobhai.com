@@ -158,8 +158,11 @@
                         <i class="bi bi-box-arrow-up-right"></i> <span>Applied externally</span>
                     </span>
                 @else
-                    <span class="ap-status-badge" id="apStatusBadge-{{ $app->id }}" style="background:{{ $meta['bg'] }};color:{{ $meta['color'] }};">
-                        <i class="bi {{ $meta['icon'] }}"></i> <span>{{ $meta['label'] }}</span>
+                    <span class="ap-status-badge" id="apStatusBadge-{{ $app->getRouteKey() }}"
+                          data-app-hash="{{ $app->getRouteKey() }}"
+                          data-status="{{ $app->status }}"
+                          style="background:{{ $meta['bg'] }};color:{{ $meta['color'] }};">
+                        <i class="bi {{ $meta['icon'] }} ap-status-icon"></i> <span class="ap-status-label">{{ $meta['label'] }}</span>
                     </span>
                 @endif
             </div>
@@ -180,7 +183,7 @@
                     </span>
                 @else
                     <div class="ap-status-select">
-                        <select onchange="updateStatus('{{ $app->getRouteKey() }}', this.value)">
+                        <select data-app-hash="{{ $app->getRouteKey() }}" onchange="updateStatus('{{ $app->getRouteKey() }}', this.value)">
                             <option value="pending"     {{ $app->status === 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="reviewed"    {{ $app->status === 'reviewed' ? 'selected' : '' }}>Under Review</option>
                             <option value="shortlisted" {{ $app->status === 'shortlisted' ? 'selected' : '' }}>Shortlisted</option>
@@ -219,26 +222,68 @@
 const AP_CSRF = document.querySelector('meta[name="csrf-token"]').content;
 const apToast = Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:2000, timerProgressBar:true });
 
-function updateStatus(appId, status){
-    fetch(`/applications/${appId}/status`, {
+function updateStatus(appHash, status){
+    fetch(`/applications/${appHash}/status`, {
         method:'POST',
         headers:{'X-CSRF-TOKEN':AP_CSRF,'Accept':'application/json','Content-Type':'application/json'},
         body: JSON.stringify({ status })
     })
     .then(r=>r.json())
     .then(d=>{
-        if(!d.success){ Swal.fire({icon:'error',title:'Could not update'}); return; }
-        const m = d.status_meta;
-        const badge = document.getElementById(`apStatusBadge-${appId}`);
-        if (badge) {
-            badge.style.background = m.bg;
-            badge.style.color = m.color;
-            badge.innerHTML = `<i class="bi ${m.icon}"></i> <span>${m.label}</span>`;
-        }
-        apToast.fire({ icon:'success', title:'Status updated to '+m.label });
+        if(!d.success){ Swal.fire({icon:'error',title:'Could not update', text:d.message||''}); return; }
+        applyBadgeUpdate(appHash, status, d.status_meta);
+        apToast.fire({ icon:'success', title:'Status updated to '+d.status_meta.label });
     })
     .catch(()=>Swal.fire({icon:'error',title:'Network error'}));
 }
+
+// badge + dropdown একসাথে update (নিজে বদলালে বা polling এ এলে — দুই ক্ষেত্রেই)
+function applyBadgeUpdate(appHash, status, meta){
+    const badge = document.getElementById(`apStatusBadge-${appHash}`);
+    if (badge) {
+        badge.setAttribute('data-status', status);
+        badge.style.background = meta.bg;
+        badge.style.color = meta.color;
+        const ic = badge.querySelector('.ap-status-icon');
+        if (ic) ic.className = 'bi ' + meta.icon + ' ap-status-icon';
+        const lb = badge.querySelector('.ap-status-label');
+        if (lb) lb.textContent = meta.label;
+        badge.style.transition = 'transform .3s ease';
+        badge.style.transform = 'scale(1.12)';
+        setTimeout(()=>{ badge.style.transform = 'scale(1)'; }, 350);
+    }
+    // dropdown selected sync
+    const sel = document.querySelector(`.ap-status-select select[data-app-hash="${appHash}"]`);
+    if (sel && sel.value !== status) sel.value = status;
+}
+
+// ============================================================
+// LIVE SYNC — অন্য tab/device এ status বদলালে এখানেও auto update
+// owner-only endpoint, hashid-keyed — strong secure
+// ============================================================
+function syncApplicantStatuses(){
+    var badges = document.querySelectorAll('.ap-status-badge[data-app-hash]');
+    if (!badges.length) return;
+
+    fetch("{{ route('jobs.applicants.live', $job) }}", {
+        headers:{ 'Accept':'application/json', 'X-Requested-With':'XMLHttpRequest' }
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (!d.statuses) return;
+        badges.forEach(function(badge){
+            var hash = badge.getAttribute('data-app-hash');
+            var fresh = d.statuses[hash];
+            if (!fresh) return;
+            if (badge.getAttribute('data-status') === fresh.status) return; // বদলায়নি
+            applyBadgeUpdate(hash, fresh.status, fresh);
+        });
+    })
+    .catch(function(){});
+}
+
+// প্রতি 4 সেকেন্ডে নীরবে sync
+setInterval(syncApplicantStatuses, 4000);
 </script>
 
 </body>

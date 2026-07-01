@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Concerns\HasHashid;
+use App\Models\JobApplicationStatusLog;
 
 
 class JobApplication extends Model
@@ -53,5 +54,11 @@ class JobApplication extends Model
     public function getResumeUrlAttribute()
     {
         return $this->resume_path ? asset('storage/' . $this->resume_path) : null;
+    }
+
+    // status change history (timeline)
+    public function statusLogs()
+    {
+        return $this->hasMany(JobApplicationStatusLog::class, 'job_application_id')->orderBy('changed_at');
     }
 }

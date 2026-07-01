@@ -426,12 +426,61 @@ document.addEventListener('DOMContentLoaded', () => {
 function openApplyModal(){ applyModalObj?.show(); }
 
 // in-app apply submit
+// in-app apply submit
 function submitApply(){
-    const form = document.getElementById('applyForm');
-    const btn = document.getElementById('applySubmitBtn');
-    const name = document.getElementById('ap_name').value.trim();
-    const email = document.getElementById('ap_email').value.trim();
-    if (!name || !email) { applyToast.fire({icon:'error', title:'Name and email are required'}); return; }
+    const form   = document.getElementById('applyForm');
+    const btn    = document.getElementById('applySubmitBtn');
+    const nameEl   = document.getElementById('ap_name');
+    const emailEl  = document.getElementById('ap_email');
+    const phoneEl  = document.getElementById('ap_phone');
+    const resumeEl = document.getElementById('ap_resume');
+
+    const name   = nameEl.value.trim();
+    const email  = emailEl.value.trim();
+    const phone  = phoneEl.value.trim();
+    const hasResume = resumeEl.files && resumeEl.files.length > 0;
+
+    // সব required field reset
+    [nameEl, emailEl, phoneEl, resumeEl].forEach(el => el.style.borderColor = '');
+
+    // ── client-side validation ──
+    const missing = [];
+    if (!name)      { missing.push('Full Name');  nameEl.style.borderColor   = '#dc2626'; }
+    if (!email)     { missing.push('Email');       emailEl.style.borderColor  = '#dc2626'; }
+    if (!phone)     { missing.push('Phone');       phoneEl.style.borderColor  = '#dc2626'; }
+    if (!hasResume) { missing.push('Resume/CV');   resumeEl.style.borderColor = '#dc2626'; }
+
+    if (missing.length) {
+        applyToast.fire({ icon:'error', title: 'Please fill: ' + missing.join(', ') });
+        // প্রথম খালি field এ focus
+        const firstEmpty = [nameEl, emailEl, phoneEl].find(el => !el.value.trim()) || (!hasResume ? resumeEl : null);
+        if (firstEmpty) firstEmpty.focus();
+        return;
+    }
+
+    // email format হালকা যাচাই
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        emailEl.style.borderColor = '#dc2626';
+        applyToast.fire({ icon:'error', title:'Please enter a valid email address' });
+        emailEl.focus();
+        return;
+    }
+
+    // resume file size/type হালকা যাচাই (backend ও করবে)
+    if (hasResume) {
+        const f = resumeEl.files[0];
+        const okType = /\.(pdf|doc|docx)$/i.test(f.name);
+        if (!okType) {
+            resumeEl.style.borderColor = '#dc2626';
+            applyToast.fire({ icon:'error', title:'Resume must be PDF or Word (.pdf/.doc/.docx)' });
+            return;
+        }
+        if (f.size > 5 * 1024 * 1024) {
+            resumeEl.style.borderColor = '#dc2626';
+            applyToast.fire({ icon:'error', title:'Resume cannot exceed 5MB' });
+            return;
+        }
+    }
 
     btn.disabled = true; const orig = btn.innerHTML;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Submitting...';

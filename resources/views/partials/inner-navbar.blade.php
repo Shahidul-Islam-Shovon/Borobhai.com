@@ -40,7 +40,20 @@
 .ibb-sd-footer:hover { background:#f3f4f8; }
 .ibb-sd-spinner { text-align:center; padding:20px; color:#6b7280; font-size:.88rem; }
 .ibb-sd-empty { text-align:center; padding:20px 14px; color:#9ca3af; font-size:.86rem; }
-@media (max-width:767px){ .ibb-search-box{ width:180px; } .ibb-search-box:focus-within{ width:210px; } .ibb-search-dropdown{ width:300px; } }
+@media (max-width:767px){
+    /* ভিতরের পেজে horizontal scrollbar fix */
+    html, body{ overflow-x:hidden; }
+
+    /* search box কে fixed width না দিয়ে বাকি জায়গা fill করাই → navbar আর overflow করে না */
+    .ibb-search-wrap{ flex:1 1 auto; min-width:0; margin-left:10px; }
+    .ibb-search-box,
+    .ibb-search-box:focus-within{ width:100%; }
+
+    /* dropdown কে viewport-এ fix করে দিলাম, তাই কখনো ডানে/বামে overflow করবে না */
+    .ibb-search-dropdown{
+        position:fixed; top:56px; left:10px; right:10px; width:auto;
+    }
+}
 </style>
 
 <nav style="background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.08);padding:.5rem 1rem;position:sticky;top:0;z-index:100;">
