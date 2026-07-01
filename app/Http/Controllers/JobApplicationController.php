@@ -304,23 +304,36 @@ class JobApplicationController extends Controller
     {
         $meId = Auth::id();
 
-        $apps = JobApplication::where('user_id', $meId)
+        $apps = JobApplication::with('statusLogs')
+            ->where('user_id', $meId)
             ->where('apply_method', 'inapp')
-            ->get(['id', 'status']);
+            ->get();
 
         $statuses = [];
         foreach ($apps as $app) {
             $meta = $app->status_meta;
-            $statuses[$app->getRouteKey()] = [   // getRouteKey() = hashid
-                'status' => $app->status,
-                'label'  => $meta['label'],
-                'color'  => $meta['color'],
-                'bg'     => $meta['bg'],
-                'icon'   => $meta['icon'],
+
+            // timeline steps (যা যা ঘটল)
+            $timeline = [];
+            foreach ($app->statusLogs as $log) {
+                $lm = $log->meta;
+                $timeline[] = [
+                    'label' => $lm['label'],
+                    'color' => $lm['color'],
+                    'date'  => $log->changed_at->format('d M, g:i A'),
+                ];
+            }
+
+            $statuses[$app->getRouteKey()] = [   // hashid-keyed
+                'status'   => $app->status,
+                'label'    => $meta['label'],
+                'color'    => $meta['color'],
+                'bg'       => $meta['bg'],
+                'icon'     => $meta['icon'],
+                'timeline' => $timeline,
             ];
         }
 
-        // stats-ও fresh পাঠাই (উপরের সংখ্যাগুলো live রাখতে)
         $all = JobApplication::where('user_id', $meId)->get(['status']);
         $stats = [
             'total'       => $all->count(),

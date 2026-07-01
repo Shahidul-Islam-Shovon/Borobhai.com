@@ -198,8 +198,8 @@
             </div>
 
             {{-- STATUS TIMELINE — যা যা ঘটল --}}
-            @if($app->apply_method === 'inapp' && $app->statusLogs->count())
-                <div class="ma-timeline">
+            @if($app->apply_method === 'inapp')
+                <div class="ma-timeline" id="maTimeline-{{ $app->getRouteKey() }}" data-app-hash="{{ $app->getRouteKey() }}" style="{{ $app->statusLogs->count() ? '' : 'display:none;' }}">
                     @foreach($app->statusLogs as $log)
                         @php $lm = $log->meta; @endphp
                         <div class="ma-tl-step">
@@ -216,8 +216,16 @@
                 @if($app->jobPost && !$app->jobPost->trashed())
                     <a href="{{ route('jobs.show', $app->jobPost) }}" class="ma-btn ma-btn-view"><i class="bi bi-box-arrow-up-right"></i> View Job</a>
                 @endif
-                @if($app->apply_method === 'inapp' && in_array($app->status, ['pending', 'reviewed']) && (!$app->jobPost || !$app->jobPost->trashed()))
-                    <button class="ma-btn ma-btn-withdraw" onclick="withdrawApp('{{ $app->jobPost->getRouteKey() }}', {{ $app->id }})"><i class="bi bi-x-circle"></i> Withdraw</button>
+                {{-- Withdraw — live toggle হয়। wrapper সবসময় থাকে, ভেতরের button status অনুযায়ী আসে/যায় --}}
+                @if($app->apply_method === 'inapp' && (!$app->jobPost || !$app->jobPost->trashed()))
+                    <span class="ma-withdraw-wrap"
+                          data-app-hash="{{ $app->getRouteKey() }}"
+                          data-job-hash="{{ $app->jobPost ? $app->jobPost->getRouteKey() : '' }}"
+                          data-app-id="{{ $app->id }}">
+                        @if(in_array($app->status, ['pending', 'reviewed']))
+                            <button class="ma-btn ma-btn-withdraw" onclick="withdrawApp('{{ $app->jobPost->getRouteKey() }}', {{ $app->id }})"><i class="bi bi-x-circle"></i> Withdraw</button>
+                        @endif
+                    </span>
                 @endif
             </div>
         </div>
@@ -282,7 +290,6 @@ function withdrawApp(jobId, appId){
 // LIVE STATUS SYNC — alumni status বদলালে reload ছাড়া এখানে update
 // ============================================================
 function syncApplicationStatuses() {
-    // পেজে দৃশ্যমান কোনো in-app status badge আছে কিনা
     var badges = document.querySelectorAll('.ma-status[data-app-hash]');
     if (!badges.length) return;
 
@@ -301,28 +308,55 @@ function syncApplicationStatuses() {
             var current = badge.getAttribute('data-status');
             if (current === fresh.status) return; // বদলায়নি — স্কিপ
 
-            // status বদলেছে — নীরবে UI update
+            // --- badge update ---
             badge.setAttribute('data-status', fresh.status);
             badge.style.background = fresh.bg;
             badge.style.color      = fresh.color;
-
             var iconEl = badge.querySelector('.ma-status-icon');
             if (iconEl) iconEl.className = 'bi ' + fresh.icon + ' ma-status-icon';
-
             var labelEl = badge.querySelector('.ma-status-label');
             if (labelEl) labelEl.textContent = fresh.label;
-
-            // ছোট highlight animation — চোখে পড়ে
             badge.style.transition = 'transform .3s ease';
             badge.style.transform  = 'scale(1.12)';
             setTimeout(function () { badge.style.transform = 'scale(1)'; }, 350);
 
-            // toast জানাই
+            // --- timeline redraw (নতুন step live আসবে) ---
+            var tl = document.getElementById('maTimeline-' + hash);
+            if (tl && fresh.timeline && fresh.timeline.length) {
+                var html = '';
+                fresh.timeline.forEach(function (step, i) {
+                    html += '<div class="ma-tl-step">'
+                          + '<span class="ma-tl-dot" style="background:' + step.color + ';"></span>'
+                          + '<span class="ma-tl-label" style="color:' + step.color + ';">' + step.label + '</span>'
+                          + '<span class="ma-tl-date">' + step.date + '</span>'
+                          + '</div>';
+                    if (i < fresh.timeline.length - 1) html += '<span class="ma-tl-line"></span>';
+                });
+                tl.innerHTML = html;
+                tl.style.display = '';
+            }
+
+            // --- Withdraw button live toggle ---
+            var wrap = document.querySelector('.ma-withdraw-wrap[data-app-hash="' + hash + '"]');
+            if (wrap) {
+                var canWithdraw = (fresh.status === 'pending' || fresh.status === 'reviewed');
+                var existingBtn = wrap.querySelector('.ma-btn-withdraw');
+                if (canWithdraw && !existingBtn) {
+                    var jobHash = wrap.getAttribute('data-job-hash');
+                    var appId   = wrap.getAttribute('data-app-id');
+                    if (jobHash) {
+                        wrap.innerHTML = '<button class="ma-btn ma-btn-withdraw" onclick="withdrawApp(\'' + jobHash + '\', ' + appId + ')"><i class="bi bi-x-circle"></i> Withdraw</button>';
+                    }
+                } else if (!canWithdraw && existingBtn) {
+                    wrap.innerHTML = '';
+                }
+            }
+
             var Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
             Toast.fire({ icon: 'info', title: 'An application status updated: ' + fresh.label });
         });
 
-        // stats সংখ্যা live update
+        // stats live update
         if (d.stats) {
             var map = { total: '.ma-stat.total', pending: '.ma-stat.pending', shortlisted: '.ma-stat.short', rejected: '.ma-stat.reject' };
             Object.keys(map).forEach(function (k) {
@@ -333,9 +367,8 @@ function syncApplicationStatuses() {
     })
     .catch(function () {});
 }
-
-// প্রতি 6 সেকেন্ডে নীরবে sync
-setInterval(syncApplicationStatuses, 6000);
+// প্রতি 5 সেকেন্ডে নীরবে sync
+setInterval(syncApplicationStatuses, 5000);
 
 </script>
 

@@ -409,74 +409,128 @@ class PostController extends Controller
 
         DB::table('users')->where('id', $meId)->update(['last_seen' => now()]);
 
-        // শুধু ৩ ঘণ্টার মধ্যে active friends (নিজেকে বাদ)
-        $activeUsers = \App\Models\User::whereIn('id', $friendIds)
+        $friends = \App\Models\User::whereIn('id', $friendIds)
             ->whereNotIn('id', $blockedIds)
             ->where('id', '!=', $meId)
             ->whereNotNull('last_seen')
-            ->where('last_seen', '>=', now()->subHours(3))
+            ->where('last_seen', '>=', now()->subHours(2))   // শুধু শেষ ২ ঘণ্টা active
             ->select('id', 'name', 'role', 'profile_picture', 'last_seen')
             ->orderByDesc('last_seen')
-            ->limit(8)
+            ->limit(12)
             ->get();
 
-        if ($activeUsers->isEmpty()) {
+          if ($friends->isEmpty()) {
             return response()->json([
-                'html' => '<div class="text-muted small px-2 py-3 text-center">No friends active recently.</div>'
+                'html'       => '<div class="text-muted small px-2 py-3 text-center">No one active right now.</div>',
+                'drawerHtml' => '<div class="bb-dr-empty">No one active right now.</div>',
             ]);
         }
 
         $html = '';
-        foreach ($activeUsers as $au) {
-            // last_seen কে Carbon এ রূপান্তর (cast না থাকলেও নিরাপদ)
-            $lastSeenCarbon = \Carbon\Carbon::parse($au->last_seen);
-            $isOnline       = $lastSeenCarbon->gte(now()->subSeconds(40));
-            $lastSeenText   = self::formatLastSeen($au->last_seen);
-
-            $pic = $au->profile_picture
-                ? '<img src="'.asset('storage/'.$au->profile_picture).'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
-                : strtoupper(substr($au->name, 0, 1));
-
-            $dotColor   = $isOnline ? '#22c55e' : '#9ca3af';
-            $badgeBg    = $isOnline ? '#dcfce7' : '#f3f4f6';
-            $badgeColor = $isOnline ? '#16a34a' : '#6b7280';
-
-            $badgeContent = $isOnline
-                ? '<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> Active now'
-                : $lastSeenText;
-
-            $nameJs     = addslashes($au->name);
-            $picUrl     = $au->profile_picture ? asset('storage/'.$au->profile_picture) : '';
-            $isOnlineJs = $isOnline ? '1' : '0';
-            $userHash   = $au->hashid;
-
-            $html .= '
-            <a href="#" class="bb-active-item" style="text-decoration:none;"
-               onclick="event.preventDefault(); openChatBox('.$au->id.', \''.$nameJs.'\', \''.$picUrl.'\', \''.$lastSeenText.'\', \''.$isOnlineJs.'\', \''.$userHash.'\')">
-                <div class="bb-active-avatar" style="overflow:hidden;position:relative;">
-                    '.$pic.'
-                    <span style="position:absolute;bottom:0;right:0;width:11px;height:11px;border-radius:50%;background:'.$dotColor.';border:2px solid #fff;display:block;"></span>
-                </div>
-                <div class="bb-active-meta">
-                    <span class="bb-active-name">'.e($au->name).'</span>
-                    <span class="bb-mini-badge" style="background:'.$badgeBg.';color:'.$badgeColor.';">'.$badgeContent.'</span>
-                </div>
-            </a>';
+        $drawerHtml = '';
+        foreach ($friends as $au) {
+            $html       .= $this->activeItemHtml($au);
+            $drawerHtml .= $this->activeDrawerHtml($au);
         }
 
-        return response()->json(['html' => $html]);
+        return response()->json(['html' => $html, 'drawerHtml' => $drawerHtml]);
+    }
+
+    // drawer format এর একটা item (mobile-nav এর .bb-dr-row এর সাথে মিল)
+    private function activeDrawerHtml($au): string
+    {
+        $lastSeenCarbon = \Carbon\Carbon::parse($au->last_seen);
+        $isOnline       = $lastSeenCarbon->gte(now()->subMinutes(1));
+        $lastSeenText   = self::formatLastSeen($au->last_seen);
+        $dotColor       = $isOnline ? '#22c55e' : '#9ca3af';
+
+        $pic = $au->profile_picture
+            ? '<img src="'.asset('storage/'.$au->profile_picture).'">'
+            : strtoupper(substr($au->name, 0, 1));
+
+        $nameJs     = e($au->name);
+        $picUrl     = $au->profile_picture ? asset('storage/'.$au->profile_picture) : '';
+        $isOnlineJs = $isOnline ? '1' : '0';
+        $userHash   = $au->hashid;
+
+        return '
+        <div class="bb-dr-row" style="cursor:pointer;"
+             onclick="bbCloseDrawer(); openChatBox('.$au->id.', \''.addslashes($au->name).'\', \''.$picUrl.'\', \''.$lastSeenText.'\', \''.$isOnlineJs.'\', \''.$userHash.'\')">
+            <div class="bb-dr-av">
+                '.$pic.'
+                <span class="bb-dr-dot" style="background:'.$dotColor.';"></span>
+            </div>
+            <div class="bb-dr-info">
+                <span class="bb-dr-name">'.e($au->name).'</span>
+                <span class="bb-dr-meta">'.$lastSeenText.'</span>
+            </div>
+            <i class="bi bi-chat-dots-fill" style="color:#4f46e5;"></i>
+        </div>';
+    }
+
+    // একটা Active Now item এর HTML (online = শেষ ১ মিনিট)
+    private function activeItemHtml($au): string
+    {
+        $lastSeenCarbon = \Carbon\Carbon::parse($au->last_seen);
+        $isOnline       = $lastSeenCarbon->gte(now()->subMinutes(1));   // ১ মিনিট
+        $lastSeenText   = self::formatLastSeen($au->last_seen);
+
+        $pic = $au->profile_picture
+            ? '<img src="'.asset('storage/'.$au->profile_picture).'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+            : strtoupper(substr($au->name, 0, 1));
+
+        $dotColor   = $isOnline ? '#22c55e' : '#9ca3af';
+        $badgeBg    = $isOnline ? '#dcfce7' : '#f3f4f6';
+        $badgeColor = $isOnline ? '#16a34a' : '#6b7280';
+        $badgeContent = $isOnline
+            ? '<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> Active now'
+            : $lastSeenText;
+
+        $nameJs     = addslashes($au->name);
+        $picUrl     = $au->profile_picture ? asset('storage/'.$au->profile_picture) : '';
+        $isOnlineJs = $isOnline ? '1' : '0';
+        $userHash   = $au->hashid;
+
+        return '
+        <a href="#" class="bb-active-item" style="text-decoration:none;"
+           data-user-id="'.$au->id.'"
+           onclick="event.preventDefault(); openChatBox('.$au->id.', \''.$nameJs.'\', \''.$picUrl.'\', \''.$lastSeenText.'\', \''.$isOnlineJs.'\', \''.$userHash.'\')">
+            <div class="bb-active-avatar" style="overflow:hidden;position:relative;">
+                '.$pic.'
+                <span class="bb-active-dot" style="position:absolute;bottom:0;right:0;width:11px;height:11px;border-radius:50%;background:'.$dotColor.';border:2px solid #fff;display:block;"></span>
+            </div>
+            <div class="bb-active-meta">
+                <span class="bb-active-name">'.e($au->name).'</span>
+                <span class="bb-mini-badge" style="background:'.$badgeBg.';color:'.$badgeColor.';">'.$badgeContent.'</span>
+            </div>
+        </a>';
+    }
+
+    // ==========================================
+    // HEARTBEAT — page খোলা থাকলে প্রতি ৩০s এ last_seen fresh
+    // এটাই Active Now real-time করার আসল চাবি
+    // ==========================================
+    public function heartbeat()
+    {
+        $meId = Auth::id();
+        if ($meId) {
+            DB::table('users')->where('id', $meId)->update(['last_seen' => now()]);
+            Cache::forget('last_seen_' . $meId);
+        }
+        return response()->json(['ok' => true]);
     }
 
     
     // ==========================================
     // GO OFFLINE (ব্রাউজার ক্লোজ — sendBeacon)
     // ==========================================
+    // ==========================================
+    // GO OFFLINE — browser close এ আর last_seen পিছিয়ে দিই না।
+    // heartbeat বন্ধ হলেই স্বাভাবিকভাবে 'Xm ago' হবে (Facebook-মত)।
+    // ==========================================
     public function goOffline()
     {
-        if (Auth::id()) {
-            DB::table('users')->where('id', Auth::id())
-                ->update(['last_seen' => now()->subHours(5)]);
-        }
+        // ইচ্ছাকৃতভাবে কিছু করি না — heartbeat বন্ধ হওয়াই যথেষ্ট
         return response()->json(['ok' => true]);
     }
 

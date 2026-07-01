@@ -166,9 +166,10 @@
         {{-- Active Now --}}
         <div class="bb-dr-sep"></div>
         <div class="bb-dr-sect"><i class="bi bi-circle-fill text-success" style="font-size:8px;"></i> Active Now</div>
+        <div id="bbdActiveZone">
         @forelse($mActive as $au)
             @php
-                $isOnline = $au->last_seen && $au->last_seen >= now()->subSeconds(40);
+                $isOnline = $au->last_seen && $au->last_seen >= now()->subMinutes(1);
                 $lastSeenText = \App\Http\Controllers\PostController::formatLastSeen($au->last_seen);
                 $dotColor = $isOnline ? '#22c55e' : '#9ca3af';
             @endphp
@@ -187,8 +188,9 @@
                 <i class="bi bi-chat-dots-fill" style="color:#4f46e5;"></i>
             </div>
         @empty
-            <div class="bb-dr-empty">No friends active recently.</div>
+            <div class="bb-dr-empty">No friends yet.</div>
         @endforelse
+        </div>
 
         {{-- Suggested People --}}
         <div class="bb-dr-sep"></div>
@@ -255,7 +257,7 @@
     };
     document.addEventListener('keydown', function(e){ if(e.key === 'Escape') window.bbCloseDrawer(); });
 
-    // Friend request: তোমার existing friendAction() backend handle করে, এখানে শুধু drawer row সরাই
+    // Friend request: existing friendAction() backend handle করে, এখানে শুধু drawer row সরাই
     window.bbDrawerFriend = function(action, id, btn){
         if(typeof friendAction === 'function') friendAction(action, id, btn);
         var row = btn.closest('.bb-dr-row');

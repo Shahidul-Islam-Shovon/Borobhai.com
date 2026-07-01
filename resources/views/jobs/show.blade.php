@@ -250,7 +250,13 @@
                     <strong><i class="bi bi-person-badge"></i> This is your job posting</strong>
                     Manage and review applicants here.
                 </div>
-                <a href="{{ route('jobs.applicants', $job) }}" class="jp-apply-btn"><i class="bi bi-people-fill"></i> View Applicants</a>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{{ route('jobs.applicants', $job) }}" class="jp-apply-btn"><i class="bi bi-people-fill"></i> View Applicants</a>
+                    <button type="button" class="jp-apply-btn" style="background:#fff;color:var(--bb-primary);border:1.5px solid var(--bb-primary);box-shadow:none;"
+                            onclick="downloadJobReport('{{ $job->getRouteKey() }}')">
+                        <i class="bi bi-file-earmark-arrow-down"></i> Download this Job Report
+                    </button>
+                </div>
             @elseif($expired)
                 <div class="jp-apply-info">
                     <strong>Applications closed</strong>
@@ -674,7 +680,59 @@ function withdrawApplication(jobId){
         .catch(()=>{ Swal.fire({icon:'error', title:'Network error'}); });
     });
 }
+
+// Job Report PDF download — loading overlay সহ
+function downloadJobReport(jobHash){
+    var overlay = document.getElementById('reportLoadingOverlay');
+    if (overlay) overlay.style.display = 'flex';
+
+    var url = '/jobs/' + jobHash + '/report';
+
+    fetch(url, { headers: { 'Accept': 'application/pdf' } })
+    .then(function(r){
+        if (!r.ok) throw new Error('Failed');
+        return r.blob();
+    })
+    .then(function(blob){
+        // blob থেকে download trigger
+        var a = document.createElement('a');
+        var objUrl = window.URL.createObjectURL(blob);
+        a.href = objUrl;
+
+        // filename — response এ না পেলে default
+        a.download = 'borobhai-job-report.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(objUrl);
+
+        if (overlay) overlay.style.display = 'none';
+        Swal.fire({ icon:'success', title:'Report downloaded!', timer:1600, showConfirmButton:false });
+    })
+    .catch(function(){
+        if (overlay) overlay.style.display = 'none';
+        Swal.fire({ icon:'error', title:'Could not generate report', text:'Please try again.' });
+    });
+}
+
 </script>
+
+<div id="reportLoadingOverlay" style="display:none;position:fixed;inset:0;z-index:99999;
+     background:rgba(255,255,255,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+     align-items:center;justify-content:center;flex-direction:column;">
+    <div style="width:64px;height:64px;border:5px solid #e5e7eb;border-top-color:#4f46e5;
+                border-radius:50%;animation:reportSpin .8s linear infinite;"></div>
+    <div style="margin-top:20px;font-size:17px;font-weight:700;color:#4f46e5;font-family:'Inter',sans-serif;">
+        Download Your Data, Please Wait
+    </div>
+    <div style="margin-top:6px;font-size:12.5px;color:#6b7280;font-family:'Inter',sans-serif;">
+        Generating job report PDF…
+    </div>
+</div>
+<style>
+@keyframes reportSpin { to { transform:rotate(360deg); } }
+</style>
+
 
 </body>
 </html>

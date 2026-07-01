@@ -3869,32 +3869,56 @@ function refreshActiveNow() {
     fetch('/active-now', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-        // শুধু তখনই update করো যখন html আছে এবং empty নয়
-        if (d.html !== undefined && d.html !== null && d.html.trim() !== '') {
-            var z = document.getElementById('activeNowZone');
-            if (z) z.innerHTML = d.html;
+        // desktop sidebar — একই থাকলে বসাব না (blink বন্ধ)
+        var z = document.getElementById('activeNowZone');
+        if (z && d.html !== undefined && d.html !== null) {
+            if (z.getAttribute('data-sig') !== d.html) {
+                z.innerHTML = d.html;
+                z.setAttribute('data-sig', d.html);
+            }
         }
-        // html empty হলে existing content রাখো — blank করবে না
+        // mobile drawer — একই থাকলে বসাব না
+        var dz = document.getElementById('bbdActiveZone');
+        if (dz && d.drawerHtml !== undefined && d.drawerHtml !== null) {
+            if (dz.getAttribute('data-sig') !== d.drawerHtml) {
+                dz.innerHTML = d.drawerHtml;
+                dz.setAttribute('data-sig', d.drawerHtml);
+            }
+        }
     })
-    .catch(function () {
-        // network error হলেও existing content রাখো
-    });
+    .catch(function () {});
 }
 
-// Page load এ ৫ সেকেন্ড delay — Blade render content কে সাথে সাথে overwrite করবে না
-// User কে আগে initial content দেখাবে, তারপর refresh হবে
-setTimeout(function () {
+// HEARTBEAT — page খোলা থাকলে last_seen fresh রাখে (reload ছাড়া)
+function sendHeartbeat() {
+    fetch('/heartbeat', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        }
+    }).catch(function () {});
+}
+
+// tab hidden হলে heartbeat পাঠাব না (ব্যান্ডউইথ বাঁচে, offline detect হয়)
+var _hbTimer = null, _anTimer = null;
+function startLiveActive() {
+    sendHeartbeat();      // সাথে সাথে একবার
     refreshActiveNow();
-}, 2000);
+    if (_hbTimer) clearInterval(_hbTimer);
+    if (_anTimer) clearInterval(_anTimer);
+    _hbTimer = setInterval(function () {
+        if (!document.hidden) sendHeartbeat();
+    }, 10000);            // প্রতি ১০s heartbeat
+    _anTimer = setInterval(refreshActiveNow, 10000);  // প্রতি 1০s panel refresh
+}
 
-setInterval(refreshActiveNow, 60000);
+// প্রথম heartbeat একটু দেরিতে (blade render content আগে দেখাতে)
+setTimeout(startLiveActive, 1500);
 
-
-// ব্রাউজার/ট্যাব ক্লোজ হলে offline signal পাঠাও
-window.addEventListener('pagehide', function () {
-    try {
-        navigator.sendBeacon('/presence/offline');
-    } catch (e) {}
+// tab আবার visible হলে সাথে সাথে heartbeat + refresh
+document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) { sendHeartbeat(); refreshActiveNow(); }
 });
 
 // ============================================================

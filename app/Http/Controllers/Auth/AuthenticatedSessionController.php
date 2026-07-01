@@ -118,15 +118,13 @@ class AuthenticatedSessionController extends Controller
     /**
      * Destroy an authenticated session.
      */
+    /**
+     * Destroy an authenticated session.
+     */
     public function destroy(Request $request)
     {
-
-    // logout করলেই সাথে সাথে offline (Active Now থেকে সরে যাবে)
-        if (Auth::id()) {
-            \DB::table('users')->where('id', Auth::id())
-            ->update(['last_seen' => now()->subHours(5)]);
-        }
-
+        // logout এ last_seen পিছিয়ে দিই না — heartbeat বন্ধ হলেই
+        // স্বাভাবিকভাবে 'Active Xm ago' হবে, ২ ঘণ্টা পর Active Now থেকে গায়ব (Facebook-মত)
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

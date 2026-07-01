@@ -117,6 +117,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-applications/live-status', [JobApplicationController::class, 'liveStatus'])->name('jobs.myApplications.live');
     Route::get('/jobs/{id}/applicants/live', [JobApplicationController::class, 'applicantsLive'])->name('jobs.applicants.live');
     Route::get('/jobs/{id}/data',               [JobController::class, 'getJob'])->name('jobs.data');
+    Route::get('/jobs/{id}/report', [JobController::class, 'downloadReport'])->name('jobs.report');
     Route::post('/jobs/{id}/save',              [JobController::class, 'toggleSave'])->name('jobs.save');
     Route::post('/jobs/{id}/apply',             [JobApplicationController::class, 'apply'])->name('jobs.apply');
     Route::post('/jobs/{id}/withdraw',          [JobApplicationController::class, 'withdraw'])->name('jobs.withdraw');
@@ -138,6 +139,7 @@ Route::middleware('auth')->group(function () {
 
     // ---------- ACTIVE NOW ----------
     Route::get('/active-now',                   [PostController::class, 'activeNow'])->name('active.now');
+    Route::post('/heartbeat', [PostController::class, 'heartbeat'])->name('heartbeat');
     Route::get('/friends/messenger-contacts', [\App\Http\Controllers\PostController::class, 'messengerContacts'])
     ->name('friends.messengerContacts');
 

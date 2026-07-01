@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use App\Models\JobPost;
 use App\Models\BbNotification;
 use App\Models\Friendship;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class JobController extends Controller
 {
@@ -263,5 +264,35 @@ class JobController extends Controller
             ->whereRaw('DATE_ADD(deadline, INTERVAL 30 DAY) < ?', [now()->toDateString()])
             ->whereDoesntHave('applications')
             ->delete();
+    }
+    // ==========================================
+    // Job Report PDF — শুধু owner। job details + applicant list সহ
+    // ==========================================
+    public function downloadReport($id)
+    {
+        $jobId = JobPost::decodeHashid($id);                       // hashid → real id
+        $job   = JobPost::withTrashed()->with('user')->findOrFail($jobId);
+
+        // শুধু owner — অন্য কেউ URL guess করলেও 403
+        if ($job->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // applicant list (সব status)
+        $applicants = $job->applications()->with('user')->latest('applied_at')->get();
+
+        $data = [
+            'job'        => $job,
+            'applicants' => $applicants,
+            'generated'  => now(),
+        ];
+
+        $pdf = Pdf::loadView('jobs.report-pdf', $data)
+                  ->setPaper('a4', 'portrait');
+
+        $safeTitle = \Illuminate\Support\Str::slug($job->title ?: 'job');
+        $fileName  = 'borobhai-report-' . $safeTitle . '-' . now()->format('Ymd-His') . '.pdf';
+
+        return $pdf->download($fileName);
     }
 }
