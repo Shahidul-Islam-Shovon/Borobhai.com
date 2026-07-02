@@ -15,15 +15,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\MessageController;
-use App\Http\Controllers\AttachmentController;
-use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\HeartbeatController;
-use App\Http\Controllers\MessengerController;
-use App\Http\Controllers\ConversationController;
-use App\Http\Controllers\MessageSeenController;
-use App\Http\Controllers\MessageDeleteController;
-use App\Http\Controllers\MessageUnsendController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
