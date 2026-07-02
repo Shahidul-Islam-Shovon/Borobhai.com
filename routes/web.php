@@ -15,6 +15,15 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\PresenceController;
+use App\Http\Controllers\HeartbeatController;
+use App\Http\Controllers\MessengerController;
+use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\MessageSeenController;
+use App\Http\Controllers\MessageDeleteController;
+use App\Http\Controllers\MessageUnsendController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -142,6 +151,32 @@ Route::middleware('auth')->group(function () {
     Route::post('/heartbeat', [PostController::class, 'heartbeat'])->name('heartbeat');
     Route::get('/friends/messenger-contacts', [\App\Http\Controllers\PostController::class, 'messengerContacts'])
     ->name('friends.messengerContacts');
+
+// ---------- MESSENGER ----------
+    Route::middleware(['auth'])->prefix('messages')->name('messages.')->group(function () {
+
+    // Route::get('/contacts', [ConversationController::class, 'contacts']);
+
+    // Route::get('/conversations', [ConversationController::class, 'index']);
+
+    // Route::get('/conversation/{user}', [ConversationController::class, 'show']);
+
+    // Route::post('/typing/{user}', [MessageController::class, 'typing']);
+
+    // Route::post('/upload', [AttachmentController::class, 'upload']);
+
+    Route::post('/send', [MessageController::class, 'send']);
+
+    Route::get('/load/{user}', [MessageController::class, 'load']);
+
+    Route::post('/seen/{user}', [MessageController::class, 'markSeen']);
+
+    Route::delete('/{message}', [MessageController::class, 'deleteForMe']);
+
+    Route::post('/{message}/unsend', [MessageController::class, 'unsend']);
+
+});
+
 
     // ---------- SEARCH ----------
     Route::get('/search',                       [SearchController::class, 'index'])->name('search.index');

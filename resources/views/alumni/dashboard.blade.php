@@ -1413,13 +1413,15 @@
 
     /* ===== CHAT BOX ===== */
     .bb-chat-box {
+        
         width: 320px;
+        height: 490px;
+        max-height: 490px;
         background: #fff;
         border-radius: 12px 12px 0 0;
         box-shadow: 0 -2px 20px rgba(16, 24, 40, 0.16);
         display: flex;
         flex-direction: column;
-        max-height: 460px;
         transition: max-height 0.25s ease;
         border: 1px solid #e4e6eb;
         border-bottom: none;
@@ -1536,6 +1538,9 @@
         gap: 6px;
         scrollbar-width: thin;
         scrollbar-color: #cbd5e1 transparent;
+        scroll-behavior:smooth;
+        max-width:72%;
+        position:relative;
     }
     .bb-chat-messages::-webkit-scrollbar {
         width: 4px;
@@ -1630,6 +1635,84 @@
     #postsFeedContainer .bb-post-head {
         flex-wrap: nowrap;
     }
+    .bb-chat-msg small{
+        opacity:.75;
+        font-size:10px;
+        display:block;
+        margin-top:4px;
+    }
+
+    .bb-chat-msg.mine small{
+        color:#fff;
+    }
+
+    .bb-chat-msg.theirs small{
+        color:#666;
+    }
+
+    .bb-chat-msg img{
+        max-width:180px;
+        border-radius:10px;
+        margin-top:5px;
+        cursor:pointer;
+    }
+
+   .bb-chat-preview{
+    display:none;
+    padding:8px;
+    border-top:1px solid #eee;
+    max-height:95px;
+    overflow:auto;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+   .bb-chat-preview.active{
+    display:flex;
+    }
+
+    .bb-preview-item{
+    position:relative;
+    width:62px;
+    height:62px;
+    border-radius:8px;
+    overflow:hidden;
+    border:1px solid #ddd;
+    background:#f7f7f7;
+}
+
+.bb-preview-item img,
+.bb-preview-item video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.bb-preview-item button{
+    position:absolute;
+    top:2px;
+    right:2px;
+    width:18px;
+    height:18px;
+    border:none;
+    border-radius:50%;
+    background:#000;
+    color:#fff;
+    cursor:pointer;
+    font-size:11px;
+}
+
+   .bb-chat-preview-file{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-size:11px;
+    width:100%;
+    height:100%;
+    padding:5px;
+}
+
     /* ===== NOTIFICATION ===== */
     .bb-notif-item {
         display:flex; align-items:flex-start; gap:12px;
@@ -2531,6 +2614,7 @@
 // SECTION 1: GLOBAL STATE
 // সব var (let নয়) — TDZ error এড়াতে
 // ============================================================
+const CURRENT_USER_ID = {{ auth()->id() }};
 var selectedMediaFiles   = [];
 var bootstrapEditModal   = null;
 var bootstrapShareModal  = null;
@@ -4446,6 +4530,7 @@ function openChatBox(userId, name, pic, lastSeen, isOnline, userHash) {
         + '<div class="bb-chat-messages" id="chatmsg-' + userId + '">'
         + '<div class="bb-chat-no-msg"><i class="bi bi-chat-dots" style="font-size:2rem;display:block;margin-bottom:8px;color:#d1d5db;"></i>Start a conversation with ' + escHtml(name) + '</div>'
         + '</div>'
+        + '<div class="bb-chat-preview" id="preview-' + userId + '"></div>'
         + '<div class="bb-chat-footer">'
         + '<button class="bb-chat-attach-btn" title="Photo/video" onclick="triggerChatAttach(' + userId + ')"><i class="bi bi-images"></i></button>'
         + '<button class="bb-chat-attach-btn" title="File" onclick="triggerChatFile(' + userId + ')"><i class="bi bi-paperclip"></i></button>'
@@ -4461,31 +4546,221 @@ function openChatBox(userId, name, pic, lastSeen, isOnline, userHash) {
     container.appendChild(box);
     openChatBoxes[userId] = box;
     setTimeout(function () { document.getElementById('chatinput-' + userId)?.focus(); }, 100);
+    loadConversation(userId);
+    startChatPolling(userId);
 }
 
 function toggleChatMinimize(userId) { openChatBoxes[userId]?.classList.toggle('minimized'); }
-function closeChatBox(userId)        { openChatBoxes[userId]?.remove(); delete openChatBoxes[userId]; }
+
+function closeChatBox(userId){
+
+    if(chatPolling[userId]){
+
+        clearInterval(chatPolling[userId]);
+
+        delete chatPolling[userId];
+
+    }
+
+    openChatBoxes[userId]?.remove();
+
+    delete openChatBoxes[userId];
+
+}
+
 
 function sendChatMsg(userId) {
-    var input = document.getElementById('chatinput-' + userId);
-    if (!input) return;
-    var text = input.value.trim();
-    if (!text) return;
-    appendChatMsg(userId, text, true);
-    input.value  = '';
-    input.style.height = 'auto';
+
+    let input = document.getElementById('chatinput-' + userId);
+
+    let text = input.value.trim();
+
+    let files = chatFiles[userId] || [];
+
+    if (text === '' && files.length === 0) return;
+
+    let formData = new FormData();
+
+    formData.append('receiver_id', userId);
+    formData.append('message', text);
+
+    files.forEach(function(file){
+        formData.append('attachments[]', file);
+    });
+
+    fetch('/messages/send', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(res => {
+
+        if (!res.success) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed',
+                text: res.message || 'Message could not be sent.'
+            });
+            return;
+        }
+
+        loadConversation(userId);
+
+        input.value = '';
+        input.style.height = 'auto';
+
+        chatFiles[userId] = [];
+
+        let preview = document.getElementById('preview-' + userId);
+
+        if (preview) {
+            preview.innerHTML = '';
+            preview.classList.remove('active');
+        }
+
+        let fileInput = document.getElementById('chatfile-' + userId);
+
+        if (fileInput) {
+            fileInput.value = '';
+        }
+
+    })
+    .catch(function () {
+        Swal.fire({
+            icon: 'error',
+            title: 'Network Error'
+        });
+    });
+
 }
 
-function appendChatMsg(userId, text, isMine) {
-    var zone = document.getElementById('chatmsg-' + userId);
-    if (!zone) return;
+function appendChatMsg(userId,text,mine,time,id,isUnsent){
+
+    let zone=document.getElementById('chatmsg-'+userId);
+
+    if(!zone) return;
+
     zone.querySelector('.bb-chat-no-msg')?.remove();
-    var div       = document.createElement('div');
-    div.className = 'bb-chat-msg ' + (isMine ? 'mine' : 'theirs');
-    div.textContent = text;
+
+    let div=document.createElement('div');
+
+    div.className='bb-chat-msg '+(mine?'mine':'theirs');
+
+    div.dataset.id=id;
+
+    div.innerHTML=
+    '<div>'+linkify(text)+'</div>'+
+    '<small style="display:block;margin-top:4px;font-size:11px;color:#888;">'+time+'</small>';
+
     zone.appendChild(div);
-    zone.scrollTop = zone.scrollHeight;
+
+    zone.scrollTop=zone.scrollHeight;
+
 }
+
+// new aded for chat UI
+function linkify(text){
+
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+    return text.replace(urlRegex,function(url){
+
+        return '<a href="'+url+'" target="_blank">'+url+'</a>';
+
+    });
+
+}
+
+function loadConversation(userId){
+
+    fetch('/messages/load/' + userId)
+    .then(r => r.json())
+    .then(function(res){
+
+        if(!res.success) return;
+
+        let zone = document.getElementById('chatmsg-' + userId);
+
+        if(!zone) return;
+
+        zone.innerHTML = '';
+
+        res.messages.forEach(function(msg){
+
+            let html = '';
+
+            switch(msg.type){
+
+                case 'text':
+
+                    html = msg.message ?? '';
+                    break;
+
+                case 'image':
+
+                    html = `
+                        <a href="${msg.attachment}" target="_blank">
+                            <img src="${msg.attachment}" class="bb-chat-image">
+                        </a>
+                    `;
+                    break;
+
+                case 'video':
+
+                    html = `
+                        <video controls class="bb-chat-video">
+                            <source src="${msg.attachment}">
+                        </video>
+                    `;
+                    break;
+
+                case 'voice':
+
+                    html = `
+                        <audio controls style="width:220px">
+                            <source src="${msg.attachment}">
+                        </audio>
+                    `;
+                    break;
+
+                case 'file':
+
+                    html = `
+                        <a href="${msg.attachment}" target="_blank" class="bb-chat-file">
+                            📄 ${msg.attachment_name}
+                        </a>
+                    `;
+                    break;
+
+                case 'unsent':
+
+                    html = '<i>This message was unsent.</i>';
+                    break;
+
+            }
+
+            appendChatMsg(
+                userId,
+                html,
+                msg.mine,
+                msg.time,
+                msg.id,
+                msg.is_unsent
+            );
+
+        });
+
+        zone.scrollTop = zone.scrollHeight;
+
+    })
+    .catch(console.error);
+
+}
+
 
 function filterChatMessages(userId, q) {
     document.getElementById('chatmsg-' + userId)?.querySelectorAll('.bb-chat-msg').forEach(function (m) {
@@ -4497,24 +4772,153 @@ function triggerChatAttach(userId) { document.getElementById('chatattach-' + use
 function triggerChatFile(userId)   { document.getElementById('chatfile-' + userId)?.click(); }
 
 function handleChatAttach(userId, input) {
-    Array.from(input.files).forEach(function (f) {
-        if (f.type.startsWith('video/') && f.size > 25 * 1024 * 1024) {
-            Swal.fire({ icon: 'warning', title: 'Video too large!', text: 'Max 25MB.' });
-            input.value = ''; return;
-        }
-        appendChatMsg(userId, '📎 ' + f.name, true);
+
+    if (!chatFiles[userId]) {
+        chatFiles[userId] = [];
+    }
+
+    let preview = document.getElementById('preview-' + userId);
+
+    preview.innerHTML = '';
+
+    Array.from(input.files).forEach(function (file) {
+        chatFiles[userId].push(file);
     });
+
+    chatFiles[userId].forEach(function (file, index) {
+
+        let div = document.createElement('div');
+        div.className = 'bb-preview-item';
+
+        if (file.type.startsWith('image/')) {
+
+            let reader = new FileReader();
+
+            reader.onload = function (e) {
+                div.innerHTML =
+                    '<img src="' + e.target.result + '">' +
+                    '<button type="button" onclick="removePreview(' + userId + ',' + index + ')">&times;</button>';
+            };
+
+            reader.readAsDataURL(file);
+
+        } else if (file.type.startsWith('video/')) {
+
+            let url = URL.createObjectURL(file);
+
+            div.innerHTML =
+                '<video src="' + url + '" muted></video>' +
+                '<button type="button" onclick="removePreview(' + userId + ',' + index + ')">&times;</button>';
+
+        } else {
+
+            div.innerHTML =
+                '<div class="bb-chat-preview-file">📄 ' + file.name + '</div>' +
+                '<button type="button" onclick="removePreview(' + userId + ',' + index + ')">&times;</button>';
+
+        }
+
+        preview.appendChild(div);
+
+    });
+
+    if (chatFiles[userId].length > 0) {
+        preview.classList.add('active');
+    } else {
+        preview.classList.remove('active');
+    }
+
     input.value = '';
 }
 
-function handleChatFile(userId, input) {
-    var f = input.files[0];
-    if (!f) return;
-    appendChatMsg(userId, '📄 ' + f.name, true);
-    input.value = '';
+
+function removePreview(userId, index) {
+
+    if (!chatFiles[userId]) return;
+
+    chatFiles[userId].splice(index, 1);
+
+    let preview = document.getElementById('preview-' + userId);
+
+    preview.innerHTML = '';
+
+    if (chatFiles[userId].length === 0) {
+        preview.classList.remove('active');
+        return;
+    }
+
+    chatFiles[userId].forEach(function (file, i) {
+
+        let div = document.createElement('div');
+        div.className = 'bb-preview-item';
+
+        if (file.type.startsWith('image/')) {
+
+            let reader = new FileReader();
+
+            reader.onload = function (e) {
+                div.innerHTML =
+                    '<img src="' + e.target.result + '">' +
+                    '<button type="button" onclick="removePreview(' + userId + ',' + i + ')">&times;</button>';
+            };
+
+            reader.readAsDataURL(file);
+
+        } else if (file.type.startsWith('video/')) {
+
+            let url = URL.createObjectURL(file);
+
+            div.innerHTML =
+                '<video src="' + url + '" controls></video>' +
+                '<button type="button" onclick="removePreview(' + userId + ',' + i + ')">&times;</button>';
+
+        } else {
+
+            div.innerHTML =
+                '<div class="bb-chat-preview-file">📄 ' + file.name + '</div>' +
+                '<button type="button" onclick="removePreview(' + userId + ',' + i + ')">&times;</button>';
+
+        }
+
+        preview.appendChild(div);
+
+    });
+
+}
+
+
+function handleChatFile(userId,input){
+
+    if(!chatFiles[userId])
+        chatFiles[userId]=[];
+
+    Array.from(input.files).forEach(f=>chatFiles[userId].push(f));
+
+    handleChatAttach(userId,{files:chatFiles[userId]});
+
+    input.value='';
 }
 
 function toggleChatEmoji(userId) { /* emoji picker integration */ }
+
+
+var chatPolling = {};
+
+function startChatPolling(userId){
+
+    if(chatPolling[userId]){
+        clearInterval(chatPolling[userId]);
+    }
+
+    loadConversation(userId);
+
+    chatPolling[userId]=setInterval(function(){
+
+        loadConversation(userId);
+
+    },2000);
+
+}
 
 function escHtml(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
