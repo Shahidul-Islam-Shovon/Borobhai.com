@@ -152,31 +152,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/friends/messenger-contacts', [\App\Http\Controllers\PostController::class, 'messengerContacts'])
     ->name('friends.messengerContacts');
 
-// ---------- MESSENGER ----------
-    Route::middleware(['auth'])->prefix('messages')->name('messages.')->group(function () {
-
-    // Route::get('/contacts', [ConversationController::class, 'contacts']);
-
-    // Route::get('/conversations', [ConversationController::class, 'index']);
-
-    // Route::get('/conversation/{user}', [ConversationController::class, 'show']);
-
-    // Route::post('/typing/{user}', [MessageController::class, 'typing']);
-
-    // Route::post('/upload', [AttachmentController::class, 'upload']);
-
-    Route::post('/send', [MessageController::class, 'send']);
-
-    Route::get('/load/{user}', [MessageController::class, 'load']);
-
-    Route::post('/seen/{user}', [MessageController::class, 'markSeen']);
-
-    Route::delete('/{message}', [MessageController::class, 'deleteForMe']);
-
-    Route::post('/{message}/unsend', [MessageController::class, 'unsend']);
-
-});
-
 
     // ---------- SEARCH ----------
     Route::get('/search',                       [SearchController::class, 'index'])->name('search.index');
