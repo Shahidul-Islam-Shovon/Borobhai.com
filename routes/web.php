@@ -13,6 +13,7 @@ use App\Http\Controllers\SavedPostController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\FriendController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\HeartbeatController;
@@ -167,6 +168,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/unblock',                 [FriendController::class, 'unblock'])->name('unblock');
         Route::post('/not-interested',     [FriendController::class, 'notInterested']);
     });
+
+    // ---------- MESSAGING ----------
+    Route::post('/message/send', [MessageController::class, 'send'])->name('message.send');
+    Route::get('/message/thread/{userId}', [MessageController::class, 'thread'])->name('message.thread');
+    Route::get('/message/unread-count', [MessageController::class, 'unreadCount'])->name('message.unreadCount');
 
     // ---------- REPORT ----------
     Route::post('/report',                      [ReportController::class, 'store'])->name('report.store');

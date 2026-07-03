@@ -4213,13 +4213,17 @@ function rSubmit() {
 }
 
 
+
 // ============================================================
-// SECTION 20: CHAT BOX
+// SECTION 20: CHAT BOX (with message polling)
 // ============================================================
+
 var openChatBoxes = {};
+var _msgTimer = null;
+var _currentChatUserId = null;
 
 function openChatBox(userId, name, pic, lastSeen, isOnline, userHash) {
-    userHash = userHash || userId; // fallback: hash না পেলে raw id (পরে মুছবে)
+    userHash = userHash || userId;
     if (openChatBoxes[userId]) { openChatBoxes[userId].classList.remove('minimized'); return; }
 
     var container     = document.getElementById('chatBoxesContainer');
@@ -4239,79 +4243,102 @@ function openChatBox(userId, name, pic, lastSeen, isOnline, userHash) {
         + '<button class="bb-chat-head-btn" onclick="toggleChatMinimize(' + userId + ')"><i class="bi bi-dash-lg"></i></button>'
         + '<button class="bb-chat-head-btn" onclick="closeChatBox(' + userId + ')"><i class="bi bi-x-lg"></i></button>'
         + '</div></div>'
-        + '<div class="bb-chat-search"><input type="text" class="bb-chat-search-input" placeholder="Search in conversation..." oninput="filterChatMessages(' + userId + ',this.value)"></div>'
-        + '<div class="bb-chat-messages" id="chatmsg-' + userId + '">'
+        + '<div class="bb-chat-messages" id="msgZone-' + userId + '">'
         + '<div class="bb-chat-no-msg"><i class="bi bi-chat-dots" style="font-size:2rem;display:block;margin-bottom:8px;color:#d1d5db;"></i>Start a conversation with ' + escHtml(name) + '</div>'
         + '</div>'
         + '<div class="bb-chat-footer">'
-        + '<button class="bb-chat-attach-btn" title="Photo/video" onclick="triggerChatAttach(' + userId + ')"><i class="bi bi-images"></i></button>'
-        + '<button class="bb-chat-attach-btn" title="File" onclick="triggerChatFile(' + userId + ')"><i class="bi bi-paperclip"></i></button>'
-        + '<input type="file" id="chatattach-' + userId + '" class="d-none" multiple accept="image/*,video/*" onchange="handleChatAttach(' + userId + ',this)">'
-        + '<input type="file" id="chatfile-' + userId + '" class="d-none" onchange="handleChatFile(' + userId + ',this)">'
-        + '<textarea class="bb-chat-input" id="chatinput-' + userId + '" placeholder="Aa" rows="1"'
-        + ' onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendChatMsg(' + userId + ');}"'
+        + '<textarea class="bb-chat-input" id="msgInput-' + userId + '" placeholder="Aa" rows="1"'
+        + ' onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendMessage(' + userId + ');}"'
         + ' oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,80)+\'px\'"></textarea>'
-        + '<button class="bb-chat-head-btn" style="background:transparent;border:none;color:#6b7280;font-size:17px;cursor:pointer;" title="Emoji" onclick="toggleChatEmoji(' + userId + ')"><i class="bi bi-emoji-smile"></i></button>'
-        + '<button class="bb-chat-send-btn" onclick="sendChatMsg(' + userId + ')"><i class="bi bi-send-fill" style="font-size:13px;"></i></button>'
+        + '<button class="bb-chat-send-btn" onclick="sendMessage(' + userId + ')"><i class="bi bi-send-fill" style="font-size:13px;"></i></button>'
         + '</div>';
 
     container.appendChild(box);
     openChatBoxes[userId] = box;
-    setTimeout(function () { document.getElementById('chatinput-' + userId)?.focus(); }, 100);
+    
+    // Start message polling
+    startMessagePolling(userId);
+    
+    setTimeout(function () { document.getElementById('msgInput-' + userId)?.focus(); }, 100);
 }
 
 function toggleChatMinimize(userId) { openChatBoxes[userId]?.classList.toggle('minimized'); }
-function closeChatBox(userId)        { openChatBoxes[userId]?.remove(); delete openChatBoxes[userId]; }
 
-function sendChatMsg(userId) {
-    var input = document.getElementById('chatinput-' + userId);
+function closeChatBox(userId) {
+    stopMessagePolling();
+    openChatBoxes[userId]?.remove();
+    delete openChatBoxes[userId];
+}
+
+// ============================================================
+// MESSAGE POLLING — প্রতি ১৫ সেকেন্ডে নতুন message fetch
+// ============================================================
+function startMessagePolling(userId) {
+    _currentChatUserId = userId;
+    if (_msgTimer) clearInterval(_msgTimer);
+    
+    fetchMessages(userId);  // এখনই একবার
+    _msgTimer = setInterval(function() { fetchMessages(userId); }, 5000);  // প্রতি ৫ সেকেন্ড
+}
+
+function stopMessagePolling() {
+    if (_msgTimer) clearInterval(_msgTimer);
+    _msgTimer = null;
+    _currentChatUserId = null;
+}
+
+function fetchMessages(userId) {
+    fetch('/message/thread/' + userId, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(r => r.json())
+    .then(d => {
+        if (d.messages) {
+            var zone = document.getElementById('msgZone-' + userId);
+            if (zone) {
+                zone.innerHTML = '';
+                d.messages.forEach(function(msg) {
+                    var div = document.createElement('div');
+                    div.className = 'bb-chat-msg ' + (msg.is_mine ? 'mine' : 'theirs');
+                    div.innerHTML = '<span>' + escHtml(msg.message) + '</span><span class="msg-time">' + msg.created_at + '</span>';
+                    zone.appendChild(div);
+                });
+                zone.scrollTop = zone.scrollHeight;
+            }
+        }
+    })
+    .catch(err => console.error('Message fetch error:', err));
+}
+
+function sendMessage(userId) {
+    var input = document.getElementById('msgInput-' + userId);
     if (!input) return;
     var text = input.value.trim();
     if (!text) return;
-    appendChatMsg(userId, text, true);
-    input.value  = '';
-    input.style.height = 'auto';
-}
-
-function appendChatMsg(userId, text, isMine) {
-    var zone = document.getElementById('chatmsg-' + userId);
-    if (!zone) return;
-    zone.querySelector('.bb-chat-no-msg')?.remove();
-    var div       = document.createElement('div');
-    div.className = 'bb-chat-msg ' + (isMine ? 'mine' : 'theirs');
-    div.textContent = text;
-    zone.appendChild(div);
-    zone.scrollTop = zone.scrollHeight;
-}
-
-function filterChatMessages(userId, q) {
-    document.getElementById('chatmsg-' + userId)?.querySelectorAll('.bb-chat-msg').forEach(function (m) {
-        m.style.display = !q || m.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
-    });
-}
-
-function triggerChatAttach(userId) { document.getElementById('chatattach-' + userId)?.click(); }
-function triggerChatFile(userId)   { document.getElementById('chatfile-' + userId)?.click(); }
-
-function handleChatAttach(userId, input) {
-    Array.from(input.files).forEach(function (f) {
-        if (f.type.startsWith('video/') && f.size > 25 * 1024 * 1024) {
-            Swal.fire({ icon: 'warning', title: 'Video too large!', text: 'Max 25MB.' });
-            input.value = ''; return;
+    
+    fetch('/message/send', {
+        method: 'POST',
+        headers: { 
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 
+            'Accept': 'application/json',
+            'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ recipient_id: userId, message: text })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            input.value = '';
+            input.style.height = 'auto';
+            fetchMessages(userId);  // সাথে সাথে refresh
+        } else {
+            console.error('Send failed:', d.error);
+            Swal.fire({icon:'error',title:'Could not send message',text:d.error||''});
         }
-        appendChatMsg(userId, '📎 ' + f.name, true);
+    })
+    .catch(err => {
+        console.error('Send error:', err);
+        Swal.fire({icon:'error',title:'Network error'});
     });
-    input.value = '';
 }
-
-function handleChatFile(userId, input) {
-    var f = input.files[0];
-    if (!f) return;
-    appendChatMsg(userId, '📄 ' + f.name, true);
-    input.value = '';
-}
-
-function toggleChatEmoji(userId) { /* emoji picker integration */ }
 
 function escHtml(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -4492,6 +4519,7 @@ function setEditPrivacy(value, iconClass, label) {
 {{-- UPDATE MAIN JS DATA END --}}
 
 @include('partials.mobile-nav')
+@include('partials.chat-box-modal')
 
 </body>
 </html>
