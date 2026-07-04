@@ -13,48 +13,47 @@ class MessageController extends Controller
 {
     // ===== SEND MESSAGE (with optional media) =====
     public function send(Request $request)
-    {
-        $validated = $request->validate([
-            'recipient_id' => 'required|integer|exists:users,id',
-            'message' => 'nullable|string|max:5000',
-            'media' => 'nullable|array|max:5',
-            'media.*' => 'file|max:25600',  // 25MB
-        ]);
+{
+    $validated = $request->validate([
+        'recipient_id' => 'required|integer|exists:users,id',
+        'message' => 'nullable|string|max:5000',
+        'media' => 'nullable|array|max:5',
+        'media.*' => 'file|max:26214400',  // 25MB
+    ]);
 
-        $me = Auth::id();
-        if ($validated['recipient_id'] == $me) abort(403, 'Cannot message yourself');
+    $me = Auth::id();
+    if ($validated['recipient_id'] == $me) abort(403);
 
-        // Conversation unique
-        $conv = Conversation::getOrCreate($me, $validated['recipient_id']);
+    $conv = Conversation::getOrCreate($me, $validated['recipient_id']);
 
-        $msg = new Message([
-            'sender_id' => $me,
-            'recipient_id' => $validated['recipient_id'],
-            'message' => $validated['message'],
-            'conversation_id' => $conv->id,
-        ]);
+    $msg = new Message([
+        'sender_id' => $me,
+        'recipient_id' => $validated['recipient_id'],
+        'message' => $validated['message'] ?: '',
+        'conversation_id' => $conv->id,
+        'delivered_at' => now(),
+    ]);
 
-        // Media upload (optional)
-        if ($request->hasFile('media')) {
-            $files = [];
-            foreach ($request->file('media') as $file) {
-                $path = $file->store('messages/' . date('Y/m'), 'public');
-                $files[] = [
-                    'path' => $path,
-                    'type' => in_array($file->getMimeType(), ['image/jpeg', 'image/png', 'image/gif', 'image/webp']) ? 'image' : (str_contains($file->getMimeType(), 'video') ? 'video' : 'file'),
-                    'size' => $file->getSize(),
-                ];
-            }
-            $msg->file_path = json_encode($files);  // JSON array store
+    // Media upload
+    if ($request->hasFile('media')) {
+        $files = [];
+        foreach ($request->file('media') as $file) {
+            $path = $file->store('messages/' . date('Y/m'), 'public');
+            $files[] = [
+                'path' => $path,
+                'name' => $file->getClientOriginalName(),
+                'type' => in_array($file->getMimeType(), ['image/jpeg', 'image/png', 'image/gif', 'image/webp']) ? 'image' : (str_contains($file->getMimeType(), 'video') ? 'video' : 'file'),
+                'size' => $file->getSize(),
+            ];
         }
-
-        $msg->delivered_at = now();
-        $msg->save();
-
-        $conv->update(['last_message_at' => now()]);
-
-        return response()->json(['success' => true, 'message_id' => $msg->id]);
+        $msg->file_path = json_encode($files);
     }
+
+    $msg->save();
+    $conv->update(['last_message_at' => now()]);
+
+    return response()->json(['success' => true, 'message_id' => $msg->id]);
+}
 
     // ===== FETCH THREAD (paginated) =====
     public function thread($userId)

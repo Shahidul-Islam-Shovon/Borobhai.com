@@ -4365,10 +4365,18 @@ function openChatBox(userId, name, pic, lastSeen, isOnline, userHash) {
         + '<div id="msgZone-' + userId + '" style="flex:1;overflow-y:auto;padding:12px;background:#fafbfc;display:flex;flex-direction:column;gap:8px;min-height:250px;max-height:350px;align-content:flex-start;">'
         + '<div id="msgPlaceholder-' + userId + '" style="text-align:center;color:#9ca3af;margin:auto;"><i class="bi bi-chat-dots" style="font-size:2rem;display:block;margin-bottom:8px;color:#d1d5db;"></i>Start a conversation</div>'
         + '</div>'
-        + '<div style="padding:12px;border-top:1px solid #e5e7eb;display:flex;gap:8px;">'
-        + '<textarea id="msgInput-' + userId + '" placeholder="Aa" rows="1" style="flex:1;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;resize:none;" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendMessage(' + userId + ');}" oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,80)+\'px\'"></textarea>'
-        + '<button onclick="sendMessage(' + userId + ')" style="background:#4f46e5;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;width:50px;flex-shrink:0;"><i class="bi bi-send-fill"></i></button>'
-        + '</div>';
+        // Footer part only (replace করো)
+        + '<div style="padding:12px;border-top:1px solid #e5e7eb;">'
+        + '<div id="mediaPreview-' + userId + '" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;"></div>'  // ← preview zone
+        + '<div style="display:flex;gap:8px;margin-bottom:8px;">'
+        + '<button type="button" onclick="document.getElementById(\'mediaInput-' + userId + '\').click()" style="background:#f3f4f6;border:1px solid #d1d5db;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;"><i class="bi bi-paperclip"></i> Media</button>'
+        + '</div>'
+        + '<input type="file" id="mediaInput-' + userId + '" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="display:none;" onchange="handleMediaSelect(' + userId + ')">'
+        + '<div style="display:flex;gap:8px;">'
+        + '<textarea id="msgInput-' + userId + '" placeholder="Aa" rows="1" style="flex:1;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;resize:none;" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendMessageWithMedia(' + userId + ');}" oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,80)+\'px\'"></textarea>'
+        + '<button onclick="sendMessageWithMedia(' + userId + ')" style="background:#4f46e5;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;width:50px;flex-shrink:0;"><i class="bi bi-send-fill"></i></button>'
+        + '</div>'
+        + '</div>'
 
     var zone = box.querySelector('[id^="msgZone-"]');
     if (zone) zone.setAttribute('data-last-id', '0');
@@ -4654,6 +4662,74 @@ function escHtml(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+
+var mediaFiles = {};  // Store selected files
+
+function handleMediaSelect(userId) {
+    var input = document.getElementById('mediaInput-' + userId);
+    mediaFiles[userId] = Array.from(input.files);
+    updateMediaPreview(userId);
+}
+
+function updateMediaPreview(userId) {
+    var preview = document.getElementById('mediaPreview-' + userId);
+    preview.innerHTML = '';
+    
+    if (!mediaFiles[userId] || mediaFiles[userId].length === 0) return;
+    
+    mediaFiles[userId].forEach((file, idx) => {
+        var tag = document.createElement('div');
+        tag.style.background = '#f3f4f6';
+        tag.style.padding = '6px 10px';
+        tag.style.borderRadius = '6px';
+        tag.style.fontSize = '12px';
+        tag.style.display = 'flex';
+        tag.style.alignItems = 'center';
+        tag.style.gap = '6px';
+        tag.innerHTML = '<span>' + file.name.substring(0, 15) + '...</span><button type="button" onclick="removeMedia(' + userId + ',' + idx + ')" style="background:transparent;border:none;color:#dc2626;cursor:pointer;font-size:14px;padding:0;">✕</button>';
+        preview.appendChild(tag);
+    });
+}
+
+function removeMedia(userId, idx) {
+    if (mediaFiles[userId]) {
+        mediaFiles[userId].splice(idx, 1);
+        updateMediaPreview(userId);
+    }
+}
+
+function sendMessageWithMedia(userId) {
+    var input = document.getElementById('msgInput-' + userId);
+    var text = input.value.trim();
+    var files = mediaFiles[userId] || [];
+    
+    if (!text && files.length === 0) {
+        alert('Write a message or select media');
+        return;
+    }
+    
+    var formData = new FormData();
+    formData.append('recipient_id', userId);
+    formData.append('message', text);
+    files.forEach(f => formData.append('media[]', f));
+    
+    fetch('/message/send', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            input.value = '';
+            input.style.height = 'auto';
+            mediaFiles[userId] = [];
+            updateMediaPreview(userId);
+            setTimeout(() => fetchMessages(userId), 1000);
+        } else alert('Error: ' + (d.error || 'Send failed'));
+    })
+    .catch(err => alert('Network error'));
+}
 
 // ============================================================
 // SECTION 21: LIVE SEARCH
