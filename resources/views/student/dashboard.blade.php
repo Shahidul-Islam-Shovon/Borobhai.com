@@ -1539,6 +1539,86 @@
     
     .bb-notif-empty { text-align: center; padding: 40px 16px; color: #9ca3af; }
     .bb-notif-empty i { font-size: 2rem; display: block; margin-bottom: 8px; }
+    #messengerPanel {
+    box-shadow: 0 10px 32px rgba(0,0,0,0.12) !important;
+    }
+
+    .msg-conv-item {
+        padding: 10px 12px;
+        border-bottom: 1px solid #f0f2f5;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .msg-conv-item:hover {
+        background: #f9fafb;
+    }
+
+    .msg-conv-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4f46e5, #7c73f0);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .msg-conv-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .msg-conv-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .msg-conv-name {
+        font-weight: 600;
+        font-size: 13px;
+        color: #1e1f24;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .msg-conv-last {
+        font-size: 12px;
+        color: #6b7280;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 2px;
+    }
+
+    .msg-conv-badge {
+        background: #4f46e5;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .msg-conv-time {
+        font-size: 11px;
+        color: #9ca3af;
+        flex-shrink: 0;
+    }
 </style>
 
     
@@ -1585,7 +1665,24 @@
                         @endif
                     </a>
             <a href="{{ route('search.index') }}" class="nav-icon-btn d-md-none"><i class="bi bi-search"></i></a>
-            <a href="#" class="nav-icon-btn"><i class="bi bi-messenger"></i></a>
+
+            {{-- Messenger Icon (নোটিফিকেশন এর পরে) --}}
+            <div class="nav-item dropdown" id="messengerDropdown">
+                <button class="nav-link position-relative" type="button" id="messengerBtn" onclick="toggleMessengerDropdown()" style="border:none;background:transparent;color:#6b7280;font-size:20px;">
+                    <i class="bi bi-messenger"></i>
+                    <span id="messengerBadge" class="badge bg-danger position-absolute top-0 start-100 translate-middle" style="display:none;font-size:10px;">0</span>
+                </button>
+                
+                {{-- Conversation List Dropdown --}}
+                <div id="messengerPanel" class="position-absolute bg-white rounded shadow-lg" style="display:none;top:100%;right:0;width:360px;max-height:500px;overflow-y:auto;z-index:1050;border:1px solid #e5e7eb;">
+                    <div style="padding:12px;border-bottom:1px solid #e5e7eb;">
+                        <h6 style="margin:0;font-weight:700;font-size:15px;">Messages</h6>
+                    </div>
+                    <div id="conversationList" style="max-height:440px;overflow-y:auto;">
+                        <div style="text-align:center;color:#9ca3af;padding:20px;">Loading...</div>
+                    </div>
+                </div>
+            </div>
 
             {{-- NOTIFICATION BELL --}}
             <div class="position-relative" id="notifWrap">
@@ -4213,9 +4310,8 @@ function rSubmit() {
 }
 
 
-
 // ============================================================
-// SECTION 20: CHAT BOX (with message polling)
+// SECTION 20: CHAT BOX (with message polling) — CORRECTED
 // ============================================================
 
 var openChatBoxes = {};
@@ -4224,57 +4320,97 @@ var _currentChatUserId = null;
 
 function openChatBox(userId, name, pic, lastSeen, isOnline, userHash) {
     userHash = userHash || userId;
-    if (openChatBoxes[userId]) { openChatBoxes[userId].classList.remove('minimized'); return; }
+    if (openChatBoxes[userId]) { 
+        openChatBoxes[userId].classList.remove('minimized'); 
+        return; 
+    }
 
     var container     = document.getElementById('chatBoxesContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'chatBoxesContainer';
+        container.style.position = 'fixed';
+        container.style.bottom = '0';
+        container.style.right = '0';
+        container.style.display = 'flex';
+        container.style.gap = '10px';
+        container.style.padding = '10px';
+        container.style.zIndex = '1000';
+        document.body.appendChild(container);
+    }
+
     var box           = document.createElement('div');
     box.className     = 'bb-chat-box';
     box.id            = 'chatbox-' + userId;
+    box.setAttribute('data-user-id', userId);
 
-    var avatarContent = pic ? '<img src="' + pic + '">' : name.charAt(0).toUpperCase();
-    var onlineDot     = isOnline === '1' ? '<span class="bb-chat-online-dot"></span>' : '';
+    var avatarContent = pic ? '<img src="' + pic + '" style="width:100%;height:100%;object-fit:cover;">' : name.charAt(0).toUpperCase();
+    var onlineDot     = isOnline === '1' ? '<span class="bb-chat-online-dot" style="position:absolute;bottom:2px;right:2px;width:10px;height:10px;background:#22c55e;border:2px solid white;border-radius:50%;display:block;"></span>' : '';
     var statusText    = isOnline === '1' ? '<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> Active now' : lastSeen;
 
-    box.innerHTML = '<div class="bb-chat-head" onclick="toggleChatMinimize(' + userId + ')">'
-        + '<div class="bb-chat-head-avatar">' + avatarContent + onlineDot + '</div>'
-        + '<div class="bb-chat-head-info"><p class="bb-chat-head-name">' + escHtml(name) + '</p><p class="bb-chat-head-status">' + statusText + '</p></div>'
-        + '<div class="bb-chat-head-actions" onclick="event.stopPropagation()">'
-        + '<a href="/profile/' + userHash + '" class="bb-chat-head-btn" target="_blank"><i class="bi bi-person-fill" style="font-size:13px;"></i></a>'
-        + '<button class="bb-chat-head-btn" onclick="toggleChatMinimize(' + userId + ')"><i class="bi bi-dash-lg"></i></button>'
-        + '<button class="bb-chat-head-btn" onclick="closeChatBox(' + userId + ')"><i class="bi bi-x-lg"></i></button>'
-        + '</div></div>'
-        + '<div class="bb-chat-messages" id="msgZone-' + userId + '">'
-        + '<div class="bb-chat-no-msg"><i class="bi bi-chat-dots" style="font-size:2rem;display:block;margin-bottom:8px;color:#d1d5db;"></i>Start a conversation with ' + escHtml(name) + '</div>'
+    box.innerHTML = '<div style="background:#4f46e5;color:white;padding:12px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;" onclick="toggleChatMinimize(' + userId + ')">'
+        + '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">'
+        + '<div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-weight:bold;color:white;position:relative;overflow:hidden;flex-shrink:0;">' + avatarContent + onlineDot + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<p style="margin:0;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(name) + '</p>'
+        + '<p style="margin:0;font-size:11px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + statusText + '</p>'
         + '</div>'
-        + '<div class="bb-chat-footer">'
-        + '<textarea class="bb-chat-input" id="msgInput-' + userId + '" placeholder="Aa" rows="1"'
-        + ' onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendMessage(' + userId + ');}"'
-        + ' oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,80)+\'px\'"></textarea>'
-        + '<button class="bb-chat-send-btn" onclick="sendMessage(' + userId + ')"><i class="bi bi-send-fill" style="font-size:13px;"></i></button>'
+        + '</div>'
+        + '<div style="display:flex;gap:6px;" onclick="event.stopPropagation();">'
+        + '<a href="/profile/' + userHash + '" target="_blank" style="background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none;"><i class="bi bi-person-fill"></i></a>'
+        + '<button onclick="toggleChatMinimize(' + userId + ')" style="background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:13px;"><i class="bi bi-dash-lg"></i></button>'
+        + '<button onclick="closeChatBox(' + userId + ')" style="background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:13px;"><i class="bi bi-x-lg"></i></button>'
+        + '</div>'
+        + '</div>'
+        + '<div id="msgZone-' + userId + '" style="flex:1;overflow-y:auto;padding:12px;background:#fafbfc;display:flex;flex-direction:column;gap:8px;min-height:250px;max-height:350px;align-content:flex-start;">'
+        + '<div id="msgPlaceholder-' + userId + '" style="text-align:center;color:#9ca3af;margin:auto;"><i class="bi bi-chat-dots" style="font-size:2rem;display:block;margin-bottom:8px;color:#d1d5db;"></i>Start a conversation</div>'
+        + '</div>'
+        + '<div style="padding:12px;border-top:1px solid #e5e7eb;display:flex;gap:8px;">'
+        + '<textarea id="msgInput-' + userId + '" placeholder="Aa" rows="1" style="flex:1;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;resize:none;" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendMessage(' + userId + ');}" oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,80)+\'px\'"></textarea>'
+        + '<button onclick="sendMessage(' + userId + ')" style="background:#4f46e5;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;width:50px;flex-shrink:0;"><i class="bi bi-send-fill"></i></button>'
         + '</div>';
+
+    var zone = box.querySelector('[id^="msgZone-"]');
+    if (zone) zone.setAttribute('data-last-id', '0');
+
+    box.style.position = 'relative';
+    box.style.width = '360px';
+    box.style.height = '500px';
+    box.style.background = '#fff';
+    box.style.borderRadius = '12px';
+    box.style.boxShadow = '0 8px 32px rgba(0,0,0,.15)';
+    box.style.display = 'flex';
+    box.style.flexDirection = 'column';
+    box.style.overflow = 'hidden';
 
     container.appendChild(box);
     openChatBoxes[userId] = box;
-    
-    // Start message polling
+
     startMessagePolling(userId);
-    
-    setTimeout(function () { document.getElementById('msgInput-' + userId)?.focus(); }, 100);
+
+    setTimeout(function () { 
+        var input = document.getElementById('msgInput-' + userId);
+        if (input) input.focus(); 
+    }, 100);
 }
 
-function toggleChatMinimize(userId) { openChatBoxes[userId]?.classList.toggle('minimized'); }
+function toggleChatMinimize(userId) { 
+    var box = openChatBoxes[userId];
+    if (box) box.classList.toggle('minimized'); 
+}
 
 function closeChatBox(userId) {
     stopMessagePolling();
-    openChatBoxes[userId]?.remove();
+    var box = openChatBoxes[userId];
+    if (box) box.remove();
     delete openChatBoxes[userId];
 }
 
 // ============================================================
-// MESSAGE POLLING — প্রতি ১৫ সেকেন্ডে নতুন message fetch
+// MESSAGE POLLING — প্রতি ৫ সেকেন্ডে নতুন message fetch
 // ============================================================
 function startMessagePolling(userId) {
-    _currentChatUserId = userId;
+    _currentChatUserId = userId;  // ← এটা set হচ্ছে
     if (_msgTimer) clearInterval(_msgTimer);
     
     fetchMessages(userId);  // এখনই একবার
@@ -4288,57 +4424,231 @@ function stopMessagePolling() {
 }
 
 function fetchMessages(userId) {
-    fetch('/message/thread/' + userId, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+    fetch('/message/thread/' + userId, {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
     .then(r => r.json())
     .then(d => {
-        if (d.messages) {
-            var zone = document.getElementById('msgZone-' + userId);
-            if (zone) {
-                zone.innerHTML = '';
-                d.messages.forEach(function(msg) {
-                    var div = document.createElement('div');
-                    div.className = 'bb-chat-msg ' + (msg.is_mine ? 'mine' : 'theirs');
-                    div.innerHTML = '<span>' + escHtml(msg.message) + '</span><span class="msg-time">' + msg.created_at + '</span>';
-                    zone.appendChild(div);
-                });
-                zone.scrollTop = zone.scrollHeight;
-            }
-        }
+        if (!d.messages) return;
+
+        var zone = document.getElementById('msgZone-' + userId);
+        if (!zone) return;
+
+        var lastId = parseInt(zone.getAttribute('data-last-id') || '0');
+        var newMessages = d.messages.filter(m => m.id > lastId);
+
+        if (newMessages.length === 0) return;
+
+        var placeholder = document.getElementById('msgPlaceholder-' + userId);
+        if (placeholder) placeholder.remove();
+
+        newMessages.forEach(function(msg) {
+            var div = document.createElement('div');
+            div.setAttribute('data-msg-id', msg.id);
+            div.style.cssText = [
+                'padding:8px 12px',
+                'border-radius:10px',
+                'margin-bottom:6px',
+                'word-wrap:break-word',
+                'font-size:12px',
+                'max-width:80%',
+                'display:block',
+                msg.is_mine
+                    ? 'background:#4f46e5;color:#fff;margin-left:auto;'
+                    : 'background:#e5e7eb;color:#1e1f24;margin-right:auto;'
+            ].join(';');
+            div.innerHTML = '<div>' + escHtml(msg.message) + '</div>'
+                          + '<div style="font-size:10px;opacity:.7;margin-top:2px;">' + msg.created_at + '</div>';
+            zone.appendChild(div);
+        });
+
+        var allIds = d.messages.map(m => m.id);
+        if (allIds.length) zone.setAttribute('data-last-id', Math.max(...allIds));
+
+        zone.scrollTop = zone.scrollHeight;
     })
-    .catch(err => console.error('Message fetch error:', err));
+    .catch(err => console.error('Fetch error:', err));
 }
 
 function sendMessage(userId) {
     var input = document.getElementById('msgInput-' + userId);
     if (!input) return;
+
     var text = input.value.trim();
     if (!text) return;
-    
+
+    var zone = document.getElementById('msgZone-' + userId);
+    var tempDiv = null;
+
+    if (zone) {
+        var placeholder = document.getElementById('msgPlaceholder-' + userId);
+        if (placeholder) placeholder.remove();
+
+        tempDiv = document.createElement('div');
+        tempDiv.setAttribute('data-msg-id', 'temp-' + Date.now());
+        tempDiv.style.cssText = 'padding:8px 12px;border-radius:10px;margin-bottom:6px;word-wrap:break-word;font-size:12px;max-width:80%;background:#4f46e5;color:#fff;margin-left:auto;';
+        tempDiv.innerHTML = '<div>' + escHtml(text) + '</div><div style="font-size:10px;opacity:.7;margin-top:2px;">Sending...</div>';
+        zone.appendChild(tempDiv);
+        zone.scrollTop = zone.scrollHeight;
+    }
+
+    input.value = '';
+    input.style.height = 'auto';
+
     fetch('/message/send', {
         method: 'POST',
-        headers: { 
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Accept': 'application/json',
-            'Content-Type': 'application/json' 
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({ recipient_id: userId, message: text })
     })
     .then(r => r.json())
     .then(d => {
         if (d.success) {
-            input.value = '';
-            input.style.height = 'auto';
-            fetchMessages(userId);  // সাথে সাথে refresh
+            if (tempDiv) {
+                tempDiv.setAttribute('data-msg-id', d.message_id);
+                var timeDiv = tempDiv.querySelector('div:last-child');
+                if (timeDiv) timeDiv.textContent = 'Just now';
+            }
+            if (zone) {
+                var currentLast = parseInt(zone.getAttribute('data-last-id') || '0');
+                if (d.message_id > currentLast) {
+                    zone.setAttribute('data-last-id', d.message_id);
+                }
+            }
         } else {
-            console.error('Send failed:', d.error);
-            Swal.fire({icon:'error',title:'Could not send message',text:d.error||''});
+            if (tempDiv) tempDiv.remove();
+            alert('Error: ' + (d.error || 'Could not send'));
         }
     })
     .catch(err => {
         console.error('Send error:', err);
-        Swal.fire({icon:'error',title:'Network error'});
+        if (tempDiv) tempDiv.remove();
+        alert('Network error');
     });
 }
+
+
+function escHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ============================================================
+// SECTION 20B: MESSENGER DROPDOWN (navbar icon + conversation list)
+// ============================================================
+
+var _messengerBadgeTimer = null;
+var _messengerOpen = false;
+
+function toggleMessengerDropdown() {
+    _messengerOpen = !_messengerOpen;
+    var panel = document.getElementById('messengerPanel');
+    if (_messengerOpen) {
+        panel.style.display = 'block';
+        fetchConversationList();
+        startMessengerBadgePolling();
+    } else {
+        panel.style.display = 'none';
+        stopMessengerBadgePolling();
+    }
+}
+
+function fetchConversationList(search = '') {
+    fetch('/message/conversations' + (search ? '?q=' + encodeURIComponent(search) : ''), {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.conversations) {
+            var list = document.getElementById('conversationList');
+            if (d.conversations.length === 0) {
+                list.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:20px;">No conversations yet</div>';
+                return;
+            }
+
+            list.innerHTML = d.conversations.map(conv => {
+                var avatar = conv.avatar 
+                    ? '<img src="' + conv.avatar + '">'
+                    : conv.name.charAt(0).toUpperCase();
+                var badge = conv.unread > 0 
+                    ? '<div class="msg-conv-badge">' + (conv.unread > 9 ? '9+' : conv.unread) + '</div>'
+                    : '';
+
+                return '<div class="msg-conv-item" onclick="openConversationChat(' + conv.user_id + ', \'' + escHtml(conv.name) + '\', \'' + (conv.avatar || '') + '\')">'
+                    + '<div class="msg-conv-avatar">' + avatar + '</div>'
+                    + '<div class="msg-conv-info">'
+                    + '<div class="msg-conv-name">' + escHtml(conv.name) + '</div>'
+                    + '<div class="msg-conv-last">' + (conv.last_message || 'No messages') + '</div>'
+                    + '</div>'
+                    + badge
+                    + '<div class="msg-conv-time">' + (conv.last_at || '') + '</div>'
+                    + '</div>';
+            }).join('');
+        }
+    })
+    .catch(err => console.error('Conversation list error:', err));
+}
+
+function updateMessengerBadge() {
+    fetch('/message/unread-count', {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(d => {
+        var badge = document.getElementById('messengerBadge');
+        if (badge) {
+            if (d.count > 0) {
+                badge.textContent = d.count > 9 ? '9+' : d.count;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    })
+    .catch(() => {});
+}
+
+function startMessengerBadgePolling() {
+    if (_messengerBadgeTimer) clearInterval(_messengerBadgeTimer);
+    updateMessengerBadge();  // immediately
+    _messengerBadgeTimer = setInterval(updateMessengerBadge, 10000);  // every 10s
+}
+
+function stopMessengerBadgePolling() {
+    if (_messengerBadgeTimer) clearInterval(_messengerBadgeTimer);
+    _messengerBadgeTimer = null;
+}
+
+// Open conversation in chat box (or focus if already open)
+function openConversationChat(userId, name, avatar) {
+    var box = openChatBoxes[userId];
+    if (box) {
+        box.classList.remove('minimized');
+        document.getElementById('messengerPanel').style.display = 'none';
+        _messengerOpen = false;
+    } else {
+        openChatBox(userId, name, avatar || '', 'now', '1', userId);  // last param: hash (use userId for now)
+        document.getElementById('messengerPanel').style.display = 'none';
+        _messengerOpen = false;
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    var btn = document.getElementById('messengerBtn');
+    var panel = document.getElementById('messengerPanel');
+    if (btn && panel && !btn.contains(e.target) && !panel.contains(e.target)) {
+        if (_messengerOpen) {
+            toggleMessengerDropdown();
+        }
+    }
+});
+
+// Initial badge load
+setTimeout(function() { updateMessengerBadge(); }, 2000);
+setInterval(updateMessengerBadge, 15000);  // background badge update every 15s
 
 function escHtml(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

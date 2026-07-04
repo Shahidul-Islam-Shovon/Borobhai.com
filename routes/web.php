@@ -174,6 +174,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/message/thread/{userId}', [MessageController::class, 'thread'])->name('message.thread');
     Route::get('/message/unread-count', [MessageController::class, 'unreadCount'])->name('message.unreadCount');
 
+    Route::post('/message/send', [MessageController::class, 'send'])->name('message.send');
+    Route::get('/message/thread/{userId}', [MessageController::class, 'thread'])->name('message.thread');
+    Route::get('/message/conversations', [MessageController::class, 'conversations'])->name('message.conversations');
+    Route::post('/message/{id}/edit', [MessageController::class, 'editMessage'])->name('message.edit');
+    Route::post('/message/{id}/delete', [MessageController::class, 'deleteMessage'])->name('message.delete');
+    Route::get('/message/unread-count', [MessageController::class, 'unreadCount'])->name('message.unreadCount');
+    Route::post('/message/{id}/react', [MessageController::class, 'reactMessage'])->name('message.react');
+
     // ---------- REPORT ----------
     Route::post('/report',                      [ReportController::class, 'store'])->name('report.store');
 
