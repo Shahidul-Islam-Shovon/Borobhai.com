@@ -35,12 +35,10 @@
         .table th { background: #f8fafc !important; color: #64748b !important; font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0 !important; padding: 10px 12px !important; }
         .table td { padding: 10px 12px !important; vertical-align: middle; color: #334155; border-bottom: 1px solid #f1f5f9 !important; }
         .table tr:hover td { background-color: #f8fafc; }
-        
         .status-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
         .status-badge.active { background-color: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
         .status-badge.temp-suspended { background-color: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
         .status-badge.perm-suspended { background-color: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
-
         .btn-action-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; font-size: 0.72rem; font-weight: 600; border-radius: 6px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); text-decoration: none; }
         .btn-action-pill:hover { transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
         .btn-action-pill.temp-ban { color: #d97706; }
@@ -59,20 +57,38 @@
     <div class="sidebar-brand"><i class="fa-solid fa-graduation-cap me-2"></i>Borobhai Admin</div>
     <div class="nav-link-custom active" data-target="analytics-tab"><i class="fa-solid fa-chart-pie"></i>Analytics</div>
     <div class="nav-link-custom" data-target="users-tab"><i class="fa-solid fa-users"></i> User Management</div>
-    <div class="nav-link-custom" data-target="posts-tab"><i class="fa-solid fa-newspaper"></i>Reported Contents</div>
-    <div class="nav-link-custom" data-target="jobs-tab"><i class="fa-solid fa-briefcase"></i> Reported Jobs</div>
+
+    <div class="nav-link-custom" data-target="posts-tab">
+        <i class="fa-solid fa-newspaper"></i> Reported Contents
+        @if($reports->whereNotIn('type',['job'])->count() > 0)
+            <span class="badge bg-danger ms-auto pending-reports-count" style="font-size:0.6rem;">
+                {{ $reports->whereNotIn('type',['job'])->count() }}
+            </span>
+        @endif
+    </div>
+
+    <div class="nav-link-custom" data-target="jobs-tab">
+        <i class="fa-solid fa-briefcase"></i> Reported Jobs
+        @if($reports->where('type','job')->count() > 0)
+            <span class="badge bg-warning text-dark ms-auto" style="font-size:0.6rem;">
+                {{ $reports->where('type','job')->count() }}
+            </span>
+        @endif
+    </div>
+
+    <div class="nav-link-custom" data-target="history-tab">
+        <i class="fa-solid fa-clock-rotate-left"></i> Completed Reports
+    </div>
     
     <div style="position: absolute; bottom: 30px; width: calc(100% - 30px);">
         <div class="d-flex align-items-center gap-5">
-                    <img src="{{ auth()->user()->profile_picture ? asset('storage/'.auth()->user()->profile_picture) : asset('default-avatar.png') }}" 
-                        alt="Profile" class="rounded-full" style="width: 60px; height: 60px; object-fit: cover;">
-                    
-                    
-                    <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-outline-warning" style="font-size: 0.8rem; text-decoration: none;">
-                        Edit Profile
-                    </a>
-                    <span class="mb-4"></span>
-                </div>
+            <img src="{{ auth()->user()->profile_picture ? asset('storage/'.auth()->user()->profile_picture) : asset('default-avatar.png') }}" 
+                alt="Profile" class="rounded-full" style="width: 60px; height: 60px; object-fit: cover;">
+            <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-outline-warning" style="font-size: 0.8rem; text-decoration: none;">
+                Edit Profile
+            </a>
+            <span class="mb-4"></span>
+        </div>
         <form id="logout-form" method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="button" onclick="confirmLogout()" class="w-100 btn btn-danger btn-sm" style="margin-top:10px; border-radius: 10px; padding: 9px; font-size: 0.78rem; font-weight: 600;">
@@ -98,14 +114,10 @@
         
         <div class="d-flex align-items-center gap-3 bg-white px-3 py-2 border rounded-4 shadow-sm" style="border-radius: 12px;">
             <div>
-                
-                 <img  src="{{ asset('storage/'.auth()->user()->profile_picture) }}" class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px; font-size: 0.85rem;">           
-
+                <img src="{{ asset('storage/'.auth()->user()->profile_picture) }}" class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px; font-size: 0.85rem;">           
             </div>
             <div class="d-none d-sm-block">
-                <div class="fw-bold text-dark" style="font-size: 0.82rem; line-height: 1.2;">
-                    {{ auth()->user()->name }}
-                </div>
+                <div class="fw-bold text-dark" style="font-size: 0.82rem; line-height: 1.2;">{{ auth()->user()->name }}</div>
                 <div class="text-muted mt-0.5" style="font-size: 0.68rem; font-weight: 600;">
                    @if(auth()->user()->isSuperAdmin())
                         <span class="badge bg-dark text-white border" style="font-size: 0.65rem; padding: 4px 8px; border-radius: 4px; font-weight: 700;">Super Admin</span>
@@ -120,30 +132,31 @@
     <div class="row g-4 mb-5">
         <div class="col-md-3">
             <div class="counter-card">
-                 <div><p class="text-muted small fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">TOTAL USERS</p><h4 class="fw-bold mb-0" style="font-size: 1.4rem;">{{ $counters['total_users'] }}</h4></div>
+                <div><p class="text-muted small fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">TOTAL USERS</p><h4 class="fw-bold mb-0" style="font-size: 1.4rem;" data-counter="total_users">{{ $counters['total_users'] }}</h4></div>
                 <div class="counter-icon text-primary" style="background: rgba(59,130,246,0.08);"><i class="fa-solid fa-users"></i></div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="counter-card">
-                <div><p class="text-muted small fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">STUDENTS</p><h4 class="fw-bold mb-0" style="font-size: 1.4rem;">{{ $counters['total_students'] }}</h4></div>
+                <div><p class="text-muted small fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">STUDENTS</p><h4 class="fw-bold mb-0" style="font-size: 1.4rem;" data-counter="total_students">{{ $counters['total_students'] }}</h4></div>
                 <div class="counter-icon text-success" style="background: rgba(16,185,129,0.08);"><i class="fa-solid fa-user-graduate"></i></div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="counter-card">
-                <div><p class="text-muted small fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">ALUMNI</p><h4 class="fw-bold mb-0" style="font-size: 1.4rem;">{{ $counters['total_alumni'] }}</h4></div>
+                <div><p class="text-muted small fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">ALUMNI</p><h4 class="fw-bold mb-0" style="font-size: 1.4rem;" data-counter="total_alumni">{{ $counters['total_alumni'] }}</h4></div>
                 <div class="counter-icon text-warning" style="background: rgba(245,158,11,0.08);"><i class="fa-solid fa-briefcase"></i></div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="counter-card">
-                <div><p class="text-muted small fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">CIRCULARS</p><h4 class="fw-bold mb-0" style="font-size: 1.4rem;" id="count-circulars">{{ $counters['total_circulars'] }}</h4></div>
+                <div><p class="text-muted small fw-bold mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">CIRCULARS</p><h4 class="fw-bold mb-0" style="font-size: 1.4rem;" id="count-circulars" data-counter="total_circulars">{{ $counters['total_circulars'] }}</h4></div>
                 <div class="counter-icon text-info" style="background: rgba(6,182,212,0.08);"><i class="fa-solid fa-scroll"></i></div>
             </div>
         </div>
     </div>
 
+    {{-- Analytics Tab --}}
     <div id="analytics-tab" class="tab-content-panel active">
         <div class="card p-4 shadow-sm border-0" style="border-radius: 16px; background: #fff;">
             <h6 class="fw-bold mb-4" style="font-size: 0.88rem;"><i class="fa-solid fa-chart-line text-primary me-2"></i> Registration & Engagement Metrics</h6>
@@ -153,11 +166,12 @@
         </div>
     </div>
 
+    {{-- Users Tab --}}
     <div id="users-tab" class="tab-content-panel">
         <div class="card-table-wrapper">
             <h6 class="fw-bold mb-4" style="font-size: 0.88rem;"><i class="fa-solid fa-users-gear text-primary me-2"></i> Member Control Panel</h6>
             <div class="table-responsive">
-                 <table id="usersTable" class="table table-hover align-middle w-100">
+                <table id="usersTable" class="table table-hover align-middle w-100">
                     <thead>
                         <tr>
                             <th style="width: 8%;">ID</th>
@@ -168,91 +182,75 @@
                         </tr>
                     </thead>
                     <tbody>
-
                         @foreach($users as $user)
                         <tr id="user-row-{{ $user->id }}">
                             <td class="fw-bold text-secondary">#{{ $user->id }}</td>
-                            
                             <td>
-    <div class="d-flex align-items-center gap-3">
-        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center fw-bold text-secondary" style="width: 38px; height: 38px; min-width: 38px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
-            {{ strtoupper(substr($user->name, 0, 1)) }}
-        </div>
-        
-        <div class="d-flex flex-column justify-content-center">
-            <div class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.82rem; line-height: 1.2;">
-                 {{ $user->name }} 
-                @if(auth()->id() == $user->id) 
-                     <span class="badge bg-primary text-white" style="font-size: 8px; padding: 2px 4px; border-radius: 4px; font-weight: 700;">Logged In</span> 
-                @endif
-            </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center fw-bold text-secondary" style="width: 38px; height: 38px; min-width: 38px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+                                        {{ strtoupper(substr($user->name, 0, 1)) }}
+                                    </div>
+                                    <div class="d-flex flex-column justify-content-center">
+                                        <div class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.82rem; line-height: 1.2;">
+                                            {{ $user->name }} 
+                                            @if(auth()->id() == $user->id) 
+                                                <span class="badge bg-primary text-white" style="font-size: 8px; padding: 2px 4px; border-radius: 4px; font-weight: 700;">Logged In</span> 
+                                            @endif
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2 mt-1.5" style="line-height: 1; flex-wrap: wrap;">
+                                            @if($user->is_super_admin)
+                                                <span class="mt-2 badge text-white d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 700; background-color: #991b1b !important;">
+                                                    <i class="fa-solid fa-crown" style="font-size: 8px; color: #fcd34d;"></i> Super Admin
+                                                </span>
+                                            @elseif($user->role === 'admin')
+                                                <span class="mt-2 badge text-white d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background-color: #1e293b !important;">
+                                                    <i class="fa-solid fa-user-shield" style="font-size: 8px;"></i> Admin
+                                                </span>
+                                            @elseif($user->role === 'alumni')
+                                                <span class="mt-2 badge text-dark d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background-color: #e0f2fe !important; color: #0369a1 !important;">
+                                                    <i class="fa-solid fa-user-graduate" style="font-size: 8px;"></i> Alumni
+                                                </span>
+                                            @elseif($user->role === 'teacher')
+                                                <span class="mt-2 badge text-dark d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background-color: #f3e8ff !important; color: #7c3aed !important;">
+                                                    <i class="fa-solid fa-chalkboard-user" style="font-size: 8px;"></i> Teacher
+                                                </span>
+                                            @else
+                                                <span class="mt-2 badge text-dark d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background-color: #fef3c7 !important; color: #b45309 !important;">
+                                                    <i class="fa-solid fa-user" style="font-size: 8px;"></i> Student
+                                                </span>
+                                            @endif
 
-            <div class="d-flex align-items-center gap-2 mt-1.5" style="line-height: 1; flex-wrap: wrap;">
-    
-    @if($user->is_super_admin)
-        {{-- 👑 ১. সুপার এডমিন হলে শুধুই সুপার এডমিন ব্যাজ দেখাবে (কাহিনী শেষ) --}}
-        <span class="mt-2 badge text-white d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 700; background-color: #991b1b !important;">
-            <i class="fa-solid fa-crown" style="font-size: 8px; color: #fcd34d;"></i> Super Admin
-        </span>
-    @elseif($user->role === 'admin')
-        {{-- 🛡️ ২. রেগুলার এডমিন ব্যাজ --}}
-        <span class="mt-2 badge text-white d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background-color: #1e293b !important;">
-            <i class="fa-solid fa-user-shield" style="font-size: 8px;"></i> Admin
-        </span>
-    @elseif($user->role === 'alumni')
-        {{-- 🎓 ৩. অ্যালুমনাই ব্যাজ --}}
-        <span class="mt-2 badge text-dark d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background-color: #e0f2fe !important; color: #0369a1 !important;">
-            <i class="fa-solid fa-user-graduate" style="font-size: 8px;"></i> Alumni
-        </span>
-        @elseif($user->role === 'teacher')
-            <span class="mt-2 badge text-dark d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background-color: #f3e8ff !important; color: #7c3aed !important;">
-                <i class="fa-solid fa-chalkboard-user" style="font-size: 8px;"></i> Teacher
-            </span>
-    @else
-        {{-- 🧑‍🎓 ৪. রেগুলার স্টুডেন্ট ব্যাজ --}}
-        <span class="mt-2 badge text-dark d-inline-flex align-items-center gap-1" style="font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background-color: #fef3c7 !important; color: #b45309 !important;">
-            <i class="fa-solid fa-user" style="font-size: 8px;"></i> Student
-        </span>
-    @endif
-
-    @if($user->status === 'active' || empty($user->status))
-        <span class="mt-2 status-badge active"><i class="fa-solid fa-circle text-success" style="font-size: 5px;"></i> Active</span>
-    @elseif($user->status === 'suspended_temp')
-        <span class="mt-2 status-badge temp-suspended"><i class="fa-solid fa-clock"></i> 7-Day Suspended</span>
-    @elseif($user->status === 'suspended_perm')
-        <span class="mt-2 status-badge perm-suspended"><i class="fa-solid fa-ban"></i> Permanently Banned</span>
-    @endif
-
-</div>
-
-            <div class="mt-2 pt-1 d-flex flex-column gap-1" style="border-top: 1px dashed #f1f5f9;">
-                <div class="text-muted" style="font-size: 0.68rem; font-weight: 500; letter-spacing: 0.2px;">
-                    <i class="fa-regular fa-calendar-check me-1 text-secondary"></i> Joined: {{ $user->created_at->format('d M Y') }}
-                </div>
-                
-                @if($user->status === 'suspended_temp' && $user->suspended_until)
-                    <div class="text-danger fw-semibold d-flex align-items-center" style="font-size: 0.65rem; letter-spacing: 0.1px;">
-                        <i class="fa-solid fa-hourglass-half me-1"></i> Blocked until: {{ \Carbon\Carbon::parse($user->suspended_until)->format('d M Y (g:i a)') }}
-                    </div>
-                @endif
-            </div>
-        </div>
-    </div>
-</td>
-
+                                            @if($user->status === 'active' || empty($user->status))
+                                                <span class="mt-2 status-badge active user-status-badge-{{ $user->id }}"><i class="fa-solid fa-circle text-success" style="font-size: 5px;"></i> Active</span>
+                                            @elseif($user->status === 'suspended_temp')
+                                                <span class="mt-2 status-badge temp-suspended user-status-badge-{{ $user->id }}"><i class="fa-solid fa-clock"></i> 7-Day Suspended</span>
+                                            @elseif($user->status === 'suspended_perm')
+                                                <span class="mt-2 status-badge perm-suspended user-status-badge-{{ $user->id }}"><i class="fa-solid fa-ban"></i> Permanently Banned</span>
+                                            @endif
+                                        </div>
+                                        <div class="mt-2 pt-1 d-flex flex-column gap-1" style="border-top: 1px dashed #f1f5f9;">
+                                            <div class="text-muted" style="font-size: 0.68rem; font-weight: 500; letter-spacing: 0.2px;">
+                                                <i class="fa-regular fa-calendar-check me-1 text-secondary"></i> Joined: {{ $user->created_at->format('d M Y') }}
+                                            </div>
+                                            @if($user->status === 'suspended_temp' && $user->suspended_until)
+                                                <div class="text-danger fw-semibold d-flex align-items-center" style="font-size: 0.65rem; letter-spacing: 0.1px;">
+                                                    <i class="fa-solid fa-hourglass-half me-1"></i> Blocked until: {{ \Carbon\Carbon::parse($user->suspended_until)->format('d M Y (g:i a)') }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
                             <td class="text-secondary" style="font-size: 0.74rem;">{{ $user->email }}</td>
-
                             <td>
                                 @if(auth()->id() == $user->id)
                                     <span class="badge bg-light text-dark border px-2 py-1" style="border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
                                         <i class="fa-solid fa-user-lock me-1"></i> Self Role Locked
                                     </span>
-                                
                                 @elseif($user->email === env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com'))
                                     <span class="badge bg-danger text-white px-2 py-1" style="border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
                                         <i class="fa-solid fa-shield-halved me-1"></i> Main System Admin
                                     </span>
-
                                 @else
                                     <div class="d-flex align-items-center gap-2">
                                         <select data-previous="{{ $user->role }}" 
@@ -260,16 +258,12 @@
                                                 class="form-select form-select-sm role-select-dropdown" 
                                                 style="max-width: 120px;"
                                                 {{ (in_array($user->status, ['suspended_temp', 'suspended_perm']) || ($user->role === 'admin' && !auth()->user()->isSuperAdmin())) ? 'disabled' : '' }}>
-                                            
                                             <option value="" disabled {{ !in_array($user->role, ['student', 'alumni', 'admin', 'teacher']) ? 'selected' : '' }}>Select Role</option>
                                             <option value="student" {{ $user->role === 'student' ? 'selected' : '' }} {{ $user->role === 'student' ? 'disabled' : '' }}>Student</option>
                                             <option value="alumni" {{ $user->role === 'alumni' ? 'selected' : '' }} {{ $user->role === 'alumni' ? 'disabled' : '' }}>Alumni</option>
-
                                             <option value="teacher" {{ $user->role === 'teacher' ? 'selected' : '' }} {{ $user->role === 'teacher' ? 'disabled' : '' }}>Teacher</option>
-
                                             <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }} {{ $user->role === 'admin' ? 'disabled' : '' }}>Admin</option>
                                         </select>
-
                                         @if(auth()->user()->isSuperAdmin() && !in_array($user->status, ['suspended_temp', 'suspended_perm']))
                                             <div class="d-flex gap-1">
                                                 @if($user->role !== 'admin')
@@ -287,7 +281,6 @@
                                     </div>
                                 @endif
                             </td>
-
                             <td style="text-align: right;">
                                 @if(auth()->id() == $user->id)
                                     <span class="text-muted" style="font-size: 0.72rem; font-weight: 500;"><i class="fa-solid fa-shield-halved me-1"></i> Protected</span>
@@ -297,19 +290,13 @@
                                     @php
                                         $currentUser = auth()->user();
                                         $canSuspend = false;
-
                                         if ($user->email !== env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com')) {
-                                            if ($user->role !== 'admin') {
-                                                $canSuspend = true;
-                                            } 
-                                            elseif ($user->role === 'admin' && !$user->isSuperAdmin() && $currentUser->isSuperAdmin()) {
-                                                $canSuspend = true;
-                                            }
+                                            if ($user->role !== 'admin') { $canSuspend = true; } 
+                                            elseif ($user->role === 'admin' && !$user->isSuperAdmin() && $currentUser->isSuperAdmin()) { $canSuspend = true; }
                                         }
                                     @endphp
-
                                     @if($canSuspend)
-                                        <div class="d-flex justify-content-end align-items-center gap-1">
+                                        <div class="d-flex justify-content-end align-items-center gap-1" id="suspend-btn-{{ $user->id }}">
                                             @if($user->status === 'active' || empty($user->status))
                                                 <button onclick="suspendFromReport({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Suspend 7 Days">
                                                     <i class="fa-solid fa-clock"></i> Suspend 7 Days
@@ -346,64 +333,81 @@
         </div>
     </div>
 
-    {{-- updated posts tab start --}}
-        <div id="posts-tab" class="tab-content-panel">
+    {{-- Reported Contents Tab --}}
+    <div id="posts-tab" class="tab-content-panel">
         <div class="card-table-wrapper">
             <div class="d-flex align-items-center justify-content-between mb-4">
                 <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
                     <i class="fa-solid fa-flag text-danger me-2"></i>
-                    Reported Content
-                    <span class="badge bg-danger ms-2" style="font-size:0.7rem;">{{ $counters['pending_reports'] }}</span>
+                    Reported Contents
+                    <span class="badge bg-danger ms-2 pending-reports-count" style="font-size:0.7rem;">
+                        {{ $reports->whereNotIn('type', ['job'])->count() }}
+                    </span>
                 </h6>
             </div>
 
-            @if($reports->isEmpty())
+            @php $contentReports = $reports->whereNotIn('type', ['job']); @endphp
+
+            @if($contentReports->isEmpty())
                 <div class="text-center py-5 text-muted">
                     <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
                     <p class="fw-semibold">No pending reports. All clear!</p>
                 </div>
             @else
             <div class="table-responsive">
-                <table class="table table-hover align-middle w-100">
+                <table class="table table-hover align-middle w-100" id="reportedTable">
                     <thead>
                         <tr>
                             <th style="width:8%">Type</th>
-                            <th style="width:30%">Reported Content</th>
-                            <th style="width:20%">Reported User</th>
-                            <th style="width:15%">Reason</th>
-                            <th style="width:27%; text-align:right">Actions</th>
+                            <th style="width:28%">Reported Content</th>
+                            <th style="width:18%">Reported User</th>
+                            <th style="width:12%">Reason</th>
+                            <th style="width:34%;text-align:right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                    
-                    @foreach($reports as $report)
+                    @foreach($contentReports as $report)
                     <tr id="report-row-{{ $report->id }}">
                         <td>
-                            @php $typeColor = match($report->type) { 'post'=>'primary', 'job'=>'warning', 'user'=>'danger', default=>'secondary' }; @endphp
-                            <span class="badge bg-{{ $typeColor }}-subtle text-{{ $typeColor }} border border-{{ $typeColor }}-subtle" style="font-size:0.65rem;font-weight:700;text-transform:uppercase;">
+                            @php $typeColor = match($report->type) { 'post'=>'primary','user'=>'danger',default=>'secondary' }; @endphp
+                            <span class="badge bg-{{ $typeColor }}-subtle text-{{ $typeColor }} border border-{{ $typeColor }}-subtle"
+                                  style="font-size:0.65rem;font-weight:700;text-transform:uppercase;">
                                 {{ $report->type }}
                             </span>
                         </td>
                         <td>
-                            <div class="fw-semibold text-dark" style="font-size:0.78rem;">
-                                {{ $report->targetTitle }}
-                            </div>
-
-                            {{-- টেবিলের View Content --}}
+                            <div class="fw-semibold text-dark" style="font-size:0.78rem;">{{ $report->targetTitle }}</div>
+                            {{-- ✅ FIX: openFeedPost() হটানো হয়েছে — সরাসরি anchor href --}}
                             @if($report->targetLink)
-                            <a href="{{ $report->targetLink }}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="text-primary" style="font-size:0.68rem;">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>View Content
-                            </a>
+                                <a href="{{ $report->targetLink }}" target="_blank" rel="noopener noreferrer"
+                                   class="text-primary" style="font-size:0.68rem;">
+                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>
+                                    {{ $report->type === 'post' ? 'View Post' : 'Visit Profile' }}
+                                </a>
+                            @else
+                                <span class="text-muted" style="font-size:0.68rem;">[Content removed]</span>
                             @endif
-
                         </td>
                         <td>
                             @if($report->targetUser)
                             <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
                             <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
+                            @php $uStatus = $report->targetUserStatus; @endphp
+                            <div class="mt-1">
+                                @if($uStatus === 'suspended_temp')
+                                    <span class="status-badge temp-suspended user-status-badge-{{ $report->targetUser->id }}">
+                                        <i class="fa-solid fa-clock"></i> 7d Suspended
+                                    </span>
+                                @elseif($uStatus === 'suspended_perm')
+                                    <span class="status-badge perm-suspended user-status-badge-{{ $report->targetUser->id }}">
+                                        <i class="fa-solid fa-ban"></i> Permanent Banned
+                                    </span>
+                                @else
+                                    <span class="status-badge active user-status-badge-{{ $report->targetUser->id }}">
+                                        <i class="fa-solid fa-circle" style="font-size:5px;"></i> Active
+                                    </span>
+                                @endif
+                            </div>
                             @else
                             <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
                             @endif
@@ -411,71 +415,61 @@
                         <td>
                             <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
                             @if($report->details)
-                            <div class="text-muted" style="font-size:0.65rem;" title="{{ $report->details }}">
-                                {{ \Illuminate\Support\Str::limit($report->details, 30) }}
-                            </div>
+                            <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
                             @endif
                         </td>
                         <td style="text-align:right;">
                             <div class="d-flex justify-content-end gap-1 flex-wrap">
-
-                                {{-- Action বাটনের View --}}
-                                @if($report->targetLink)
-                                <a href="{{ $report->targetLink }}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="btn-action-pill" style="color:#2563eb;">
-                                    <i class="fa-solid fa-eye"></i> View
-                                </a>
-                                @endif
-
-                                {{-- Warn --}}
                                 @if($report->targetUser)
-                                <button onclick="adminAction('warn', {{ $report->id }})" class="btn-action-pill temp-ban" title="Send Warning">
-                                    <i class="fa-solid fa-triangle-exclamation"></i> Warn
-                                </button>
-                                {{-- Suspend --}}
-                                <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'temp')" class="btn-action-pill temp-ban" title="Suspend 7 Days">
-                                    <i class="fa-solid fa-clock"></i> 7d Ban
-                                </button>
-                                <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'perm')" class="btn-action-pill perm-ban" title="Permanent Ban">
-                                    <i class="fa-solid fa-ban"></i> Perm Ban
+                                <button onclick="adminAction('warn', {{ $report->id }})" class="btn-action-pill temp-ban">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Warn User
                                 </button>
                                 @endif
 
-                                {{-- Delete content --}}
-                                @if($report->type !== 'user')
-                                <button onclick="adminAction('delete-content', {{ $report->id }})" class="btn-action-pill perm-ban" title="Delete Content">
-                                    <i class="fa-regular fa-trash-can"></i> Delete
-                                </button>
+                                @if($report->type === 'user' && $report->targetUser)
+                                    <span id="suspend-btn-{{ $report->targetUser->id }}">
+                                        @if(in_array($report->targetUserStatus, ['suspended_temp','suspended_perm']))
+                                            <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'active')" class="btn-action-pill activate">
+                                                <i class="fa-solid fa-circle-check"></i> Remove Suspension
+                                            </button>
+                                        @else
+                                            <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'temp')" class="btn-action-pill temp-ban">
+                                                <i class="fa-solid fa-clock"></i> 7d Ban
+                                            </button>
+                                            <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'perm')" class="btn-action-pill perm-ban">
+                                                <i class="fa-solid fa-ban"></i> Perm Ban
+                                            </button>
+                                        @endif
+                                    </span>
+                                @elseif($report->type === 'post')
+                                    <button onclick="adminAction('delete-content', {{ $report->id }})" class="btn-action-pill perm-ban">
+                                        <i class="fa-regular fa-trash-can"></i> Delete Post
+                                    </button>
                                 @endif
 
-                                {{-- Dismiss --}}
-                                <button onclick="adminAction('dismiss', {{ $report->id }})" class="btn-action-pill activate" title="Dismiss Report">
-                                    <i class="fa-solid fa-check"></i> Dismiss
+                                <button onclick="completeReport({{ $report->id }})" class="btn-action-pill activate">
+                                    <i class="fa-solid fa-check-double"></i> Action Completed
                                 </button>
                             </div>
                         </td>
                     </tr>
                     @endforeach
-
                     </tbody>
                 </table>
             </div>
             @endif
         </div>
     </div>
-    {{-- updated posts tab end --}}
 
-    {{-- updated reported job section start --}}
-        <div id="jobs-tab" class="tab-content-panel">
+    {{-- Reported Jobs Tab --}}
+    <div id="jobs-tab" class="tab-content-panel">
         <div class="card-table-wrapper">
             <div class="d-flex align-items-center justify-content-between mb-4">
                 <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
                     <i class="fa-solid fa-briefcase text-warning me-2"></i>
                     Reported Jobs
                     <span class="badge bg-warning text-dark ms-2" style="font-size:0.7rem;">
-                        {{ $reports->where('type', 'job')->count() }}
+                        {{ $reports->where('type','job')->count() }}
                     </span>
                 </h6>
             </div>
@@ -489,27 +483,22 @@
                 </div>
             @else
             <div class="table-responsive">
-                <table class="table table-hover align-middle w-100">
+                <table class="table table-hover align-middle w-100" id="jobsTable">
                     <thead>
                         <tr>
-                            <th style="width:30%">Reported Job</th>
-                            <th style="width:20%">Posted By</th>
-                            <th style="width:15%">Reason</th>
-                            <th style="width:35%; text-align:right">Actions</th>
+                            <th style="width:28%">Reported Job</th>
+                            <th style="width:18%">Posted By</th>
+                            <th style="width:12%">Reason</th>
+                            <th style="width:42%;text-align:right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                     @foreach($jobReports as $report)
                     <tr id="report-row-{{ $report->id }}">
                         <td>
-                            <div class="fw-semibold text-dark" style="font-size:0.78rem;">
-                                {{ $report->targetTitle }}
-                            </div>
+                            <div class="fw-semibold text-dark" style="font-size:0.78rem;">{{ $report->targetTitle }}</div>
                             @if($report->targetLink)
-                            <a href="{{ $report->targetLink }}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="text-primary" style="font-size:0.68rem;">
+                            <a href="{{ $report->targetLink }}" target="_blank" rel="noopener noreferrer" class="text-primary" style="font-size:0.68rem;">
                                 <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>View Job
                             </a>
                             @else
@@ -518,69 +507,61 @@
                         </td>
                         <td>
                             @if($report->targetUser)
-                            <div class="fw-semibold" style="font-size:0.78rem;">
-                                {{ $report->targetUser->name }}
-                            </div>
-                            <div class="text-muted" style="font-size:0.68rem;">
-                                {{ $report->targetUser->email }}
+                            <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
+                            <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
+                            @php $uStatus = $report->targetUserStatus; @endphp
+                            <div class="mt-1">
+                                @if($uStatus === 'suspended_temp')
+                                    <span class="status-badge temp-suspended user-status-badge-{{ $report->targetUser->id }}">
+                                        <i class="fa-solid fa-clock"></i> 7d Suspended
+                                    </span>
+                                @elseif($uStatus === 'suspended_perm')
+                                    <span class="status-badge perm-suspended user-status-badge-{{ $report->targetUser->id }}">
+                                        <i class="fa-solid fa-ban"></i> Permanent Banned
+                                    </span>
+                                @else
+                                    <span class="status-badge active user-status-badge-{{ $report->targetUser->id }}">
+                                        <i class="fa-solid fa-circle" style="font-size:5px;"></i> Active
+                                    </span>
+                                @endif
                             </div>
                             @else
                             <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
                             @endif
                         </td>
                         <td>
-                            <span class="text-muted" style="font-size:0.72rem;">
-                                {{ ucfirst($report->reason) }}
-                            </span>
+                            <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
                             @if($report->details)
-                            <div class="text-muted" style="font-size:0.65rem;">
-                                {{ \Illuminate\Support\Str::limit($report->details, 30) }}
-                            </div>
+                            <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
                             @endif
                         </td>
                         <td style="text-align:right;">
                             <div class="d-flex justify-content-end gap-1 flex-wrap">
-
-                                {{-- View Job --}}
-                                @if($report->targetLink)
-                                <a href="{{ $report->targetLink }}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="btn-action-pill" style="color:#2563eb;">
-                                    <i class="fa-solid fa-eye"></i> View
-                                </a>
-                                @endif
-
-                                {{-- Warn user --}}
                                 @if($report->targetUser)
-                                <button onclick="adminAction('warn', {{ $report->id }})"
-                                        class="btn-action-pill temp-ban">
+                                <button onclick="adminAction('warn', {{ $report->id }})" class="btn-action-pill temp-ban">
                                     <i class="fa-solid fa-triangle-exclamation"></i> Warn
                                 </button>
-
-                                {{-- Suspend --}}
-                                <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'temp')"
-                                        class="btn-action-pill temp-ban">
-                                    <i class="fa-solid fa-clock"></i> 7d Ban
-                                </button>
-                                <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'perm')"
-                                        class="btn-action-pill perm-ban">
-                                    <i class="fa-solid fa-ban"></i> Perm Ban
-                                </button>
+                                <span id="suspend-btn-{{ $report->targetUser->id }}">
+                                    @if(in_array($report->targetUserStatus, ['suspended_temp','suspended_perm']))
+                                        <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'active')" class="btn-action-pill activate">
+                                            <i class="fa-solid fa-circle-check"></i> Remove Suspension
+                                        </button>
+                                    @else
+                                        <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'temp')" class="btn-action-pill temp-ban">
+                                            <i class="fa-solid fa-clock"></i> 7d Ban
+                                        </button>
+                                        <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'perm')" class="btn-action-pill perm-ban">
+                                            <i class="fa-solid fa-ban"></i> Perm Ban
+                                        </button>
+                                    @endif
+                                </span>
                                 @endif
-
-                                {{-- Delete Job --}}
-                                <button onclick="adminAction('delete-content', {{ $report->id }})"
-                                        class="btn-action-pill perm-ban">
+                                <button onclick="adminAction('delete-content', {{ $report->id }})" class="btn-action-pill perm-ban">
                                     <i class="fa-regular fa-trash-can"></i> Delete Job
                                 </button>
-
-                                {{-- Dismiss --}}
-                                <button onclick="adminAction('dismiss', {{ $report->id }})"
-                                        class="btn-action-pill activate">
-                                    <i class="fa-solid fa-check"></i> Dismiss
+                                <button onclick="completeReport({{ $report->id }})" class="btn-action-pill activate">
+                                    <i class="fa-solid fa-check-double"></i> Action Complete
                                 </button>
-
                             </div>
                         </td>
                     </tr>
@@ -591,249 +572,166 @@
             @endif
         </div>
     </div>
-    {{-- updated reported job section end --}}
+
+    {{-- History Tab --}}
+    <div id="history-tab" class="tab-content-panel">
+        <div class="card-table-wrapper">
+            <h6 class="fw-bold mb-4" style="font-size:0.88rem;">
+                <i class="fa-solid fa-clock-rotate-left text-secondary me-2"></i>
+                Completed Complaint History
+            </h6>
+            @if($completedReports->isEmpty())
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-inbox fa-2x mb-3"></i>
+                    <p class="fw-semibold">No completed reports yet.</p>
+                </div>
+            @else
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle w-100" id="historyTable">
+    <thead>
+        <tr>
+            <th>Report Type</th>
+            <th>Content</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Resolved At</th>
+            <th style="text-align:right;">Appeal</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach($completedReports as $r)
+    <tr>
+        <td>
+            <span class="badge bg-secondary-subtle text-secondary border" style="font-size:0.65rem;font-weight:700;text-transform:uppercase;">
+                {{ $r->type }}
+            </span>
+        </td>
+        <td style="font-size:0.78rem;">{{ $r->targetTitle }}</td>
+        <td style="font-size:0.72rem;color:#64748b;">{{ ucfirst($r->reason) }}</td>
+        <td>
+            @if($r->status === 'completed')
+                <span class="status-badge active"><i class="fa-solid fa-check-double"></i> Completed</span>
+            @elseif($r->status === 'warned')
+                <span class="status-badge temp-suspended"><i class="fa-solid fa-triangle-exclamation"></i> Warned</span>
+            @else
+                <span class="status-badge perm-suspended"><i class="fa-solid fa-trash-can"></i> Deleted</span>
+            @endif
+        </td>
+        <td style="font-size:0.72rem;color:#64748b;">{{ $r->updated_at->format('d M Y, g:i a') }}</td>
+        <td style="text-align:right;">
+            @if($r->appeal_status === 'pending')
+                <span class="badge bg-warning text-dark mb-1 d-block" style="font-size:0.65rem;">Appeal Pending</span>
+                <button onclick="markReviewed({{ $r->id }})" class="btn-action-pill activate">
+                    <i class="fa-solid fa-check-double"></i> Reviewed
+                </button>
+            @elseif($r->appeal_status === 'reviewed')
+                <span class="badge bg-success" style="font-size:0.65rem;">Reviewed</span>
+            @else
+                <span class="text-muted" style="font-size:0.7rem;">—</span>
+            @endif
+        </td>
+    </tr>
+    @endforeach
+    </tbody>
+</table>
+                
+            </div>
+            @endif
+        </div>
+    </div>
+
 </div>
 
 <script>
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
 document.addEventListener("DOMContentLoaded", function() {
     const activeTab = localStorage.getItem('admin_active_tab') || 'analytics-tab';
-    
     document.querySelectorAll('.nav-link-custom').forEach(l => l.classList.remove('active'));
     document.querySelectorAll('.tab-content-panel').forEach(t => t.classList.remove('active'));
-    
     const tabBtn = document.querySelector(`[data-target="${activeTab}"]`);
     if (tabBtn) tabBtn.classList.add('active');
-    
     const tabContent = document.getElementById(activeTab);
     if (tabContent) {
         tabContent.classList.add('active');
         tabContent.style.opacity = '1';
-         tabContent.style.transform = 'scale(1) translateY(0)';
+        tabContent.style.transform = 'scale(1) translateY(0)';
     }
-
     const savedScrollPos = localStorage.getItem("admin_scroll_pos");
     if (savedScrollPos) {
-        setTimeout(() => {
-            window.scrollTo(0, parseInt(savedScrollPos));
-            localStorage.removeItem("admin_scroll_pos"); 
-        }, 60);
+        setTimeout(() => { window.scrollTo(0, parseInt(savedScrollPos)); localStorage.removeItem("admin_scroll_pos"); }, 60);
     }
 });
 
 function saveDashboardState() {
     localStorage.setItem("admin_scroll_pos", window.scrollY);
     const activeTabEl = document.querySelector('.nav-link-custom.active');
-    if (activeTabEl) {
-        localStorage.setItem('admin_active_tab', activeTabEl.getAttribute('data-target'));
-    }
+    if (activeTabEl) localStorage.setItem('admin_active_tab', activeTabEl.getAttribute('data-target'));
 }
 
 document.querySelectorAll('.nav-link-custom').forEach(link => {
     link.addEventListener('click', function() {
         const targetTabId = this.getAttribute('data-target');
         const currentActiveContent = document.querySelector('.tab-content-panel.active');
-        
-        if(currentActiveContent && currentActiveContent.id === targetTabId) return;
-
+        if (currentActiveContent && currentActiveContent.id === targetTabId) return;
         document.querySelectorAll('.nav-link-custom').forEach(l => l.classList.remove('active'));
         this.classList.add('active');
-        
-        if(currentActiveContent) {
-            currentActiveContent.style.opacity =  '0';
+        if (currentActiveContent) {
+            currentActiveContent.style.opacity = '0';
             currentActiveContent.style.transform = 'scale(0.995) translateY(4px)';
-            
             setTimeout(() => {
                 currentActiveContent.classList.remove('active');
                 const nextActiveContent = document.getElementById(targetTabId);
                 nextActiveContent.classList.add('active');
-         
                 setTimeout(() => {
                     nextActiveContent.style.opacity = '1';
                     nextActiveContent.style.transform = 'scale(1) translateY(0)';
                 }, 20);
-                
                 localStorage.setItem('admin_active_tab', targetTabId);
             }, 180);
         }
     });
 });
 
-// ✅ আগের DataTable init replace করো
+// ============================================================
+// ✅ DATATABLES — একবারই init, isDataTable চেক সহ
+// ============================================================
 $(document).ready(function () {
-    $('#usersTable').DataTable({
-        pageLength: 10,
-        responsive: true,
-        order: [[0, 'asc']],
-        stateSave: true,      // ✅ reload এর পর same page/search ধরে রাখবে
-        stateDuration: 60     // 60 সেকেন্ড state ধরে রাখবে
-    });
-    $('#circularsTable').DataTable({
-        pageLength: 10,
-        responsive: true,
-        order: [[0, 'desc']],
-        stateSave: true,
-        stateDuration: 60
-    });
+    if ($('#usersTable').length && !$.fn.DataTable.isDataTable('#usersTable')) {
+        $('#usersTable').DataTable({ pageLength: 10, responsive: true, order: [[0, 'asc']], stateSave: true, stateDuration: 60, columnDefs: [{ orderable: false, targets: [-1] }] });
+    }
+    if ($('#reportedTable').length && !$.fn.DataTable.isDataTable('#reportedTable')) {
+        $('#reportedTable').DataTable({ pageLength: 10, order: [[0, 'desc']], columnDefs: [{ orderable: false, targets: [4] }], language: { search: 'Search reports:', emptyTable: 'No pending reports — all clear!', zeroRecords: 'No matching reports found.' } });
+    }
+    if ($('#jobsTable').length && !$.fn.DataTable.isDataTable('#jobsTable')) {
+        $('#jobsTable').DataTable({ pageLength: 10, order: [[0, 'desc']], columnDefs: [{ orderable: false, targets: [-1] }], language: { search: 'Search jobs:' } });
+    }
+    if ($('#historyTable').length && !$.fn.DataTable.isDataTable('#historyTable')) {
+        $('#historyTable').DataTable({ pageLength: 10, order: [[4, 'desc']], language: { search: 'Search history:' } });
+    }
 });
 
+// ============================================================
+// TOAST
+// ============================================================
 const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
 
-function confirmRoleChange(userId, selectElement) {
-    const previousRole = selectElement.getAttribute('data-previous');
-    const newRole = selectElement.value;
-    Swal.fire({
-        title: 'Change User Role?',
-        text: `Are you sure you want to change this user's role from ${previousRole.toUpperCase()} to ${newRole.toUpperCase()}?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#2563eb',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Yes, Update Role'
-    }).then((result) => {
-        if (result.isConfirmed) {
-             executeRoleChange(userId, newRole);
-        } else {
-            selectElement.value = previousRole;
-        }
-    });
-}
-
-function executeRoleChange(userId, newRole) {
-    fetch(`/admin/users/${userId}/change-role`, {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({ role: newRole })
-    })
-    .then(async response => {
-         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'Failed to update role');
-        return data;
-    })
-    .then(data => {
-        saveDashboardState();
-        if (data.success) {
-            document.querySelectorAll('.role-select-dropdown').forEach(el => {
-                el.onchange = null;
-                el.removeAttribute('onchange');
-            });
-            
-            Swal.fire({ icon: 'success', title: 'Role Updated', text: data.message, timer: 1250, showConfirmButton: false })
-            .then(() => { window.location.reload(); });
-        }
-    })
-    .catch(error => {
-        Swal.fire({ icon: 'error', title: 'Action Denied', text: error.message });
-    });
-}
-
-function executeAuthorityChange(userId, type) {
-    let actionText = '';
-    if (type === 'super') actionText = 'Do you want to promote this user to Super Admin?';
-    else if (type === 'admin') actionText = 'Do you want to make this user a Regular Admin?';
-    else actionText = 'Do you want to demote this user to a normal member?';
-     
-    Swal.fire({
-        title: 'Update Admin Privileges?',
-        text: actionText,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#0f172a',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Yes, Update Privileges'
-    }).then((result) => {
-        if (result.isConfirmed) {
-             fetch("{{ route('admin.manage.authority') }}", {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ user_id: userId, type: type })
-            })
-            .then(async response => {
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.message || 'Something went wrong');
-                return data;
-            })
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({ icon: 'success', title: 'Privileges Updated', text: data.message, timer: 1500, showConfirmButton: false })
-                    .then(() => { window.location.reload(); });
-                 }
-            })
-            .catch(error => {
-                Swal.fire({ icon: 'error', title: 'Action Denied', text: error.message });
-            });
-        }
-    });
-}
-
-
-function suspendFromReport(userId, action) {
-    let text = '', confirmText = '', color = '';
-
-    if (action === 'temp') {
-        text = 'Suspend this user for 7 days?';
-        confirmText = 'Yes, Suspend 7 Days';
-        color = '#d97706';
-    } else if (action === 'perm') {
-        text = 'Permanently ban this user?';
-        confirmText = 'Yes, Ban Permanently';
-        color = '#dc2626';
-    } else if (action === 'active') {
-        text = 'Restore access for this user?';
-        confirmText = 'Yes, Restore Access';
-        color = '#16a34a';
-    }
-
-    Swal.fire({
-        title: 'Suspend User?', text: text, icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: color,
-        cancelButtonColor: '#64748b',
-        confirmButtonText: confirmText
-    }).then(result => {
-        if (!result.isConfirmed) return;
-
-        fetch(`/admin/reports/suspend/${userId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({ action: action })
-        })
-        .then(r => r.json())
-        .then(d => {
-            if (d.success) {
-                Toast.fire({ icon: 'success', title: d.message });
-            } else {
-                Swal.fire({ icon: 'error', title: 'Failed', text: d.message });
-            }
-        })
-        .catch(() => Swal.fire({ icon: 'error', title: 'Network Error' }));
-    });
-}
-
+// ============================================================
+// ANALYTICS CHART
+// ============================================================
 document.addEventListener("DOMContentLoaded", function() {
     fetch('/admin/dashboard/analytics-data', { method: 'GET' })
     .then(res => res.json())
     .then(data => {
         const chartCanvas = document.getElementById('adminTrendChart');
         if (!chartCanvas) return;
-
         const ctx = chartCanvas.getContext('2d');
         const blueGradient = ctx.createLinearGradient(0, 0, 0, 350);
         blueGradient.addColorStop(0, 'rgba(59, 130, 246, 0.15)');
         blueGradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-
-          new Chart(ctx, {
+        new Chart(ctx, {
             type: 'line',
             data: {
                 labels: data.labels || [],
@@ -843,163 +741,246 @@ document.addEventListener("DOMContentLoaded", function() {
                 ]
             },
             options: {
-                 responsive: true,
-                maintainAspectRatio: false,
+                responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '500' } } } },
-                scales: {
-                    y: { beginAtZero: true, ticks: { font: { size: 10 } } },
-                    x: { grid: { display: false }, ticks: { font: { size: 10 } } }
-                }
+                scales: { y: { beginAtZero: true, ticks: { font: { size: 10 } } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } }
             }
         });
     }).catch(err => console.error('Chart Load Error:', err));
 });
 
+// ============================================================
+// LOGOUT
+// ============================================================
 function confirmLogout() {
-    Swal.fire({ 
-        title: 'Sign Out?', 
-        text: "Are you sure you want to log out of the admin panel?", 
-        icon: 'warning', 
-        showCancelButton: true, 
-        confirmButtonColor: '#ef4444', 
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Yes, Sign Out' 
-    }).then((result) => { 
+    Swal.fire({ title: 'Sign Out?', text: "Are you sure you want to log out of the admin panel?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#64748b', confirmButtonText: 'Yes, Sign Out' })
+    .then((result) => { 
         if (result.isConfirmed) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Logging Out...',
-                text: 'You have been successfully logged out.',
-                showConfirmButton: false,
-                timer: 1500,
-                timerProgressBar: true
-            });
-
-            setTimeout(() => {
-                document.getElementById('logout-form').submit();
-            }, 1300);
+            Swal.fire({ icon: 'success', title: 'Logging Out...', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+            setTimeout(() => { document.getElementById('logout-form').submit(); }, 1300);
         } 
     });
 }
 
-function deletePost(postId) {
-    Swal.fire({ title: 'Delete Post?', text: "Are you sure you want to permanently delete this post?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Yes, Delete Post' }).then((result) => {
+// ============================================================
+// ROLE CHANGE
+// ============================================================
+function confirmRoleChange(userId, selectElement) {
+    const previousRole = selectElement.getAttribute('data-previous');
+    const newRole = selectElement.value;
+    Swal.fire({ title: 'Change User Role?', text: `Change role from ${previousRole.toUpperCase()} to ${newRole.toUpperCase()}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#2563eb', cancelButtonColor: '#64748b', confirmButtonText: 'Yes, Update Role' })
+    .then((result) => { result.isConfirmed ? executeRoleChange(userId, newRole) : (selectElement.value = previousRole); });
+}
+
+function executeRoleChange(userId, newRole) {
+    fetch(`/admin/users/${userId}/change-role`, { method: "POST", headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }, body: JSON.stringify({ role: newRole }) })
+    .then(async response => { const data = await response.json(); if (!response.ok) throw new Error(data.message || 'Failed'); return data; })
+    .then(data => {
+        saveDashboardState();
+        if (data.success) {
+            Swal.fire({ icon: 'success', title: 'Role Updated', text: data.message, timer: 1250, showConfirmButton: false }).then(() => { window.location.reload(); });
+        }
+    })
+    .catch(error => { Swal.fire({ icon: 'error', title: 'Action Denied', text: error.message }); });
+}
+
+// ============================================================
+// AUTHORITY CHANGE
+// ============================================================
+function executeAuthorityChange(userId, type) {
+    let actionText = '';
+    if (type === 'super') actionText = 'Do you want to promote this user to Super Admin?';
+    else if (type === 'admin') actionText = 'Do you want to make this user a Regular Admin?';
+    else actionText = 'Do you want to demote this user to a normal member?';
+    Swal.fire({ title: 'Update Admin Privileges?', text: actionText, icon: 'warning', showCancelButton: true, confirmButtonColor: '#0f172a', cancelButtonColor: '#64748b', confirmButtonText: 'Yes, Update Privileges' })
+    .then((result) => {
         if (result.isConfirmed) {
-            fetch(`/admin/posts/${postId}/delete`, { method: "DELETE", headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') } })
-            .then(res => res.json()).then(data => { if(data.success) { Toast.fire({ icon: 'success', title: 'Post Deleted' }); $('#postsTable').DataTable().row(`#post-row-${postId}`).remove().draw(false); } });
+            fetch("{{ route('admin.manage.authority') }}", { method: "POST", headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') }, body: JSON.stringify({ user_id: userId, type: type }) })
+            .then(async response => { const data = await response.json(); if (!response.ok) throw new Error(data.message || 'Something went wrong'); return data; })
+            .then(data => { if (data.success) { Swal.fire({ icon: 'success', title: 'Privileges Updated', text: data.message, timer: 1500, showConfirmButton: false }).then(() => { window.location.reload(); }); } })
+            .catch(error => { Swal.fire({ icon: 'error', title: 'Action Denied', text: error.message }); });
         }
     });
 }
 
-function deleteCircular(circularId) {
-    Swal.fire({ title: 'Delete Job Listing?', text: 'Are you sure you want to delete this job circular?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Yes, Delete Circular' }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/admin/circulars/${circularId}/delete`, { method: "DELETE", headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') } })
-            .then(res => res.json()).then(data => { 
-                if(data.success) { 
-                    Toast.fire({ icon: 'success', title: 'Job Circular Deleted' }); 
-                    $('#circularsTable').DataTable().row(`#circular-row-${circularId}`).remove().draw(false); 
-                    const counter = document.getElementById('count-circulars');
-                    if(counter) counter.innerText = parseInt(counter.innerText) - 1;
-                } 
-             });
-        }
-    });
-}
+// ============================================================
+// ADMIN REPORT ACTIONS (warn / delete-content / dismiss)
+// ============================================================
 
-function adminAction(action, reportId) {
+   function adminAction(action, reportId) {
     const config = {
-        warn:           { title: 'Send Warning?',   text: 'A warning notification will be sent to the user.', icon: 'warning', confirmText: 'Yes, Warn User', color: '#d97706' },
-        dismiss:        { title: 'Dismiss Report?', text: 'This report will be marked as resolved.',           icon: 'info',    confirmText: 'Dismiss',         color: '#16a34a' },
-        'delete-content':{ title: 'Delete Content?', text: 'This will permanently delete the reported content.',icon: 'warning', confirmText: 'Yes, Delete',    color: '#dc2626' },
+        warn:             { title: 'Send Warning?',   text: 'A warning notification will be sent to the user.', icon: 'warning', confirmText: 'Yes, Warn User', color: '#d97706' },
+        'delete-content': { title: 'Delete Content?', text: 'This will permanently delete the reported content.', icon: 'warning', confirmText: 'Yes, Delete',    color: '#dc2626' },
+        dismiss:          { title: 'Dismiss Report?', text: 'This report will be marked as resolved.',           icon: 'info',    confirmText: 'Dismiss',          color: '#16a34a' },
     };
     const c = config[action];
+    if (!c) return;
 
-    Swal.fire({
-        title: c.title, text: c.text, icon: c.icon,
-        showCancelButton: true, confirmButtonColor: c.color,
-        confirmButtonText: c.confirmText
-    })
+    Swal.fire({ title: c.title, text: c.text, icon: c.icon, showCancelButton: true, confirmButtonColor: c.color, confirmButtonText: c.confirmText })
     .then(result => {
         if (!result.isConfirmed) return;
 
-        // ✅ FIX: route name অনুযায়ী URL ও method
-        let url, method;
-        if (action === 'warn') {
-            url    = `/admin/reports/${reportId}/warn`;
-            method = 'POST';
-        } else if (action === 'dismiss') {
-            url    = `/admin/reports/${reportId}/dismiss`;
-            method = 'POST';
-        } else if (action === 'delete-content') {
-            url    = `/admin/reports/${reportId}/delete-content`;
-            method = 'DELETE';
+        let note = null;
+        if (action === 'warn' || action === 'delete-content') {
+            note = prompt(
+                action === 'warn'
+                    ? 'Write a note for the user explaining the warning:'
+                    : 'Write a note for the user explaining why this is being deleted:',
+                ''
+            );
+            if (note === null) return; // user cancelled the prompt
         }
 
-        fetch(url, {
-            method: method,
-            headers: {
-                'Accept':       'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            }
+        const methodMap = { warn: 'POST', 'delete-content': 'DELETE', dismiss: 'POST' };
+        const urlMap    = { warn: `/admin/reports/${reportId}/warn`, 'delete-content': `/admin/reports/${reportId}/content`, dismiss: `/admin/reports/${reportId}/dismiss` };
+
+        fetch(urlMap[action], {
+            method: methodMap[action],
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+            body: JSON.stringify({ note: note })
         })
         .then(r => r.json())
         .then(d => {
             if (d.success) {
                 Toast.fire({ icon: 'success', title: d.message });
-                document.getElementById('report-row-' + reportId)?.remove();
+
+                // ✅ শুধু delete-content আর dismiss এ রো সরাও — warn এ না
+                if (action !== 'warn') {
+                    const row = document.getElementById('report-row-' + reportId);
+                    if (row && $.fn.DataTable.isDataTable('#reportedTable')) {
+                        $('#reportedTable').DataTable().row(row).remove().draw();
+                    } else if (row && $.fn.DataTable.isDataTable('#jobsTable')) {
+                        $('#jobsTable').DataTable().row(row).remove().draw();
+                    } else if (row) {
+                        row.remove();
+                    }
+                    document.querySelectorAll('.pending-reports-count').forEach(b => {
+                        b.textContent = Math.max(0, (parseInt(b.textContent) || 0) - 1);
+                    });
+                }
+                refreshStatsCards();
             } else {
-                Swal.fire({ icon: 'error', title: 'Failed', text: d.message });
+                Toast.fire({ icon: 'error', title: d.message || 'Something went wrong.' });
             }
         })
-        .catch(() => {
-            Swal.fire({ icon: 'error', title: 'Network Error', text: 'Please try again.' });
-        });
+        .catch(() => Toast.fire({ icon: 'error', title: 'Network error.' }));
     });
 }
 
-// ✅ Report section এর জন্য আলাদা function
+// ============================================================
+// STATS LIVE REFRESH
+// ============================================================
+function refreshStatsCards() {
+    fetch('/admin/dashboard/analytics-data', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(r => r.json())
+    .then(d => {
+        if (d.counters) {
+            Object.entries(d.counters).forEach(([key, val]) => {
+                const el = document.querySelector(`[data-counter="${key}"]`);
+                if (el) el.textContent = val;
+            });
+        }
+    })
+    .catch(() => {});
+}
+
+// ============================================================
+// SUSPEND
+// ============================================================
 function suspendFromReport(userId, action) {
     let text = '', confirmText = '', color = '';
-
-    if (action === 'temp') {
-        text = 'Suspend this user for 7 days?';
-        confirmText = 'Yes, Suspend 7 Days'; color = '#d97706';
-    } else if (action === 'perm') {
-        text = 'Permanently ban this user?';
-        confirmText = 'Yes, Ban Permanently'; color = '#dc2626';
-    } else if (action === 'active') {
-        text = 'Restore access for this user?';
-        confirmText = 'Yes, Restore'; color = '#16a34a';
-    }
-
-    Swal.fire({
-        title: 'Suspend User?', text: text, icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: color,
-        cancelButtonColor: '#64748b',
-        confirmButtonText: confirmText
-    }).then(result => {
+    if (action === 'temp')   { text = 'Suspend this user for 7 days?';    confirmText = 'Yes, Suspend 7 Days';  color = '#d97706'; }
+    else if (action === 'perm')   { text = 'Permanently ban this user?';       confirmText = 'Yes, Ban Permanently'; color = '#dc2626'; }
+    else if (action === 'active') { text = 'Restore access for this user?';    confirmText = 'Yes, Restore Access'; color = '#16a34a'; }
+    Swal.fire({ title: 'Update Suspension?', text: text, icon: 'warning', showCancelButton: true, confirmButtonColor: color, cancelButtonColor: '#64748b', confirmButtonText: confirmText })
+    .then(result => {
         if (!result.isConfirmed) return;
-
         fetch(`/admin/reports/suspend/${userId}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
             body: JSON.stringify({ action: action })
         })
         .then(r => r.json())
         .then(d => {
+            if (!d.success) { Swal.fire({ icon: 'error', title: 'Failed', text: d.message }); return; }
+            Toast.fire({ icon: 'success', title: d.message });
+
+            // status badge live update
+            document.querySelectorAll(`.user-status-badge-${userId}`).forEach(badge => {
+                if (action === 'active') {
+                    badge.className = `status-badge active user-status-badge-${userId}`;
+                    badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:5px;"></i> Active';
+                } else if (action === 'temp') {
+                    badge.className = `status-badge temp-suspended user-status-badge-${userId}`;
+                    badge.innerHTML = '<i class="fa-solid fa-clock"></i> 7d Suspended';
+                } else {
+                    badge.className = `status-badge perm-suspended user-status-badge-${userId}`;
+                    badge.innerHTML = '<i class="fa-solid fa-ban"></i> Permanent Banned';
+                }
+            });
+
+            // suspend button live update
+            document.querySelectorAll(`[id="suspend-btn-${userId}"]`).forEach(wrap => {
+                if (action === 'active') {
+                    wrap.innerHTML = `
+                        <button onclick="suspendFromReport(${userId}, 'temp')" class="btn-action-pill temp-ban"><i class="fa-solid fa-clock"></i> 7d Ban</button>
+                        <button onclick="suspendFromReport(${userId}, 'perm')" class="btn-action-pill perm-ban"><i class="fa-solid fa-ban"></i> Perm Ban</button>`;
+                } else {
+                    const otherAction = action === 'temp' ? 'perm' : 'temp';
+                    const otherLabel  = action === 'temp' ? '<i class="fa-solid fa-ban"></i> Perm Ban' : '<i class="fa-solid fa-clock"></i> 7d Ban';
+                    const otherClass  = action === 'temp' ? 'perm-ban' : 'temp-ban';
+                    wrap.innerHTML = `
+                        <button onclick="suspendFromReport(${userId}, 'active')" class="btn-action-pill activate"><i class="fa-solid fa-circle-check"></i> Remove Suspension</button>
+                        <button onclick="suspendFromReport(${userId}, '${otherAction}')" class="btn-action-pill ${otherClass}">${otherLabel}</button>`;
+                }
+            });
+        })
+        .catch(() => Swal.fire({ icon: 'error', title: 'Network Error' }));
+    });
+}
+
+// ============================================================
+// COMPLETE REPORT → History
+// ============================================================
+function completeReport(reportId) {
+    Swal.fire({ title: 'Mark as Completed?', text: 'This complaint will move to history.', icon: 'info', showCancelButton: true, confirmButtonColor: '#16a34a', confirmButtonText: 'Yes, Complete' })
+    .then(result => {
+        if (!result.isConfirmed) return;
+        fetch(`/admin/reports/${reportId}/complete`, { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } })
+        .then(r => r.json())
+        .then(d => {
             if (d.success) {
-                Toast.fire({ icon: 'success', title: d.message });
+                Toast.fire({ icon: 'success', title: 'Moved to history!' });
+                const row = document.getElementById('report-row-' + reportId);
+                if (row && $.fn.DataTable.isDataTable('#reportedTable')) {
+                    $('#reportedTable').DataTable().row(row).remove().draw();
+                } else if (row && $.fn.DataTable.isDataTable('#jobsTable')) {
+                    $('#jobsTable').DataTable().row(row).remove().draw();
+                } else if (row) { row.remove(); }
+                document.querySelectorAll('.pending-reports-count').forEach(b => {
+                    b.textContent = Math.max(0, (parseInt(b.textContent) || 0) - 1);
+                });
             } else {
                 Swal.fire({ icon: 'error', title: 'Failed', text: d.message });
             }
+        });
+    });
+}
+
+function markReviewed(reportId) {
+    Swal.fire({
+        title: 'Review Appeal?',
+        text: 'রিপোর্ট বাতিল হয়ে যাবে এবং ইউজারের পোস্ট/একাউন্ট রিস্টোর করা হবে।',
+        icon: 'question', showCancelButton: true,
+        confirmButtonColor: '#16a34a', confirmButtonText: 'Yes, Mark Reviewed'
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        fetch(`/admin/reports/${reportId}/mark-reviewed`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
         })
-        .catch(() => Swal.fire({ icon: 'error', title: 'Network Error' }));
+        .then(r => r.json())
+        .then(d => { Toast.fire({ icon: d.success ? 'success' : 'error', title: d.message }); if (d.success) location.reload(); });
     });
 }
 

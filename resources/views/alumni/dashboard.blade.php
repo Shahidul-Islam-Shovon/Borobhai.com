@@ -4338,6 +4338,7 @@ function routeNotification(action, target) {
     var onHome = (location.pathname === '/' || location.pathname === '');
     if (action === 'profile') { location.href = '/profile/' + target; return; }
     if (action === 'job')     { location.href = '/jobs/' + target;    return; }
+    if (action === 'report-decision') { window.open('/reports/' + target + '/decision', '_blank'); return; } // ⬅️ নতুন ট্যাব
     if (action === 'home')    { if (!onHome) location.href = '/'; return; }
     if (action === 'comments') {
         if (onHome) jumpAndComment(target);

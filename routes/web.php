@@ -39,6 +39,10 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard',                [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/analytics-data',[AdminDashboardController::class, 'getAnalyticsData'])->name('dashboard.analytics');
+
+    // reported history [ get only ]
+    Route::get('/reports/history', [AdminDashboardController::class, 'reportHistory'])->name('reports.history');
+
     Route::post('/users/{id}/change-role', [AdminDashboardController::class, 'changeUserRole'])->name('users.change-role');
     //suspension
     Route::post('/users/{id}/suspension',  [AdminDashboardController::class, 'updateSuspensionStatus'])->name('users.suspension');
@@ -58,6 +62,24 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/reports/{id}/warn',      [AdminDashboardController::class, 'warnUser'])->name('reports.warn');
     Route::post('/reports/{id}/dismiss',   [AdminDashboardController::class, 'dismissReport'])->name('reports.dismiss');
     Route::delete('/reports/{id}/delete-content', [AdminDashboardController::class, 'deleteReportedContent'])->name('reports.delete-content');
+    
+    //report history [ post only ]
+    Route::post('/reports/{id}/complete', [AdminDashboardController::class, 'completeReport'])->name('reports.complete');
+    Route::post('/reports/suspend/{userId}', [AdminDashboardController::class, 'suspendFromReport'])->name('reports.suspend');
+});
+
+// ✅ নতুন — Admin-only, Hashid protected
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/posts/review/{hashid}', [PostController::class, 'adminReview'])->name('admin.post.review');
+    Route::post('/admin/reports/{report}/review', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'submitReview'])->name('admin.reports.review');
+    Route::post('/admin/reports/{report}/mark-reviewed', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'markReviewed'])->name('admin.reports.markReviewed');
+});
+
+// ✅ সাধারণ ইউজারের জন্য — ডিসিশন দেখা ও আপিল করা
+// ✅ নতুন — hashid দিয়ে প্রটেক্টেড
+Route::middleware(['auth'])->group(function () {
+    Route::get('/reports/{hashid}/decision', [\App\Http\Controllers\ReportDecisionController::class, 'show'])->name('reports.decision');
+    Route::post('/reports/{hashid}/appeal', [\App\Http\Controllers\ReportDecisionController::class, 'appeal'])->name('reports.appeal');
 });
 
 // ==========================================
@@ -122,6 +144,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/posts/{id}',                [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/posts/{id}/share',            [PostController::class, 'share'])->name('posts.share');
     Route::post('/posts/{post}/save',           [SavedPostController::class, 'toggle'])->name('posts.save');
+   
     Route::get('/saved',                        [SavedPostController::class, 'index'])->name('saved.index');
     //LIVE COUNTS
     Route::get('/feed/live-counts', [PostController::class, 'liveCounts'])->name('feed.liveCounts');

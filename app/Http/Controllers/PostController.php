@@ -610,6 +610,30 @@ class PostController extends Controller
 
         return response()->json(['counts' => $counts]);
     }
-        
+
+   public function adminReview($hashid)
+    {
+        $id = \App\Models\Post::decodeId($hashid);
+        if (!$id) {
+            abort(404);
+        }
+
+        $post = \App\Models\Post::withTrashed()
+            ->with([
+                'user',
+                'comments' => fn($q) => $q->with('user')->latest()->limit(20),
+            ])
+            ->withCount(['likes', 'comments'])
+            ->findOrFail($id);
+
+        $report = \App\Models\Report::where('type', 'post')
+            ->where('target_id', $id)
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        return view('posts.show', compact('post', 'report'));
+    }
+                
 
 }

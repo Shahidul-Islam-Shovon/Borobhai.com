@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
 {
-    protected $fillable = ['reporter_id', 'type', 'target_id', 'reason', 'details', 'status'];
+    protected $fillable = ['reporter_id', 'type', 'target_id', 'reason', 'details', 'status', 'admin_note', 'admin_id', 'action_taken', 'reviewed_at', 'appeal_message', 'appeal_status', 'appealed_at'];
 
     public function reporter() { return $this->belongsTo(User::class, 'reporter_id'); }
 
@@ -27,5 +27,31 @@ class Report extends Model
             'job'  => 'Job #' . $this->target_id,
             'user' => User::find($this->target_id)?->name ?? 'Unknown User',
         };
+    }
+
+    // getHashidAttribute(), encodeId(), decodeId() — Post মডেলের মতোই প্যাটার্ন
+    public function getHashidAttribute()
+    {
+        return static::encodeId($this->id);
+    }
+
+    public static function encodeId($id)
+    {
+        $sig = substr(hash_hmac('sha256', $id, config('app.key')), 0, 10);
+        $raw = $id . '.' . $sig;
+        return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
+    }
+
+    public static function decodeId($hash)
+    {
+        try {
+            $raw = base64_decode(strtr($hash, '-_', '+/'));
+            [$id, $sig] = explode('.', $raw, 2);
+            if (!ctype_digit($id)) return null;
+            $expected = substr(hash_hmac('sha256', $id, config('app.key')), 0, 10);
+            return hash_equals($expected, $sig) ? (int) $id : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

@@ -111,4 +111,30 @@ class JobPost extends Model
               ->orWhereRaw('DATE_ADD(deadline, INTERVAL 2 DAY) >= ?', [now()->toDateString()]);
         });
     }
+
+    // ✅ Hashid — id লুকিয়ে রাখার জন্য, সিগনেচার-ভেরিফাইড (tamper-proof)
+    public function getHashidAttribute()
+    {
+        return static::encodeId($this->id);
+    }
+
+    public static function encodeId($id)
+    {
+        $sig = substr(hash_hmac('sha256', $id, config('app.key')), 0, 10);
+        $raw = $id . '.' . $sig;
+        return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
+    }
+
+    public static function decodeId($hash)
+    {
+        try {
+            $raw = base64_decode(strtr($hash, '-_', '+/'));
+            [$id, $sig] = explode('.', $raw, 2);
+            if (!ctype_digit($id)) return null;
+            $expected = substr(hash_hmac('sha256', $id, config('app.key')), 0, 10);
+            return hash_equals($expected, $sig) ? (int) $id : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
 }

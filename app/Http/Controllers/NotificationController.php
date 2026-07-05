@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    // ১) Dropdown list — latest 20
     public function index()
     {
         $meId = Auth::id();
@@ -16,14 +15,12 @@ class NotificationController extends Controller
             ->with('actor:id,name,profile_picture,role')
             ->latest()->limit(20)->get();
 
-        // FB এর মত: খুললে শুধু "seen" → badge সরবে, কিন্তু is_read অপরিবর্তিত
         BbNotification::where('user_id', $meId)
             ->where('seen', false)->update(['seen' => true]);
 
         return response()->json(['html' => $this->buildItems($notifications)]);
     }
 
-    // ২) Badge — unseen count
     public function poll()
     {
         return response()->json([
@@ -32,7 +29,6 @@ class NotificationController extends Controller
         ]);
     }
 
-    // ৩) একটা read
     public function markOneRead($id)
     {
         BbNotification::where('id', $id)->where('user_id', Auth::id())
@@ -40,7 +36,6 @@ class NotificationController extends Controller
         return response()->json(['success' => true]);
     }
 
-    // ৪) সব read
     public function markAllRead()
     {
         BbNotification::where('user_id', Auth::id())
@@ -48,7 +43,6 @@ class NotificationController extends Controller
         return response()->json(['success' => true]);
     }
 
-    // ৫) See all — full page (Today / This Week / Earlier grouping)
     public function all()
     {
         $meId = Auth::id();
@@ -57,11 +51,9 @@ class NotificationController extends Controller
             ->with('actor:id,name,profile_picture,role')
             ->latest()->paginate(20);
 
-        // খোলার সাথে badge clear (seen → true)
         BbNotification::where('user_id', $meId)
             ->where('seen', false)->update(['seen' => true]);
 
-        // current page items কে bucket-এ ভাগ করি
         $groups = ['Today' => [], 'This Week' => [], 'Earlier' => []];
         foreach ($notifications as $n) {
             $created = $n->created_at;
@@ -74,7 +66,6 @@ class NotificationController extends Controller
         return view('notifications.index', compact('notifications', 'groups'));
     }
 
-    // ===== item builder =====
     private function buildItems($list): string
     {
         $html = '';
@@ -107,7 +98,6 @@ class NotificationController extends Controller
         </div>';
     }
 
-    // ⚠️ comment-জাতীয় type এ notifiable_id = POST id হতে হবে (নিচে নোট দেখো)
     private function resolveTarget($n): array
     {
         return match ($n->type) {
@@ -117,17 +107,21 @@ class NotificationController extends Controller
             'job_status'                                     => ['myapplications', 0],
             'new_job', 'job_apply',
             'job_deadline_soon', 'job_deadline_expired'      => ['job', $this->jobHashid($n->notifiable_id)],
+            'admin_decision', 'appeal_filed'                 => ['report-decision', $this->reportHashid($n->notifiable_id)],
             default                                          => ['home', 0],
         };
     }
-
-    // raw job id → hashid string, route এ বসানোর জন্য
-    // job ডিলিট হয়ে গেলে notification থেকে যেতে পারে — তখন find() null দেবে,
-    // সেক্ষেত্রে raw id fallback করছি (লিংক কাজ নাও করতে পারে, কিন্তু পেজ crash করবে না)
+  
     private function jobHashid($rawId): string
     {
         $job = \App\Models\JobPost::find($rawId);
         return $job ? $job->getRouteKey() : (string) $rawId;
+    }
+
+    private function reportHashid($rawId): string
+    {
+        $report = \App\Models\Report::find($rawId);
+        return $report ? $report->hashid : (string) $rawId;
     }
 
     private function iconFor($type): string
@@ -146,12 +140,13 @@ class NotificationController extends Controller
             'job_deadline_soon'    => '<i class="bi bi-clock-fill text-warning"></i>',
             'job_deadline_expired' => '<i class="bi bi-hourglass-bottom text-danger"></i>',
             'report_submitted'     => '<i class="bi bi-flag-fill text-danger"></i>',
+            'admin_decision'       => '<i class="bi bi-shield-check text-danger"></i>',
+            'appeal_filed'         => '<i class="bi bi-megaphone-fill text-warning"></i>',
             'new_message'          => '<i class="bi bi-chat-dots-fill text-primary"></i>',
             default                => '<i class="bi bi-bell-fill text-muted"></i>',
         };
     }
 
-    // blade থেকে একটা notification এর data পাওয়ার জন্য
     public function metaFor($n): array
     {
         [$action, $target] = $this->resolveTarget($n);

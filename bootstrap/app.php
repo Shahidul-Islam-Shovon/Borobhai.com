@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'alumni'  => \App\Http\Middleware\AlumniMiddleware::class,
             'student' => \App\Http\Middleware\StudentMiddleware::class,
             'role'    => \App\Http\Middleware\CheckRole::class,
-            
+            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
         ]);
 
         $middleware->append(\App\Http\Middleware\UpdateLastSeen::class);
