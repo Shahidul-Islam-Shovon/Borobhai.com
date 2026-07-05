@@ -1,6 +1,6 @@
 @php
     use Illuminate\Support\Facades\Auth;
-    $hid = $job->getRouteKey();   // hashid — URL, DOM id, JS arg সব এতেই
+    $hid = $job->getRouteKey();
     $expired = $job->is_expired;
     $expiringSoon = $job->is_expiring_soon;
     $typeColors = [
@@ -13,9 +13,10 @@
     ];
     $tc = $typeColors[$job->job_type] ?? ['#eef2ff', '#4f46e5', 'bi-briefcase'];
     $isSaved = isset($job->is_saved_by_me) ? ($job->is_saved_by_me > 0) : false;
-    $hasApplied = isset($appliedJobIds) && in_array($job->id, $appliedJobIds); // server-side raw — ঠিক আছে
-    $isOwner = $job->user_id === Auth::id();   // নিজের job এ apply নয় — শুধু View Details
+    $hasApplied = isset($appliedJobIds) && in_array($job->id, $appliedJobIds);
+    $isOwner = $job->user_id === Auth::id();
 @endphp
+
 
 <div class="bb-jobcard" id="jobCard-{{ $hid }}">
     <div class="bb-jobcard-top">
@@ -32,6 +33,8 @@
                     onclick="toggleJobSave('{{ $hid }}')" title="{{ $isSaved ? 'Saved' : 'Save job' }}">
                 <i class="bi {{ $isSaved ? 'bi-bookmark-fill' : 'bi-bookmark' }}"></i>
             </button>
+
+            {{-- ✅ Owner হলে Edit/Delete, অন্যরা Report দেখবে --}}
             @if($isOwner)
                 <div class="dropdown">
                     <button class="bb-jobcard-more" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
@@ -40,7 +43,23 @@
                         <li><a class="dropdown-item py-1 fs-7 text-danger" href="javascript:void(0)" onclick="deleteJob('{{ $hid }}')"><i class="bi bi-trash me-1"></i> Delete</a></li>
                     </ul>
                 </div>
+            @else
+                <div class="dropdown">
+                    <button class="bb-jobcard-more" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width:130px;">
+                        <li>
+                            <a class="dropdown-item py-1 fs-7 text-danger"
+                            href="javascript:void(0)"
+                            onclick="openReport('job', {{ $job->id }}, '{{ e($job->title) }}')">
+                                <i class="bi bi-flag-fill me-1"></i> Report Job
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             @endif
+
         </div>
     </div>
 

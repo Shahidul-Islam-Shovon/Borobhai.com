@@ -37,13 +37,27 @@ Route::get('/dashboard', function () {
 // ADMIN
 // ==========================================
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard',                          [AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard/analytics-data',           [AdminDashboardController::class, 'getAnalyticsData'])->name('dashboard.analytics');
-    Route::post('/users/{id}/change-role',            [AdminDashboardController::class, 'changeUserRole'])->name('users.change-role');
-    Route::post('/users/{id}/suspension',             [AdminDashboardController::class, 'updateSuspensionStatus'])->name('users.suspension');
-    Route::delete('/posts/{id}/delete',               [AdminDashboardController::class, 'deletePost'])->name('posts.delete');
-    Route::delete('/circulars/{id}/delete',           [AdminDashboardController::class, 'deleteCircular'])->name('circulars.delete');
-    Route::post('/admin/manage-authority',            [AdminDashboardController::class, 'manageAuthority'])->name('manage.authority');
+    Route::get('/dashboard',                [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/analytics-data',[AdminDashboardController::class, 'getAnalyticsData'])->name('dashboard.analytics');
+    Route::post('/users/{id}/change-role', [AdminDashboardController::class, 'changeUserRole'])->name('users.change-role');
+    //suspension
+    Route::post('/users/{id}/suspension',  [AdminDashboardController::class, 'updateSuspensionStatus'])->name('users.suspension');
+    
+    // new suspension route
+    // ✅ নতুন — report section থেকে suspension
+    Route::post('/reports/suspend/{userId}', [AdminDashboardController::class, 'suspendFromReport'])->name('reports.suspend');
+
+    Route::delete('/posts/{id}/delete',    [AdminDashboardController::class, 'deletePost'])->name('posts.delete');
+
+    Route::delete('/circulars/{id}/delete',[AdminDashboardController::class, 'deleteCircular'])->name('circulars.delete');
+
+    // ✅ FIX: double prefix সরানো হয়েছে
+    Route::post('/manage-authority',       [AdminDashboardController::class, 'manageAuthority'])->name('manage.authority');
+
+    // Reports
+    Route::post('/reports/{id}/warn',      [AdminDashboardController::class, 'warnUser'])->name('reports.warn');
+    Route::post('/reports/{id}/dismiss',   [AdminDashboardController::class, 'dismissReport'])->name('reports.dismiss');
+    Route::delete('/reports/{id}/delete-content', [AdminDashboardController::class, 'deleteReportedContent'])->name('reports.delete-content');
 });
 
 // ==========================================

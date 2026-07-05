@@ -57,10 +57,10 @@
 
 <div class="sidebar">
     <div class="sidebar-brand"><i class="fa-solid fa-graduation-cap me-2"></i>Borobhai Admin</div>
-    <div class="nav-link-custom active" data-target="analytics-tab"><i class="fa-solid fa-chart-pie"></i> Analytics Dashboard</div>
-    <div class="nav-link-custom" data-target="users-tab"><i class="fa-solid fa-users"></i> User Control Panel</div>
-    <div class="nav-link-custom" data-target="posts-tab"><i class="fa-solid fa-newspaper"></i> Post Moderation</div>
-    <div class="nav-link-custom" data-target="jobs-tab"><i class="fa-solid fa-briefcase"></i> Job Portal Audits</div>
+    <div class="nav-link-custom active" data-target="analytics-tab"><i class="fa-solid fa-chart-pie"></i>Analytics</div>
+    <div class="nav-link-custom" data-target="users-tab"><i class="fa-solid fa-users"></i> User Management</div>
+    <div class="nav-link-custom" data-target="posts-tab"><i class="fa-solid fa-newspaper"></i>Reported Contents</div>
+    <div class="nav-link-custom" data-target="jobs-tab"><i class="fa-solid fa-briefcase"></i> Reported Jobs</div>
     
     <div style="position: absolute; bottom: 30px; width: calc(100% - 30px);">
         <div class="d-flex align-items-center gap-5">
@@ -311,24 +311,24 @@
                                     @if($canSuspend)
                                         <div class="d-flex justify-content-end align-items-center gap-1">
                                             @if($user->status === 'active' || empty($user->status))
-                                                <button onclick="manageSuspension({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Suspend 7 Days">
+                                                <button onclick="suspendFromReport({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Suspend 7 Days">
                                                     <i class="fa-solid fa-clock"></i> Suspend 7 Days
                                                 </button>
-                                                <button onclick="manageSuspension({{ $user->id }}, 'perm')" class="btn-action-pill perm-ban" title="Suspend Permanently">
+                                                <button onclick="suspendFromReport({{ $user->id }}, 'perm')" class="btn-action-pill perm-ban" title="Suspend Permanently">
                                                     <i class="fa-solid fa-ban"></i> Suspend Permanently
                                                 </button>
                                             @elseif($user->status === 'suspended_temp')
-                                                <button onclick="manageSuspension({{ $user->id }}, 'active')" class="btn-action-pill activate" title="Remove Suspension">
+                                                <button onclick="suspendFromReport({{ $user->id }}, 'active')" class="btn-action-pill activate" title="Remove Suspension">
                                                     <i class="fa-solid fa-circle-check"></i> Remove Suspension
                                                 </button>
-                                                <button onclick="manageSuspension({{ $user->id }}, 'perm')" class="btn-action-pill perm-ban" title="Upgrade to Permanent Ban">
+                                                <button onclick="suspendFromReport({{ $user->id }}, 'perm')" class="btn-action-pill perm-ban" title="Upgrade to Permanent Ban">
                                                     <i class="fa-solid fa-ban"></i> Suspend Permanently
                                                 </button>
                                             @elseif($user->status === 'suspended_perm')
-                                                <button onclick="manageSuspension({{ $user->id }}, 'active')" class="btn-action-pill activate" title="Remove Suspension">
+                                                <button onclick="suspendFromReport({{ $user->id }}, 'active')" class="btn-action-pill activate" title="Remove Suspension">
                                                     <i class="fa-solid fa-circle-check"></i> Remove Suspension
                                                 </button>
-                                                <button onclick="manageSuspension({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Downgrade to 7 Days Suspension">
+                                                <button onclick="suspendFromReport({{ $user->id }}, 'temp')" class="btn-action-pill temp-ban" title="Downgrade to 7 Days Suspension">
                                                     <i class="fa-solid fa-clock"></i> Suspend 7 Days
                                                 </button>
                                             @endif
@@ -346,69 +346,252 @@
         </div>
     </div>
 
-    <div id="posts-tab" class="tab-content-panel">
+    {{-- updated posts tab start --}}
+        <div id="posts-tab" class="tab-content-panel">
         <div class="card-table-wrapper">
-           <h6 class="fw-bold mb-4" style="font-size: 0.88rem;"><i class="fa-solid fa-shield-halved text-danger me-2"></i> Social Feed Moderation Logs</h6>
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
+                    <i class="fa-solid fa-flag text-danger me-2"></i>
+                    Reported Content
+                    <span class="badge bg-danger ms-2" style="font-size:0.7rem;">{{ $counters['pending_reports'] }}</span>
+                </h6>
+            </div>
+
+            @if($reports->isEmpty())
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
+                    <p class="fw-semibold">No pending reports. All clear!</p>
+                </div>
+            @else
             <div class="table-responsive">
-                <table id="postsTable" class="table table-hover align-middle w-100">
+                <table class="table table-hover align-middle w-100">
                     <thead>
                         <tr>
-                             <th style="width: 15%;">ID</th>
-                            <th style="width: 25%;">Author</th>
-                            <th style="width: 45%;">Post Excerpt</th>
-                             <th style="width: 15%; text-align: right;">Action</th>
+                            <th style="width:8%">Type</th>
+                            <th style="width:30%">Reported Content</th>
+                            <th style="width:20%">Reported User</th>
+                            <th style="width:15%">Reason</th>
+                            <th style="width:27%; text-align:right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($posts as $post)
-                        <tr id="post-row-{{ $post->id }}">
-                            <td>#{{ $post->id }}</td>
-                            <td><span class="fw-medium">{{ $post->user->name ?? 'Unknown' }}</span></td>
-                             <td><span class="text-muted d-inline-block text-truncate" style="max-width: 450px;">{{ $post->content }}</span></td>
-                            <td class="text-end">
-                                <button onclick="deletePost({{ $post->id }})" class="btn btn-sm btn-light text-danger border px-2.5 py-1" style="border-radius: 6px; font-size: 0.72rem; font-weight: 600;">
-                                    <i class="fa-regular fa-trash-can me-1"></i> Terminate
-                                </button>
-                             </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-         </div>
-    </div>
+                    
+                    @foreach($reports as $report)
+                    <tr id="report-row-{{ $report->id }}">
+                        <td>
+                            @php $typeColor = match($report->type) { 'post'=>'primary', 'job'=>'warning', 'user'=>'danger', default=>'secondary' }; @endphp
+                            <span class="badge bg-{{ $typeColor }}-subtle text-{{ $typeColor }} border border-{{ $typeColor }}-subtle" style="font-size:0.65rem;font-weight:700;text-transform:uppercase;">
+                                {{ $report->type }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark" style="font-size:0.78rem;">
+                                {{ $report->targetTitle }}
+                            </div>
 
-    <div id="jobs-tab" class="tab-content-panel">
-        <div class="card-table-wrapper">
-            <h6 class="fw-bold mb-4" style="font-size: 0.88rem;"><i class="fa-solid fa-briefcase text-warning me-2"></i> Corporate Job Circular Audits</h6>
-            <div class="table-responsive">
-                <table id="circularsTable" class="table table-hover align-middle w-100">
-                     <thead>
-                        <tr>
-                            <th style="width: 15%;">ID</th>
-                            <th style="width: 25%;">Posted By</th>
-                             <th style="width: 45%;">Job Profile & Company</th>
-                            <th style="width: 15%; text-align: right;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($circulars as $circular)
-                        <tr id="circular-row-{{ $circular->id }}">
-                            <td>#{{ $circular->id }}</td>
-                            <td><span class="fw-medium text-dark">{{ $circular->user->name ?? 'Alumni' }}</span></td>
-                             <td><div><strong class="text-primary" style="font-size: 0.78rem;">{{ $circular->title }}</strong></div><span class="text-muted" style="font-size: 0.68rem;"><i class="fa-solid fa-building me-1"></i> {{ $circular->company }}</span></td>
-                            <td class="text-end">
-                                <button onclick="deleteCircular({{ $circular->id }})" class="btn btn-sm btn-light text-danger border px-2.5 py-1" style="border-radius: 6px; font-size: 0.72rem; font-weight: 600;">
-                                    <i class="fa-solid fa-ban me-1"></i> Remove
+                            {{-- টেবিলের View Content --}}
+                            @if($report->targetLink)
+                            <a href="{{ $report->targetLink }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="text-primary" style="font-size:0.68rem;">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>View Content
+                            </a>
+                            @endif
+
+                        </td>
+                        <td>
+                            @if($report->targetUser)
+                            <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
+                            <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
+                            @else
+                            <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
+                            @if($report->details)
+                            <div class="text-muted" style="font-size:0.65rem;" title="{{ $report->details }}">
+                                {{ \Illuminate\Support\Str::limit($report->details, 30) }}
+                            </div>
+                            @endif
+                        </td>
+                        <td style="text-align:right;">
+                            <div class="d-flex justify-content-end gap-1 flex-wrap">
+
+                                {{-- Action বাটনের View --}}
+                                @if($report->targetLink)
+                                <a href="{{ $report->targetLink }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn-action-pill" style="color:#2563eb;">
+                                    <i class="fa-solid fa-eye"></i> View
+                                </a>
+                                @endif
+
+                                {{-- Warn --}}
+                                @if($report->targetUser)
+                                <button onclick="adminAction('warn', {{ $report->id }})" class="btn-action-pill temp-ban" title="Send Warning">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Warn
                                 </button>
-                             </td>
-                        </tr>
-                        @endforeach
+                                {{-- Suspend --}}
+                                <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'temp')" class="btn-action-pill temp-ban" title="Suspend 7 Days">
+                                    <i class="fa-solid fa-clock"></i> 7d Ban
+                                </button>
+                                <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'perm')" class="btn-action-pill perm-ban" title="Permanent Ban">
+                                    <i class="fa-solid fa-ban"></i> Perm Ban
+                                </button>
+                                @endif
+
+                                {{-- Delete content --}}
+                                @if($report->type !== 'user')
+                                <button onclick="adminAction('delete-content', {{ $report->id }})" class="btn-action-pill perm-ban" title="Delete Content">
+                                    <i class="fa-regular fa-trash-can"></i> Delete
+                                </button>
+                                @endif
+
+                                {{-- Dismiss --}}
+                                <button onclick="adminAction('dismiss', {{ $report->id }})" class="btn-action-pill activate" title="Dismiss Report">
+                                    <i class="fa-solid fa-check"></i> Dismiss
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+
                     </tbody>
                 </table>
             </div>
-         </div>
+            @endif
+        </div>
     </div>
+    {{-- updated posts tab end --}}
+
+    {{-- updated reported job section start --}}
+        <div id="jobs-tab" class="tab-content-panel">
+        <div class="card-table-wrapper">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
+                    <i class="fa-solid fa-briefcase text-warning me-2"></i>
+                    Reported Jobs
+                    <span class="badge bg-warning text-dark ms-2" style="font-size:0.7rem;">
+                        {{ $reports->where('type', 'job')->count() }}
+                    </span>
+                </h6>
+            </div>
+
+            @php $jobReports = $reports->where('type', 'job'); @endphp
+
+            @if($jobReports->isEmpty())
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
+                    <p class="fw-semibold">No reported jobs. All clear!</p>
+                </div>
+            @else
+            <div class="table-responsive">
+                <table class="table table-hover align-middle w-100">
+                    <thead>
+                        <tr>
+                            <th style="width:30%">Reported Job</th>
+                            <th style="width:20%">Posted By</th>
+                            <th style="width:15%">Reason</th>
+                            <th style="width:35%; text-align:right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($jobReports as $report)
+                    <tr id="report-row-{{ $report->id }}">
+                        <td>
+                            <div class="fw-semibold text-dark" style="font-size:0.78rem;">
+                                {{ $report->targetTitle }}
+                            </div>
+                            @if($report->targetLink)
+                            <a href="{{ $report->targetLink }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="text-primary" style="font-size:0.68rem;">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>View Job
+                            </a>
+                            @else
+                            <span class="text-muted" style="font-size:0.68rem;">[Job removed]</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($report->targetUser)
+                            <div class="fw-semibold" style="font-size:0.78rem;">
+                                {{ $report->targetUser->name }}
+                            </div>
+                            <div class="text-muted" style="font-size:0.68rem;">
+                                {{ $report->targetUser->email }}
+                            </div>
+                            @else
+                            <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="text-muted" style="font-size:0.72rem;">
+                                {{ ucfirst($report->reason) }}
+                            </span>
+                            @if($report->details)
+                            <div class="text-muted" style="font-size:0.65rem;">
+                                {{ \Illuminate\Support\Str::limit($report->details, 30) }}
+                            </div>
+                            @endif
+                        </td>
+                        <td style="text-align:right;">
+                            <div class="d-flex justify-content-end gap-1 flex-wrap">
+
+                                {{-- View Job --}}
+                                @if($report->targetLink)
+                                <a href="{{ $report->targetLink }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn-action-pill" style="color:#2563eb;">
+                                    <i class="fa-solid fa-eye"></i> View
+                                </a>
+                                @endif
+
+                                {{-- Warn user --}}
+                                @if($report->targetUser)
+                                <button onclick="adminAction('warn', {{ $report->id }})"
+                                        class="btn-action-pill temp-ban">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Warn
+                                </button>
+
+                                {{-- Suspend --}}
+                                <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'temp')"
+                                        class="btn-action-pill temp-ban">
+                                    <i class="fa-solid fa-clock"></i> 7d Ban
+                                </button>
+                                <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'perm')"
+                                        class="btn-action-pill perm-ban">
+                                    <i class="fa-solid fa-ban"></i> Perm Ban
+                                </button>
+                                @endif
+
+                                {{-- Delete Job --}}
+                                <button onclick="adminAction('delete-content', {{ $report->id }})"
+                                        class="btn-action-pill perm-ban">
+                                    <i class="fa-regular fa-trash-can"></i> Delete Job
+                                </button>
+
+                                {{-- Dismiss --}}
+                                <button onclick="adminAction('dismiss', {{ $report->id }})"
+                                        class="btn-action-pill activate">
+                                    <i class="fa-solid fa-check"></i> Dismiss
+                                </button>
+
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+        </div>
+    </div>
+    {{-- updated reported job section end --}}
 </div>
 
 <script>
@@ -475,10 +658,22 @@ document.querySelectorAll('.nav-link-custom').forEach(link => {
     });
 });
 
-$(document).ready(function() {
-    $('#usersTable').DataTable({ "pageLength": 10, "responsive": true, "order": [[0, "asc"]] });
-    $('#postsTable').DataTable({ "pageLength": 10, "responsive": true, "order": [[0, "desc"]] });
-    $('#circularsTable').DataTable({ "pageLength": 10, "responsive": true, "order": [[0, "desc"]] });
+// ✅ আগের DataTable init replace করো
+$(document).ready(function () {
+    $('#usersTable').DataTable({
+        pageLength: 10,
+        responsive: true,
+        order: [[0, 'asc']],
+        stateSave: true,      // ✅ reload এর পর same page/search ধরে রাখবে
+        stateDuration: 60     // 60 সেকেন্ড state ধরে রাখবে
+    });
+    $('#circularsTable').DataTable({
+        pageLength: 10,
+        responsive: true,
+        order: [[0, 'desc']],
+        stateSave: true,
+        stateDuration: 60
+    });
 });
 
 const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
@@ -578,60 +773,51 @@ function executeAuthorityChange(userId, type) {
     });
 }
 
-function manageSuspension(userId, action) {
-    let textBody = "";
-    let confirmText = "Confirm";
-    let confirmColor = '#2563eb';
+
+function suspendFromReport(userId, action) {
+    let text = '', confirmText = '', color = '';
 
     if (action === 'temp') {
-        textBody = "Are you sure you want to suspend this account for 7 days?";
-        confirmText = "Yes, Suspend Account";
-        confirmColor = '#d97706';
+        text = 'Suspend this user for 7 days?';
+        confirmText = 'Yes, Suspend 7 Days';
+        color = '#d97706';
     } else if (action === 'perm') {
-        textBody = "Are you sure you want to permanently ban this account?";
-        confirmText = "Yes, Ban Permanently";
-        confirmColor = '#dc2626';
+        text = 'Permanently ban this user?';
+        confirmText = 'Yes, Ban Permanently';
+        color = '#dc2626';
     } else if (action === 'active') {
-        textBody = "Are you sure you want to restore full access for this user?";
-        confirmText = "Yes, Restore Access";
-        confirmColor = '#16a34a';
+        text = 'Restore access for this user?';
+        confirmText = 'Yes, Restore Access';
+        color = '#16a34a';
     }
 
     Swal.fire({
-        title: 'Change Account Status?',
-        text: textBody,
-        icon: 'warning',
+        title: 'Suspend User?', text: text, icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: confirmColor,
+        confirmButtonColor: color,
         cancelButtonColor: '#64748b',
         confirmButtonText: confirmText
-    }).then((result) => {
-        if (result.isConfirmed) {
-              fetch(`/admin/users/${userId}/suspension`, { 
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ action: action })
-            })
-            .then(async response => {
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.message || 'Failed to update status');
-                return data;
-            })
-            .then(data => {
-                saveDashboardState();
-                if (data.success) {
-                    Swal.fire({ icon: 'success', title: 'Status Updated', text: data.message, timer: 1250, showConfirmButton: false })
-                    .then(() => { window.location.reload(); });
-                }
-            })
-            .catch(error => {
-                Swal.fire({ icon: 'error', title: 'Action Denied', text: error.message });
-            });
-        }
+    }).then(result => {
+        if (!result.isConfirmed) return;
+
+        fetch(`/admin/reports/suspend/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ action: action })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                Toast.fire({ icon: 'success', title: d.message });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Failed', text: d.message });
+            }
+        })
+        .catch(() => Swal.fire({ icon: 'error', title: 'Network Error' }));
     });
 }
 
@@ -720,6 +906,103 @@ function deleteCircular(circularId) {
         }
     });
 }
+
+function adminAction(action, reportId) {
+    const config = {
+        warn:           { title: 'Send Warning?',   text: 'A warning notification will be sent to the user.', icon: 'warning', confirmText: 'Yes, Warn User', color: '#d97706' },
+        dismiss:        { title: 'Dismiss Report?', text: 'This report will be marked as resolved.',           icon: 'info',    confirmText: 'Dismiss',         color: '#16a34a' },
+        'delete-content':{ title: 'Delete Content?', text: 'This will permanently delete the reported content.',icon: 'warning', confirmText: 'Yes, Delete',    color: '#dc2626' },
+    };
+    const c = config[action];
+
+    Swal.fire({
+        title: c.title, text: c.text, icon: c.icon,
+        showCancelButton: true, confirmButtonColor: c.color,
+        confirmButtonText: c.confirmText
+    })
+    .then(result => {
+        if (!result.isConfirmed) return;
+
+        // ✅ FIX: route name অনুযায়ী URL ও method
+        let url, method;
+        if (action === 'warn') {
+            url    = `/admin/reports/${reportId}/warn`;
+            method = 'POST';
+        } else if (action === 'dismiss') {
+            url    = `/admin/reports/${reportId}/dismiss`;
+            method = 'POST';
+        } else if (action === 'delete-content') {
+            url    = `/admin/reports/${reportId}/delete-content`;
+            method = 'DELETE';
+        }
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Accept':       'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                Toast.fire({ icon: 'success', title: d.message });
+                document.getElementById('report-row-' + reportId)?.remove();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Failed', text: d.message });
+            }
+        })
+        .catch(() => {
+            Swal.fire({ icon: 'error', title: 'Network Error', text: 'Please try again.' });
+        });
+    });
+}
+
+// ✅ Report section এর জন্য আলাদা function
+function suspendFromReport(userId, action) {
+    let text = '', confirmText = '', color = '';
+
+    if (action === 'temp') {
+        text = 'Suspend this user for 7 days?';
+        confirmText = 'Yes, Suspend 7 Days'; color = '#d97706';
+    } else if (action === 'perm') {
+        text = 'Permanently ban this user?';
+        confirmText = 'Yes, Ban Permanently'; color = '#dc2626';
+    } else if (action === 'active') {
+        text = 'Restore access for this user?';
+        confirmText = 'Yes, Restore'; color = '#16a34a';
+    }
+
+    Swal.fire({
+        title: 'Suspend User?', text: text, icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: color,
+        cancelButtonColor: '#64748b',
+        confirmButtonText: confirmText
+    }).then(result => {
+        if (!result.isConfirmed) return;
+
+        fetch(`/admin/reports/suspend/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ action: action })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                Toast.fire({ icon: 'success', title: d.message });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Failed', text: d.message });
+            }
+        })
+        .catch(() => Swal.fire({ icon: 'error', title: 'Network Error' }));
+    });
+}
+
 </script>
 </body>
 </html>

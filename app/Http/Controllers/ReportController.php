@@ -10,54 +10,34 @@ use Illuminate\Support\Facades\Auth;
 
 class ReportController extends Controller
 {
+    // ReportController@store (বা আগের যেখানে /report POST handle হয়)
     public function store(Request $request)
     {
-        $request->validate([
-            'type'    => 'required|in:post,user',
+        $data = $request->validate([
+            'type'    => 'required|in:post,job,user',
             'id'      => 'required|integer',
-            'reason'  => 'required|in:spam,harassment,fake,inappropriate,other',
+            'reason'  => 'required|string',
             'details' => 'nullable|string|max:500',
         ]);
 
-        $meId = Auth::id();
-
-        // নিজেকে report করা যাবে না
-        if ($request->type === 'user' && $request->id == $meId) {
-            return response()->json(['success' => false, 'message' => 'You cannot report yourself.']);
-        }
-
-        // একই জিনিস বারবার report করা যাবে না
-        $exists = Report::where('reporter_id', $meId)
-            ->where('reportable_type', $request->type)
-            ->where('reportable_id', $request->id)
-            ->where('status', 'pending')
+        // একই ইউজার একই content একাধিকবার report করতে পারবে না
+        $exists = \App\Models\Report::where('reporter_id', auth()->id())
+            ->where('type', $data['type'])
+            ->where('target_id', $data['id'])
             ->exists();
 
         if ($exists) {
-            return response()->json(['success' => false, 'message' => 'You have already reported this.']);
+            return response()->json(['success' => false, 'message' => 'Already reported.']);
         }
 
-        Report::create([
-            'reporter_id'     => $meId,
-            'reportable_type' => $request->type,
-            'reportable_id'   => $request->id,
-            'reason'          => $request->reason,
-            'details'         => $request->details,
+        \App\Models\Report::create([
+            'reporter_id' => auth()->id(),
+            'type'        => $data['type'],
+            'target_id'   => $data['id'],
+            'reason'      => $data['reason'],
+            'details'     => $data['details'] ?? null,
         ]);
 
-        // সব admin কে notification
-        $adminIds = User::where('role', 'admin')->pluck('id')->toArray();
-        foreach ($adminIds as $adminId) {
-            BbNotification::send(
-                $adminId,
-                Auth::id(),
-                'report_submitted',
-                Auth::user()->name . ' reported a ' . $request->type . '.',
-                $request->type,
-                $request->id
-            );
-        }
-
-        return response()->json(['success' => true, 'message' => 'Report submitted. Our team will review it.']);
+        return response()->json(['success' => true, 'message' => 'Report submitted.']);
     }
 }
