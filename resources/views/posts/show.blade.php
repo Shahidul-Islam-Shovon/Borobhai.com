@@ -421,37 +421,11 @@
             </div>
         </div>
 
-        {{-- Admin actions --}}
-<div class="ps-actions">
-    <a href="{{ route('profile.view', $post->user) }}" class="ps-btn ps-btn-profile" target="_blank">
-        <i class="bi bi-person-fill"></i> View Profile
-    </a>
-
-    @if(isset($report))
-    <button class="ps-btn ps-btn-warn" onclick="adminActionWithNote('warn', {{ $report->id }})">
-        <i class="bi bi-exclamation-triangle"></i> Warn User
-    </button>
-    <button class="ps-btn ps-btn-ban" onclick="showSuspendModal({{ $post->user->id }})">
-        <i class="bi bi-slash-circle"></i> Suspend
-    </button>
-    <button class="ps-btn ps-btn-delete" onclick="adminActionWithNote('delete-content', {{ $report->id }})">
-        <i class="bi bi-trash3-fill"></i> Delete Post
-    </button>
-    <button class="ps-btn ps-btn-dismiss" onclick="adminAction('dismiss', {{ $report->id }})">
-        <i class="bi bi-check-lg"></i> Dismiss Report
-    </button>
-    @else
-    <button class="ps-btn ps-btn-delete" onclick="directDelete({{ $post->id }})">
-        <i class="bi bi-trash3-fill"></i> Delete Post
-    </button>
-    @endif
-</div>
-
 @if(isset($report))
 {{-- Review Note সেকশন --}}
 <div class="ps-card mt-3" style="padding:20px 22px;">
     <h6 class="fw-bold mb-2" style="font-size:0.85rem;"><i class="bi bi-pencil-square text-primary me-2"></i>Admin Review Note</h6>
-    <textarea id="reviewNoteBox" class="form-control mb-2" rows="3" placeholder="ইউজারকে জানানোর জন্য মন্তব্য লিখুন...">{{ $report->admin_note }}</textarea>
+    <textarea id="reviewNoteBox" class="form-control mb-2" rows="3" placeholder="Write a Note for User">{{ $report->admin_note }}</textarea>
     <button class="ps-btn ps-btn-profile" onclick="submitReviewNote({{ $report->id }})">
         <i class="bi bi-send-fill"></i> Send Review to User
     </button>

@@ -121,16 +121,27 @@
     </div>
 
     {{-- Content preview --}}
-    @if($content)
-    <div class="card">
-        <div class="card-head">
-            <i class="bi bi-file-text text-primary"></i> Reported Content
-            @if($isDeleted)
-                <span class="badge-pill bp-del ms-auto"><i class="bi bi-trash3"></i> Deleted</span>
+    {{-- Content preview --}}
+@if($content)
+<div class="card">
+    <div class="card-head">
+        <i class="bi bi-file-text text-primary"></i>
+        {{ $contentType === 'job' ? 'Reported Job' : 'Reported Post' }}
+        @if($isDeleted)
+            <span class="badge-pill bp-del ms-auto"><i class="bi bi-trash3"></i> Deleted</span>
+        @endif
+    </div>
+    <div class="card-body">
+        <div class="content-preview">{{ $content }}</div>
+
+        @if($contentType === 'post')
+            @if(!empty($videos))
+            <div class="media-grid">
+                @foreach($videos as $vid)
+                    <video src="{{ asset('storage/'.$vid) }}" controls style="width:100%;height:90px;object-fit:cover;border-radius:8px;"></video>
+                @endforeach
+            </div>
             @endif
-        </div>
-        <div class="card-body">
-            <div class="content-preview">{{ $content }}</div>
             @if(!empty($images))
             <div class="media-grid">
                 @foreach($images as $img)
@@ -138,9 +149,18 @@
                 @endforeach
             </div>
             @endif
-        </div>
+            <div class="d-flex gap-3 mt-3" style="font-size:0.78rem;color:var(--bb-muted);">
+                <span><i class="bi bi-heart-fill text-danger me-1"></i>{{ $likesCount }} Likes</span>
+                <span><i class="bi bi-chat-fill text-primary me-1"></i>{{ $commentsCount }} Comments</span>
+            </div>
+        @elseif($contentType === 'job' && $jobLink)
+            <a href="{{ $jobLink }}" target="_blank" class="btn btn-outline-primary btn-sm mt-2">
+                <i class="bi bi-box-arrow-up-right me-1"></i> View Full Job Details
+            </a>
+        @endif
     </div>
-    @endif
+</div>
+@endif
 
     {{-- Admin note --}}
     @if($report->admin_note)
@@ -156,31 +176,45 @@
     @endif
 
     {{-- Appeal section --}}
-    <div class="card">
-        <div class="card-head"><i class="bi bi-megaphone text-primary"></i> Appeal</div>
-        <div class="card-body">
-            @if($report->appeal_status === 'pending')
-                <div class="alert alert-info alert-soft mb-0">
-                    <i class="bi bi-hourglass-split me-1"></i> Your appeal has been submitted. An admin will review it shortly.
-                </div>
-                @if($report->appeal_message)
-                <div class="content-preview mt-3" style="font-size:0.85rem;">{{ $report->appeal_message }}</div>
+<div class="card">
+    <div class="card-head"><i class="bi bi-megaphone text-primary"></i> Appeal</div>
+    <div class="card-body">
+        @if($report->appeal_status === 'pending')
+            <div class="alert alert-info alert-soft mb-2">
+                <i class="bi bi-hourglass-split me-1"></i>
+                @if($isAdminViewer)
+                    This user has submitted an appeal. Review the message below.
+                @else
+                    Your appeal has been submitted. An admin will review it shortly.
                 @endif
-            @elseif($report->appeal_status === 'reviewed')
-                <div class="alert alert-success alert-soft mb-0">
-                    <i class="bi bi-check-circle-fill me-1"></i> Your appeal has been reviewed and resolved. Everything has been restored.
-                </div>
-            @else
-                <p class="text-muted mb-2" style="font-size:0.85rem;">If you believe this decision is a mistake, you can submit an appeal below.</p>
-                <form id="appealForm">
-                    <textarea id="appealMessage" class="form-control mb-3" rows="4" placeholder="Explain why you think this decision is incorrect..."></textarea>
-                    <button type="submit" class="btn btn-appeal">
-                        <i class="bi bi-send-fill me-1"></i> Submit Appeal
-                    </button>
-                </form>
+            </div>
+            @if($report->appeal_message)
+            <div class="content-preview mb-3" style="font-size:0.85rem;">{{ $report->appeal_message }}</div>
             @endif
-        </div>
+
+            @if($isAdminViewer)
+            <button class="btn btn-appeal" onclick="markReviewedFromDecision()">
+                <i class="bi bi-check-circle-fill me-1"></i> Accept Appeal & Restore
+            </button>
+            @endif
+
+        @elseif($report->appeal_status === 'reviewed')
+            <div class="alert alert-success alert-soft mb-0">
+                <i class="bi bi-check-circle-fill me-1"></i> This appeal has been reviewed and resolved. Everything has been restored.
+            </div>
+        @elseif(!$isAdminViewer)
+            <p class="text-muted mb-2" style="font-size:0.85rem;">If you believe this decision is a mistake, you can submit an appeal below.</p>
+            <form id="appealForm">
+                <textarea id="appealMessage" class="form-control mb-3" rows="4" placeholder="Explain why you think this decision is incorrect..."></textarea>
+                <button type="submit" class="btn btn-appeal">
+                    <i class="bi bi-send-fill me-1"></i> Submit Appeal
+                </button>
+            </form>
+        @else
+            <p class="text-muted mb-0" style="font-size:0.85rem;">No appeal has been submitted for this report yet.</p>
+        @endif
     </div>
+</div>
 
 </div>
 
@@ -215,6 +249,19 @@ document.getElementById('appealForm')?.addEventListener('submit', function(e){
         btn.innerHTML = '<i class="bi bi-send-fill me-1"></i> Submit Appeal';
     });
 });
+
+function markReviewedFromDecision() {
+    if (!confirm('Accept this appeal? The report will be cancelled and everything restored.')) return;
+    fetch("/admin/reports/{{ $report->id }}/mark-reviewed", {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+    })
+    .then(r => r.json())
+    .then(d => { alert(d.message); if (d.success) location.reload(); })
+    .catch(() => alert('Network error.'));
+}
+
+
 </script>
 </body>
 </html>

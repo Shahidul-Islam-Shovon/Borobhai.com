@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ReportDecisionController extends Controller
 {
+    
     public function show($hashid)
     {
         $id = Report::decodeId($hashid);
@@ -18,31 +19,46 @@ class ReportDecisionController extends Controller
         $targetUserId = null;
         $content      = null;
         $images       = [];
+        $videos       = [];
         $isDeleted    = false;
         $contentType  = $report->type;
+        $jobLink      = null;
+        $likesCount   = 0;
+        $commentsCount = 0;
 
         if ($report->type === 'post') {
-            $post = \App\Models\Post::withTrashed()->find($report->target_id);
+            $post = \App\Models\Post::withTrashed()->withCount(['likes','comments'])->find($report->target_id);
             $targetUserId = $post?->user_id;
             $content      = $post?->content;
             $images       = $post?->images ?? [];
             $isDeleted    = $post?->trashed() ?? false;
+            $likesCount    = $post?->likes_count ?? 0;
+            $commentsCount = $post?->comments_count ?? 0;
+
+            if (!empty($post?->video) && $post->video !== 'null') {
+                $videos = is_array($post->video) ? $post->video : (json_decode($post->video, true) ?: [$post->video]);
+            }
         } elseif ($report->type === 'job') {
             $job = \App\Models\JobPost::withTrashed()->find($report->target_id);
             $targetUserId = $job?->user_id;
             $content      = $job ? ($job->title . ' — ' . $job->company) : null;
             $isDeleted    = $job?->trashed() ?? false;
+            $jobLink      = ($job && !$isDeleted) ? route('jobs.show', $job) : null;
         } elseif ($report->type === 'user') {
             $targetUserId = $report->target_id;
         }
 
-        // শুধু নিজের রিপোর্টের ডিসিশন দেখতে পারবে (বা admin)
-        $user = Auth::user();
-        if ($targetUserId !== Auth::id() && !($user->role === 'admin' || $user->is_super_admin)) {
+        $viewer = Auth::user();
+        $isAdminViewer = $viewer->role === 'admin' || $viewer->is_super_admin;
+
+        if ($targetUserId !== Auth::id() && !$isAdminViewer) {
             abort(403);
         }
 
-        return view('reports.decision', compact('report', 'content', 'images', 'isDeleted', 'contentType'));
+        return view('reports.decision', compact(
+            'report', 'content', 'images', 'videos', 'isDeleted', 'contentType',
+            'jobLink', 'likesCount', 'commentsCount', 'isAdminViewer'
+        ));
     }
 
     public function appeal(Request $request, $hashid)

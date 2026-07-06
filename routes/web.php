@@ -113,7 +113,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
 
     // ---------- PROFILE ----------
-    Route::get('/profile',                      [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/tab/content',          [ProfileController::class, 'tabContent'])->name('profile.tab');
     Route::post('/profile/update',              [ProfileController::class, 'updateProfile'])->name('profile.update.info');
     Route::post('/profile/photo',               [ProfileController::class, 'updatePhoto'])->name('profile.update.photo');
@@ -132,8 +132,7 @@ Route::middleware('auth')->group(function () {
 
     // ⚠️ {user} routes (hashid) — static এর পরে
     Route::get('/profile/{user}/tab/content',   [ProfileController::class, 'tabContent'])->name('profile.tab.user');
-    Route::get('/profile/{user}',               [ProfileController::class, 'show'])->name('profile.view');
-
+    Route::get('/profile/{userHash}', [ProfileController::class, 'show'])->name('profile.view');
     // ---------- FEED ----------
 
     Route::post('/presence/offline', [PostController::class, 'goOffline'])->name('presence.offline');

@@ -297,7 +297,7 @@ class ProfileController extends Controller
         $user = $request->user();
 
         if ($user->is_super_admin) {
-            return back()->withErrors(['userDeletion' => 'সুপার অ্যাডমিন অ্যাকাউন্ট ডিলিট করা নিষিদ্ধ!']);
+            return back()->withErrors(['userDeletion' => 'Cant Delete Super Admin Account!']);
         }
 
         $request->validateWithBag('userDeletion', [

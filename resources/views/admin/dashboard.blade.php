@@ -362,6 +362,7 @@
                             <th style="width:28%">Reported Content</th>
                             <th style="width:18%">Reported User</th>
                             <th style="width:12%">Reason</th>
+                            <th style="width:12%">Appeal Status</th>
                             <th style="width:34%;text-align:right">Actions</th>
                         </tr>
                     </thead>
@@ -416,6 +417,21 @@
                             <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
                             @if($report->details)
                             <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
+                            @endif
+                        </td>
+                        <td>
+                            @if($report->appeal_status === 'pending')
+                                <div class="mb-2 p-2" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
+                                    <div class="fw-bold text-warning" style="font-size:0.68rem;text-transform:uppercase;">
+                                        <i class="fa-solid fa-megaphone"></i> User Appealed
+                                    </div>
+                                    <div class="text-dark mt-1" style="font-size:0.72rem;">{{ \Illuminate\Support\Str::limit($report->appeal_message, 80) }}</div>
+                                </div>
+                                <button onclick="markReviewed({{ $report->id }})" class="btn-action-pill activate">
+                                    <i class="fa-solid fa-check-double"></i> Accept Appeal
+                                </button>
+                            @else
+                                {{-- আগের actions (warn/delete/complete ইত্যাদি) এখানে --}}
                             @endif
                         </td>
                         <td style="text-align:right;">
@@ -592,7 +608,7 @@
     <thead>
         <tr>
             <th>Report Type</th>
-            <th>Content</th>
+            <th>Post Caption</th>
             <th>Reason</th>
             <th>Status</th>
             <th>Resolved At</th>
@@ -611,11 +627,13 @@
         <td style="font-size:0.72rem;color:#64748b;">{{ ucfirst($r->reason) }}</td>
         <td>
             @if($r->status === 'completed')
-                <span class="status-badge active"><i class="fa-solid fa-check-double"></i> Completed</span>
+                <span class="status-badge active"><i class="fa-solid fa-check-double"></i> Action Taken</span>
             @elseif($r->status === 'warned')
-                <span class="status-badge temp-suspended"><i class="fa-solid fa-triangle-exclamation"></i> Warned</span>
+                <span class="status-badge temp-suspended"><i class="fa-solid fa-triangle-exclamation"></i> Warned User</span>
+            @elseif($r->appeal_status === 'reviewed')
+                <span class="status-badge temp-suspended"><i class="fa-solid fa-check-double"></i>Reviewed and Dismiss Report</span>
             @else
-                <span class="status-badge perm-suspended"><i class="fa-solid fa-trash-can"></i> Deleted</span>
+                <span class="status-badge perm-suspended"><i class="fa-solid fa-trash-can"></i>Deleted by Admin</span>
             @endif
         </td>
         <td style="font-size:0.72rem;color:#64748b;">{{ $r->updated_at->format('d M Y, g:i a') }}</td>
@@ -627,8 +645,10 @@
                 </button>
             @elseif($r->appeal_status === 'reviewed')
                 <span class="badge bg-success" style="font-size:0.65rem;">Reviewed</span>
+            @elseif($r->appeal_status === 'rejected')
+                <span class="badge bg-danger" style="font-size:0.65rem;">Rejected</span>
             @else
-                <span class="text-muted" style="font-size:0.7rem;">—</span>
+                <span class="text-muted" style="font-size:0.7rem;">No Appeal Yet</span>
             @endif
         </td>
     </tr>
@@ -809,9 +829,9 @@ function executeAuthorityChange(userId, type) {
 
    function adminAction(action, reportId) {
     const config = {
-        warn:             { title: 'Send Warning?',   text: 'A warning notification will be sent to the user.', icon: 'warning', confirmText: 'Yes, Warn User', color: '#d97706' },
-        'delete-content': { title: 'Delete Content?', text: 'This will permanently delete the reported content.', icon: 'warning', confirmText: 'Yes, Delete',    color: '#dc2626' },
-        dismiss:          { title: 'Dismiss Report?', text: 'This report will be marked as resolved.',           icon: 'info',    confirmText: 'Dismiss',          color: '#16a34a' },
+        warn:  { title: 'Send Warning?',   text: 'A warning notification will be sent to the user.', icon: 'warning', confirmText: 'Yes, Warn User', color: '#d97706' },
+        'delete-content': { title: 'Delete Content?', text: 'This will permanently delete the reported content.', icon: 'warning', confirmText: 'Yes, Delete', color: '#dc2626' },
+        dismiss:  { title: 'Dismiss Report?', text: 'This report will be marked as resolved.',  icon: 'info',    confirmText: 'Dismiss',  color: '#16a34a' }, 
     };
     const c = config[action];
     if (!c) return;
@@ -970,7 +990,7 @@ function completeReport(reportId) {
 function markReviewed(reportId) {
     Swal.fire({
         title: 'Review Appeal?',
-        text: 'রিপোর্ট বাতিল হয়ে যাবে এবং ইউজারের পোস্ট/একাউন্ট রিস্টোর করা হবে।',
+        text: 'Report will be marked as reviewed and dismissed. This action cannot be undone',
         icon: 'question', showCancelButton: true,
         confirmButtonColor: '#16a34a', confirmButtonText: 'Yes, Mark Reviewed'
     }).then(result => {

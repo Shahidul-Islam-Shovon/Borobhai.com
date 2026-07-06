@@ -26,7 +26,10 @@ class AdminDashboardController extends Controller
         $users     = User::latest()->get();
         $circulars = \App\Models\JobPost::with('user')->latest()->get();
 
-        $reports = \App\Models\Report::where('status', 'pending')
+        $reports = \App\Models\Report::where(function ($q) {
+        $q->where('status', 'pending')
+          ->orWhere('appeal_status', 'pending'); // ⬅️ appeal থাকলে আবার active লিস্টে দেখাবে
+        })
         ->latest()
         ->get()
         ->map(function ($r) {
@@ -65,6 +68,9 @@ class AdminDashboardController extends Controller
 
     // ✅ Completed history আলাদা
     $completedReports = \App\Models\Report::whereIn('status', ['warned', 'dismissed', 'completed'])
+    ->where(function ($q) {
+        $q->whereNull('appeal_status')->orWhere('appeal_status', 'reviewed'); // ⬅️ pending appeal বাদ
+    })
     ->latest()
     ->limit(50)
     ->get()
