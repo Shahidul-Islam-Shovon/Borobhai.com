@@ -58,8 +58,8 @@
     <div class="nav-link-custom active" data-target="analytics-tab"><i class="fa-solid fa-chart-pie"></i>Analytics</div>
     <div class="nav-link-custom" data-target="users-tab"><i class="fa-solid fa-users"></i> User Management</div>
 
-    <div class="nav-link-custom" data-target="posts-tab">
-        <i class="fa-solid fa-newspaper"></i> Reported Contents
+    <div class="nav-link-custom" data-target="posts-tab" onclick="markSeen('post')">
+    <i class="fa-solid fa-newspaper"></i> Reported Contents
         @if($reports->whereNotIn('type',['job'])->count() > 0)
             <span class="badge bg-danger ms-auto pending-reports-count" style="font-size:0.6rem;">
                 {{ $reports->whereNotIn('type',['job'])->count() }}
@@ -67,7 +67,7 @@
         @endif
     </div>
 
-    <div class="nav-link-custom" data-target="jobs-tab">
+    <div class="nav-link-custom" data-target="jobs-tab" onclick="markSeen('job')">
         <i class="fa-solid fa-briefcase"></i> Reported Jobs
         @if($reports->where('type','job')->count() > 0)
             <span class="badge bg-warning text-dark ms-auto" style="font-size:0.6rem;">
@@ -334,260 +334,258 @@
     </div>
 
     {{-- Reported Contents Tab --}}
-    <div id="posts-tab" class="tab-content-panel">
-        <div class="card-table-wrapper">
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
-                    <i class="fa-solid fa-flag text-danger me-2"></i>
-                    Reported Contents
-                    <span class="badge bg-danger ms-2 pending-reports-count" style="font-size:0.7rem;">
-                        {{ $reports->whereNotIn('type', ['job'])->count() }}
-                    </span>
-                </h6>
+    {{-- Reported Contents Tab --}}
+<div id="posts-tab" class="tab-content-panel">
+    <div class="card-table-wrapper">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
+                <i class="fa-solid fa-flag text-danger me-2"></i>
+                Reported Contents
+                <span class="badge bg-danger ms-2 pending-reports-count" style="font-size:0.7rem;">
+                    {{ $reports->whereNotIn('type', ['job'])->count() }}
+                </span>
+            </h6>
+        </div>
+
+        @php $contentReports = $reports->whereNotIn('type', ['job']); @endphp
+
+        @if($contentReports->isEmpty())
+            <div class="text-center py-5 text-muted">
+                <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
+                <p class="fw-semibold">No pending reports. All clear!</p>
             </div>
-
-            @php $contentReports = $reports->whereNotIn('type', ['job']); @endphp
-
-            @if($contentReports->isEmpty())
-                <div class="text-center py-5 text-muted">
-                    <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
-                    <p class="fw-semibold">No pending reports. All clear!</p>
-                </div>
-            @else
-            <div class="table-responsive">
-                <table class="table table-hover align-middle w-100" id="reportedTable">
-                    <thead>
-                        <tr>
-                            <th style="width:8%">Type</th>
-                            <th style="width:28%">Reported Content</th>
-                            <th style="width:18%">Reported User</th>
-                            <th style="width:12%">Reason</th>
-                            <th style="width:12%">Appeal Status</th>
-                            <th style="width:34%;text-align:right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach($contentReports as $report)
-                    <tr id="report-row-{{ $report->id }}">
-                        <td>
-                            @php $typeColor = match($report->type) { 'post'=>'primary','user'=>'danger',default=>'secondary' }; @endphp
-                            <span class="badge bg-{{ $typeColor }}-subtle text-{{ $typeColor }} border border-{{ $typeColor }}-subtle"
-                                  style="font-size:0.65rem;font-weight:700;text-transform:uppercase;">
-                                {{ $report->type }}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="fw-semibold text-dark" style="font-size:0.78rem;">{{ $report->targetTitle }}</div>
-                            {{-- ✅ FIX: openFeedPost() হটানো হয়েছে — সরাসরি anchor href --}}
-                            @if($report->targetLink)
-                                <a href="{{ $report->targetLink }}" target="_blank" rel="noopener noreferrer"
-                                   class="text-primary" style="font-size:0.68rem;">
-                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>
-                                    {{ $report->type === 'post' ? 'View Post' : 'Visit Profile' }}
-                                </a>
+        @else
+        <div class="table-responsive">
+            <table class="table table-hover align-middle w-100" id="reportedTable">
+                <thead>
+                    <tr>
+                        <th style="width:4%">#</th>
+                        <th style="width:8%">Type</th>
+                        <th style="width:24%">Reported Content</th>
+                        <th style="width:16%">Reported User</th>
+                        <th style="width:11%">Reason</th>
+                        <th style="width:14%">Appeal</th>
+                        <th style="width:23%;text-align:right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach($contentReports as $i => $report)
+                <tr id="report-row-{{ $report->id }}" class="{{ !$report->admin_seen ? 'table-warning' : '' }}">
+                    <td class="fw-bold text-secondary">
+                        {{ $i + 1 }}
+                        @if(!$report->admin_seen)
+                            <span class="badge bg-danger ms-1" style="font-size:0.55rem;">NEW</span>
+                        @endif
+                    </td>
+                    <td>
+                        @php $typeColor = match($report->type) { 'post'=>'primary','user'=>'danger',default=>'secondary' }; @endphp
+                        <span class="badge bg-{{ $typeColor }}-subtle text-{{ $typeColor }} border border-{{ $typeColor }}-subtle"
+                              style="font-size:0.65rem;font-weight:700;text-transform:uppercase;">
+                            {{ $report->type }}
+                        </span>
+                        <div class="text-muted mt-1" style="font-size:0.62rem;">{{ $report->created_at->diffForHumans() }}</div>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark" style="font-size:0.78rem;">{{ $report->targetTitle }}</div>
+                        @if($report->targetLink)
+                            <a href="{{ $report->targetLink }}" target="_blank" rel="noopener noreferrer"
+                               class="text-primary" style="font-size:0.68rem;">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>
+                                {{ $report->type === 'post' ? 'View Post' : 'Visit Profile' }}
+                            </a>
+                        @else
+                            <span class="text-muted" style="font-size:0.68rem;">[Content removed]</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($report->targetUser)
+                        <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
+                        <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
+                        @php $uStatus = $report->targetUserStatus; @endphp
+                        <div class="mt-1">
+                            @if($uStatus === 'suspended_temp')
+                                <span class="status-badge temp-suspended user-status-badge-{{ $report->targetUser->id }}"><i class="fa-solid fa-clock"></i> 7d Suspended</span>
+                            @elseif($uStatus === 'suspended_perm')
+                                <span class="status-badge perm-suspended user-status-badge-{{ $report->targetUser->id }}"><i class="fa-solid fa-ban"></i> Permanent Banned</span>
                             @else
-                                <span class="text-muted" style="font-size:0.68rem;">[Content removed]</span>
+                                <span class="status-badge active user-status-badge-{{ $report->targetUser->id }}"><i class="fa-solid fa-circle" style="font-size:5px;"></i> Active</span>
                             @endif
-                        </td>
-                        <td>
-                            @if($report->targetUser)
-                            <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
-                            <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
-                            @php $uStatus = $report->targetUserStatus; @endphp
-                            <div class="mt-1">
-                                @if($uStatus === 'suspended_temp')
-                                    <span class="status-badge temp-suspended user-status-badge-{{ $report->targetUser->id }}">
-                                        <i class="fa-solid fa-clock"></i> 7d Suspended
-                                    </span>
-                                @elseif($uStatus === 'suspended_perm')
-                                    <span class="status-badge perm-suspended user-status-badge-{{ $report->targetUser->id }}">
-                                        <i class="fa-solid fa-ban"></i> Permanent Banned
-                                    </span>
-                                @else
-                                    <span class="status-badge active user-status-badge-{{ $report->targetUser->id }}">
-                                        <i class="fa-solid fa-circle" style="font-size:5px;"></i> Active
-                                    </span>
-                                @endif
-                            </div>
-                            @else
-                            <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
-                            @endif
-                        </td>
-                        <td>
-                            <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
-                            @if($report->details)
-                            <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
-                            @endif
-                        </td>
-                        <td>
-                            @if($report->appeal_status === 'pending')
-                                <div class="mb-2 p-2" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
-                                    <div class="fw-bold text-warning" style="font-size:0.68rem;text-transform:uppercase;">
-                                        <i class="fa-solid fa-megaphone"></i> User Appealed
-                                    </div>
-                                    <div class="text-dark mt-1" style="font-size:0.72rem;">{{ \Illuminate\Support\Str::limit($report->appeal_message, 80) }}</div>
+                        </div>
+                        @else
+                        <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
+                        @endif
+                    </td>
+                    <td>
+                        <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
+                        @if($report->details)
+                        <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
+                        @endif
+                    </td>
+                    <td>
+                        @if($report->appeal_status === 'pending')
+                            <div class="mb-2 p-2" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
+                                <div class="fw-bold text-warning" style="font-size:0.65rem;text-transform:uppercase;">
+                                    <i class="fa-solid fa-megaphone"></i> Appealed
                                 </div>
-                                <button onclick="markReviewed({{ $report->id }})" class="btn-action-pill activate">
-                                    <i class="fa-solid fa-check-double"></i> Accept Appeal
-                                </button>
-                            @else
-                                {{-- আগের actions (warn/delete/complete ইত্যাদি) এখানে --}}
-                            @endif
-                        </td>
-                        <td style="text-align:right;">
-                            <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                <div class="text-dark mt-1" style="font-size:0.7rem;">{{ \Illuminate\Support\Str::limit($report->appeal_message, 60) }}</div>
+                            </div>
+                            <button onclick="markReviewed({{ $report->id }})" class="btn-action-pill activate w-100 justify-content-center">
+                                <i class="fa-solid fa-check-double"></i> Accept Appeal
+                            </button>
+                        @else
+                            <span class="text-muted" style="font-size:0.7rem;">— No appeal —</span>
+                        @endif
+                    </td>
+                    <td style="text-align:right;">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size:0.75rem;border-radius:8px;">
+                                <i class="fa-solid fa-gavel me-1"></i> Take Action
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.8rem;">
                                 @if($report->targetUser)
-                                <button onclick="adminAction('warn', {{ $report->id }})" class="btn-action-pill temp-ban">
-                                    <i class="fa-solid fa-triangle-exclamation"></i> Warn User
-                                </button>
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('warn', {{ $report->id }})"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Warn User</a></li>
                                 @endif
 
                                 @if($report->type === 'user' && $report->targetUser)
-                                    <span id="suspend-btn-{{ $report->targetUser->id }}">
+                                    <li><span id="suspend-btn-{{ $report->targetUser->id }}" class="d-block">
                                         @if(in_array($report->targetUserStatus, ['suspended_temp','suspended_perm']))
-                                            <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'active')" class="btn-action-pill activate">
-                                                <i class="fa-solid fa-circle-check"></i> Remove Suspension
-                                            </button>
+                                            <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'active')"><i class="fa-solid fa-circle-check text-success me-2"></i>Remove Suspension</a>
                                         @else
-                                            <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'temp')" class="btn-action-pill temp-ban">
-                                                <i class="fa-solid fa-clock"></i> 7d Ban
-                                            </button>
-                                            <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'perm')" class="btn-action-pill perm-ban">
-                                                <i class="fa-solid fa-ban"></i> Perm Ban
-                                            </button>
+                                            <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'temp')"><i class="fa-solid fa-clock text-warning me-2"></i>Suspend 7 Days</a>
+                                            <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'perm')"><i class="fa-solid fa-ban text-danger me-2"></i>Permanent Ban</a>
                                         @endif
-                                    </span>
+                                    </span></li>
                                 @elseif($report->type === 'post')
-                                    <button onclick="adminAction('delete-content', {{ $report->id }})" class="btn-action-pill perm-ban">
-                                        <i class="fa-regular fa-trash-can"></i> Delete Post
-                                    </button>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); adminAction('delete-content', {{ $report->id }})"><i class="fa-regular fa-trash-can me-2"></i>Delete Post</a></li>
                                 @endif
 
-                                <button onclick="completeReport({{ $report->id }})" class="btn-action-pill activate">
-                                    <i class="fa-solid fa-check-double"></i> Action Completed
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
-            @endif
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('dismiss', {{ $report->id }})"><i class="fa-solid fa-ban text-muted me-2"></i>Dismiss (No Violation)</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); completeReport({{ $report->id }})"><i class="fa-solid fa-check-double text-success me-2"></i>Mark Resolved</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+                </tbody>
+            </table>
         </div>
+        @endif
     </div>
+</div>
 
     {{-- Reported Jobs Tab --}}
-    <div id="jobs-tab" class="tab-content-panel">
-        <div class="card-table-wrapper">
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
-                    <i class="fa-solid fa-briefcase text-warning me-2"></i>
-                    Reported Jobs
-                    <span class="badge bg-warning text-dark ms-2" style="font-size:0.7rem;">
-                        {{ $reports->where('type','job')->count() }}
-                    </span>
-                </h6>
-            </div>
-
-            @php $jobReports = $reports->where('type', 'job'); @endphp
-
-            @if($jobReports->isEmpty())
-                <div class="text-center py-5 text-muted">
-                    <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
-                    <p class="fw-semibold">No reported jobs. All clear!</p>
-                </div>
-            @else
-            <div class="table-responsive">
-                <table class="table table-hover align-middle w-100" id="jobsTable">
-                    <thead>
-                        <tr>
-                            <th style="width:28%">Reported Job</th>
-                            <th style="width:18%">Posted By</th>
-                            <th style="width:12%">Reason</th>
-                            <th style="width:42%;text-align:right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach($jobReports as $report)
-                    <tr id="report-row-{{ $report->id }}">
-                        <td>
-                            <div class="fw-semibold text-dark" style="font-size:0.78rem;">{{ $report->targetTitle }}</div>
-                            @if($report->targetLink)
-                            <a href="{{ $report->targetLink }}" target="_blank" rel="noopener noreferrer" class="text-primary" style="font-size:0.68rem;">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>View Job
-                            </a>
-                            @else
-                            <span class="text-muted" style="font-size:0.68rem;">[Job removed]</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if($report->targetUser)
-                            <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
-                            <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
-                            @php $uStatus = $report->targetUserStatus; @endphp
-                            <div class="mt-1">
-                                @if($uStatus === 'suspended_temp')
-                                    <span class="status-badge temp-suspended user-status-badge-{{ $report->targetUser->id }}">
-                                        <i class="fa-solid fa-clock"></i> 7d Suspended
-                                    </span>
-                                @elseif($uStatus === 'suspended_perm')
-                                    <span class="status-badge perm-suspended user-status-badge-{{ $report->targetUser->id }}">
-                                        <i class="fa-solid fa-ban"></i> Permanent Banned
-                                    </span>
-                                @else
-                                    <span class="status-badge active user-status-badge-{{ $report->targetUser->id }}">
-                                        <i class="fa-solid fa-circle" style="font-size:5px;"></i> Active
-                                    </span>
-                                @endif
-                            </div>
-                            @else
-                            <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
-                            @endif
-                        </td>
-                        <td>
-                            <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
-                            @if($report->details)
-                            <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
-                            @endif
-                        </td>
-                        <td style="text-align:right;">
-                            <div class="d-flex justify-content-end gap-1 flex-wrap">
-                                @if($report->targetUser)
-                                <button onclick="adminAction('warn', {{ $report->id }})" class="btn-action-pill temp-ban">
-                                    <i class="fa-solid fa-triangle-exclamation"></i> Warn
-                                </button>
-                                <span id="suspend-btn-{{ $report->targetUser->id }}">
-                                    @if(in_array($report->targetUserStatus, ['suspended_temp','suspended_perm']))
-                                        <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'active')" class="btn-action-pill activate">
-                                            <i class="fa-solid fa-circle-check"></i> Remove Suspension
-                                        </button>
-                                    @else
-                                        <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'temp')" class="btn-action-pill temp-ban">
-                                            <i class="fa-solid fa-clock"></i> 7d Ban
-                                        </button>
-                                        <button onclick="suspendFromReport({{ $report->targetUser->id }}, 'perm')" class="btn-action-pill perm-ban">
-                                            <i class="fa-solid fa-ban"></i> Perm Ban
-                                        </button>
-                                    @endif
-                                </span>
-                                @endif
-                                <button onclick="adminAction('delete-content', {{ $report->id }})" class="btn-action-pill perm-ban">
-                                    <i class="fa-regular fa-trash-can"></i> Delete Job
-                                </button>
-                                <button onclick="completeReport({{ $report->id }})" class="btn-action-pill activate">
-                                    <i class="fa-solid fa-check-double"></i> Action Complete
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
-            @endif
+    {{-- Reported Jobs Tab --}}
+<div id="jobs-tab" class="tab-content-panel">
+    <div class="card-table-wrapper">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
+                <i class="fa-solid fa-briefcase text-warning me-2"></i>
+                Reported Jobs
+                <span class="badge bg-warning text-dark ms-2" style="font-size:0.7rem;">
+                    {{ $reports->where('type','job')->count() }}
+                </span>
+            </h6>
         </div>
+
+        @php $jobReports = $reports->where('type', 'job'); @endphp
+
+        @if($jobReports->isEmpty())
+            <div class="text-center py-5 text-muted">
+                <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
+                <p class="fw-semibold">No reported jobs. All clear!</p>
+            </div>
+        @else
+        <div class="table-responsive">
+            <table class="table table-hover align-middle w-100" id="jobsTable">
+                <thead>
+                    <tr>
+                        <th style="width:4%">#</th>
+                        <th style="width:26%">Reported Job</th>
+                        <th style="width:18%">Posted By</th>
+                        <th style="width:12%">Reason</th>
+                        <th style="width:14%">Appeal</th>
+                        <th style="width:26%;text-align:right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach($jobReports as $i => $report)
+                <tr id="report-row-{{ $report->id }}" class="{{ !$report->admin_seen ? 'table-warning' : '' }}">
+                    <td class="fw-bold text-secondary">
+                        {{ $i + 1 }}
+                        @if(!$report->admin_seen)
+                            <span class="badge bg-danger ms-1" style="font-size:0.55rem;">NEW</span>
+                        @endif
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark" style="font-size:0.78rem;">{{ $report->targetTitle }}</div>
+                        @if($report->targetLink)
+                        <a href="{{ $report->targetLink }}" target="_blank" rel="noopener noreferrer" class="text-primary" style="font-size:0.68rem;">
+                            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>View Job
+                        </a>
+                        @else
+                        <span class="text-muted" style="font-size:0.68rem;">[Job removed]</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($report->targetUser)
+                        <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
+                        <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
+                        @else
+                        <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
+                        @endif
+                    </td>
+                    <td>
+                        <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
+                        @if($report->details)
+                        <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
+                        @endif
+                    </td>
+                    <td>
+                        @if($report->appeal_status === 'pending')
+                            <div class="mb-2 p-2" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
+                                <div class="fw-bold text-warning" style="font-size:0.65rem;text-transform:uppercase;"><i class="fa-solid fa-megaphone"></i> Appealed</div>
+                                <div class="text-dark mt-1" style="font-size:0.7rem;">{{ \Illuminate\Support\Str::limit($report->appeal_message, 60) }}</div>
+                            </div>
+                            <button onclick="markReviewed({{ $report->id }})" class="btn-action-pill activate w-100 justify-content-center">
+                                <i class="fa-solid fa-check-double"></i> Accept Appeal
+                            </button>
+                        @else
+                            <span class="text-muted" style="font-size:0.7rem;">— No appeal —</span>
+                        @endif
+                    </td>
+                    <td style="text-align:right;">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size:0.75rem;border-radius:8px;">
+                                <i class="fa-solid fa-gavel me-1"></i> Take Action
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.8rem;">
+                                @if($report->targetUser)
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('warn', {{ $report->id }})"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Warn User</a></li>
+                                <li><span id="suspend-btn-{{ $report->targetUser->id }}" class="d-block">
+                                    @if(in_array($report->targetUserStatus, ['suspended_temp','suspended_perm']))
+                                        <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'active')"><i class="fa-solid fa-circle-check text-success me-2"></i>Remove Suspension</a>
+                                    @else
+                                        <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'temp')"><i class="fa-solid fa-clock text-warning me-2"></i>Suspend 7 Days</a>
+                                        <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'perm')"><i class="fa-solid fa-ban text-danger me-2"></i>Permanent Ban</a>
+                                    @endif
+                                </span></li>
+                                @endif
+                                <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); adminAction('delete-content', {{ $report->id }})"><i class="fa-regular fa-trash-can me-2"></i>Delete Job</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('dismiss', {{ $report->id }})"><i class="fa-solid fa-ban text-muted me-2"></i>Dismiss (No Violation)</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); completeReport({{ $report->id }})"><i class="fa-solid fa-check-double text-success me-2"></i>Mark Resolved</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
     </div>
+</div>
 
     {{-- History Tab --}}
     <div id="history-tab" class="tab-content-panel">
@@ -602,60 +600,54 @@
                     <p class="fw-semibold">No completed reports yet.</p>
                 </div>
             @else
-            <div class="table-responsive">
-
+            <div class="table-responsive">               
                 <table class="table table-hover align-middle w-100" id="historyTable">
-    <thead>
-        <tr>
-            <th>Report Type</th>
-            <th>Post Caption</th>
-            <th>Reason</th>
-            <th>Status</th>
-            <th>Resolved At</th>
-            <th style="text-align:right;">Appeal</th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach($completedReports as $r)
-    <tr>
-        <td>
-            <span class="badge bg-secondary-subtle text-secondary border" style="font-size:0.65rem;font-weight:700;text-transform:uppercase;">
-                {{ $r->type }}
-            </span>
-        </td>
-        <td style="font-size:0.78rem;">{{ $r->targetTitle }}</td>
-        <td style="font-size:0.72rem;color:#64748b;">{{ ucfirst($r->reason) }}</td>
-        <td>
-            @if($r->status === 'completed')
-                <span class="status-badge active"><i class="fa-solid fa-check-double"></i> Action Taken</span>
-            @elseif($r->status === 'warned')
-                <span class="status-badge temp-suspended"><i class="fa-solid fa-triangle-exclamation"></i> Warned User</span>
-            @elseif($r->appeal_status === 'reviewed')
-                <span class="status-badge temp-suspended"><i class="fa-solid fa-check-double"></i>Reviewed and Dismiss Report</span>
-            @else
-                <span class="status-badge perm-suspended"><i class="fa-solid fa-trash-can"></i>Deleted by Admin</span>
-            @endif
-        </td>
-        <td style="font-size:0.72rem;color:#64748b;">{{ $r->updated_at->format('d M Y, g:i a') }}</td>
-        <td style="text-align:right;">
-            @if($r->appeal_status === 'pending')
-                <span class="badge bg-warning text-dark mb-1 d-block" style="font-size:0.65rem;">Appeal Pending</span>
-                <button onclick="markReviewed({{ $r->id }})" class="btn-action-pill activate">
-                    <i class="fa-solid fa-check-double"></i> Reviewed
-                </button>
-            @elseif($r->appeal_status === 'reviewed')
-                <span class="badge bg-success" style="font-size:0.65rem;">Reviewed</span>
-            @elseif($r->appeal_status === 'rejected')
-                <span class="badge bg-danger" style="font-size:0.65rem;">Rejected</span>
-            @else
-                <span class="text-muted" style="font-size:0.7rem;">No Appeal Yet</span>
-            @endif
-        </td>
-    </tr>
-    @endforeach
-    </tbody>
-</table>
-                
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Type</th>
+                            <th>Content</th>
+                            <th>Reason</th>
+                            <th>Final Outcome</th>
+                            <th>Resolved At</th>
+                            <th style="text-align:right;">Appeal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($completedReports as $i => $r)
+                    <tr>
+                        <td class="text-secondary fw-bold">{{ $i + 1 }}</td>
+                        <td>
+                            <span class="badge bg-secondary-subtle text-secondary border" style="font-size:0.65rem;font-weight:700;text-transform:uppercase;">
+                                {{ $r->type }}
+                            </span>
+                        </td>
+                        <td style="font-size:0.78rem;">{{ $r->targetTitle }}</td>
+                        <td style="font-size:0.72rem;color:#64748b;">{{ ucfirst($r->reason) }}</td>
+                        <td>
+                            @php
+                                $outcome = match(true) {
+                                    $r->appeal_status === 'reviewed' => ['bp-ok', 'fa-check-double', 'Appeal Approved — Restored'],
+                                    $r->action_taken === 'warned' => ['temp-suspended', 'fa-triangle-exclamation', 'Warned User'],
+                                    $r->action_taken === 'deleted' => ['perm-suspended', 'fa-trash-can', 'Content Removed'],
+                                    $r->action_taken === 'dismissed_no_violation' => ['active', 'fa-check', 'Dismissed — No Violation'],
+                                    default => ['active', 'fa-check-double', 'Marked Resolved'],
+                                };
+                            @endphp
+                            <span class="status-badge {{ $outcome[0] }}"><i class="fa-solid {{ $outcome[1] }}"></i> {{ $outcome[2] }}</span>
+                        </td>
+                        <td style="font-size:0.72rem;color:#64748b;">{{ $r->updated_at->format('d M Y, g:i a') }}</td>
+                        <td style="text-align:right;">
+                            @if($r->appeal_status === 'reviewed')
+                                <span class="badge bg-success" style="font-size:0.65rem;">Appeal Reviewed</span>
+                            @else
+                                <span class="text-muted" style="font-size:0.7rem;">— No appeal —</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                    </tbody>
+                </table>
             </div>
             @endif
         </div>
@@ -668,6 +660,11 @@
 // TAB NAVIGATION
 // ============================================================
 document.addEventListener("DOMContentLoaded", function() {
+    
+    // ✅ পেজ লোড হওয়া মানেই admin দেখেছে — তাই সাথে সাথেই seen মার্ক করে দাও
+    fetch('/admin/reports/mark-seen/post', { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } }).catch(()=>{});
+    fetch('/admin/reports/mark-seen/job', { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } }).catch(()=>{});
+
     const activeTab = localStorage.getItem('admin_active_tab') || 'analytics-tab';
     document.querySelectorAll('.nav-link-custom').forEach(l => l.classList.remove('active'));
     document.querySelectorAll('.tab-content-panel').forEach(t => t.classList.remove('active'));
@@ -827,11 +824,11 @@ function executeAuthorityChange(userId, type) {
 // ADMIN REPORT ACTIONS (warn / delete-content / dismiss)
 // ============================================================
 
-   function adminAction(action, reportId) {
+function adminAction(action, reportId) {
     const config = {
-        warn:  { title: 'Send Warning?',   text: 'A warning notification will be sent to the user.', icon: 'warning', confirmText: 'Yes, Warn User', color: '#d97706' },
-        'delete-content': { title: 'Delete Content?', text: 'This will permanently delete the reported content.', icon: 'warning', confirmText: 'Yes, Delete', color: '#dc2626' },
-        dismiss:  { title: 'Dismiss Report?', text: 'This report will be marked as resolved.',  icon: 'info',    confirmText: 'Dismiss',  color: '#16a34a' }, 
+        warn:             { title: 'Send Warning?',   text: 'A warning notification will be sent to the user. The report will remain active.', icon: 'warning', confirmText: 'Yes, Warn User', color: '#d97706' },
+        'delete-content':  { title: 'Delete Content?', text: 'This will permanently delete the reported content.', icon: 'warning', confirmText: 'Yes, Delete', color: '#dc2626' },
+        dismiss:          { title: 'Dismiss Report?', text: 'This report will be marked as resolved with no violation found.', icon: 'info', confirmText: 'Dismiss', color: '#16a34a' },
     };
     const c = config[action];
     if (!c) return;
@@ -843,16 +840,18 @@ function executeAuthorityChange(userId, type) {
         let note = null;
         if (action === 'warn' || action === 'delete-content') {
             note = prompt(
-                action === 'warn'
-                    ? 'Write a note for the user explaining the warning:'
-                    : 'Write a note for the user explaining why this is being deleted:',
+                action === 'warn' ? 'Write a note for the user explaining the warning:' : 'Write a reason for deleting this (the user will see this):',
                 ''
             );
-            if (note === null) return; // user cancelled the prompt
+            if (note === null) return;
         }
 
         const methodMap = { warn: 'POST', 'delete-content': 'DELETE', dismiss: 'POST' };
-        const urlMap    = { warn: `/admin/reports/${reportId}/warn`, 'delete-content': `/admin/reports/${reportId}/content`, dismiss: `/admin/reports/${reportId}/dismiss` };
+        const urlMap = {
+            warn: `/admin/reports/${reportId}/warn`,
+            'delete-content': `/admin/reports/${reportId}/delete-content`,
+            dismiss: `/admin/reports/${reportId}/dismiss`,
+        };
 
         fetch(urlMap[action], {
             method: methodMap[action],
@@ -864,7 +863,7 @@ function executeAuthorityChange(userId, type) {
             if (d.success) {
                 Toast.fire({ icon: 'success', title: d.message });
 
-                // ✅ শুধু delete-content আর dismiss এ রো সরাও — warn এ না
+                // ✅ শুধু delete-content আর dismiss এ রো সরাও — warn এ case খোলা থাকে, তাই রো ও থাকবে
                 if (action !== 'warn') {
                     const row = document.getElementById('report-row-' + reportId);
                     if (row && $.fn.DataTable.isDataTable('#reportedTable')) {
@@ -877,6 +876,8 @@ function executeAuthorityChange(userId, type) {
                     document.querySelectorAll('.pending-reports-count').forEach(b => {
                         b.textContent = Math.max(0, (parseInt(b.textContent) || 0) - 1);
                     });
+                } else {
+                    // ✅ Warn করার পর row থেকেই যাবে, শুধু note/badge visually আপডেট করা যায় (ঐচ্ছিক)
                 }
                 refreshStatsCards();
             } else {
@@ -885,6 +886,18 @@ function executeAuthorityChange(userId, type) {
         })
         .catch(() => Toast.fire({ icon: 'error', title: 'Network error.' }));
     });
+}
+
+
+// ✅ নতুন — ট্যাব খুললে seen মার্ক + NEW ব্যাজ সরানো
+function markSeen(type) {
+    fetch(`/admin/reports/mark-seen/${type}`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+    }).then(() => {
+        document.querySelectorAll('.badge.bg-danger').forEach(b => { if (b.textContent.trim() === 'NEW') b.remove(); });
+        document.querySelectorAll('tr.table-warning').forEach(r => r.classList.remove('table-warning'));
+    }).catch(() => {});
 }
 
 // ============================================================

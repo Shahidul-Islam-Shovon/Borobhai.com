@@ -4,7 +4,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
 {
-    protected $fillable = ['reporter_id', 'type', 'target_id', 'reason', 'details', 'status', 'admin_note', 'admin_id', 'action_taken', 'reviewed_at', 'appeal_message', 'appeal_status', 'appealed_at'];
+    protected $fillable = ['reporter_id', 'type', 'target_id', 'reason', 'details', 'status', 'admin_note', 'admin_id', 'action_taken', 'reviewed_at', 'appeal_message', 'appeal_status', 'appealed_at', 'admin_seen'];
+
+        protected $casts = [
+        'reviewed_at' => 'datetime',
+        'appealed_at' => 'datetime',
+        'admin_seen'  => 'boolean',
+    ];
 
     public function reporter() { return $this->belongsTo(User::class, 'reporter_id'); }
 

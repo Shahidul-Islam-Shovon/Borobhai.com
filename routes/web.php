@@ -46,6 +46,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/users/{id}/change-role', [AdminDashboardController::class, 'changeUserRole'])->name('users.change-role');
     //suspension
     Route::post('/users/{id}/suspension',  [AdminDashboardController::class, 'updateSuspensionStatus'])->name('users.suspension');
+
+    Route::post('/admin/reports/mark-seen/{type}', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'markSeen'])->name('admin.reports.markSeen');
     
     // new suspension route
     // ✅ নতুন — report section থেকে suspension

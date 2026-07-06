@@ -26,112 +26,124 @@ class AdminDashboardController extends Controller
         $users     = User::latest()->get();
         $circulars = \App\Models\JobPost::with('user')->latest()->get();
 
+        // ✅ Active queue = এখনো pending, বা appeal pending — warn করা হলেও status pending-ই থাকে তাই এখানেই থাকবে
         $reports = \App\Models\Report::where(function ($q) {
-        $q->where('status', 'pending')
-          ->orWhere('appeal_status', 'pending'); // ⬅️ appeal থাকলে আবার active লিস্টে দেখাবে
-        })
-        ->latest()
-        ->get()
-        ->map(function ($r) {
-            $targetTitle = '';
-            $targetLink  = null;
-            $targetUser  = null;
+                $q->where('status', 'pending')->orWhere('appeal_status', 'pending');
+            })
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function ($r) {
+                $targetTitle = '';
+                $targetLink  = null;
+                $targetUser  = null;
 
-            if ($r->type === 'post') {
-                $post = \App\Models\Post::withTrashed()->find($r->target_id);
-                $targetTitle = $post
-                    ? \Illuminate\Support\Str::limit($post->content ?: '[Media Post]', 60)
-                    : '[Deleted]';
-                $targetLink = $post ? route('admin.post.review', $post->hashid) : null; // ⬅️ বদলানো হয়েছে
-                $targetUser  = $post?->user;
-            
+                if ($r->type === 'post') {
+                    $post = \App\Models\Post::withTrashed()->find($r->target_id);
+                    $targetTitle = $post ? \Illuminate\Support\Str::limit($post->content ?: '[Media Post]', 60) : '[Deleted]';
+                    $targetLink  = $post ? route('admin.post.review', $post->hashid) : null;
+                    $targetUser  = $post?->user;
+                } elseif ($r->type === 'job') {
+                    $job = \App\Models\JobPost::withTrashed()->find($r->target_id);
+                    $targetTitle = $job ? $job->title . ' — ' . $job->company : '[Deleted]';
+                    $targetLink  = $job && !$job->trashed() ? route('jobs.show', $job) : null;
+                    $targetUser  = $job?->user;
+                } elseif ($r->type === 'user') {
+                    $user = \App\Models\User::find($r->target_id);
+                    $targetTitle = $user ? $user->name . ' (' . ucfirst($user->role) . ')' : '[Deleted]';
+                    $targetLink  = $user ? route('profile.view', $user) : null;
+                    $targetUser  = $user;
+                }
 
-            } elseif ($r->type === 'job') {
-                $job = \App\Models\JobPost::find($r->target_id);
-                $targetTitle = $job ? $job->title . ' — ' . $job->company : '[Deleted]';
-                $targetLink  = $job ? route('jobs.show', $job) : null;
-                $targetUser  = $job?->user;
+                $r->targetTitle      = $targetTitle;
+                $r->targetLink       = $targetLink;
+                $r->targetUser       = $targetUser;
+                $r->targetUserStatus = $targetUser?->status ?? 'active';
+                return $r;
+            });
 
-            } elseif ($r->type === 'user') {
-                $user = \App\Models\User::find($r->target_id);
-                $targetTitle = $user ? $user->name . ' (' . ucfirst($user->role) . ')' : '[Deleted]';
-                $targetLink  = $user ? route('profile.view', $user) : null;
-                $targetUser  = $user;
-            }
+        // ✅ History = শুধু resolved case (dismissed/completed) — 'warned' আর status হিসেবে ব্যবহার হয় না
+        $completedReports = \App\Models\Report::whereIn('status', ['dismissed', 'completed'])
+            ->where(function ($q) {
+                $q->whereNull('appeal_status')->orWhere('appeal_status', '!=', 'pending');
+            })
+            ->latest('updated_at')
+            ->limit(80)
+            ->get()
+            ->map(function ($r) {
+                $targetTitle = '';
+                if ($r->type === 'post') {
+                    $post = \App\Models\Post::withTrashed()->find($r->target_id);
+                    $targetTitle = $post ? \Illuminate\Support\Str::limit($post->content ?: '[Media Post]', 40) : '[Deleted]';
+                } elseif ($r->type === 'job') {
+                    $job = \App\Models\JobPost::withTrashed()->find($r->target_id);
+                    $targetTitle = $job ? $job->title : '[Deleted]';
+                } elseif ($r->type === 'user') {
+                    $user = \App\Models\User::find($r->target_id);
+                    $targetTitle = $user ? $user->name : '[Deleted]';
+                }
+                $r->targetTitle = $targetTitle;
+                return $r;
+            });
 
-            $r->targetTitle     = $targetTitle;
-            $r->targetLink      = $targetLink;
-            $r->targetUser      = $targetUser;
-            $r->targetUserStatus = $targetUser?->status ?? 'active';
-            return $r;
-        });
+        $unseenCount = \App\Models\Report::where('status', 'pending')->where('admin_seen', false)->count();
 
-    // ✅ Completed history আলাদা
-    $completedReports = \App\Models\Report::whereIn('status', ['warned', 'dismissed', 'completed'])
-    ->where(function ($q) {
-        $q->whereNull('appeal_status')->orWhere('appeal_status', 'reviewed'); // ⬅️ pending appeal বাদ
-    })
-    ->latest()
-    ->limit(50)
-    ->get()
-    ->map(function ($r) {
-        $targetTitle = '';
-        if ($r->type === 'post') {
-            $post = \App\Models\Post::withTrashed()->find($r->target_id);
-            $targetTitle = $post ? \Illuminate\Support\Str::limit($post->content ?: '[Media Post]', 40) : '[Deleted]';
-        } elseif ($r->type === 'job') {
-            $job = \App\Models\JobPost::withTrashed()->find($r->target_id);
-            $targetTitle = $job ? $job->title : '[Deleted]';
-        } elseif ($r->type === 'user') {
-            $user = \App\Models\User::find($r->target_id);
-            $targetTitle = $user ? $user->name : '[Deleted]';
+        return view('admin.dashboard', compact('counters', 'users', 'circulars', 'reports', 'completedReports', 'unseenCount'));
+    }
+
+
+    // ✅ নতুন — ট্যাব খুললে সব pending রিপোর্ট "seen" মার্ক করবে
+    public function markSeen($type)
+    {
+        $query = \App\Models\Report::where('status', 'pending')->where('admin_seen', false);
+        if ($type === 'post') {
+            $query->whereIn('type', ['post', 'user']);
+        } elseif ($type === 'job') {
+            $query->where('type', 'job');
         }
-        $r->targetTitle = $targetTitle; // appeal_status কলামেই আছে মডেলে, আলাদা করে সেট করার দরকার নেই
-        return $r;
-    });
+        $query->update(['admin_seen' => true]);
 
-    return view('admin.dashboard', compact('counters', 'users', 'circulars', 'reports', 'completedReports'));
-
-        }
+        return response()->json(['success' => true]);
+    }
 
     // ✅ FIXED: target_id থেকে সরাসরি user_id বের করো
     public function warnUser(Request $request, $reportId)
-    {
-        $report = \App\Models\Report::findOrFail($reportId);
-        $note   = $request->input('note');
+{
+    $report = \App\Models\Report::findOrFail($reportId);
+    $note   = $request->input('note');
 
-        $targetUserId = null;
-        if ($report->type === 'post') {
-            $targetUserId = \App\Models\Post::withTrashed()->find($report->target_id)?->user_id;
-        } elseif ($report->type === 'job') {
-            $targetUserId = \App\Models\JobPost::withTrashed()->find($report->target_id)?->user_id;
-        } elseif ($report->type === 'user') {
-            $targetUserId = $report->target_id;
-        }
-
-        if (!$targetUserId) {
-            return response()->json(['success' => false, 'message' => 'Target user not found.'], 404);
-        }
-
-        $report->update([
-            'admin_id'     => auth()->id(),
-            'admin_note'   => $note,
-            'action_taken' => 'warned',
-            'reviewed_at'  => now(),
-        ]);
-
-        // warnUser() মেথডে
-        \App\Models\BbNotification::send(
-            $targetUserId,
-            auth()->id(),
-            'admin_decision',
-            '⚠️ A warning has been issued regarding your ' . $report->type . '. Click to view details.',
-            'report',
-            $report->id
-        );
-
-        return response()->json(['success' => true, 'message' => 'Warning sent to user.']);
+    $targetUserId = null;
+    if ($report->type === 'post') {
+        $targetUserId = \App\Models\Post::withTrashed()->find($report->target_id)?->user_id;
+    } elseif ($report->type === 'job') {
+        $targetUserId = \App\Models\JobPost::withTrashed()->find($report->target_id)?->user_id;
+    } elseif ($report->type === 'user') {
+        $targetUserId = $report->target_id;
     }
+
+    if (!$targetUserId) {
+        return response()->json(['success' => false, 'message' => 'Target user not found.'], 404);
+    }
+
+    // ✅ status বদলাবে না — case খোলা থাকবে, শুধু note/log সেভ হবে
+    $report->update([
+        'admin_id'     => auth()->id(),
+        'admin_note'   => $note,
+        'action_taken' => 'warned',
+        'reviewed_at'  => now(),
+        // 'status' ইচ্ছাকৃতভাবে বাদ — pending-ই থাকবে
+    ]);
+
+    \App\Models\BbNotification::send(
+        $targetUserId,
+        auth()->id(),
+        'admin_decision',
+        '⚠️ A warning has been issued regarding your ' . $report->type . '. Click to view details.',
+        'report',
+        $report->id
+    );
+
+    return response()->json(['success' => true, 'message' => 'Warning sent. Report remains active.']);
+}
 
 
    public function suspendFromReport(Request $request, $userId)
@@ -196,7 +208,12 @@ class AdminDashboardController extends Controller
 
     public function dismissReport($reportId)
     {
-        \App\Models\Report::findOrFail($reportId)->update(['status' => 'dismissed']);
+        \App\Models\Report::findOrFail($reportId)->update([
+            'status'       => 'dismissed',
+            'action_taken' => 'dismissed_no_violation',
+            'admin_id'     => auth()->id(),
+            'reviewed_at'  => now(),
+        ]);
         return response()->json(['success' => true, 'message' => 'Report dismissed.']);
     }
 
@@ -523,7 +540,12 @@ public function markReviewed($reportId)
     // completeReport route for marking a report as completed
     public function completeReport($reportId)
     {
-        \App\Models\Report::findOrFail($reportId)->update(['status' => 'completed']);
+        $report = \App\Models\Report::findOrFail($reportId);
+        $report->update([
+            'status'       => 'completed',
+            'action_taken' => $report->action_taken ?? 'resolved_other',
+            'reviewed_at'  => $report->reviewed_at ?? now(),
+        ]);
         return response()->json(['success' => true, 'message' => 'Report marked as completed.']);
     }
     

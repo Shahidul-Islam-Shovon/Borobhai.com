@@ -49,6 +49,25 @@
         .meta-row .v { color:var(--bb-text); font-weight:600; text-align:right; }
 
         .content-preview { background:#f8fafc; border:1px solid #eef1f6; border-radius:12px; padding:16px; font-size:0.92rem; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
+
+        .post-card-mini { padding: 18px 22px; }
+        .pcm-author { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+        .pcm-avatar {
+            width:44px; height:44px; border-radius:50%; overflow:hidden; flex-shrink:0;
+            background: linear-gradient(135deg,#4f46e5,#7c73f0); color:#fff;
+            display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1rem;
+        }
+        .pcm-avatar img { width:100%; height:100%; object-fit:cover; }
+        .pcm-name { font-weight:700; font-size:0.92rem; color:var(--bb-text); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .pcm-role { font-size:0.62rem; font-weight:700; padding:2px 8px; border-radius:20px; }
+        .pcm-role.rb-alumni  { background:#fef3c7; color:#d97706; }
+        .pcm-role.rb-teacher { background:#f3e8ff; color:#7c3aed; }
+        .pcm-role.rb-student { background:#eef2ff; color:#4f46e5; }
+        .pcm-meta { font-size:0.72rem; color:var(--bb-muted); margin-top:2px; }
+        .pcm-content { font-size:0.9rem; line-height:1.6; color:var(--bb-text); white-space:pre-wrap; word-break:break-word; margin-bottom:12px; }
+        .pcm-media { width:100%; max-height:420px; object-fit:cover; border-radius:12px; margin-bottom:10px; display:block; }
+        .pcm-footer { display:flex; gap:18px; align-items:center; padding-top:12px; border-top:1px solid #f1f5f9; font-size:0.78rem; color:var(--bb-muted); font-weight:600; }
+
         .media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; margin-top:12px; }
         .media-grid img { width:100%; height:90px; object-fit:cover; border-radius:8px; border:1px solid #eef1f6; }
 
@@ -66,6 +85,7 @@
         .btn-appeal:hover { background:#4338ca; color:#fff; }
 
         .alert-soft { border-radius:12px; font-size:0.85rem; border:none; }
+        .status-hero.success-hero { background: linear-gradient(135deg, #16a34a, #22c55e); box-shadow: 0 10px 30px -8px rgba(22,163,74,.4); }
     </style>
 </head>
 <body>
@@ -79,15 +99,26 @@
 
     {{-- Hero status --}}
     @php
-        $heroClass = $report->action_taken === 'deleted' ? 'deleted' : ($report->action_taken === 'warned' ? 'warned' : '');
-        $heroIcon  = $report->action_taken === 'deleted' ? 'bi-trash3-fill' : ($report->action_taken === 'warned' ? 'bi-exclamation-triangle-fill' : 'bi-shield-check');
-        $heroTitle = match($report->action_taken) {
-            'deleted' => 'Your content was removed',
-            'warned'  => 'You received a warning',
-            'reviewed_note' => 'Admin reviewed your report',
-            default => 'Report Update',
-        };
-    @endphp
+    // ✅ appeal reviewed হলে সবসময় সবচেয়ে বেশি priority পাবে
+    if ($report->appeal_status === 'reviewed') {
+        $heroClass = 'success-hero';
+        $heroIcon  = 'bi-check-circle-fill';
+        $heroTitle = 'Appeal Approved — Everything Restored';
+    } elseif ($report->action_taken === 'deleted') {
+        $heroClass = 'deleted';
+        $heroIcon  = 'bi-trash3-fill';
+        $heroTitle = 'Your content was removed';
+    } elseif ($report->action_taken === 'warned') {
+        $heroClass = 'warned';
+        $heroIcon  = 'bi-exclamation-triangle-fill';
+        $heroTitle = 'You received a warning';
+    } else {
+        $heroClass = '';
+        $heroIcon  = 'bi-shield-check';
+        $heroTitle = 'Report Update';
+    }
+@endphp
+
     <div class="status-hero {{ $heroClass }}">
         <div class="icon-badge"><i class="bi {{ $heroIcon }}"></i></div>
         <div>
@@ -120,43 +151,91 @@
         </div>
     </div>
 
+
     {{-- Content preview --}}
-    {{-- Content preview --}}
-@if($content)
+    {{-- Reported Post Card (real feed-style card) --}}
+@if($contentType === 'post' && $post)
 <div class="card">
     <div class="card-head">
-        <i class="bi bi-file-text text-primary"></i>
-        {{ $contentType === 'job' ? 'Reported Job' : 'Reported Post' }}
+        <i class="bi bi-file-text text-primary"></i> Reported Post
+        @if($isDeleted)
+            <span class="badge-pill bp-del ms-auto"><i class="bi bi-trash3"></i> Deleted</span>
+        @endif
+    </div>
+    <div class="card-body p-0">
+        <div class="post-card-mini">
+            <div class="pcm-author">
+                <div class="pcm-avatar">
+                    @if($post->user?->profile_picture)
+                        <img src="{{ asset('storage/'.$post->user->profile_picture) }}">
+                    @else
+                        {{ strtoupper(substr($post->user?->name ?? '?', 0, 1)) }}
+                    @endif
+                </div>
+                <div class="flex-grow-1">
+                    <div class="pcm-name">
+                        {{ $post->user?->name ?? 'Deleted User' }}
+                        @if($post->user)
+                        @php
+                            $roleClass = match($post->user->role) { 'alumni'=>'rb-alumni', 'teacher'=>'rb-teacher', default=>'rb-student' };
+                        @endphp
+                        <span class="pcm-role {{ $roleClass }}">{{ ucfirst($post->user->role) }}</span>
+                        @endif
+                    </div>
+                    <div class="pcm-meta">
+                        {{ $post->user?->email ?? '—' }} &nbsp;·&nbsp; {{ $post->created_at->diffForHumans() }}
+                    </div>
+                </div>
+            </div>
+
+            @if($post->content)
+            <div class="pcm-content">{{ $post->content }}</div>
+            @endif
+
+            @php
+                $images = $post->images ?? [];
+                $videos = [];
+                if (!empty($post->video) && $post->video !== 'null') {
+                    $videos = is_array($post->video) ? $post->video : (json_decode($post->video, true) ?: [$post->video]);
+                }
+            @endphp
+
+            @if(!empty($videos))
+                @foreach($videos as $vid)
+                <video src="{{ asset('storage/'.$vid) }}" controls class="pcm-media"></video>
+                @endforeach
+            @endif
+            @if(!empty($images))
+                @foreach($images as $img)
+                <img src="{{ asset('storage/'.$img) }}" class="pcm-media" alt="media">
+                @endforeach
+            @endif
+
+            <div class="pcm-footer">
+                <span><i class="bi bi-heart-fill text-danger"></i> {{ $post->likes_count ?? 0 }} Likes</span>
+                <span><i class="bi bi-chat-fill text-primary"></i> {{ $post->comments_count ?? 0 }} Comments</span>
+                <span class="ms-auto text-muted">Post ID #{{ $post->id }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+@elseif($contentType === 'job' && $job)
+<div class="card">
+    <div class="card-head">
+        <i class="bi bi-briefcase text-primary"></i> Reported Job
         @if($isDeleted)
             <span class="badge-pill bp-del ms-auto"><i class="bi bi-trash3"></i> Deleted</span>
         @endif
     </div>
     <div class="card-body">
-        <div class="content-preview">{{ $content }}</div>
-
-        @if($contentType === 'post')
-            @if(!empty($videos))
-            <div class="media-grid">
-                @foreach($videos as $vid)
-                    <video src="{{ asset('storage/'.$vid) }}" controls style="width:100%;height:90px;object-fit:cover;border-radius:8px;"></video>
-                @endforeach
-            </div>
-            @endif
-            @if(!empty($images))
-            <div class="media-grid">
-                @foreach($images as $img)
-                    <img src="{{ asset('storage/'.$img) }}" alt="media">
-                @endforeach
-            </div>
-            @endif
-            <div class="d-flex gap-3 mt-3" style="font-size:0.78rem;color:var(--bb-muted);">
-                <span><i class="bi bi-heart-fill text-danger me-1"></i>{{ $likesCount }} Likes</span>
-                <span><i class="bi bi-chat-fill text-primary me-1"></i>{{ $commentsCount }} Comments</span>
-            </div>
-        @elseif($contentType === 'job' && $jobLink)
-            <a href="{{ $jobLink }}" target="_blank" class="btn btn-outline-primary btn-sm mt-2">
-                <i class="bi bi-box-arrow-up-right me-1"></i> View Full Job Details
-            </a>
+        <div class="content-preview mb-3">
+            <strong>{{ $job->title }}</strong><br>
+            <span class="text-muted" style="font-size:0.85rem;">{{ $job->company }}</span>
+        </div>
+        @if(!$isDeleted)
+        <a href="{{ route('jobs.show', $job) }}" target="_blank" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-box-arrow-up-right me-1"></i> View Full Job Details
+        </a>
         @endif
     </div>
 </div>
