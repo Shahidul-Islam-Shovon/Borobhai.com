@@ -148,11 +148,12 @@ class AdminDashboardController extends Controller
     {
         $report = \App\Models\Report::findOrFail($reportId);
         $report->update([
-            'status'       => 'dismissed',
-            'action_taken' => 'dismissed_no_violation',
-            'admin_id'     => auth()->id(),
-            'reviewed_at'  => now(),
-            'history_seen' => false,
+            'status'        => 'dismissed',
+            'action_taken'  => 'dismissed_no_violation',
+            'admin_id'      => auth()->id(),
+            'reviewed_at'   => now(),
+            'history_seen'  => false,
+            'appeal_status' => $report->appeal_status === 'pending' ? null : $report->appeal_status, // 🆕
         ]);
         return response()->json([
             'success' => true,
@@ -184,12 +185,13 @@ class AdminDashboardController extends Controller
         }
 
         $report->update([
-            'admin_id'     => auth()->id(),
-            'admin_note'   => $note,
-            'action_taken' => 'deleted',
-            'reviewed_at'  => now(),
-            'status'       => 'dismissed',
-            'history_seen' => false,
+            'admin_id'      => auth()->id(),
+            'admin_note'    => $note,
+            'action_taken'  => 'deleted',
+            'reviewed_at'   => now(),
+            'status'        => 'dismissed',
+            'history_seen'  => false,
+            'appeal_status' => $report->appeal_status === 'pending' ? null : $report->appeal_status, // 🆕
         ]);
 
         if ($userId) {
@@ -215,10 +217,11 @@ class AdminDashboardController extends Controller
             : 'resolved_other';
 
         $report->update([
-            'status'       => 'completed',
-            'action_taken' => $finalAction,
-            'reviewed_at'  => $report->reviewed_at ?? now(),
-            'history_seen' => false,
+            'status'        => 'completed',
+            'action_taken'  => $finalAction,
+            'reviewed_at'   => $report->reviewed_at ?? now(),
+            'history_seen'  => false,
+            'appeal_status' => $report->appeal_status === 'pending' ? null : $report->appeal_status, // 🆕
         ]);
 
         return response()->json([

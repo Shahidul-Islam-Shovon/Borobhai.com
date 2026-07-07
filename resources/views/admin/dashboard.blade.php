@@ -870,15 +870,22 @@ function markAsRead(reportId, el) {
     .catch(() => {});
 }
 
+
 function removeReportRow(reportId) {
     const row = document.getElementById('report-row-' + reportId);
-    if (row && $.fn.DataTable.isDataTable('#reportedTable')) {
+    if (!row) return;
+
+    const reportedTableEl = document.getElementById('reportedTable');
+    const jobsTableEl     = document.getElementById('jobsTable');
+
+    if (reportedTableEl && $.contains(reportedTableEl, row) && $.fn.DataTable.isDataTable('#reportedTable')) {
         $('#reportedTable').DataTable().row(row).remove().draw(false);
-    } else if (row && $.fn.DataTable.isDataTable('#jobsTable')) {
+    } else if (jobsTableEl && $.contains(jobsTableEl, row) && $.fn.DataTable.isDataTable('#jobsTable')) {
         $('#jobsTable').DataTable().row(row).remove().draw(false);
-    } else if (row) {
+    } else {
         row.remove();
     }
+
     document.querySelectorAll('.pending-reports-count').forEach(b => {
         b.textContent = Math.max(0, (parseInt(b.textContent) || 0) - 1);
     });
