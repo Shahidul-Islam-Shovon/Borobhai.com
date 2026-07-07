@@ -5,20 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Admin Control Center - Borobhai.online</title>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
+
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    
+
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
         .sidebar { width: 260px; height: 100vh; background: #0f172a; position: fixed; top: 0; left: 0; padding: 25px 15px; color: #fff; z-index: 100; box-shadow: 4px 0 24px rgba(15, 23, 42, 0.08); }
@@ -31,7 +31,7 @@
         .counter-card:hover { transform: translateY(-3px); box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.04); border-color: #cbd5e1; }
         .counter-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
         .card-table-wrapper { background: #fff; border-radius: 16px; padding: 22px; border: 1px solid #e2e8f0; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.015); }
-        .table { font-size: 0.76rem !important; } 
+        .table { font-size: 0.76rem !important; }
         .table th { background: #f8fafc !important; color: #64748b !important; font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0 !important; padding: 10px 12px !important; }
         .table td { padding: 10px 12px !important; vertical-align: middle; color: #334155; border-bottom: 1px solid #f1f5f9 !important; }
         .table tr:hover td { background-color: #f8fafc; }
@@ -58,8 +58,8 @@
     <div class="nav-link-custom active" data-target="analytics-tab"><i class="fa-solid fa-chart-pie"></i>Analytics</div>
     <div class="nav-link-custom" data-target="users-tab"><i class="fa-solid fa-users"></i> User Management</div>
 
-    <div class="nav-link-custom" data-target="posts-tab" onclick="markSeen('post')">
-    <i class="fa-solid fa-newspaper"></i> Reported Contents
+    <div class="nav-link-custom" data-target="posts-tab">
+        <i class="fa-solid fa-newspaper"></i> Reported Contents
         @if($reports->whereNotIn('type',['job'])->count() > 0)
             <span class="badge bg-danger ms-auto pending-reports-count" style="font-size:0.6rem;">
                 {{ $reports->whereNotIn('type',['job'])->count() }}
@@ -67,7 +67,7 @@
         @endif
     </div>
 
-    <div class="nav-link-custom" data-target="jobs-tab" onclick="markSeen('job')">
+    <div class="nav-link-custom" data-target="jobs-tab">
         <i class="fa-solid fa-briefcase"></i> Reported Jobs
         @if($reports->where('type','job')->count() > 0)
             <span class="badge bg-warning text-dark ms-auto" style="font-size:0.6rem;">
@@ -78,11 +78,15 @@
 
     <div class="nav-link-custom" data-target="history-tab">
         <i class="fa-solid fa-clock-rotate-left"></i> Completed Reports
+        @php $historyUnseenCount = $completedReports->where('history_seen', false)->count(); @endphp
+        @if($historyUnseenCount > 0)
+            <span class="badge bg-info ms-auto" style="font-size:0.6rem;">{{ $historyUnseenCount }}</span>
+        @endif
     </div>
-    
+
     <div style="position: absolute; bottom: 30px; width: calc(100% - 30px);">
         <div class="d-flex align-items-center gap-5">
-            <img src="{{ auth()->user()->profile_picture ? asset('storage/'.auth()->user()->profile_picture) : asset('default-avatar.png') }}" 
+            <img src="{{ auth()->user()->profile_picture ? asset('storage/'.auth()->user()->profile_picture) : asset('default-avatar.png') }}"
                 alt="Profile" class="rounded-full" style="width: 60px; height: 60px; object-fit: cover;">
             <a href="{{ route('profile.edit') }}" class="btn btn-sm btn-outline-warning" style="font-size: 0.8rem; text-decoration: none;">
                 Edit Profile
@@ -99,11 +103,11 @@
 </div>
 
 <div class="main-content">
-    
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2>
-                Welcome back, {{ auth()->user()->name }} 
+                Welcome back, {{ auth()->user()->name }}
                 @if(auth()->user()->isSuperAdmin())
                     <span class="badge bg-dark text-white border ms-1" style="font-size: 0.65rem; padding: 4px 8px; vertical-align: middle; border-radius: 4px; font-weight: 700;">Super Admin</span>
                 @else
@@ -111,10 +115,10 @@
                 @endif
             </h2>
         </div>
-        
+
         <div class="d-flex align-items-center gap-3 bg-white px-3 py-2 border rounded-4 shadow-sm" style="border-radius: 12px;">
             <div>
-                <img src="{{ asset('storage/'.auth()->user()->profile_picture) }}" class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px; font-size: 0.85rem;">           
+                <img src="{{ asset('storage/'.auth()->user()->profile_picture) }}" class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px; font-size: 0.85rem;">
             </div>
             <div class="d-none d-sm-block">
                 <div class="fw-bold text-dark" style="font-size: 0.82rem; line-height: 1.2;">{{ auth()->user()->name }}</div>
@@ -192,9 +196,9 @@
                                     </div>
                                     <div class="d-flex flex-column justify-content-center">
                                         <div class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.82rem; line-height: 1.2;">
-                                            {{ $user->name }} 
-                                            @if(auth()->id() == $user->id) 
-                                                <span class="badge bg-primary text-white" style="font-size: 8px; padding: 2px 4px; border-radius: 4px; font-weight: 700;">Logged In</span> 
+                                            {{ $user->name }}
+                                            @if(auth()->id() == $user->id)
+                                                <span class="badge bg-primary text-white" style="font-size: 8px; padding: 2px 4px; border-radius: 4px; font-weight: 700;">Logged In</span>
                                             @endif
                                         </div>
                                         <div class="d-flex align-items-center gap-2 mt-1.5" style="line-height: 1; flex-wrap: wrap;">
@@ -253,9 +257,9 @@
                                     </span>
                                 @else
                                     <div class="d-flex align-items-center gap-2">
-                                        <select data-previous="{{ $user->role }}" 
-                                                onchange="confirmRoleChange({{ $user->id }}, this)" 
-                                                class="form-select form-select-sm role-select-dropdown" 
+                                        <select data-previous="{{ $user->role }}"
+                                                onchange="confirmRoleChange({{ $user->id }}, this)"
+                                                class="form-select form-select-sm role-select-dropdown"
                                                 style="max-width: 120px;"
                                                 {{ (in_array($user->status, ['suspended_temp', 'suspended_perm']) || ($user->role === 'admin' && !auth()->user()->isSuperAdmin())) ? 'disabled' : '' }}>
                                             <option value="" disabled {{ !in_array($user->role, ['student', 'alumni', 'admin', 'teacher']) ? 'selected' : '' }}>Select Role</option>
@@ -291,7 +295,7 @@
                                         $currentUser = auth()->user();
                                         $canSuspend = false;
                                         if ($user->email !== env('CHIEF_SUPER_ADMIN_EMAIL', 'shahidul.webdev@gmail.com')) {
-                                            if ($user->role !== 'admin') { $canSuspend = true; } 
+                                            if ($user->role !== 'admin') { $canSuspend = true; }
                                             elseif ($user->role === 'admin' && !$user->isSuperAdmin() && $currentUser->isSuperAdmin()) { $canSuspend = true; }
                                         }
                                     @endphp
@@ -324,129 +328,252 @@
                                         <span class="text-muted" style="font-size: 0.72rem; font-weight: 500;"><i class="fa-solid fa-user-shield me-1"></i> Restricted</span>
                                     @endif
                                 @endif
-                            </td>                          
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
-            </div> 
+            </div>
         </div>
     </div>
 
     {{-- Reported Contents Tab --}}
-    {{-- Reported Contents Tab --}}
-<div id="posts-tab" class="tab-content-panel">
-    <div class="card-table-wrapper">
-        <div class="d-flex align-items-center justify-content-between mb-4">
-            <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
-                <i class="fa-solid fa-flag text-danger me-2"></i>
-                Reported Contents
-                <span class="badge bg-danger ms-2 pending-reports-count" style="font-size:0.7rem;">
-                    {{ $reports->whereNotIn('type', ['job'])->count() }}
-                </span>
-            </h6>
-        </div>
-
-        @php $contentReports = $reports->whereNotIn('type', ['job']); @endphp
-
-        @if($contentReports->isEmpty())
-            <div class="text-center py-5 text-muted">
-                <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
-                <p class="fw-semibold">No pending reports. All clear!</p>
+    <div id="posts-tab" class="tab-content-panel">
+        <div class="card-table-wrapper">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
+                    <i class="fa-solid fa-flag text-danger me-2"></i>
+                    Reported Contents
+                    <span class="badge bg-danger ms-2 pending-reports-count" style="font-size:0.7rem;">
+                        {{ $reports->whereNotIn('type', ['job'])->count() }}
+                    </span>
+                </h6>
             </div>
-        @else
-        <div class="table-responsive">
-            <table class="table table-hover align-middle w-100" id="reportedTable">
-                <thead>
-                    <tr>
-                        <th style="width:4%">#</th>
-                        <th style="width:8%">Type</th>
-                        <th style="width:24%">Reported Content</th>
-                        <th style="width:16%">Reported User</th>
-                        <th style="width:11%">Reason</th>
-                        <th style="width:14%">Appeal</th>
-                        <th style="width:23%;text-align:right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach($contentReports as $i => $report)
-                <tr id="report-row-{{ $report->id }}" class="{{ !$report->admin_seen ? 'table-warning' : '' }}">
-                    <td class="fw-bold text-secondary">
-                        {{ $i + 1 }}
-                        @if(!$report->admin_seen)
-                            <span class="badge bg-danger ms-1" style="font-size:0.55rem;">NEW</span>
-                        @endif
-                    </td>
-                    <td>
-                        @php $typeColor = match($report->type) { 'post'=>'primary','user'=>'danger',default=>'secondary' }; @endphp
-                        <span class="badge bg-{{ $typeColor }}-subtle text-{{ $typeColor }} border border-{{ $typeColor }}-subtle"
-                              style="font-size:0.65rem;font-weight:700;text-transform:uppercase;">
-                            {{ $report->type }}
-                        </span>
-                        <div class="text-muted mt-1" style="font-size:0.62rem;">{{ $report->created_at->diffForHumans() }}</div>
-                    </td>
-                    <td>
-                        <div class="fw-semibold text-dark" style="font-size:0.78rem;">{{ $report->targetTitle }}</div>
-                        @if($report->targetLink)
-                            <a href="{{ $report->targetLink }}" target="_blank" rel="noopener noreferrer"
-                               class="text-primary" style="font-size:0.68rem;">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>
-                                {{ $report->type === 'post' ? 'View Post' : 'Visit Profile' }}
-                            </a>
-                        @else
-                            <span class="text-muted" style="font-size:0.68rem;">[Content removed]</span>
-                        @endif
-                    </td>
-                    <td>
-                        @if($report->targetUser)
-                        <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
-                        <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
-                        @php $uStatus = $report->targetUserStatus; @endphp
-                        <div class="mt-1">
-                            @if($uStatus === 'suspended_temp')
-                                <span class="status-badge temp-suspended user-status-badge-{{ $report->targetUser->id }}"><i class="fa-solid fa-clock"></i> 7d Suspended</span>
-                            @elseif($uStatus === 'suspended_perm')
-                                <span class="status-badge perm-suspended user-status-badge-{{ $report->targetUser->id }}"><i class="fa-solid fa-ban"></i> Permanent Banned</span>
-                            @else
-                                <span class="status-badge active user-status-badge-{{ $report->targetUser->id }}"><i class="fa-solid fa-circle" style="font-size:5px;"></i> Active</span>
-                            @endif
-                        </div>
-                        @else
-                        <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
-                        @endif
-                    </td>
-                    <td>
-                        <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
-                        @if($report->details)
-                        <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
-                        @endif
-                    </td>
-                    <td>
-                        @if($report->appeal_status === 'pending')
-                            <div class="mb-2 p-2" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
-                                <div class="fw-bold text-warning" style="font-size:0.65rem;text-transform:uppercase;">
-                                    <i class="fa-solid fa-megaphone"></i> Appealed
-                                </div>
-                                <div class="text-dark mt-1" style="font-size:0.7rem;">{{ \Illuminate\Support\Str::limit($report->appeal_message, 60) }}</div>
-                            </div>
-                            <button onclick="markReviewed({{ $report->id }})" class="btn-action-pill activate w-100 justify-content-center">
-                                <i class="fa-solid fa-check-double"></i> Accept Appeal
-                            </button>
-                        @else
-                            <span class="text-muted" style="font-size:0.7rem;">— No appeal —</span>
-                        @endif
-                    </td>
-                    <td style="text-align:right;">
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size:0.75rem;border-radius:8px;">
-                                <i class="fa-solid fa-gavel me-1"></i> Take Action
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.8rem;">
-                                @if($report->targetUser)
-                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('warn', {{ $report->id }})"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Warn User</a></li>
-                                @endif
 
-                                @if($report->type === 'user' && $report->targetUser)
+            @php $contentReports = $reports->whereNotIn('type', ['job']); @endphp
+
+            @if($contentReports->isEmpty())
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
+                    <p class="fw-semibold">No pending reports. All clear!</p>
+                </div>
+            @else
+            <div class="table-responsive">
+                <table class="table table-hover align-middle w-100" id="reportedTable">
+                    <thead>
+                        <tr>
+                            <th style="width:4%">#</th>
+                            <th style="width:8%">Type</th>
+                            <th style="width:24%">Reported Content</th>
+                            <th style="width:16%">Reported User</th>
+                            <th style="width:11%">Reason</th>
+                            <th style="width:14%">Appeal</th>
+                            <th style="width:23%;text-align:right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($contentReports as $report)
+                    <tr id="report-row-{{ $report->id }}" class="{{ !$report->admin_seen ? 'table-warning' : '' }}">
+                        <td class="fw-bold text-secondary">
+                            @if(!$report->admin_seen)
+                                <span class="badge bg-danger" style="font-size:0.55rem;">NEW</span>
+                            @else
+                                •
+                            @endif
+                        </td>
+                        <td>
+                            @php $typeColor = match($report->type) { 'post'=>'primary','user'=>'danger',default=>'secondary' }; @endphp
+                            <span class="badge bg-{{ $typeColor }}-subtle text-{{ $typeColor }} border border-{{ $typeColor }}-subtle"
+                                  style="font-size:0.65rem;font-weight:700;text-transform:uppercase;">
+                                {{ $report->type }}
+                            </span>
+                            <div class="text-muted mt-1" style="font-size:0.62rem;">{{ $report->created_at->diffForHumans() }}</div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark" style="font-size:0.78rem;">{{ $report->targetTitle }}</div>
+                            @if($report->targetLink)
+                                <a href="{{ $report->targetLink }}" target="_blank" rel="noopener noreferrer"
+                                   class="text-primary" style="font-size:0.68rem;">
+                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>
+                                    {{ $report->type === 'post' ? 'View Post' : 'Visit Profile' }}
+                                </a>
+                            @else
+                                <span class="text-muted" style="font-size:0.68rem;">[Content removed]</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($report->targetUser)
+                            <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
+                            <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
+                            @php $uStatus = $report->targetUserStatus; @endphp
+                            <div class="mt-1">
+                                @if($uStatus === 'suspended_temp')
+                                    <span class="status-badge temp-suspended user-status-badge-{{ $report->targetUser->id }}"><i class="fa-solid fa-clock"></i> 7d Suspended</span>
+                                @elseif($uStatus === 'suspended_perm')
+                                    <span class="status-badge perm-suspended user-status-badge-{{ $report->targetUser->id }}"><i class="fa-solid fa-ban"></i> Permanent Banned</span>
+                                @else
+                                    <span class="status-badge active user-status-badge-{{ $report->targetUser->id }}"><i class="fa-solid fa-circle" style="font-size:5px;"></i> Active</span>
+                                @endif
+                            </div>
+                            @else
+                            <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
+                            @if($report->details)
+                            <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
+                            @endif
+                        </td>
+                        <td>
+                            @if($report->appeal_status === 'pending')
+                                <div class="mb-2 p-2" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
+                                    <div class="fw-bold text-warning" style="font-size:0.65rem;text-transform:uppercase;">
+                                        <i class="fa-solid fa-megaphone"></i> Appealed
+                                    </div>
+                                    <div class="text-dark mt-1" style="font-size:0.7rem;">{{ \Illuminate\Support\Str::limit($report->appeal_message, 60) }}</div>
+                                </div>
+                                <button onclick="markReviewed({{ $report->id }})" class="btn-action-pill activate w-100 justify-content-center">
+                                    <i class="fa-solid fa-check-double"></i> Accept Appeal
+                                </button>
+                            @else
+                                <span class="text-muted" style="font-size:0.7rem;">— No appeal —</span>
+                            @endif
+                        </td>
+                        <td style="text-align:right;">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size:0.75rem;border-radius:8px;">
+                                    <i class="fa-solid fa-gavel me-1"></i> Take Action
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.8rem;">
+                                    @if(!$report->admin_seen)
+                                        <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); markAsRead({{ $report->id }}, this)"><i class="fa-solid fa-eye text-primary me-2"></i>Mark as Read</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    @endif
+                                    @if($report->targetUser)
+                                    <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('warn', {{ $report->id }})"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Warn User</a></li>
+                                    @endif
+
+                                    @if($report->type === 'user' && $report->targetUser)
+                                        <li><span id="suspend-btn-{{ $report->targetUser->id }}" class="d-block">
+                                            @if(in_array($report->targetUserStatus, ['suspended_temp','suspended_perm']))
+                                                <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'active')"><i class="fa-solid fa-circle-check text-success me-2"></i>Remove Suspension</a>
+                                            @else
+                                                <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'temp')"><i class="fa-solid fa-clock text-warning me-2"></i>Suspend 7 Days</a>
+                                                <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'perm')"><i class="fa-solid fa-ban text-danger me-2"></i>Permanent Ban</a>
+                                            @endif
+                                        </span></li>
+                                    @elseif($report->type === 'post')
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); adminAction('delete-content', {{ $report->id }})"><i class="fa-regular fa-trash-can me-2"></i>Delete Post</a></li>
+                                    @endif
+
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('dismiss', {{ $report->id }})"><i class="fa-solid fa-ban text-muted me-2"></i>Dismiss (No Violation)</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); completeReport({{ $report->id }})"><i class="fa-solid fa-check-double text-success me-2"></i>Mark Resolved</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- Reported Jobs Tab --}}
+    <div id="jobs-tab" class="tab-content-panel">
+        <div class="card-table-wrapper">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
+                    <i class="fa-solid fa-briefcase text-warning me-2"></i>
+                    Reported Jobs
+                    <span class="badge bg-warning text-dark ms-2" style="font-size:0.7rem;">
+                        {{ $reports->where('type','job')->count() }}
+                    </span>
+                </h6>
+            </div>
+
+            @php $jobReports = $reports->where('type', 'job'); @endphp
+
+            @if($jobReports->isEmpty())
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
+                    <p class="fw-semibold">No reported jobs. All clear!</p>
+                </div>
+            @else
+            <div class="table-responsive">
+                <table class="table table-hover align-middle w-100" id="jobsTable">
+                    <thead>
+                        <tr>
+                            <th style="width:4%">#</th>
+                            <th style="width:26%">Reported Job</th>
+                            <th style="width:18%">Posted By</th>
+                            <th style="width:12%">Reason</th>
+                            <th style="width:14%">Appeal</th>
+                            <th style="width:26%;text-align:right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($jobReports as $report)
+                    <tr id="report-row-{{ $report->id }}" class="{{ !$report->admin_seen ? 'table-warning' : '' }}">
+                        <td class="fw-bold text-secondary">
+                            @if(!$report->admin_seen)
+                                <span class="badge bg-danger" style="font-size:0.55rem;">NEW</span>
+                            @else
+                                •
+                            @endif
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark" style="font-size:0.78rem;">{{ $report->targetTitle }}</div>
+                            @if($report->targetLink)
+                            <a href="{{ $report->targetLink }}" target="_blank" rel="noopener noreferrer" class="text-primary" style="font-size:0.68rem;">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>View Job
+                            </a>
+                            @else
+                            <span class="text-muted" style="font-size:0.68rem;">[Job removed]</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($report->targetUser)
+                            <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
+                            <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
+                            @else
+                            <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
+                            @if($report->details)
+                            <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
+                            @endif
+                        </td>
+                        <td>
+                            @if($report->appeal_status === 'pending')
+                                <div class="mb-2 p-2" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
+                                    <div class="fw-bold text-warning" style="font-size:0.65rem;text-transform:uppercase;"><i class="fa-solid fa-megaphone"></i> Appealed</div>
+                                    <div class="text-dark mt-1" style="font-size:0.7rem;">{{ \Illuminate\Support\Str::limit($report->appeal_message, 60) }}</div>
+                                </div>
+                                <button onclick="markReviewed({{ $report->id }})" class="btn-action-pill activate w-100 justify-content-center">
+                                    <i class="fa-solid fa-check-double"></i> Accept Appeal
+                                </button>
+                            @else
+                                <span class="text-muted" style="font-size:0.7rem;">— No appeal —</span>
+                            @endif
+                        </td>
+                        <td style="text-align:right;">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size:0.75rem;border-radius:8px;">
+                                    <i class="fa-solid fa-gavel me-1"></i> Take Action
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.8rem;">
+                                    @if(!$report->admin_seen)
+                                        <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); markAsRead({{ $report->id }}, this)"><i class="fa-solid fa-eye text-primary me-2"></i>Mark as Read</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    @endif
+                                    @if($report->targetUser)
+                                    <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('warn', {{ $report->id }})"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Warn User</a></li>
                                     <li><span id="suspend-btn-{{ $report->targetUser->id }}" class="d-block">
                                         @if(in_array($report->targetUserStatus, ['suspended_temp','suspended_perm']))
                                             <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'active')"><i class="fa-solid fa-circle-check text-success me-2"></i>Remove Suspension</a>
@@ -455,137 +582,22 @@
                                             <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'perm')"><i class="fa-solid fa-ban text-danger me-2"></i>Permanent Ban</a>
                                         @endif
                                     </span></li>
-                                @elseif($report->type === 'post')
-                                    <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); adminAction('delete-content', {{ $report->id }})"><i class="fa-regular fa-trash-can me-2"></i>Delete Post</a></li>
-                                @endif
-
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('dismiss', {{ $report->id }})"><i class="fa-solid fa-ban text-muted me-2"></i>Dismiss (No Violation)</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); completeReport({{ $report->id }})"><i class="fa-solid fa-check-double text-success me-2"></i>Mark Resolved</a></li>
-                            </ul>
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
-                </tbody>
-            </table>
-        </div>
-        @endif
-    </div>
-</div>
-
-    {{-- Reported Jobs Tab --}}
-    {{-- Reported Jobs Tab --}}
-<div id="jobs-tab" class="tab-content-panel">
-    <div class="card-table-wrapper">
-        <div class="d-flex align-items-center justify-content-between mb-4">
-            <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
-                <i class="fa-solid fa-briefcase text-warning me-2"></i>
-                Reported Jobs
-                <span class="badge bg-warning text-dark ms-2" style="font-size:0.7rem;">
-                    {{ $reports->where('type','job')->count() }}
-                </span>
-            </h6>
-        </div>
-
-        @php $jobReports = $reports->where('type', 'job'); @endphp
-
-        @if($jobReports->isEmpty())
-            <div class="text-center py-5 text-muted">
-                <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
-                <p class="fw-semibold">No reported jobs. All clear!</p>
-            </div>
-        @else
-        <div class="table-responsive">
-            <table class="table table-hover align-middle w-100" id="jobsTable">
-                <thead>
-                    <tr>
-                        <th style="width:4%">#</th>
-                        <th style="width:26%">Reported Job</th>
-                        <th style="width:18%">Posted By</th>
-                        <th style="width:12%">Reason</th>
-                        <th style="width:14%">Appeal</th>
-                        <th style="width:26%;text-align:right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach($jobReports as $i => $report)
-                <tr id="report-row-{{ $report->id }}" class="{{ !$report->admin_seen ? 'table-warning' : '' }}">
-                    <td class="fw-bold text-secondary">
-                        {{ $i + 1 }}
-                        @if(!$report->admin_seen)
-                            <span class="badge bg-danger ms-1" style="font-size:0.55rem;">NEW</span>
-                        @endif
-                    </td>
-                    <td>
-                        <div class="fw-semibold text-dark" style="font-size:0.78rem;">{{ $report->targetTitle }}</div>
-                        @if($report->targetLink)
-                        <a href="{{ $report->targetLink }}" target="_blank" rel="noopener noreferrer" class="text-primary" style="font-size:0.68rem;">
-                            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>View Job
-                        </a>
-                        @else
-                        <span class="text-muted" style="font-size:0.68rem;">[Job removed]</span>
-                        @endif
-                    </td>
-                    <td>
-                        @if($report->targetUser)
-                        <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
-                        <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
-                        @else
-                        <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
-                        @endif
-                    </td>
-                    <td>
-                        <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
-                        @if($report->details)
-                        <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
-                        @endif
-                    </td>
-                    <td>
-                        @if($report->appeal_status === 'pending')
-                            <div class="mb-2 p-2" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
-                                <div class="fw-bold text-warning" style="font-size:0.65rem;text-transform:uppercase;"><i class="fa-solid fa-megaphone"></i> Appealed</div>
-                                <div class="text-dark mt-1" style="font-size:0.7rem;">{{ \Illuminate\Support\Str::limit($report->appeal_message, 60) }}</div>
-                            </div>
-                            <button onclick="markReviewed({{ $report->id }})" class="btn-action-pill activate w-100 justify-content-center">
-                                <i class="fa-solid fa-check-double"></i> Accept Appeal
-                            </button>
-                        @else
-                            <span class="text-muted" style="font-size:0.7rem;">— No appeal —</span>
-                        @endif
-                    </td>
-                    <td style="text-align:right;">
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size:0.75rem;border-radius:8px;">
-                                <i class="fa-solid fa-gavel me-1"></i> Take Action
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.8rem;">
-                                @if($report->targetUser)
-                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('warn', {{ $report->id }})"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Warn User</a></li>
-                                <li><span id="suspend-btn-{{ $report->targetUser->id }}" class="d-block">
-                                    @if(in_array($report->targetUserStatus, ['suspended_temp','suspended_perm']))
-                                        <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'active')"><i class="fa-solid fa-circle-check text-success me-2"></i>Remove Suspension</a>
-                                    @else
-                                        <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'temp')"><i class="fa-solid fa-clock text-warning me-2"></i>Suspend 7 Days</a>
-                                        <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'perm')"><i class="fa-solid fa-ban text-danger me-2"></i>Permanent Ban</a>
                                     @endif
-                                </span></li>
-                                @endif
-                                <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); adminAction('delete-content', {{ $report->id }})"><i class="fa-regular fa-trash-can me-2"></i>Delete Job</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('dismiss', {{ $report->id }})"><i class="fa-solid fa-ban text-muted me-2"></i>Dismiss (No Violation)</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); completeReport({{ $report->id }})"><i class="fa-solid fa-check-double text-success me-2"></i>Mark Resolved</a></li>
-                            </ul>
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
-                </tbody>
-            </table>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); adminAction('delete-content', {{ $report->id }})"><i class="fa-regular fa-trash-can me-2"></i>Delete Job</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('dismiss', {{ $report->id }})"><i class="fa-solid fa-ban text-muted me-2"></i>Dismiss (No Violation)</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); completeReport({{ $report->id }})"><i class="fa-solid fa-check-double text-success me-2"></i>Mark Resolved</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
         </div>
-        @endif
     </div>
-</div>
 
     {{-- History Tab --}}
     <div id="history-tab" class="tab-content-panel">
@@ -600,51 +612,17 @@
                     <p class="fw-semibold">No completed reports yet.</p>
                 </div>
             @else
-            <div class="table-responsive">               
+            <div class="table-responsive">
                 <table class="table table-hover align-middle w-100" id="historyTable">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Type</th>
-                            <th>Content</th>
-                            <th>Reason</th>
-                            <th>Final Outcome</th>
-                            <th>Resolved At</th>
-                            <th style="text-align:right;">Appeal</th>
+                            <th>#</th><th>Type</th><th>Content</th><th>Reason</th>
+                            <th>Final Outcome</th><th>Resolved At</th><th style="text-align:right;">Appeal</th>
                         </tr>
                     </thead>
                     <tbody>
-                    @foreach($completedReports as $i => $r)
-                    <tr>
-                        <td class="text-secondary fw-bold">{{ $i + 1 }}</td>
-                        <td>
-                            <span class="badge bg-secondary-subtle text-secondary border" style="font-size:0.65rem;font-weight:700;text-transform:uppercase;">
-                                {{ $r->type }}
-                            </span>
-                        </td>
-                        <td style="font-size:0.78rem;">{{ $r->targetTitle }}</td>
-                        <td style="font-size:0.72rem;color:#64748b;">{{ ucfirst($r->reason) }}</td>
-                        <td>
-                            @php
-                                $outcome = match(true) {
-                                    $r->appeal_status === 'reviewed' => ['bp-ok', 'fa-check-double', 'Appeal Approved — Restored'],
-                                    $r->action_taken === 'warned' => ['temp-suspended', 'fa-triangle-exclamation', 'Warned User'],
-                                    $r->action_taken === 'deleted' => ['perm-suspended', 'fa-trash-can', 'Content Removed'],
-                                    $r->action_taken === 'dismissed_no_violation' => ['active', 'fa-check', 'Dismissed — No Violation'],
-                                    default => ['active', 'fa-check-double', 'Marked Resolved'],
-                                };
-                            @endphp
-                            <span class="status-badge {{ $outcome[0] }}"><i class="fa-solid {{ $outcome[1] }}"></i> {{ $outcome[2] }}</span>
-                        </td>
-                        <td style="font-size:0.72rem;color:#64748b;">{{ $r->updated_at->format('d M Y, g:i a') }}</td>
-                        <td style="text-align:right;">
-                            @if($r->appeal_status === 'reviewed')
-                                <span class="badge bg-success" style="font-size:0.65rem;">Appeal Reviewed</span>
-                            @else
-                                <span class="text-muted" style="font-size:0.7rem;">— No appeal —</span>
-                            @endif
-                        </td>
-                    </tr>
+                    @foreach($completedReports as $r)
+                        @include('admin.partials.history-row', ['r' => $r])
                     @endforeach
                     </tbody>
                 </table>
@@ -660,11 +638,6 @@
 // TAB NAVIGATION
 // ============================================================
 document.addEventListener("DOMContentLoaded", function() {
-    
-    // ✅ পেজ লোড হওয়া মানেই admin দেখেছে — তাই সাথে সাথেই seen মার্ক করে দাও
-    fetch('/admin/reports/mark-seen/post', { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } }).catch(()=>{});
-    fetch('/admin/reports/mark-seen/job', { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } }).catch(()=>{});
-
     const activeTab = localStorage.getItem('admin_active_tab') || 'analytics-tab';
     document.querySelectorAll('.nav-link-custom').forEach(l => l.classList.remove('active'));
     document.querySelectorAll('.tab-content-panel').forEach(t => t.classList.remove('active'));
@@ -713,20 +686,20 @@ document.querySelectorAll('.nav-link-custom').forEach(link => {
 });
 
 // ============================================================
-// ✅ DATATABLES — একবারই init, isDataTable চেক সহ
+// DATATABLES
 // ============================================================
 $(document).ready(function () {
     if ($('#usersTable').length && !$.fn.DataTable.isDataTable('#usersTable')) {
         $('#usersTable').DataTable({ pageLength: 10, responsive: true, order: [[0, 'asc']], stateSave: true, stateDuration: 60, columnDefs: [{ orderable: false, targets: [-1] }] });
     }
     if ($('#reportedTable').length && !$.fn.DataTable.isDataTable('#reportedTable')) {
-        $('#reportedTable').DataTable({ pageLength: 10, order: [[0, 'desc']], columnDefs: [{ orderable: false, targets: [4] }], language: { search: 'Search reports:', emptyTable: 'No pending reports — all clear!', zeroRecords: 'No matching reports found.' } });
+        $('#reportedTable').DataTable({ pageLength: 10, order: [], columnDefs: [{ orderable: false, targets: [0, 4, 5, 6] }], language: { search: 'Search reports:', emptyTable: 'No pending reports — all clear!', zeroRecords: 'No matching reports found.' } });
     }
     if ($('#jobsTable').length && !$.fn.DataTable.isDataTable('#jobsTable')) {
-        $('#jobsTable').DataTable({ pageLength: 10, order: [[0, 'desc']], columnDefs: [{ orderable: false, targets: [-1] }], language: { search: 'Search jobs:' } });
+        $('#jobsTable').DataTable({ pageLength: 10, order: [], columnDefs: [{ orderable: false, targets: [0, 4, 5] }], language: { search: 'Search jobs:' } });
     }
     if ($('#historyTable').length && !$.fn.DataTable.isDataTable('#historyTable')) {
-        $('#historyTable').DataTable({ pageLength: 10, order: [[4, 'desc']], language: { search: 'Search history:' } });
+        $('#historyTable').DataTable({ pageLength: 10, order: [], columnDefs: [{ orderable: false, targets: [0, 4, 6] }], language: { search: 'Search history:' } });
     }
 });
 
@@ -771,11 +744,11 @@ document.addEventListener("DOMContentLoaded", function() {
 // ============================================================
 function confirmLogout() {
     Swal.fire({ title: 'Sign Out?', text: "Are you sure you want to log out of the admin panel?", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#64748b', confirmButtonText: 'Yes, Sign Out' })
-    .then((result) => { 
+    .then((result) => {
         if (result.isConfirmed) {
             Swal.fire({ icon: 'success', title: 'Logging Out...', showConfirmButton: false, timer: 1500, timerProgressBar: true });
             setTimeout(() => { document.getElementById('logout-form').submit(); }, 1300);
-        } 
+        }
     });
 }
 
@@ -823,11 +796,10 @@ function executeAuthorityChange(userId, type) {
 // ============================================================
 // ADMIN REPORT ACTIONS (warn / delete-content / dismiss)
 // ============================================================
-
 function adminAction(action, reportId) {
     const config = {
         warn:             { title: 'Send Warning?',   text: 'A warning notification will be sent to the user. The report will remain active.', icon: 'warning', confirmText: 'Yes, Warn User', color: '#d97706' },
-        'delete-content':  { title: 'Delete Content?', text: 'This will permanently delete the reported content.', icon: 'warning', confirmText: 'Yes, Delete', color: '#dc2626' },
+        'delete-content': { title: 'Delete Content?', text: 'This will permanently delete the reported content.', icon: 'warning', confirmText: 'Yes, Delete', color: '#dc2626' },
         dismiss:          { title: 'Dismiss Report?', text: 'This report will be marked as resolved with no violation found.', icon: 'info', confirmText: 'Dismiss', color: '#16a34a' },
     };
     const c = config[action];
@@ -862,22 +834,9 @@ function adminAction(action, reportId) {
         .then(d => {
             if (d.success) {
                 Toast.fire({ icon: 'success', title: d.message });
-
-                // ✅ শুধু delete-content আর dismiss এ রো সরাও — warn এ case খোলা থাকে, তাই রো ও থাকবে
                 if (action !== 'warn') {
-                    const row = document.getElementById('report-row-' + reportId);
-                    if (row && $.fn.DataTable.isDataTable('#reportedTable')) {
-                        $('#reportedTable').DataTable().row(row).remove().draw();
-                    } else if (row && $.fn.DataTable.isDataTable('#jobsTable')) {
-                        $('#jobsTable').DataTable().row(row).remove().draw();
-                    } else if (row) {
-                        row.remove();
-                    }
-                    document.querySelectorAll('.pending-reports-count').forEach(b => {
-                        b.textContent = Math.max(0, (parseInt(b.textContent) || 0) - 1);
-                    });
-                } else {
-                    // ✅ Warn করার পর row থেকেই যাবে, শুধু note/badge visually আপডেট করা যায় (ঐচ্ছিক)
+                    removeReportRow(reportId);
+                    addHistoryRowLive(d.history_row);
                 }
                 refreshStatsCards();
             } else {
@@ -888,16 +847,48 @@ function adminAction(action, reportId) {
     });
 }
 
-
-// ✅ নতুন — ট্যাব খুললে seen মার্ক + NEW ব্যাজ সরানো
-function markSeen(type) {
-    fetch(`/admin/reports/mark-seen/${type}`, {
+// ✅ একটা নির্দিষ্ট রিপোর্ট Read মার্ক করা — persist করে, tab/reload এ প্রভাবিত হয় না
+function markAsRead(reportId, el) {
+    fetch(`/admin/reports/${reportId}/mark-seen`, {
         method: 'POST',
         headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-    }).then(() => {
-        document.querySelectorAll('.badge.bg-danger').forEach(b => { if (b.textContent.trim() === 'NEW') b.remove(); });
-        document.querySelectorAll('tr.table-warning').forEach(r => r.classList.remove('table-warning'));
-    }).catch(() => {});
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) return;
+        const row = document.getElementById('report-row-' + reportId) || (el.closest ? el.closest('tr') : null);
+        if (!row) return;
+        row.classList.remove('table-warning', 'table-info');
+        row.querySelectorAll('.badge').forEach(b => { if (b.textContent.trim() === 'NEW') { b.textContent = '•'; b.className = ''; } });
+        if (el && el.tagName === 'A') {
+            const li = el.closest('li');
+            const divider = li?.nextElementSibling;
+            li?.remove();
+            if (divider && divider.querySelector('hr')) divider.remove();
+        }
+    })
+    .catch(() => {});
+}
+
+function removeReportRow(reportId) {
+    const row = document.getElementById('report-row-' + reportId);
+    if (row && $.fn.DataTable.isDataTable('#reportedTable')) {
+        $('#reportedTable').DataTable().row(row).remove().draw(false);
+    } else if (row && $.fn.DataTable.isDataTable('#jobsTable')) {
+        $('#jobsTable').DataTable().row(row).remove().draw(false);
+    } else if (row) {
+        row.remove();
+    }
+    document.querySelectorAll('.pending-reports-count').forEach(b => {
+        b.textContent = Math.max(0, (parseInt(b.textContent) || 0) - 1);
+    });
+}
+
+// ✅ History টেবিলে নতুন resolve হওয়া রিপোর্ট লাইভ যোগ করা (reload ছাড়াই)
+function addHistoryRowLive(html) {
+    if (!html || !$.fn.DataTable.isDataTable('#historyTable')) return;
+    const table = $('#historyTable').DataTable();
+    table.row.add($(html)).draw(false);
 }
 
 // ============================================================
@@ -938,7 +929,6 @@ function suspendFromReport(userId, action) {
             if (!d.success) { Swal.fire({ icon: 'error', title: 'Failed', text: d.message }); return; }
             Toast.fire({ icon: 'success', title: d.message });
 
-            // status badge live update
             document.querySelectorAll(`.user-status-badge-${userId}`).forEach(badge => {
                 if (action === 'active') {
                     badge.className = `status-badge active user-status-badge-${userId}`;
@@ -952,7 +942,6 @@ function suspendFromReport(userId, action) {
                 }
             });
 
-            // suspend button live update
             document.querySelectorAll(`[id="suspend-btn-${userId}"]`).forEach(wrap => {
                 if (action === 'active') {
                     wrap.innerHTML = `
@@ -973,7 +962,7 @@ function suspendFromReport(userId, action) {
 }
 
 // ============================================================
-// COMPLETE REPORT → History
+// COMPLETE REPORT → History (live)
 // ============================================================
 function completeReport(reportId) {
     Swal.fire({ title: 'Mark as Completed?', text: 'This complaint will move to history.', icon: 'info', showCancelButton: true, confirmButtonColor: '#16a34a', confirmButtonText: 'Yes, Complete' })
@@ -984,15 +973,8 @@ function completeReport(reportId) {
         .then(d => {
             if (d.success) {
                 Toast.fire({ icon: 'success', title: 'Moved to history!' });
-                const row = document.getElementById('report-row-' + reportId);
-                if (row && $.fn.DataTable.isDataTable('#reportedTable')) {
-                    $('#reportedTable').DataTable().row(row).remove().draw();
-                } else if (row && $.fn.DataTable.isDataTable('#jobsTable')) {
-                    $('#jobsTable').DataTable().row(row).remove().draw();
-                } else if (row) { row.remove(); }
-                document.querySelectorAll('.pending-reports-count').forEach(b => {
-                    b.textContent = Math.max(0, (parseInt(b.textContent) || 0) - 1);
-                });
+                removeReportRow(reportId);
+                addHistoryRowLive(d.history_row);
             } else {
                 Swal.fire({ icon: 'error', title: 'Failed', text: d.message });
             }
@@ -1013,10 +995,15 @@ function markReviewed(reportId) {
             headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
         })
         .then(r => r.json())
-        .then(d => { Toast.fire({ icon: d.success ? 'success' : 'error', title: d.message }); if (d.success) location.reload(); });
+        .then(d => {
+            Toast.fire({ icon: d.success ? 'success' : 'error', title: d.message });
+            if (d.success) {
+                removeReportRow(reportId);
+                addHistoryRowLive(d.history_row);
+            }
+        });
     });
 }
-
 </script>
 </body>
 </html>

@@ -4,17 +4,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
 {
-    protected $fillable = ['reporter_id', 'type', 'target_id', 'reason', 'details', 'status', 'admin_note', 'admin_id', 'action_taken', 'reviewed_at', 'appeal_message', 'appeal_status', 'appealed_at', 'admin_seen'];
+    protected $fillable = [
+        'reporter_id', 'type', 'target_id', 'reason', 'details', 'status',
+        'admin_note', 'admin_id', 'action_taken', 'reviewed_at',
+        'appeal_message', 'appeal_status', 'appealed_at',
+        'admin_seen', 'history_seen', 'was_warned',
+    ];
 
-        protected $casts = [
-        'reviewed_at' => 'datetime',
-        'appealed_at' => 'datetime',
-        'admin_seen'  => 'boolean',
+    protected $casts = [
+        'reviewed_at'  => 'datetime',
+        'appealed_at'  => 'datetime',
+        'admin_seen'   => 'boolean',
+        'history_seen' => 'boolean',
+        'was_warned'   => 'boolean',
     ];
 
     public function reporter() { return $this->belongsTo(User::class, 'reporter_id'); }
 
-    // target মডেল dynamic resolve
     public function target()
     {
         return match($this->type) {
@@ -25,7 +31,6 @@ class Report extends Model
         };
     }
 
-    // target নামের সহজ accessor
     public function getTargetNameAttribute(): string
     {
         return match($this->type) {
@@ -35,7 +40,6 @@ class Report extends Model
         };
     }
 
-    // getHashidAttribute(), encodeId(), decodeId() — Post মডেলের মতোই প্যাটার্ন
     public function getHashidAttribute()
     {
         return static::encodeId($this->id);

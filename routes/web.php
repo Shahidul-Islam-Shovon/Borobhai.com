@@ -37,52 +37,38 @@ Route::get('/dashboard', function () {
 // ADMIN
 // ==========================================
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard',                [AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard/analytics-data',[AdminDashboardController::class, 'getAnalyticsData'])->name('dashboard.analytics');
+    Route::get('/dashboard',                 [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/analytics-data',  [AdminDashboardController::class, 'getAnalyticsData'])->name('dashboard.analytics');
+    Route::get('/reports/history',           [AdminDashboardController::class, 'reportHistory'])->name('reports.history');
 
-    // reported history [ get only ]
-    Route::get('/reports/history', [AdminDashboardController::class, 'reportHistory'])->name('reports.history');
-
-    Route::post('/users/{id}/change-role', [AdminDashboardController::class, 'changeUserRole'])->name('users.change-role');
-    //suspension
-    Route::post('/users/{id}/suspension',  [AdminDashboardController::class, 'updateSuspensionStatus'])->name('users.suspension');
-
-    Route::post('/admin/reports/mark-seen/{type}', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'markSeen'])->name('admin.reports.markSeen');
-    
-    // new suspension route
-    // ✅ নতুন — report section থেকে suspension
+    Route::post('/users/{id}/change-role',   [AdminDashboardController::class, 'changeUserRole'])->name('users.change-role');
+    Route::post('/users/{id}/suspension',    [AdminDashboardController::class, 'updateSuspensionStatus'])->name('users.suspension');
     Route::post('/reports/suspend/{userId}', [AdminDashboardController::class, 'suspendFromReport'])->name('reports.suspend');
 
-    Route::delete('/posts/{id}/delete',    [AdminDashboardController::class, 'deletePost'])->name('posts.delete');
+    Route::delete('/posts/{id}/delete',      [AdminDashboardController::class, 'deletePost'])->name('posts.delete');
+    Route::delete('/circulars/{id}/delete',  [AdminDashboardController::class, 'deleteCircular'])->name('circulars.delete');
+    Route::post('/manage-authority',         [AdminDashboardController::class, 'manageAuthority'])->name('manage.authority');
 
-    Route::delete('/circulars/{id}/delete',[AdminDashboardController::class, 'deleteCircular'])->name('circulars.delete');
-
-    // ✅ FIX: double prefix সরানো হয়েছে
-    Route::post('/manage-authority',       [AdminDashboardController::class, 'manageAuthority'])->name('manage.authority');
-
-    // Reports
-    Route::post('/reports/{id}/warn',      [AdminDashboardController::class, 'warnUser'])->name('reports.warn');
-    Route::post('/reports/{id}/dismiss',   [AdminDashboardController::class, 'dismissReport'])->name('reports.dismiss');
+    // Reports — action routes
+    Route::post('/reports/{id}/warn',             [AdminDashboardController::class, 'warnUser'])->name('reports.warn');
+    Route::post('/reports/{id}/dismiss',          [AdminDashboardController::class, 'dismissReport'])->name('reports.dismiss');
+    Route::post('/reports/{id}/mark-seen',        [AdminDashboardController::class, 'markSeen'])->name('reports.markSeen');
     Route::delete('/reports/{id}/delete-content', [AdminDashboardController::class, 'deleteReportedContent'])->name('reports.delete-content');
-    
-    //report history [ post only ]
-    Route::post('/reports/{id}/complete', [AdminDashboardController::class, 'completeReport'])->name('reports.complete');
-    Route::post('/reports/suspend/{userId}', [AdminDashboardController::class, 'suspendFromReport'])->name('reports.suspend');
+    Route::post('/reports/{id}/complete',         [AdminDashboardController::class, 'completeReport'])->name('reports.complete');
 });
 
-// ✅ নতুন — Admin-only, Hashid protected
 Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/admin/posts/review/{hashid}', [PostController::class, 'adminReview'])->name('admin.post.review');
-    Route::post('/admin/reports/{report}/review', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'submitReview'])->name('admin.reports.review');
-    Route::post('/admin/reports/{report}/mark-reviewed', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'markReviewed'])->name('admin.reports.markReviewed');
+    Route::get('/admin/posts/review/{hashid}',            [PostController::class, 'adminReview'])->name('admin.post.review');
+    Route::post('/admin/reports/{report}/review',         [\App\Http\Controllers\Admin\AdminDashboardController::class, 'submitReview'])->name('admin.reports.review');
+    Route::post('/admin/reports/{report}/mark-reviewed',  [\App\Http\Controllers\Admin\AdminDashboardController::class, 'markReviewed'])->name('admin.reports.markReviewed');
 });
 
-// ✅ সাধারণ ইউজারের জন্য — ডিসিশন দেখা ও আপিল করা
-// ✅ নতুন — hashid দিয়ে প্রটেক্টেড
 Route::middleware(['auth'])->group(function () {
-    Route::get('/reports/{hashid}/decision', [\App\Http\Controllers\ReportDecisionController::class, 'show'])->name('reports.decision');
-    Route::post('/reports/{hashid}/appeal', [\App\Http\Controllers\ReportDecisionController::class, 'appeal'])->name('reports.appeal');
+    Route::get('/reports/{hashid}/decision',  [\App\Http\Controllers\ReportDecisionController::class, 'show'])->name('reports.decision');
+    Route::post('/reports/{hashid}/appeal',   [\App\Http\Controllers\ReportDecisionController::class, 'appeal'])->name('reports.appeal');
 });
+
+
 
 // ==========================================
 // LEGACY DASHBOARD ROUTES
