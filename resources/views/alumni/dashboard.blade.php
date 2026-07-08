@@ -1940,11 +1940,19 @@
 
             {{-- Messenger Icon (নোটিফিকেশন এর পরে) --}}
             <div class="nav-item dropdown" id="messengerDropdown">
-                <button class="nav-link position-relative" type="button" id="messengerBtn" onclick="toggleMessengerDropdown()" style="border:none;background:transparent;color:#6b7280;font-size:20px;">
+
+                <button class="nav-icon-btn position-relative"
+                    id="messengerBtn"
+                    onclick="toggleMessengerDropdown()">
                     <i class="fa-brands fa-facebook-messenger"></i>
-                    <span id="messengerBadge" class="badge bg-danger position-absolute top-0 start-100 translate-middle" style="display:none;font-size:10px;">0</span>
+
+                    <span id="messengerBadge"
+                        class="badge bg-danger position-absolute top-0 start-100 translate-middle"
+                        style="display:none;font-size:10px;">
+                        0
+                    </span>
                 </button>
-                
+                                
                 {{-- Conversation List Dropdown --}}
                 <div id="messengerPanel" class="position-absolute bg-white rounded shadow-lg" style="display:none;top:100%;right:0;width:360px;max-height:500px;overflow-y:auto;z-index:1050;border:1px solid #e5e7eb;">
                     <div style="padding:12px;border-bottom:1px solid #e5e7eb;">

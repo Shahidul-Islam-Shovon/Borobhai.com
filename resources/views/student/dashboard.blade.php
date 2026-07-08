@@ -1783,9 +1783,17 @@
 
             {{-- Messenger Icon (নোটিফিকেশন এর পরে) --}}
             <div class="nav-item dropdown" id="messengerDropdown">
-                <button class="nav-link position-relative" type="button" id="messengerBtn" onclick="toggleMessengerDropdown()" style="border:none;background:transparent;color:#6b7280;font-size:20px;">
+                
+                <button class="nav-icon-btn position-relative"
+                    id="messengerBtn"
+                    onclick="toggleMessengerDropdown()">
                     <i class="fa-brands fa-facebook-messenger"></i>
-                    <span id="messengerBadge" class="badge bg-danger position-absolute top-0 start-100 translate-middle" style="display:none;font-size:10px;">0</span>
+
+                    <span id="messengerBadge"
+                        class="badge bg-danger position-absolute top-0 start-100 translate-middle"
+                        style="display:none;font-size:10px;">
+                        0
+                    </span>
                 </button>
                 
                 {{-- Conversation List Dropdown --}}
