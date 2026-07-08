@@ -113,11 +113,14 @@ class MessageController extends Controller
             'sender_id' => $m->sender_id,
             'message' => $m->is_deleted ? '' : $m->message,
             'is_deleted' => (bool) $m->is_deleted,
+            'is_edited' => (bool) $m->is_edited,
             'forwarded' => (bool) $m->forwarded,
             'media' => $m->is_deleted ? [] : $this->formatMedia($m),
             'reply_to' => $reply,
             'reactions' => $this->formatReactions($m, $me),
             'created_at' => $m->created_at->format('g:i A'),
+            // ফ্রন্টএন্ডে "১৫ মিনিটের পর এডিট বন্ধ" লজিকের জন্য মিলিসেকেন্ড টাইমস্ট্যাম্প
+            'created_at_ts' => $m->created_at->timestamp * 1000,
             'is_mine' => $m->sender_id === $me,
             'seen' => (bool) $m->seen_at,
         ];
@@ -322,12 +325,26 @@ class MessageController extends Controller
     }
 
     // ===== EDIT MESSAGE =====
-    public function editMessage($id, Request $request)
+    public function editMessage(Request $request, $id)
     {
-        $msg = Message::findOrFail($id);
-        if ($msg->sender_id !== Auth::id()) abort(403);
+        $request->validate(['message' => 'required|string|max:5000']);
 
-        $msg->update(['message' => $request->validate(['message' => 'required|string|max:5000'])['message']]);
+        $message = Message::where('id', $id)->where('sender_id', Auth::id())->firstOrFail();
+
+        if ($message->is_deleted) {
+            return response()->json(['success' => false, 'error' => 'Cannot edit a deleted message.'], 403);
+        }
+
+        // Facebook-style: বার্তা পাঠানোর ১৫ মিনিটের মধ্যেই শুধু এডিট করা যাবে
+        if ($message->created_at->diffInMinutes(now()) > 15) {
+            return response()->json(['success' => false, 'error' => 'Edit time expired (15 minutes limit).'], 403);
+        }
+
+        $message->update([
+            'message' => $request->message,
+            'is_edited' => true,
+        ]);
+
         return response()->json(['success' => true]);
     }
 

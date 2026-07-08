@@ -564,7 +564,7 @@ textarea.bb-job-input { resize:vertical; }
                 </span>
             
             <a href="{{ route('search.index') }}" class="nav-icon-btn d-md-none"><i class="bi bi-search"></i></a>
-            <a href="#" class="nav-icon-btn"><i class="bi bi-messenger"></i></a>
+            <a href="#" class="nav-icon-btn"><i class="fa-brands fa-facebook-messenger"></i></a>
             <a href="#" class="nav-icon-btn"><i class="bi bi-bell-fill"></i></a>
             <div class="dropdown">
                 <button class="nav-icon-btn border-0" data-bs-toggle="dropdown">

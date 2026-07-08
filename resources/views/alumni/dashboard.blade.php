@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
     <title>Borobhai.online</title>
@@ -1777,21 +1779,28 @@
         color: #9ca3af;
         flex-shrink: 0;
     }
-    .bb-msg-row { display:flex; align-items:center; gap:4px; position:relative; margin-bottom:2px; }
+    
+    .bb-msg-row { display:flex; align-items:center; gap:2px; position:relative; margin-bottom:2px; }
     .bb-msg-row.mine { justify-content:flex-end; }
     .bb-msg-row.theirs { justify-content:flex-start; }
-    .bb-msg-bubble-wrap { display:flex; flex-direction:column; max-width:78%; }
-    .bb-msg-actions { display:none; align-items:center; gap:2px; flex-shrink:0; align-self:center; }
-    .bb-msg-row:hover .bb-msg-actions { display:flex; }
-    .bb-msg-action-btn { width:22px;height:22px;border:none;background:transparent;color:#6b7280;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px; }
+    .bb-msg-bubble-wrap { display:flex; flex-direction:column; max-width:75%; position:relative; }
+    .bb-msg-actions { display:none; align-items:center; gap:1px; flex-shrink:0; white-space:nowrap; }
+    .bb-msg-row:hover .bb-msg-actions {
+    display: flex;
+    }
+    /* মোবাইলে hover কাজ করে না, তাই মেসেজে tap করলেও দেখাবে */
+    .bb-msg-row.bb-touch-active .bb-msg-actions {
+        display: flex;
+    }
+    .bb-msg-action-btn { width:22px;height:22px;border:none;background:transparent;color:#6b7280;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;padding:0; }
     .bb-msg-action-btn:hover { background:#e5e7eb; }
-    .bb-msg-menu { position:absolute; background:#fff; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.18); z-index:200; min-width:150px; padding:4px; display:none; }
+    .bb-msg-menu { position:absolute; top:100%; margin-top:2px; background:#fff; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.18); z-index:300; width:160px; padding:4px; display:none; }
     .bb-msg-menu.show { display:block; }
-    .bb-msg-menu-item { padding:7px 10px; font-size:12.5px; cursor:pointer; border-radius:6px; display:flex; align-items:center; gap:8px; color:#1e1f24; }
+    .bb-msg-menu-item { padding:7px 10px; font-size:12.5px; cursor:pointer; border-radius:6px; display:flex; align-items:center; gap:8px; color:#1e1f24; white-space:nowrap; }
     .bb-msg-menu-item:hover { background:#f3f4f6; }
     .bb-msg-menu-item.danger { color:#dc2626; }
     
-    .bb-react-bar { position:absolute; top:-34px; background:#fff; border-radius:20px; box-shadow:0 2px 10px rgba(0,0,0,.15); padding:4px 7px; display:none; gap:3px; z-index:150; }
+    .bb-react-bar { position:absolute; top:-36px; background:#fff; border-radius:20px; box-shadow:0 2px 10px rgba(0,0,0,.18); padding:4px 6px; display:none; gap:3px; z-index:300; width:max-content; }
     .bb-react-bar.show { display:flex; }
     .bb-msg-row.mine .bb-react-bar { right:0; }
     .bb-msg-row.theirs .bb-react-bar { left:0; }
@@ -1813,6 +1822,65 @@
     .bb-forward-contact-item:hover { background:#f3f4f6; }
     .bb-forward-search { padding:8px 14px; border-bottom:1px solid #f0f2f5; }
     .bb-forward-search input { width:100%; border:1px solid #e5e7eb; border-radius:16px; padding:6px 12px; font-size:12.5px; outline:none; }
+
+    .bb-msg-media-grid {
+    display: grid;
+    gap: 3px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 4px;
+    max-width: 260px;
+    }
+    .bb-msg-media-grid-1 { grid-template-columns: 1fr; }
+    .bb-msg-media-grid-1 .bb-msg-media-cell { height: 220px; }
+
+    .bb-msg-media-grid-2 { grid-template-columns: 1fr 1fr; }
+    .bb-msg-media-grid-2 .bb-msg-media-cell { height: 150px; }
+
+    .bb-msg-media-grid-3 {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+    .bb-msg-media-grid-3 .bb-msg-media-cell:first-child {
+        grid-row: span 2;
+        height: 153px;
+    }
+    .bb-msg-media-grid-3 .bb-msg-media-cell:not(:first-child) { height: 75px; }
+
+    .bb-msg-media-grid-4 {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+    .bb-msg-media-grid-4 .bb-msg-media-cell { height: 108px; }
+
+    .bb-msg-media-cell {
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        background: #000;
+    }
+    .bb-msg-media-cell img,
+    .bb-msg-media-cell video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .bb-msg-media-play {
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 32px; height: 32px;
+        background: rgba(0,0,0,.55);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .bb-msg-media-play i { color: #fff; font-size: 15px; }
+    .bb-msg-media-more {
+        position: absolute; inset: 0;
+        background: rgba(0,0,0,.55);
+        color: #fff; font-weight: 700; font-size: 20px;
+        display: flex; align-items: center; justify-content: center;
+    }
 </style>
 
  
@@ -1873,7 +1941,7 @@
             {{-- Messenger Icon (নোটিফিকেশন এর পরে) --}}
             <div class="nav-item dropdown" id="messengerDropdown">
                 <button class="nav-link position-relative" type="button" id="messengerBtn" onclick="toggleMessengerDropdown()" style="border:none;background:transparent;color:#6b7280;font-size:20px;">
-                    <i class="bi bi-messenger"></i>
+                    <i class="fa-brands fa-facebook-messenger"></i>
                     <span id="messengerBadge" class="badge bg-danger position-absolute top-0 start-100 translate-middle" style="display:none;font-size:10px;">0</span>
                 </button>
                 
@@ -4676,13 +4744,12 @@ function openChatBox(userId, name, pic, lastSeen, isOnline, userHash, skipSave) 
         + '<button type="button" onclick="clearReplyTo(' + userId + ')" style="background:transparent;border:none;color:#6b7280;cursor:pointer;font-size:14px;padding:2px 6px;">✕</button>'
         + '</div>'
         + '<div id="mediaPreview-' + userId + '" style="margin-bottom:8px;display:none;flex-wrap:wrap;gap:6px;max-height:70px;overflow-y:auto;"></div>'
-        + '<div style="display:flex;gap:8px;margin-bottom:8px;">'
-        + '<button type="button" onclick="document.getElementById(\'mediaInput-' + userId + '\').click()" style="background:#f3f4f6;border:1px solid #d1d5db;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;"><i class="bi bi-paperclip"></i> Media</button>'
-        + '</div>'
         + '<input type="file" id="mediaInput-' + userId + '" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar" style="display:none;" onchange="handleMediaSelect(' + userId + ')">'
-        + '<div style="display:flex;gap:8px;">'
+        + '<div style="display:flex;gap:4px;align-items:flex-end;">'
+        + '<button type="button" onclick="document.getElementById(\'mediaInput-' + userId + '\').click()" title="Attach media" style="background:transparent;border:none;color:#4f46e5;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:17px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><i class="bi bi-image-fill"></i></button>'
         + '<textarea id="msgInput-' + userId + '" placeholder="Aa" rows="1" style="flex:1;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;resize:none;" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendMessageWithMedia(' + userId + ');}" oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,80)+\'px\'"></textarea>'
-        + '<button onclick="sendMessageWithMedia(' + userId + ')" style="background:#4f46e5;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;width:50px;flex-shrink:0;"><i class="bi bi-send-fill"></i></button>'
+        + '<button type="button" class="bb-emoji-btn" data-target="#msgInput-' + userId + '" title="Emoji" style="width:30px;height:30px;flex-shrink:0;font-size:17px;padding:0;display:flex;align-items:center;justify-content:center;"><i class="bi bi-emoji-smile"></i></button>'
+        + '<button onclick="sendMessageWithMedia(' + userId + ')" style="background:#4f46e5;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;width:44px;flex-shrink:0;"><i class="bi bi-send-fill"></i></button>'
         + '</div></div>';
 
     var zone = box.querySelector('[id^="msgZone-"]');
@@ -4801,6 +4868,12 @@ function fetchMessages(userId) {
     .catch(err => console.error('Fetch error:', err));
 }
 
+function canEditMessage(msg) {
+    if (!msg.created_at_ts) return true; // fallback, backend আপডেট না হলে পুরনো আচরণ
+    var FIFTEEN_MIN = 15 * 60 * 1000;
+    return (Date.now() - msg.created_at_ts) <= FIFTEEN_MIN;
+}
+
 function renderMessageRow(msg, userId) {
     var side = msg.is_mine ? 'mine' : 'theirs';
     var bubbleBg = msg.is_mine ? 'background:#4f46e5;color:#fff;' : 'background:#e5e7eb;color:#1e1f24;';
@@ -4847,7 +4920,9 @@ function renderMessageRow(msg, userId) {
         menuItems.push('<div class="bb-msg-menu-item" onclick="startReplyTo(' + userId + ',' + msg.id + ')"><i class="bi bi-reply-fill"></i> Reply</div>');
         menuItems.push('<div class="bb-msg-menu-item" onclick="openForwardModal(' + msg.id + ')"><i class="bi bi-arrow-90deg-right"></i> Forward</div>');
         if (msg.is_mine) {
-            menuItems.push('<div class="bb-msg-menu-item" onclick="editMessageUI(' + userId + ',' + msg.id + ')"><i class="bi bi-pencil"></i> Edit</div>');
+            if (canEditMessage(msg)) {
+                menuItems.push('<div class="bb-msg-menu-item" onclick="editMessageUI(' + userId + ',' + msg.id + ')"><i class="bi bi-pencil"></i> Edit</div>');
+            }
             menuItems.push('<div class="bb-msg-menu-item danger" onclick="deleteMessageUI(' + userId + ',' + msg.id + ',\'me\')"><i class="bi bi-trash"></i> Delete for me</div>');
             menuItems.push('<div class="bb-msg-menu-item danger" onclick="deleteMessageUI(' + userId + ',' + msg.id + ',\'everyone\')"><i class="bi bi-trash-fill"></i> Delete for everyone</div>');
         } else {
@@ -4991,6 +5066,13 @@ function closeReactModal() {
 
 // ===== THREE-DOT MENU =====
 document.addEventListener('click', function (e) {
+    var row = e.target.closest('.bb-msg-row');
+    document.querySelectorAll('.bb-msg-row.bb-touch-active').forEach(function (r) {
+        if (r !== row) r.classList.remove('bb-touch-active');
+    });
+    if (row && !e.target.closest('.bb-msg-actions') && !e.target.closest('.bb-msg-menu')) {
+        row.classList.toggle('bb-touch-active');
+    }
     if (!e.target.closest('.bb-msg-menu') && !e.target.closest('.bb-msg-action-btn')) {
         document.querySelectorAll('.bb-msg-menu.show').forEach(m => m.classList.remove('show'));
     }
@@ -5080,6 +5162,11 @@ function submitEditMessage(userId) {
     })
     .then(r => r.json())
     .then(d => {
+        if (!d.success) {
+        Swal.fire({ icon: 'warning', title: d.error || 'Cannot edit this message anymore' });
+        cancelEditMessage(userId);
+        return;
+    }
         if (!d.success) return;
         var msg = chatMsgCache[userId][msgId];
         var row = document.querySelector('.bb-msg-row[data-msg-id="' + msgId + '"]');
@@ -5770,6 +5857,7 @@ function escHtml(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+
 function renderMsgMedia(media) {
     if (!media || !media.length) return '';
 
@@ -5783,41 +5871,26 @@ function renderMsgMedia(media) {
             return { type: f.type, url: f.url };
         })).replace(/"/g, '&quot;');
 
-        var n = visualItems.length;
-        var gridStyle, tileHeight;
-        if (n === 1) { gridStyle = 'display:block;'; tileHeight = '220px'; }
-        else if (n === 2) { gridStyle = 'display:grid;grid-template-columns:1fr 1fr;gap:3px;'; tileHeight = '130px'; }
-        else if (n === 3) { gridStyle = 'display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:3px;'; tileHeight = '130px'; }
-        else { gridStyle = 'display:grid;grid-template-columns:1fr 1fr;gap:3px;'; tileHeight = '100px'; }
+        var total = visualItems.length;
+        var showCount = Math.min(total, 4);
+        var showMore = total > 4;
 
-        html += '<div style="' + gridStyle + 'border-radius:10px;overflow:hidden;margin-bottom:4px;width:220px;">';
-
-        visualItems.forEach(function (f, idx) {
-            if (n === 3 && idx === 0) {
-                // প্রথমটা বড়, ২ রো জুড়ে
-                var extraStyle = 'grid-row: 1 / 3;';
-            } else {
-                var extraStyle = '';
-            }
-
-            var showMoreOverlay = (n > 4 && idx === 3);
-            var itemStyle = 'position:relative;width:100%;height:' + tileHeight + ';overflow:hidden;cursor:pointer;' + extraStyle;
-
-            if (n > 4 && idx >= 4) return; // ৪টার বেশি হলে বাকিগুলো overlay-তে ঢুকবে, আলাদা দেখাবে না
-
-            html += '<div style="' + itemStyle + '" onclick="openLightbox(\'' + lbData + '\',' + idx + ')">';
+        html += '<div class="bb-msg-media-grid bb-msg-media-grid-' + showCount + '">';
+        for (var i = 0; i < showCount; i++) {
+            var f = visualItems[i];
+            var isLast = showMore && i === 3;
+            html += '<div class="bb-msg-media-cell" onclick="openLightbox(\'' + lbData + '\',' + i + ')">';
             if (f.type === 'image') {
-                html += '<img src="' + f.url + '" style="width:100%;height:100%;object-fit:cover;display:block;">';
+                html += '<img src="' + f.url + '" loading="lazy">';
             } else {
-                html += '<video src="' + f.url + '" style="width:100%;height:100%;object-fit:cover;display:block;" muted></video>'
-                      + '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;background:rgba(0,0,0,.55);border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="bi bi-play-fill" style="color:#fff;font-size:16px;"></i></div>';
+                html += '<video src="' + f.url + '" muted preload="metadata"></video>'
+                      + '<div class="bb-msg-media-play"><i class="bi bi-play-fill"></i></div>';
             }
-            if (showMoreOverlay) {
-                html += '<div style="position:absolute;inset:0;background:rgba(0,0,0,.55);color:#fff;font-weight:700;font-size:20px;display:flex;align-items:center;justify-content:center;">+' + (n - 4) + '</div>';
+            if (isLast) {
+                html += '<div class="bb-msg-media-more">+' + (total - 4) + '</div>';
             }
             html += '</div>';
-        });
-
+        }
         html += '</div>';
     }
 
@@ -5825,10 +5898,12 @@ function renderMsgMedia(media) {
         html += '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:4px;">';
         fileItems.forEach(function (f) {
             var ext = (f.name.split('.').pop() || 'FILE').toUpperCase();
-            var kindIcon = { PDF:['bi-file-earmark-pdf-fill','#dc2626'], DOC:['bi-file-earmark-word-fill','#2563eb'], DOCX:['bi-file-earmark-word-fill','#2563eb'],
-                              XLS:['bi-file-earmark-excel-fill','#16a34a'], XLSX:['bi-file-earmark-excel-fill','#16a34a'],
-                              PPT:['bi-file-earmark-ppt-fill','#ea580c'], PPTX:['bi-file-earmark-ppt-fill','#ea580c'],
-                              ZIP:['bi-file-earmark-zip-fill','#6b7280'], RAR:['bi-file-earmark-zip-fill','#6b7280'] }[ext] || ['bi-file-earmark-fill','#6b7280'];
+            var kindIcon = {
+                PDF: ['bi-file-earmark-pdf-fill', '#dc2626'], DOC: ['bi-file-earmark-word-fill', '#2563eb'], DOCX: ['bi-file-earmark-word-fill', '#2563eb'],
+                XLS: ['bi-file-earmark-excel-fill', '#16a34a'], XLSX: ['bi-file-earmark-excel-fill', '#16a34a'],
+                PPT: ['bi-file-earmark-ppt-fill', '#ea580c'], PPTX: ['bi-file-earmark-ppt-fill', '#ea580c'],
+                ZIP: ['bi-file-earmark-zip-fill', '#6b7280'], RAR: ['bi-file-earmark-zip-fill', '#6b7280']
+            }[ext] || ['bi-file-earmark-fill', '#6b7280'];
             html += '<a href="' + f.url + '" target="_blank" download style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.85);color:#1e1f24;padding:8px 10px;border-radius:8px;text-decoration:none;min-width:170px;">'
                   + '<i class="bi ' + kindIcon[0] + '" style="font-size:22px;color:' + kindIcon[1] + ';flex-shrink:0;"></i>'
                   + '<div style="min-width:0;"><div style="font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">' + escHtml(f.name) + '</div>'
