@@ -206,6 +206,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/message/unread-count', [MessageController::class, 'unreadCount'])->name('message.unreadCount');
     Route::post('/message/{id}/react', [MessageController::class, 'reactMessage'])->name('message.react');
 
+    Route::post('/message/{id}/forward', [MessageController::class, 'forwardMessage']);
+    Route::get('/message/thread/{userId}/older', [MessageController::class, 'olderMessages']);
+    Route::get('/message/thread/{userId}/search', [MessageController::class, 'searchThread']);
+    Route::get('/message/thread/{userId}/media', [MessageController::class, 'threadMedia']);
+
     // ---------- REPORT ----------
     Route::post('/report',                      [ReportController::class, 'store'])->name('report.store');
 

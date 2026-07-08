@@ -1777,6 +1777,42 @@
         color: #9ca3af;
         flex-shrink: 0;
     }
+    .bb-msg-row { display:flex; align-items:center; gap:4px; position:relative; margin-bottom:2px; }
+    .bb-msg-row.mine { justify-content:flex-end; }
+    .bb-msg-row.theirs { justify-content:flex-start; }
+    .bb-msg-bubble-wrap { display:flex; flex-direction:column; max-width:78%; }
+    .bb-msg-actions { display:none; align-items:center; gap:2px; flex-shrink:0; align-self:center; }
+    .bb-msg-row:hover .bb-msg-actions { display:flex; }
+    .bb-msg-action-btn { width:22px;height:22px;border:none;background:transparent;color:#6b7280;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px; }
+    .bb-msg-action-btn:hover { background:#e5e7eb; }
+    .bb-msg-menu { position:absolute; background:#fff; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.18); z-index:200; min-width:150px; padding:4px; display:none; }
+    .bb-msg-menu.show { display:block; }
+    .bb-msg-menu-item { padding:7px 10px; font-size:12.5px; cursor:pointer; border-radius:6px; display:flex; align-items:center; gap:8px; color:#1e1f24; }
+    .bb-msg-menu-item:hover { background:#f3f4f6; }
+    .bb-msg-menu-item.danger { color:#dc2626; }
+    
+    .bb-react-bar { position:absolute; top:-34px; background:#fff; border-radius:20px; box-shadow:0 2px 10px rgba(0,0,0,.15); padding:4px 7px; display:none; gap:3px; z-index:150; }
+    .bb-react-bar.show { display:flex; }
+    .bb-msg-row.mine .bb-react-bar { right:0; }
+    .bb-msg-row.theirs .bb-react-bar { left:0; }
+
+    .bb-react-emoji { cursor:pointer; font-size:15px; padding:2px 3px; border-radius:50%; transition:transform .1s; }
+    .bb-react-emoji:hover { transform:scale(1.3); }
+    .bb-msg-reactions { display:flex; gap:2px; margin-top:2px; flex-wrap:wrap; }
+    .bb-msg-reaction-pill { background:#fff; border:1px solid #e5e7eb; border-radius:10px; font-size:10px; padding:0 5px; display:flex; align-items:center; gap:2px; cursor:pointer; }
+    .bb-reply-preview-inline { border-left:3px solid #4f46e5; background:rgba(79,70,229,.08); padding:3px 8px; border-radius:6px; margin-bottom:3px; font-size:11px; cursor:pointer; color:#374151; }
+    .bb-reply-compose { display:none; align-items:center; justify-content:space-between; background:#f0f2f5; border-radius:8px; padding:6px 10px; margin-bottom:6px; font-size:12px; }
+    .bb-search-box-chat { display:none; padding:8px 10px; border-bottom:1px solid #f0f2f5; }
+    .bb-search-box-chat input { width:100%; border:1px solid #e5e7eb; border-radius:16px; padding:5px 12px; font-size:12.5px; outline:none; }
+    .bb-gallery-modal-overlay, .bb-forward-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:5000; display:none; align-items:center; justify-content:center; }
+    .bb-gallery-modal, .bb-forward-modal { background:#fff; border-radius:14px; width:360px; max-height:75vh; display:flex; flex-direction:column; overflow:hidden; }
+    .bb-gallery-modal-head, .bb-forward-modal-head { padding:14px 16px; border-bottom:1px solid #eceef1; display:flex; align-items:center; justify-content:space-between; font-weight:700; }
+    .bb-gallery-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:3px; overflow-y:auto; padding:8px; }
+    .bb-gallery-grid img, .bb-gallery-grid video { width:100%; height:100px; object-fit:cover; cursor:pointer; border-radius:4px; }
+    .bb-forward-contact-item { display:flex; align-items:center; gap:10px; padding:9px 14px; cursor:pointer; }
+    .bb-forward-contact-item:hover { background:#f3f4f6; }
+    .bb-forward-search { padding:8px 14px; border-bottom:1px solid #f0f2f5; }
+    .bb-forward-search input { width:100%; border:1px solid #e5e7eb; border-radius:16px; padding:6px 12px; font-size:12.5px; outline:none; }
 </style>
 
  
@@ -2656,6 +2692,7 @@ var _reportModal         = null;
 var feedLoading          = false;
 var feedPage             = 1;
 var currentFeedFilter    = 'all';
+var _messengerConvCache = [];
 
 // ============================================================
 // SECTION 2: DOM READY INIT
@@ -4570,12 +4607,18 @@ function restoreOpenChats() {
 
 
 var openChatBoxes = {};
+
+var chatMsgCache = {};      // userId -> {msgId: msgObj}
+var replyToState = {};      // userId -> msgId or null
+var REACT_EMOJIS = ['👍','❤️','😂','😮','😢'];
+
 var _msgTimers = {};
 var _chatUnreadKnown = {};
 var _lastSoundAt = 0;
 var _audioCtx = null;
 var _badgeCountKnown = null;
 var _pollMinimizedTimer = null;
+
 
 function openChatBox(userId, name, pic, lastSeen, isOnline, userHash, skipSave) {
     userHash = userHash || userId;
@@ -4586,76 +4629,82 @@ function openChatBox(userId, name, pic, lastSeen, isOnline, userHash, skipSave) 
         return;
     }
 
-    var container     = document.getElementById('chatBoxesContainer');
+    var container = document.getElementById('chatBoxesContainer');
     if (!container) {
         container = document.createElement('div');
         container.id = 'chatBoxesContainer';
-        container.style.position = 'fixed';
-        container.style.bottom = '0';
-        container.style.right = '0';
-        container.style.display = 'flex';
-        container.style.gap = '10px';
-        container.style.padding = '10px';
-        container.style.zIndex = '1000';
+        container.style.cssText = 'position:fixed;bottom:0;right:0;display:flex;gap:10px;padding:10px;z-index:1000;';
         document.body.appendChild(container);
     }
 
-    var box           = document.createElement('div');
-    box.className     = 'bb-chat-box';
-    box.id            = 'chatbox-' + userId;
+    var box = document.createElement('div');
+    box.className = 'bb-chat-box';
+    box.id = 'chatbox-' + userId;
     box.setAttribute('data-user-id', userId);
     box.setAttribute('data-name', name || '');
     box.setAttribute('data-pic', pic || '');
     box.setAttribute('data-hash', userHash);
 
     var avatarContent = pic ? '<img src="' + pic + '" style="width:100%;height:100%;object-fit:cover;">' : name.charAt(0).toUpperCase();
-    var onlineDot     = isOnline === '1' ? '<span class="bb-chat-online-dot" style="position:absolute;bottom:2px;right:2px;width:10px;height:10px;background:#22c55e;border:2px solid white;border-radius:50%;display:block;"></span>' : '';
-    var statusText    = isOnline === '1' ? '<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> Active now' : lastSeen;
+    var onlineDot = isOnline === '1' ? '<span style="position:absolute;bottom:2px;right:2px;width:10px;height:10px;background:#22c55e;border:2px solid white;border-radius:50%;display:block;"></span>' : '';
+    var statusText = isOnline === '1' ? '<i class="bi bi-circle-fill text-success" style="font-size:7px;"></i> Active now' : lastSeen;
 
-    box.innerHTML = '<div style="background:#4f46e5;color:white;padding:12px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;flex-shrink:0;" onclick="toggleChatMinimize(' + userId + ')">'
+    box.innerHTML =
+        '<div style="background:#4f46e5;color:white;padding:12px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;flex-shrink:0;" onclick="toggleChatMinimize(' + userId + ')">'
         + '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">'
         + '<div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-weight:bold;color:white;position:relative;overflow:hidden;flex-shrink:0;">' + avatarContent + onlineDot + '</div>'
         + '<div style="flex:1;min-width:0;">'
         + '<p style="margin:0;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(name) + '</p>'
         + '<p style="margin:0;font-size:11px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + statusText + '</p>'
+        + '</div></div>'
+        + '<div style="display:flex;gap:4px;" onclick="event.stopPropagation();">'
+        + '<button onclick="toggleChatSearch(' + userId + ')" style="background:rgba(255,255,255,.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:12px;"><i class="bi bi-search"></i></button>'
+        + '<button onclick="openMediaGallery(' + userId + ')" style="background:rgba(255,255,255,.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:12px;"><i class="bi bi-images"></i></button>'
+        + '<button onclick="toggleChatMinimize(' + userId + ')" style="background:rgba(255,255,255,.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px;"><i class="bi bi-dash-lg"></i></button>'
+        + '<button onclick="closeChatBox(' + userId + ')" style="background:rgba(255,255,255,.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px;"><i class="bi bi-x-lg"></i></button>'
+        + '</div></div>'
+        + '<div class="bb-search-box-chat" id="chatSearchBox-' + userId + '">'
+        + '<input type="text" placeholder="Search in conversation..." oninput="searchInThread(' + userId + ',this.value)">'
         + '</div>'
-        + '</div>'
-        + '<div style="display:flex;gap:6px;" onclick="event.stopPropagation();">'
-        + '<a href="/profile/' + userHash + '" target="_blank" style="background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none;"><i class="bi bi-person-fill"></i></a>'
-        + '<button onclick="toggleChatMinimize(' + userId + ')" style="background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:13px;"><i class="bi bi-dash-lg"></i></button>'
-        + '<button onclick="closeChatBox(' + userId + ')" style="background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:13px;"><i class="bi bi-x-lg"></i></button>'
-        + '</div>'
-        + '</div>'
-        + '<div id="msgZone-' + userId + '" class="bb-chat-body-zone" style="flex:1;overflow-y:auto;padding:12px;background:#fafbfc;display:flex;flex-direction:column;gap:8px;min-height:0;align-content:flex-start;">'
+        + '<div id="msgZone-' + userId + '" class="bb-chat-body-zone" style="flex:1;overflow-y:auto;padding:12px;background:#fafbfc;display:flex;flex-direction:column;gap:4px;min-height:0;align-content:flex-start;">'
         + '<div id="msgPlaceholder-' + userId + '" style="text-align:center;color:#9ca3af;margin:auto;"><i class="bi bi-chat-dots" style="font-size:2rem;display:block;margin-bottom:8px;color:#d1d5db;"></i>Start a conversation</div>'
         + '</div>'
-        // Footer part only (replace করো)
         + '<div class="bb-chat-footer-zone" style="padding:12px;border-top:1px solid #e5e7eb;flex-shrink:0;">'
+        + '<div class="bb-reply-compose" id="replyCompose-' + userId + '">'
+        + '<div style="min-width:0;flex:1;"><div style="font-weight:700;color:#4f46e5;font-size:11px;" id="replyComposeSender-' + userId + '"></div>'
+        + '<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#374151;" id="replyComposeText-' + userId + '"></div></div>'
+        + '<button type="button" onclick="clearReplyTo(' + userId + ')" style="background:transparent;border:none;color:#6b7280;cursor:pointer;font-size:14px;padding:2px 6px;">✕</button>'
+        + '</div>'
         + '<div id="mediaPreview-' + userId + '" style="margin-bottom:8px;display:none;flex-wrap:wrap;gap:6px;max-height:70px;overflow-y:auto;"></div>'
         + '<div style="display:flex;gap:8px;margin-bottom:8px;">'
         + '<button type="button" onclick="document.getElementById(\'mediaInput-' + userId + '\').click()" style="background:#f3f4f6;border:1px solid #d1d5db;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;"><i class="bi bi-paperclip"></i> Media</button>'
         + '</div>'
-        + '<input type="file" id="mediaInput-' + userId + '" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="display:none;" onchange="handleMediaSelect(' + userId + ')">'
+        + '<input type="file" id="mediaInput-' + userId + '" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar" style="display:none;" onchange="handleMediaSelect(' + userId + ')">'
         + '<div style="display:flex;gap:8px;">'
         + '<textarea id="msgInput-' + userId + '" placeholder="Aa" rows="1" style="flex:1;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;resize:none;" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendMessageWithMedia(' + userId + ');}" oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,80)+\'px\'"></textarea>'
         + '<button onclick="sendMessageWithMedia(' + userId + ')" style="background:#4f46e5;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;width:50px;flex-shrink:0;"><i class="bi bi-send-fill"></i></button>'
-        + '</div>'
-        + '</div>'
+        + '</div></div>';
 
     var zone = box.querySelector('[id^="msgZone-"]');
-    if (zone) zone.setAttribute('data-last-id', '0');
+    if (zone) {
+        zone.setAttribute('data-last-id', '0');
+        zone.setAttribute('data-oldest-id', '0');
+        zone.setAttribute('data-has-more', '0');
+        zone.addEventListener('scroll', function () {
+            if (zone.scrollTop < 40) loadOlderMessages(userId);
+        });
+    }
 
-     container.appendChild(box);
-     openChatBoxes[userId] = box;
+    container.appendChild(box);
+    openChatBoxes[userId] = box;
+    replyToState[userId] = null;
 
     startMessagePolling(userId);
     if (!skipSave) saveOpenChatsState();
 
-    startMessagePolling(userId);
-
-    setTimeout(function () { 
+    setTimeout(function () {
         var input = document.getElementById('msgInput-' + userId);
-        if (input) input.focus(); 
+        if (input) input.focus();
     }, 100);
 }
 
@@ -4710,7 +4759,6 @@ function stopMessagePolling(userId) {
     }
 }
 
-
 function fetchMessages(userId) {
     fetch('/message/thread/' + userId, {
         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
@@ -4718,44 +4766,112 @@ function fetchMessages(userId) {
     .then(r => r.json())
     .then(d => {
         if (!d.messages) return;
-
         var zone = document.getElementById('msgZone-' + userId);
         if (!zone) return;
-
-        var lastId = parseInt(zone.getAttribute('data-last-id') || '0');
-        var newMessages = d.messages.filter(m => m.id > lastId);
-
-        if (newMessages.length === 0) return;
+        if (!chatMsgCache[userId]) chatMsgCache[userId] = {};
 
         var placeholder = document.getElementById('msgPlaceholder-' + userId);
-        if (placeholder) placeholder.remove();
+        var lastIdBefore = parseInt(zone.getAttribute('data-last-id') || '0');
+        var appendedNew = false;
 
-        newMessages.forEach(function(msg) {
-            var div = document.createElement('div');
-            div.setAttribute('data-msg-id', msg.id);
-            div.style.cssText = [
-                'padding:8px 12px',
-                'border-radius:10px',
-                'margin-bottom:6px',
-                'word-wrap:break-word',
-                'font-size:12px',
-                'max-width:80%',
-                'display:block',
-                msg.is_mine
-                    ? 'background:#4f46e5;color:#fff;margin-left:auto;'
-                    : 'background:#e5e7eb;color:#1e1f24;margin-right:auto;'
-            ].join(';');
-            div.innerHTML = '<div>' + escHtml(msg.message) + '</div>'
-                          + '<div style="font-size:10px;opacity:.7;margin-top:2px;">' + msg.created_at + '</div>';
-            zone.appendChild(div);
+        d.messages.forEach(function (msg) {
+            var cached = chatMsgCache[userId][msg.id];
+            var changed = !cached || JSON.stringify(cached) !== JSON.stringify(msg);
+            chatMsgCache[userId][msg.id] = msg;
+
+            var existingRow = zone.querySelector('.bb-msg-row[data-msg-id="' + msg.id + '"]');
+            if (existingRow) {
+                if (changed) existingRow.outerHTML = renderMessageRow(msg, userId);
+            } else {
+                if (placeholder) { placeholder.remove(); placeholder = null; }
+                zone.insertAdjacentHTML('beforeend', renderMessageRow(msg, userId));
+                if (msg.id > lastIdBefore) appendedNew = true;
+            }
         });
 
         var allIds = d.messages.map(m => m.id);
-        if (allIds.length) zone.setAttribute('data-last-id', Math.max(...allIds));
+        if (allIds.length) {
+            zone.setAttribute('data-last-id', Math.max(allIds.reduce((a,b)=>Math.max(a,b), lastIdBefore)));
+            zone.setAttribute('data-oldest-id', Math.min(...allIds));
+        }
+        zone.setAttribute('data-has-more', d.has_more ? '1' : '0');
 
-        zone.scrollTop = zone.scrollHeight;
+        if (appendedNew) zone.scrollTop = zone.scrollHeight;
     })
     .catch(err => console.error('Fetch error:', err));
+}
+
+function renderMessageRow(msg, userId) {
+    var side = msg.is_mine ? 'mine' : 'theirs';
+    var bubbleBg = msg.is_mine ? 'background:#4f46e5;color:#fff;' : 'background:#e5e7eb;color:#1e1f24;';
+    var radius = msg.is_mine ? '14px 14px 4px 14px' : '14px 14px 14px 4px';
+
+    var forwardedHtml = msg.forwarded
+        ? '<div style="font-size:10px;color:#9ca3af;font-style:italic;display:flex;align-items:center;gap:3px;margin-bottom:2px;' + (msg.is_mine ? 'justify-content:flex-end;' : '') + '"><i class="bi bi-arrow-90deg-right"></i> Forwarded</div>'
+        : '';
+
+    var replyHtml = '';
+    if (msg.reply_to) {
+        var replyBg = msg.is_mine ? 'background:rgba(255,255,255,.2);border-left-color:#fff;' : 'background:rgba(79,70,229,.1);border-left-color:#4f46e5;';
+        replyHtml = '<div class="bb-reply-preview-inline" onclick="jumpToMessage(' + userId + ',' + msg.reply_to.id + ')" style="' + replyBg + (msg.is_mine ? 'color:#fff;' : 'color:#374151;') + '">'
+            + '<strong>' + escHtml(msg.reply_to.sender_name) + '</strong>: ' + escHtml((msg.reply_to.message || '').substring(0, 40))
+            + '</div>';
+    }
+
+    var bodyHtml;
+    if (msg.is_deleted) {
+        bodyHtml = '<div style="padding:2px 4px;font-style:italic;opacity:.7;font-size:11.5px;">This message was deleted</div>';
+    } else {
+        var mediaHtml = renderMsgMedia(msg.media || []);
+        var textHtml = msg.message ? '<div style="padding:2px 4px;">' + escHtml(msg.message) + '</div>' : '';
+        bodyHtml = replyHtml + mediaHtml + textHtml;
+    }
+
+    var reactionsHtml = '';
+    var reactions = msg.reactions || {};
+    var reactKeys = Object.keys(reactions).filter(e => reactions[e] && reactions[e].length);
+    if (reactKeys.length) {
+        reactionsHtml = '<div class="bb-msg-reactions" style="' + (msg.is_mine ? 'justify-content:flex-end;' : '') + '">';
+        reactKeys.forEach(function (e) {
+            reactionsHtml += '<span class="bb-msg-reaction-pill" onclick="openReactModal(' + msg.id + ',' + userId + ')">' + e + ' ' + reactions[e].length + '</span>';
+        });
+        reactionsHtml += '</div>';
+    }
+
+    var reactBarHtml = '<div class="bb-react-bar" id="reactBar-' + msg.id + '">' + REACT_EMOJIS.map(e =>
+        '<span class="bb-react-emoji" onclick="reactToMessage(' + msg.id + ',\'' + e + '\',' + userId + ')">' + e + '</span>'
+    ).join('') + '</div>';
+
+    var menuItems = [];
+    if (!msg.is_deleted) {
+        menuItems.push('<div class="bb-msg-menu-item" onclick="startReplyTo(' + userId + ',' + msg.id + ')"><i class="bi bi-reply-fill"></i> Reply</div>');
+        menuItems.push('<div class="bb-msg-menu-item" onclick="openForwardModal(' + msg.id + ')"><i class="bi bi-arrow-90deg-right"></i> Forward</div>');
+        if (msg.is_mine) {
+            menuItems.push('<div class="bb-msg-menu-item" onclick="editMessageUI(' + userId + ',' + msg.id + ')"><i class="bi bi-pencil"></i> Edit</div>');
+            menuItems.push('<div class="bb-msg-menu-item danger" onclick="deleteMessageUI(' + userId + ',' + msg.id + ',\'me\')"><i class="bi bi-trash"></i> Delete for me</div>');
+            menuItems.push('<div class="bb-msg-menu-item danger" onclick="deleteMessageUI(' + userId + ',' + msg.id + ',\'everyone\')"><i class="bi bi-trash-fill"></i> Delete for everyone</div>');
+        } else {
+            menuItems.push('<div class="bb-msg-menu-item danger" onclick="deleteMessageUI(' + userId + ',' + msg.id + ',\'me\')"><i class="bi bi-trash"></i> Delete for me</div>');
+        }
+    }
+
+    var dotsHtml = msg.is_deleted ? '' :
+        '<div class="bb-msg-actions">'
+        + '<button class="bb-msg-action-btn" onclick="toggleReactBar(event,' + msg.id + ')"><i class="bi bi-emoji-smile"></i></button>'
+        + '<button class="bb-msg-action-btn" onclick="toggleMsgMenu(event,' + msg.id + ')"><i class="bi bi-three-dots"></i></button>'
+        + '</div>'
+        + '<div class="bb-msg-menu" id="msgMenu-' + msg.id + '">' + menuItems.join('') + '</div>';
+
+    return '<div class="bb-msg-row ' + side + '" data-msg-id="' + msg.id + '">'
+        + (side === 'mine' ? dotsHtml : '')
+        + '<div class="bb-msg-bubble-wrap">'
+        + forwardedHtml
+        + '<div style="position:relative;padding:6px 8px;border-radius:' + radius + ';font-size:12px;word-wrap:break-word;' + bubbleBg + '">'
+        + reactBarHtml + bodyHtml
+        + '<div style="font-size:10px;opacity:.7;margin-top:2px;padding:0 4px;">' + msg.created_at + '</div>'
+        + '</div>' + reactionsHtml + '</div>'
+        + (side === 'theirs' ? dotsHtml : '')
+        + '</div>';
 }
 
 function sendMessage(userId) {
@@ -4821,6 +4937,410 @@ function sendMessage(userId) {
 
 function escHtml(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function ensureReactModal() {
+    if (document.getElementById('bbReactModalOverlay')) return;
+    var el = document.createElement('div');
+    el.id = 'bbReactModalOverlay';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:6000;display:none;align-items:center;justify-content:center;';
+    el.innerHTML = '<div style="background:#fff;border-radius:14px;width:300px;max-height:60vh;display:flex;flex-direction:column;overflow:hidden;">'
+        + '<div style="padding:12px 16px;border-bottom:1px solid #eceef1;display:flex;align-items:center;justify-content:space-between;">'
+        + '<div id="reactModalTabs" style="display:flex;gap:12px;font-size:15px;"></div>'
+        + '<button onclick="closeReactModal()" style="border:none;background:transparent;font-size:16px;cursor:pointer;">✕</button>'
+        + '</div><div id="reactModalList" style="overflow-y:auto;padding:6px 0;"></div></div>';
+    document.body.appendChild(el);
+    el.addEventListener('click', function (ev) { if (ev.target === el) closeReactModal(); });
+}
+
+function openReactModal(msgId, userId) {
+    var msg = (chatMsgCache[userId] || {})[msgId];
+    if (!msg) return;
+    var reactions = msg.reactions || {};
+    var emojis = Object.keys(reactions).filter(e => reactions[e] && reactions[e].length);
+    if (!emojis.length) return;
+
+    ensureReactModal();
+    var tabsEl = document.getElementById('reactModalTabs');
+    var listEl = document.getElementById('reactModalList');
+    var activeEmoji = emojis[0];
+
+    function renderTabs() {
+        tabsEl.innerHTML = emojis.map(e =>
+            '<span onclick="selectReactTab(\'' + e + '\')" style="cursor:pointer;padding:4px 8px;border-radius:8px;' + (e === activeEmoji ? 'background:#eef2ff;' : '') + '">' + e + ' ' + reactions[e].length + '</span>'
+        ).join('');
+    }
+    function renderList(e) {
+        listEl.innerHTML = reactions[e].map(u =>
+            '<div style="display:flex;align-items:center;gap:10px;padding:8px 16px;">'
+            + '<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;">' + u.name.charAt(0).toUpperCase() + '</div>'
+            + '<span style="font-size:13px;">' + escHtml(u.name) + '</span></div>'
+        ).join('');
+    }
+    window.selectReactTab = function (e) { activeEmoji = e; renderTabs(); renderList(e); };
+
+    renderTabs();
+    renderList(activeEmoji);
+    document.getElementById('bbReactModalOverlay').style.display = 'flex';
+}
+
+function closeReactModal() {
+    var el = document.getElementById('bbReactModalOverlay');
+    if (el) el.style.display = 'none';
+}
+
+// ===== THREE-DOT MENU =====
+document.addEventListener('click', function (e) {
+    if (!e.target.closest('.bb-msg-menu') && !e.target.closest('.bb-msg-action-btn')) {
+        document.querySelectorAll('.bb-msg-menu.show').forEach(m => m.classList.remove('show'));
+    }
+    if (!e.target.closest('.bb-react-bar') && !e.target.closest('.bb-msg-action-btn')) {
+        document.querySelectorAll('.bb-react-bar.show').forEach(m => m.classList.remove('show'));
+    }
+});
+
+function toggleReactBar(e, msgId) {
+    e.stopPropagation();
+    var bar = document.getElementById('reactBar-' + msgId);
+    if (!bar) return;
+    var wasOpen = bar.classList.contains('show');
+    document.querySelectorAll('.bb-react-bar.show, .bb-msg-menu.show').forEach(m => m.classList.remove('show'));
+    if (!wasOpen) bar.classList.add('show');
+}
+
+function toggleMsgMenu(e, msgId) {
+    e.stopPropagation();
+    var menu = document.getElementById('msgMenu-' + msgId);
+    if (!menu) return;
+    var wasOpen = menu.classList.contains('show');
+    document.querySelectorAll('.bb-msg-menu.show').forEach(m => m.classList.remove('show'));
+    if (wasOpen) return;
+
+    var btn = e.target.closest('.bb-msg-action-btn');
+    var row = btn.closest('.bb-msg-row');
+    var rowRect = row.getBoundingClientRect();
+    var btnRect = btn.getBoundingClientRect();
+    menu.style.top = (btnRect.bottom - rowRect.top) + 'px';
+    menu.style.left = row.classList.contains('mine') ? 'auto' : (btnRect.left - rowRect.left) + 'px';
+    menu.style.right = row.classList.contains('mine') ? (rowRect.right - btnRect.right) + 'px' : 'auto';
+    menu.classList.add('show');
+}
+
+// ===== EDIT (inline in input box, Facebook style) =====
+var editState = {}; // userId -> msgId
+
+function editMessageUI(userId, msgId) {
+    document.querySelectorAll('.bb-msg-menu.show').forEach(m => m.classList.remove('show'));
+    var msg = (chatMsgCache[userId] || {})[msgId];
+    if (!msg) return;
+
+    editState[userId] = msgId;
+    clearReplyTo(userId);
+
+    var input = document.getElementById('msgInput-' + userId);
+    if (input) {
+        input.value = msg.message || '';
+        input.focus();
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 80) + 'px';
+    }
+
+    var box = document.getElementById('editCompose-' + userId);
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'editCompose-' + userId;
+        box.className = 'bb-reply-compose';
+        box.style.display = 'flex';
+        box.innerHTML = '<div style="min-width:0;flex:1;"><div style="font-weight:700;color:#f59e0b;font-size:11px;"><i class="bi bi-pencil-fill"></i> Editing message</div></div>'
+            + '<button type="button" onclick="cancelEditMessage(' + userId + ')" style="background:transparent;border:none;color:#6b7280;cursor:pointer;font-size:14px;padding:2px 6px;">✕</button>';
+        var replyBox = document.getElementById('replyCompose-' + userId);
+        replyBox.parentNode.insertBefore(box, replyBox);
+    }
+    box.style.display = 'flex';
+}
+
+function cancelEditMessage(userId) {
+    delete editState[userId];
+    var box = document.getElementById('editCompose-' + userId);
+    if (box) box.style.display = 'none';
+    var input = document.getElementById('msgInput-' + userId);
+    if (input) { input.value = ''; input.style.height = 'auto'; }
+}
+
+function submitEditMessage(userId) {
+    var msgId = editState[userId];
+    var input = document.getElementById('msgInput-' + userId);
+    var newText = input.value.trim();
+    if (!newText) return;
+
+    fetch('/message/' + msgId + '/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+        body: JSON.stringify({ message: newText })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) return;
+        var msg = chatMsgCache[userId][msgId];
+        var row = document.querySelector('.bb-msg-row[data-msg-id="' + msgId + '"]');
+        if (row && msg) {
+            msg.message = newText;
+            chatMsgCache[userId][msgId] = msg;
+            row.outerHTML = renderMessageRow(msg, userId);
+        }
+        cancelEditMessage(userId);
+        input.value = ''; input.style.height = 'auto';
+    });
+}
+
+// ===== DELETE =====
+function deleteMessageUI(userId, msgId, action) {
+    document.querySelectorAll('.bb-msg-menu.show').forEach(m => m.classList.remove('show'));
+    if (!confirm(action === 'everyone' ? 'Delete this message for everyone?' : 'Delete this message for you?')) return;
+
+    fetch('/message/' + msgId + '/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+        body: JSON.stringify({ action: action })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) return;
+        var row = document.querySelector('.bb-msg-row[data-msg-id="' + msgId + '"]');
+        if (action === 'me') {
+            if (row) row.remove();
+        } else if (row) {
+            var msg = chatMsgCache[userId][msgId];
+            msg.is_deleted = true;
+            row.outerHTML = renderMessageRow(msg, userId);
+        }
+    });
+}
+
+// ===== REACT =====
+function reactToMessage(msgId, emoji, userId) {
+    fetch('/message/' + msgId + '/react', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+        body: JSON.stringify({ emoji: emoji })
+    })
+    .then(r => r.json())
+    .then(d => {
+        document.querySelectorAll('.bb-react-bar.show').forEach(m => m.classList.remove('show'));
+        if (d.success) fetchMessages(userId);
+    });
+}
+
+// ===== REPLY =====
+function startReplyTo(userId, msgId) {
+    document.querySelectorAll('.bb-msg-menu.show').forEach(m => m.classList.remove('show'));
+    var msg = (chatMsgCache[userId] || {})[msgId];
+    if (!msg) return;
+    replyToState[userId] = msgId;
+
+    var box = document.getElementById('replyCompose-' + userId);
+    var senderEl = document.getElementById('replyComposeSender-' + userId);
+    var textEl = document.getElementById('replyComposeText-' + userId);
+    if (senderEl) senderEl.textContent = msg.is_mine ? 'You' : (document.getElementById('chatbox-' + userId)?.getAttribute('data-name') || 'User');
+    if (textEl) textEl.textContent = msg.message || '[Media]';
+    if (box) box.style.display = 'flex';
+
+    var input = document.getElementById('msgInput-' + userId);
+    if (input) input.focus();
+}
+
+function clearReplyTo(userId) {
+    replyToState[userId] = null;
+    var box = document.getElementById('replyCompose-' + userId);
+    if (box) box.style.display = 'none';
+}
+
+function jumpToMessage(userId, msgId) {
+    var row = document.querySelector('.bb-msg-row[data-msg-id="' + msgId + '"]');
+    if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.style.transition = 'background .3s';
+        var inner = row.querySelector('[style*="border-radius"]');
+        if (inner) {
+            var old = inner.style.boxShadow;
+            inner.style.boxShadow = '0 0 0 2px #f59e0b';
+            setTimeout(() => inner.style.boxShadow = old, 1200);
+        }
+    }
+}
+
+// ===== FORWARD =====
+var _forwardMsgId = null;
+
+function openForwardModal(msgId) {
+    document.querySelectorAll('.bb-msg-menu.show').forEach(m => m.classList.remove('show'));
+    _forwardMsgId = msgId;
+
+    var overlay = document.getElementById('bbForwardOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'bbForwardOverlay';
+        overlay.className = 'bb-forward-modal-overlay';
+        overlay.innerHTML = '<div class="bb-forward-modal">'
+            + '<div class="bb-forward-modal-head"><span>Forward Message</span><button onclick="closeForwardModal()" style="border:none;background:transparent;font-size:18px;cursor:pointer;">✕</button></div>'
+            + '<div class="bb-forward-search"><input type="text" placeholder="Search friends..." oninput="renderForwardContacts(this.value)"></div>'
+            + '<div id="forwardContactList" style="overflow-y:auto;flex:1;"></div>'
+            + '</div>';
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) closeForwardModal(); });
+    }
+    overlay.style.display = 'flex';
+
+    fetch('/friends/messenger-contacts', { headers: { 'Accept': 'application/json' } })
+    .then(r => r.json())
+    .then(d => { window._forwardContacts = d.contacts || []; renderForwardContacts(''); })
+    .catch(() => {});
+}
+
+function renderForwardContacts(q) {
+    var list = document.getElementById('forwardContactList');
+    if (!list) return;
+    var contacts = (window._forwardContacts || []).filter(c => c.name.toLowerCase().includes((q || '').toLowerCase()));
+    if (!contacts.length) { list.innerHTML = '<div class="text-muted text-center small py-3">No contacts found</div>'; return; }
+
+    list.innerHTML = contacts.map(c => {
+        var pic = c.profile_picture ? '<img src="/storage/' + c.profile_picture + '" style="width:100%;height:100%;object-fit:cover;">' : c.name.charAt(0).toUpperCase();
+        return '<div class="bb-forward-contact-item" onclick="sendForward(' + c.id + ',\'' + escHtml(c.name).replace(/'/g,"\\'") + '\')">'
+            + '<div style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#4f46e5,#7c73f0);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">' + pic + '</div>'
+            + '<span style="font-size:13px;font-weight:600;">' + escHtml(c.name) + '</span></div>';
+    }).join('');
+}
+
+function sendForward(recipientId, name) {
+    if (!_forwardMsgId) return;
+    fetch('/message/' + _forwardMsgId + '/forward', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+        body: JSON.stringify({ recipient_id: recipientId })
+    })
+    .then(r => r.json())
+    .then(d => {
+        closeForwardModal();
+        if (d.success) {
+            Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1800 }).fire({ icon: 'success', title: 'Forwarded to ' + name });
+        }
+    });
+}
+
+function closeForwardModal() {
+    var overlay = document.getElementById('bbForwardOverlay');
+    if (overlay) overlay.style.display = 'none';
+    _forwardMsgId = null;
+}
+
+// ===== SEARCH IN CONVERSATION =====
+var _searchTimer = {};
+function toggleChatSearch(userId) {
+    var box = document.getElementById('chatSearchBox-' + userId);
+    if (!box) return;
+    var showing = box.style.display === 'block';
+    box.style.display = showing ? 'none' : 'block';
+    if (!showing) box.querySelector('input').focus();
+    else { box.querySelector('input').value = ''; fetchMessages(userId); }
+}
+
+function searchInThread(userId, q) {
+    clearTimeout(_searchTimer[userId]);
+    _searchTimer[userId] = setTimeout(function () {
+        if (!q.trim()) { renderThreadMessages(userId, Object.values(chatMsgCache[userId] || {})); return; }
+        fetch('/message/thread/' + userId + '/search?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+        .then(r => r.json())
+        .then(d => {
+            (d.messages || []).forEach(m => { if (!chatMsgCache[userId]) chatMsgCache[userId] = {}; chatMsgCache[userId][m.id] = m; });
+            renderThreadMessages(userId, d.messages || [], true);
+        });
+    }, 300);
+}
+
+function renderThreadMessages(userId, messages, isSearch) {
+    var zone = document.getElementById('msgZone-' + userId);
+    if (!zone) return;
+    zone.innerHTML = messages.length
+        ? messages.map(m => renderMessageRow(m, userId)).join('')
+        : '<div style="text-align:center;color:#9ca3af;margin:auto;">' + (isSearch ? 'No matches found' : 'Start a conversation') + '</div>';
+    if (!isSearch) zone.scrollTop = zone.scrollHeight;
+}
+
+// ===== INFINITE SCROLL (older messages) =====
+var _loadingOlder = {};
+function loadOlderMessages(userId) {
+    var zone = document.getElementById('msgZone-' + userId);
+    if (!zone || _loadingOlder[userId]) return;
+    if (zone.getAttribute('data-has-more') !== '1') return;
+
+    var oldestId = zone.getAttribute('data-oldest-id');
+    if (!oldestId || oldestId === '0') return;
+
+    _loadingOlder[userId] = true;
+    var prevHeight = zone.scrollHeight;
+
+    fetch('/message/thread/' + userId + '/older?before_id=' + oldestId, { headers: { 'Accept': 'application/json' } })
+    .then(r => r.json())
+    .then(d => {
+        _loadingOlder[userId] = false;
+        if (!d.messages || !d.messages.length) { zone.setAttribute('data-has-more', '0'); return; }
+
+        if (!chatMsgCache[userId]) chatMsgCache[userId] = {};
+        d.messages.forEach(m => chatMsgCache[userId][m.id] = m);
+
+        var html = d.messages.map(m => renderMessageRow(m, userId)).join('');
+        zone.insertAdjacentHTML('afterbegin', html);
+        zone.setAttribute('data-oldest-id', d.messages[0].id);
+        zone.setAttribute('data-has-more', d.has_more ? '1' : '0');
+        zone.scrollTop = zone.scrollHeight - prevHeight;
+    })
+    .catch(() => { _loadingOlder[userId] = false; });
+}
+
+// ===== MEDIA GALLERY =====
+function openMediaGallery(userId) {
+    var overlay = document.getElementById('bbGalleryOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'bbGalleryOverlay';
+        overlay.className = 'bb-gallery-modal-overlay';
+        overlay.innerHTML = '<div class="bb-gallery-modal">'
+            + '<div class="bb-gallery-modal-head"><span>Shared Media</span><button onclick="closeMediaGallery()" style="border:none;background:transparent;font-size:18px;cursor:pointer;">✕</button></div>'
+            + '<div class="bb-gallery-grid" id="galleryGrid"><div class="text-center text-muted small py-4" style="grid-column:1/-1;">Loading...</div></div>'
+            + '</div>';
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) closeMediaGallery(); });
+    }
+    overlay.style.display = 'flex';
+
+    fetch('/message/thread/' + userId + '/media', { headers: { 'Accept': 'application/json' } })
+    .then(r => r.json())
+    .then(d => {
+        var grid = document.getElementById('galleryGrid');
+        var media = d.media || [];
+        if (!media.length) { grid.innerHTML = '<div class="text-center text-muted small py-4" style="grid-column:1/-1;">No media shared yet</div>'; return; }
+
+        var visualMedia = media.filter(f => f.type === 'image' || f.type === 'video');
+        var lbData = JSON.stringify(visualMedia.map(f => ({ type: f.type, url: f.url }))).replace(/"/g, '&quot;');
+
+        grid.innerHTML = media.map(function (f, idx) {
+            if (f.type === 'image') {
+                var vIdx = visualMedia.findIndex(v => v.url === f.url);
+                return '<img src="' + f.url + '" onclick="openLightbox(\'' + lbData + '\',' + vIdx + ')">';
+            } else if (f.type === 'video') {
+                var vIdx2 = visualMedia.findIndex(v => v.url === f.url);
+                return '<video src="' + f.url + '" onclick="openLightbox(\'' + lbData + '\',' + vIdx2 + ')" muted></video>';
+            } else {
+                return '<a href="' + f.url + '" target="_blank" download style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100px;background:#f3f4f6;border-radius:4px;text-decoration:none;color:#374151;font-size:10px;text-align:center;padding:4px;"><i class="bi bi-file-earmark-fill" style="font-size:22px;"></i>' + escHtml(f.name.substring(0, 12)) + '</a>';
+            }
+        }).join('');
+    })
+    .catch(() => {});
+}
+
+function closeMediaGallery() {
+    var overlay = document.getElementById('bbGalleryOverlay');
+    if (overlay) overlay.style.display = 'none';
 }
 
 // ============================================================
@@ -5034,20 +5554,22 @@ function removeMedia(userId, idx) {
 }
 
 function sendMessageWithMedia(userId) {
+    if (editState[userId]) { submitEditMessage(userId); return; }
     var input = document.getElementById('msgInput-' + userId);
     var text = input.value.trim();
     var files = mediaFiles[userId] || [];
-    
+
     if (!text && files.length === 0) {
         alert('Write a message or select media');
         return;
     }
-    
+
     var formData = new FormData();
     formData.append('recipient_id', userId);
     formData.append('message', text);
     files.forEach(f => formData.append('media[]', f));
-    
+    if (replyToState[userId]) formData.append('reply_to_id', replyToState[userId]);
+
     fetch('/message/send', {
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
@@ -5060,6 +5582,7 @@ function sendMessageWithMedia(userId) {
             input.style.height = 'auto';
             mediaFiles[userId] = [];
             updateMediaPreview(userId);
+            clearReplyTo(userId);
             setTimeout(() => fetchMessages(userId), 1000);
         } else alert('Error: ' + (d.error || 'Send failed'));
     })
@@ -5093,6 +5616,7 @@ function fetchConversationList(search = '') {
     .then(r => r.json())
     .then(d => {
         if (d.conversations) {
+            _messengerConvCache = d.conversations;
             var list = document.getElementById('conversationList');
             if (d.conversations.length === 0) {
                 list.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:20px;">No conversations yet</div>';
@@ -5161,14 +5685,18 @@ function stopMessengerBadgePolling() {
 function openConversationChat(userId, name, avatar) {
     var box = openChatBoxes[userId];
     if (box) {
-        box.classList.remove('minimized');
+        unminimizeChatBox(userId);
         document.getElementById('messengerPanel').style.display = 'none';
         _messengerOpen = false;
-    } else {
-        openChatBox(userId, name, avatar || '', 'now', '1', userId);  // last param: hash (use userId for now)
-        document.getElementById('messengerPanel').style.display = 'none';
-        _messengerOpen = false;
+        return;
     }
+    var conv = (_messengerConvCache || []).find(c => c.user_id == userId);
+    var isOnline = conv && conv.is_online ? '1' : '0';
+    var lastSeen = conv ? conv.last_seen_text : '';
+    var hash = conv ? conv.hash : userId;
+    openChatBox(userId, name, avatar || '', lastSeen, isOnline, hash);
+    document.getElementById('messengerPanel').style.display = 'none';
+    _messengerOpen = false;
 }
 
 // Close dropdown when clicking outside
@@ -5242,7 +5770,84 @@ function escHtml(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function renderMsgMedia(media) {
+    if (!media || !media.length) return '';
 
+    var visualItems = media.filter(function (f) { return f.type === 'image' || f.type === 'video'; });
+    var fileItems    = media.filter(function (f) { return f.type !== 'image' && f.type !== 'video'; });
+
+    var html = '';
+
+    if (visualItems.length) {
+        var lbData = JSON.stringify(visualItems.map(function (f) {
+            return { type: f.type, url: f.url };
+        })).replace(/"/g, '&quot;');
+
+        var n = visualItems.length;
+        var gridStyle, tileHeight;
+        if (n === 1) { gridStyle = 'display:block;'; tileHeight = '220px'; }
+        else if (n === 2) { gridStyle = 'display:grid;grid-template-columns:1fr 1fr;gap:3px;'; tileHeight = '130px'; }
+        else if (n === 3) { gridStyle = 'display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:3px;'; tileHeight = '130px'; }
+        else { gridStyle = 'display:grid;grid-template-columns:1fr 1fr;gap:3px;'; tileHeight = '100px'; }
+
+        html += '<div style="' + gridStyle + 'border-radius:10px;overflow:hidden;margin-bottom:4px;width:220px;">';
+
+        visualItems.forEach(function (f, idx) {
+            if (n === 3 && idx === 0) {
+                // প্রথমটা বড়, ২ রো জুড়ে
+                var extraStyle = 'grid-row: 1 / 3;';
+            } else {
+                var extraStyle = '';
+            }
+
+            var showMoreOverlay = (n > 4 && idx === 3);
+            var itemStyle = 'position:relative;width:100%;height:' + tileHeight + ';overflow:hidden;cursor:pointer;' + extraStyle;
+
+            if (n > 4 && idx >= 4) return; // ৪টার বেশি হলে বাকিগুলো overlay-তে ঢুকবে, আলাদা দেখাবে না
+
+            html += '<div style="' + itemStyle + '" onclick="openLightbox(\'' + lbData + '\',' + idx + ')">';
+            if (f.type === 'image') {
+                html += '<img src="' + f.url + '" style="width:100%;height:100%;object-fit:cover;display:block;">';
+            } else {
+                html += '<video src="' + f.url + '" style="width:100%;height:100%;object-fit:cover;display:block;" muted></video>'
+                      + '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;background:rgba(0,0,0,.55);border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="bi bi-play-fill" style="color:#fff;font-size:16px;"></i></div>';
+            }
+            if (showMoreOverlay) {
+                html += '<div style="position:absolute;inset:0;background:rgba(0,0,0,.55);color:#fff;font-weight:700;font-size:20px;display:flex;align-items:center;justify-content:center;">+' + (n - 4) + '</div>';
+            }
+            html += '</div>';
+        });
+
+        html += '</div>';
+    }
+
+    if (fileItems.length) {
+        html += '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:4px;">';
+        fileItems.forEach(function (f) {
+            var ext = (f.name.split('.').pop() || 'FILE').toUpperCase();
+            var kindIcon = { PDF:['bi-file-earmark-pdf-fill','#dc2626'], DOC:['bi-file-earmark-word-fill','#2563eb'], DOCX:['bi-file-earmark-word-fill','#2563eb'],
+                              XLS:['bi-file-earmark-excel-fill','#16a34a'], XLSX:['bi-file-earmark-excel-fill','#16a34a'],
+                              PPT:['bi-file-earmark-ppt-fill','#ea580c'], PPTX:['bi-file-earmark-ppt-fill','#ea580c'],
+                              ZIP:['bi-file-earmark-zip-fill','#6b7280'], RAR:['bi-file-earmark-zip-fill','#6b7280'] }[ext] || ['bi-file-earmark-fill','#6b7280'];
+            html += '<a href="' + f.url + '" target="_blank" download style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.85);color:#1e1f24;padding:8px 10px;border-radius:8px;text-decoration:none;min-width:170px;">'
+                  + '<i class="bi ' + kindIcon[0] + '" style="font-size:22px;color:' + kindIcon[1] + ';flex-shrink:0;"></i>'
+                  + '<div style="min-width:0;"><div style="font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">' + escHtml(f.name) + '</div>'
+                  + '<div style="font-size:10px;color:#6b7280;">' + ext + ' · ' + formatFileSize(f.size) + '</div></div>'
+                  + '</a>';
+        });
+        html += '</div>';
+    }
+
+    return html;
+}
+
+
+function formatFileSize(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
 
 // ============================================================
 // SECTION 22: JOB POST MODAL (alumni only)
