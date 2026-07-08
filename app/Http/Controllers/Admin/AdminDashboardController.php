@@ -144,92 +144,98 @@ class AdminDashboardController extends Controller
         return response()->json(['success' => true, 'message' => 'Warning sent. Report remains active.']);
     }
 
-    public function dismissReport($reportId)
-    {
-        $report = \App\Models\Report::findOrFail($reportId);
-        $report->update([
-            'status'        => 'dismissed',
-            'action_taken'  => 'dismissed_no_violation',
-            'admin_id'      => auth()->id(),
-            'reviewed_at'   => now(),
-            'history_seen'  => false,
-            'appeal_status' => $report->appeal_status === 'pending' ? null : $report->appeal_status, // 🆕
-        ]);
-        return response()->json([
-            'success' => true,
-            'message' => 'Report dismissed.',
-            'history_row' => $this->renderHistoryRow($report->fresh()),
-        ]);
-    }
+   public function dismissReport($reportId)
+{
+    $report = \App\Models\Report::findOrFail($reportId);
+    $wasAppealPending = $report->appeal_status === 'pending';
 
-    public function deleteReportedContent(Request $request, $reportId)
-    {
-        $report = \App\Models\Report::findOrFail($reportId);
-        $note   = $request->input('note');
-        $userId = null;
+    $report->update([
+        'status'        => 'dismissed',
+        'action_taken'  => 'dismissed_no_violation',
+        'admin_id'      => auth()->id(),
+        'reviewed_at'   => now(),
+        'history_seen'  => false,
+        'appeal_status' => $wasAppealPending ? 'ignored' : $report->appeal_status, // ✅ নতুন
+    ]);
 
-        if ($report->type === 'post') {
-            $post = \App\Models\Post::find($report->target_id);
-            if ($post) {
-                $userId = $post->user_id;
-                $post->update(['deleted_by_admin_id' => auth()->id(), 'admin_delete_note' => $note]);
-                $post->delete();
-            }
-        } elseif ($report->type === 'job') {
-            $job = \App\Models\JobPost::find($report->target_id);
-            if ($job) {
-                $userId = $job->user_id;
-                $job->update(['deleted_by_admin_id' => auth()->id(), 'admin_delete_note' => $note]);
-                $job->delete();
-            }
+    return response()->json([
+        'success' => true,
+        'message' => 'Report dismissed.',
+        'history_row' => $this->renderHistoryRow($report->fresh()),
+    ]);
+}
+
+public function deleteReportedContent(Request $request, $reportId)
+{
+    $report = \App\Models\Report::findOrFail($reportId);
+    $note   = $request->input('note');
+    $userId = null;
+    $wasAppealPending = $report->appeal_status === 'pending'; // ✅ নতুন
+
+    if ($report->type === 'post') {
+        $post = \App\Models\Post::find($report->target_id);
+        if ($post) {
+            $userId = $post->user_id;
+            $post->update(['deleted_by_admin_id' => auth()->id(), 'admin_delete_note' => $note]);
+            $post->delete();
         }
-
-        $report->update([
-            'admin_id'      => auth()->id(),
-            'admin_note'    => $note,
-            'action_taken'  => 'deleted',
-            'reviewed_at'   => now(),
-            'status'        => 'dismissed',
-            'history_seen'  => false,
-            'appeal_status' => $report->appeal_status === 'pending' ? null : $report->appeal_status, // 🆕
-        ]);
-
-        if ($userId) {
-            \App\Models\BbNotification::send(
-                $userId, auth()->id(), 'admin_decision',
-                '🗑️ Your ' . $report->type . ' was removed by an admin. Click to view the reason.',
-                'report', $report->id
-            );
+    } elseif ($report->type === 'job') {
+        $job = \App\Models\JobPost::find($report->target_id);
+        if ($job) {
+            $userId = $job->user_id;
+            $job->update(['deleted_by_admin_id' => auth()->id(), 'admin_delete_note' => $note]);
+            $job->delete();
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Content deleted successfully.',
-            'history_row' => $this->renderHistoryRow($report->fresh()),
-        ]);
     }
 
-    public function completeReport($reportId)
-    {
-        $report = \App\Models\Report::findOrFail($reportId);
-        $finalAction = in_array($report->action_taken, ['deleted', 'dismissed_no_violation'])
-            ? $report->action_taken
-            : 'resolved_other';
+    $report->update([
+        'admin_id'      => auth()->id(),
+        'admin_note'    => $note,
+        'action_taken'  => 'deleted',
+        'reviewed_at'   => now(),
+        'status'        => 'dismissed',
+        'history_seen'  => false,
+        'appeal_status' => $wasAppealPending ? 'ignored' : $report->appeal_status, // ✅ নতুন
+    ]);
 
-        $report->update([
-            'status'        => 'completed',
-            'action_taken'  => $finalAction,
-            'reviewed_at'   => $report->reviewed_at ?? now(),
-            'history_seen'  => false,
-            'appeal_status' => $report->appeal_status === 'pending' ? null : $report->appeal_status, // 🆕
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Report marked as completed.',
-            'history_row' => $this->renderHistoryRow($report->fresh()),
-        ]);
+    if ($userId) {
+        \App\Models\BbNotification::send(
+            $userId, auth()->id(), 'admin_decision',
+            '🗑️ Your ' . $report->type . ' was removed by an admin. Click to view the reason.',
+            'report', $report->id
+        );
     }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Content deleted successfully.',
+        'history_row' => $this->renderHistoryRow($report->fresh()),
+    ]);
+}
+
+public function completeReport($reportId)
+{
+    $report = \App\Models\Report::findOrFail($reportId);
+    $wasAppealPending = $report->appeal_status === 'pending'; // ✅ নতুন
+
+    $finalAction = in_array($report->action_taken, ['deleted', 'dismissed_no_violation'])
+        ? $report->action_taken
+        : 'resolved_other';
+
+    $report->update([
+        'status'        => 'completed',
+        'action_taken'  => $finalAction,
+        'reviewed_at'   => $report->reviewed_at ?? now(),
+        'history_seen'  => false,
+        'appeal_status' => $wasAppealPending ? 'ignored' : $report->appeal_status, // ✅ নতুন
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Report marked as completed.',
+        'history_row' => $this->renderHistoryRow($report->fresh()),
+    ]);
+}
 
     public function submitReview(Request $request, $reportId)
     {

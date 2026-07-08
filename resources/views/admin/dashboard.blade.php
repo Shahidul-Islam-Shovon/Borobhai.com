@@ -79,9 +79,7 @@
     <div class="nav-link-custom" data-target="history-tab">
         <i class="fa-solid fa-clock-rotate-left"></i> Completed Reports
         @php $historyUnseenCount = $completedReports->where('history_seen', false)->count(); @endphp
-        @if($historyUnseenCount > 0)
-            <span class="badge bg-info ms-auto" style="font-size:0.6rem;">{{ $historyUnseenCount }}</span>
-        @endif
+        <span class="badge bg-info ms-auto" id="history-unseen-badge" style="font-size:0.6rem; {{ $historyUnseenCount > 0 ? '' : 'display:none;' }}">{{ $historyUnseenCount }}</span>
     </div>
 
     <div style="position: absolute; bottom: 30px; width: calc(100% - 30px);">
@@ -675,6 +673,14 @@ document.querySelectorAll('.nav-link-custom').forEach(link => {
                 currentActiveContent.classList.remove('active');
                 const nextActiveContent = document.getElementById(targetTabId);
                 nextActiveContent.classList.add('active');
+                if (targetTabId === 'history-tab' && nextActiveContent.dataset.needsAdjust === '1') {
+                    setTimeout(() => {
+                        if ($.fn.DataTable.isDataTable('#historyTable')) {
+                            $('#historyTable').DataTable().columns.adjust().draw(false);
+                        }
+                        nextActiveContent.dataset.needsAdjust = '0';
+                    }, 250);
+                }
                 setTimeout(() => {
                     nextActiveContent.style.opacity = '1';
                     nextActiveContent.style.transform = 'scale(1) translateY(0)';
@@ -848,28 +854,6 @@ function adminAction(action, reportId) {
 }
 
 // ✅ একটা নির্দিষ্ট রিপোর্ট Read মার্ক করা — persist করে, tab/reload এ প্রভাবিত হয় না
-function markAsRead(reportId, el) {
-    fetch(`/admin/reports/${reportId}/mark-seen`, {
-        method: 'POST',
-        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (!d.success) return;
-        const row = document.getElementById('report-row-' + reportId) || (el.closest ? el.closest('tr') : null);
-        if (!row) return;
-        row.classList.remove('table-warning', 'table-info');
-        row.querySelectorAll('.badge').forEach(b => { if (b.textContent.trim() === 'NEW') { b.textContent = '•'; b.className = ''; } });
-        if (el && el.tagName === 'A') {
-            const li = el.closest('li');
-            const divider = li?.nextElementSibling;
-            li?.remove();
-            if (divider && divider.querySelector('hr')) divider.remove();
-        }
-    })
-    .catch(() => {});
-}
-
 
 function removeReportRow(reportId) {
     const row = document.getElementById('report-row-' + reportId);
@@ -891,13 +875,6 @@ function removeReportRow(reportId) {
     });
 }
 
-// ✅ History টেবিলে নতুন resolve হওয়া রিপোর্ট লাইভ যোগ করা (reload ছাড়াই)
-function addHistoryRowLive(html) {
-    if (!html || !$.fn.DataTable.isDataTable('#historyTable')) return;
-    const table = $('#historyTable').DataTable();
-    table.row.add($(html)).draw(false);
-}
-
 // ============================================================
 // STATS LIVE REFRESH
 // ============================================================
@@ -913,6 +890,72 @@ function refreshStatsCards() {
         }
     })
     .catch(() => {});
+}
+
+
+function bumpHistoryBadge(delta) {
+    const badge = document.getElementById('history-unseen-badge');
+    if (!badge) return;
+    let count = Math.max(0, (parseInt(badge.textContent) || 0) + delta);
+    badge.textContent = count;
+    badge.style.display = count > 0 ? '' : 'none';
+}
+
+function markAsRead(reportId, el) {
+    fetch(`/admin/reports/${reportId}/mark-seen`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) return;
+
+        const row = document.getElementById('report-row-' + reportId)
+                 || document.querySelector(`tr[data-report-id="${reportId}"]`);
+        if (!row) return;
+
+        const wasHistoryRow = row.hasAttribute('data-report-id');
+        row.classList.remove('table-warning', 'table-info');
+        row.querySelectorAll('.badge').forEach(b => {
+            if (b.textContent.trim() === 'NEW') { b.textContent = '•'; b.className = ''; }
+        });
+
+        if (el) {
+            if (el.tagName === 'A') {
+                // active tables — dropdown "Mark as Read" লিংক
+                const li = el.closest('li');
+                const divider = li?.nextElementSibling;
+                li?.remove();
+                if (divider && divider.querySelector('hr')) divider.remove();
+            } else if (el.tagName === 'BUTTON') {
+                // history table — "Mark as Read" বাটন
+                const span = document.createElement('span');
+                span.className = 'text-muted';
+                span.style.fontSize = '0.68rem';
+                span.innerHTML = '<i class="fa-solid fa-check"></i> Read';
+                el.replaceWith(span);
+            }
+        }
+
+        if (wasHistoryRow) bumpHistoryBadge(-1);
+    })
+    .catch(() => {});
+}
+
+
+function addHistoryRowLive(html) {
+    if (!html || !$.fn.DataTable.isDataTable('#historyTable')) return;
+    const table = $('#historyTable').DataTable();
+    table.row.add($(html)).draw(false);
+
+    // ✅ যদি History tab এই মুহূর্তে hidden থাকে, DataTables কে পরে columns.adjust() করতে বলা লাগবে
+    const historyTabEl = document.getElementById('history-tab');
+    if (historyTabEl && !historyTabEl.classList.contains('active')) {
+        // ট্যাব এখন visible না — পরে switch করলে ঠিক দেখানোর জন্য adjust flag রাখি
+        historyTabEl.dataset.needsAdjust = '1';
+    } else {
+        table.columns.adjust().draw(false);
+    }
 }
 
 // ============================================================

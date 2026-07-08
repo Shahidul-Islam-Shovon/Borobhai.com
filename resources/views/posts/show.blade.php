@@ -20,209 +20,64 @@
             --bb-warning: #d97706;
             --bb-success: #16a34a;
         }
-
         * { box-sizing: border-box; }
+        body { background: var(--bb-surface); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--bb-text); min-height: 100vh; }
 
-        body {
-            background: var(--bb-surface);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            color: var(--bb-text);
-            min-height: 100vh;
-        }
-
-        /* ── Top bar ── */
-        .ps-topbar {
-            background: #fff;
-            border-bottom: 1px solid var(--bb-border);
-            padding: 14px 24px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-        }
-        .ps-back {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--bb-primary);
-            font-weight: 600;
-            font-size: 0.85rem;
-            text-decoration: none;
-            padding: 7px 14px;
-            border-radius: 8px;
-            background: var(--bb-primary-soft);
-            transition: background .15s;
-        }
+        .ps-topbar { background: #fff; border-bottom: 1px solid var(--bb-border); padding: 14px 24px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 50; }
+        .ps-back { display: flex; align-items: center; gap: 6px; color: var(--bb-primary); font-weight: 600; font-size: 0.85rem; text-decoration: none; padding: 7px 14px; border-radius: 8px; background: var(--bb-primary-soft); transition: background .15s; }
         .ps-back:hover { background: #e0e7ff; color: var(--bb-primary); }
-        .ps-topbar-title {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--bb-text);
-        }
-        .ps-topbar-sub {
-            font-size: 0.75rem;
-            color: var(--bb-muted);
-            margin-left: 4px;
-        }
+        .ps-topbar-title { font-size: 0.9rem; font-weight: 700; color: var(--bb-text); }
+        .ps-topbar-sub { font-size: 0.75rem; color: var(--bb-muted); margin-left: 4px; }
 
-        /* ── Layout ── */
-        .ps-layout {
-            max-width: 780px;
-            margin: 32px auto;
-            padding: 0 16px 80px;
-        }
+        .ps-layout { max-width: 780px; margin: 32px auto; padding: 0 16px 80px; }
 
-        /* ── Report badge ── */
-        .ps-report-banner {
-            background: #fef2f2;
-            border: 1.5px solid #fecaca;
-            border-radius: 12px;
-            padding: 14px 18px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
+        .ps-report-banner { background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
         .ps-report-banner i { color: var(--bb-danger); font-size: 1.2rem; }
         .ps-report-banner strong { color: var(--bb-danger); font-size: 0.82rem; }
         .ps-report-banner span { color: #991b1b; font-size: 0.78rem; }
 
-        /* ── Post card ── */
-        .ps-card {
-            background: var(--bb-card);
-            border: 1px solid var(--bb-border);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 2px 12px rgba(0,0,0,.06);
-        }
+        .ps-appeal-banner { background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; }
+        .ps-appeal-banner.reviewed { background: #f0fdf4; border-color: #bbf7d0; }
+        .ps-appeal-banner.ignored { background: #f3f4f6; border-color: #d1d5db; }
+        .ps-appeal-banner .tag { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; }
+        .ps-appeal-banner.pending .tag { color: #b45309; }
+        .ps-appeal-banner.reviewed .tag { color: #16a34a; }
+        .ps-appeal-banner.ignored .tag { color: #6b7280; }
+        .ps-appeal-banner p { font-size: 0.82rem; color: #374151; margin: 6px 0 0; }
 
-        /* Author row */
-        .ps-author {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 20px 22px 16px;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        .ps-avatar {
-            width: 46px; height: 46px;
-            border-radius: 50%;
-            object-fit: cover;
-            background: linear-gradient(135deg, #4f46e5, #7c73f0);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-            overflow: hidden;
-        }
-        .ps-author-name {
-            font-weight: 700;
-            font-size: 0.92rem;
-            color: var(--bb-text);
-            text-decoration: none;
-        }
+        .ps-card { background: var(--bb-card); border: 1px solid var(--bb-border); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+
+        .ps-author { display: flex; align-items: center; gap: 12px; padding: 20px 22px 16px; border-bottom: 1px solid #f3f4f6; }
+        .ps-avatar { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; background: linear-gradient(135deg, #4f46e5, #7c73f0); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; flex-shrink: 0; overflow: hidden; }
+        .ps-author-name { font-weight: 700; font-size: 0.92rem; color: var(--bb-text); text-decoration: none; }
         .ps-author-name:hover { color: var(--bb-primary); }
-        .ps-author-meta {
-            font-size: 0.72rem;
-            color: var(--bb-muted);
-            margin-top: 2px;
-        }
-        .ps-role-badge {
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 20px;
-            margin-left: 6px;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-        }
+        .ps-author-meta { font-size: 0.72rem; color: var(--bb-muted); margin-top: 2px; }
+        .ps-role-badge { font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 6px; display: inline-flex; align-items: center; gap: 3px; }
         .rb-alumni  { background: #fef3c7; color: #d97706; }
         .rb-teacher { background: #f3e8ff; color: #7c3aed; }
         .rb-student { background: #eef2ff; color: #4f46e5; }
 
-        /* Content */
-        .ps-content {
-            padding: 20px 22px;
-            font-size: 0.94rem;
-            line-height: 1.7;
-            color: var(--bb-text);
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
+        .ps-content { padding: 20px 22px; font-size: 0.94rem; line-height: 1.7; color: var(--bb-text); white-space: pre-wrap; word-break: break-word; }
 
-        /* Media grid */
-        .ps-media {
-            padding: 0 22px 20px;
-        }
-        .ps-media-grid {
-            display: grid;
-            gap: 4px;
-            border-radius: 12px;
-            overflow: hidden;
-        }
+        .ps-media { padding: 0 22px 20px; }
+        .ps-media-grid { display: grid; gap: 4px; border-radius: 12px; overflow: hidden; }
         .ps-media-grid.count-1 { grid-template-columns: 1fr; }
         .ps-media-grid.count-2 { grid-template-columns: 1fr 1fr; }
         .ps-media-grid.count-3 { grid-template-columns: 1fr 1fr; }
         .ps-media-grid.count-3 .ps-media-item:first-child { grid-column: 1 / -1; }
         .ps-media-grid.count-4 { grid-template-columns: 1fr 1fr; }
-        .ps-media-item {
-            aspect-ratio: 4/3;
-            overflow: hidden;
-            background: #f3f4f6;
-            position: relative;
-        }
-        .ps-media-item img, .ps-media-item video {
-            width: 100%; height: 100%;
-            object-fit: cover;
-        }
+        .ps-media-item { aspect-ratio: 4/3; overflow: hidden; background: #f3f4f6; position: relative; }
+        .ps-media-item img, .ps-media-item video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Stats bar */
-        .ps-stats {
-            display: flex;
-            gap: 20px;
-            padding: 14px 22px;
-            border-top: 1px solid #f3f4f6;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        .ps-stat {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.78rem;
-            color: var(--bb-muted);
-            font-weight: 600;
-        }
+        .ps-stats { display: flex; gap: 20px; padding: 14px 22px; border-top: 1px solid #f3f4f6; border-bottom: 1px solid #f3f4f6; }
+        .ps-stat { display: flex; align-items: center; gap: 5px; font-size: 0.78rem; color: var(--bb-muted); font-weight: 600; }
         .ps-stat i { font-size: 0.9rem; }
         .ps-stat.likes i { color: #ef4444; }
         .ps-stat.comments i { color: var(--bb-primary); }
         .ps-stat.shares i { color: var(--bb-success); }
 
-        /* Admin actions */
-        .ps-actions {
-            padding: 16px 22px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .ps-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            transition: all .15s;
-            text-decoration: none;
-        }
+        .ps-actions { padding: 16px 22px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .ps-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; border: none; cursor: pointer; transition: all .15s; text-decoration: none; }
         .ps-btn-warn    { background: #fef3c7; color: #d97706; }
         .ps-btn-warn:hover { background: #fde68a; color: #b45309; }
         .ps-btn-ban     { background: #ffe4e6; color: #e11d48; }
@@ -234,54 +89,17 @@
         .ps-btn-profile { background: var(--bb-primary-soft); color: var(--bb-primary); }
         .ps-btn-profile:hover { background: #e0e7ff; }
 
-        /* Comments section */
-        .ps-comments {
-            background: var(--bb-card);
-            border: 1px solid var(--bb-border);
-            border-radius: 16px;
-            margin-top: 16px;
-            overflow: hidden;
-            box-shadow: 0 2px 12px rgba(0,0,0,.06);
-        }
-        .ps-comments-head {
-            padding: 16px 22px;
-            font-weight: 700;
-            font-size: 0.88rem;
-            border-bottom: 1px solid #f3f4f6;
-            color: var(--bb-text);
-        }
-        .ps-comment-item {
-            display: flex;
-            gap: 10px;
-            padding: 14px 22px;
-            border-bottom: 1px solid #f9fafb;
-        }
+        .ps-comments { background: var(--bb-card); border: 1px solid var(--bb-border); border-radius: 16px; margin-top: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+        .ps-comments-head { padding: 16px 22px; font-weight: 700; font-size: 0.88rem; border-bottom: 1px solid #f3f4f6; color: var(--bb-text); }
+        .ps-comment-item { display: flex; gap: 10px; padding: 14px 22px; border-bottom: 1px solid #f9fafb; }
         .ps-comment-item:last-child { border-bottom: none; }
-        .ps-comment-avatar {
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4f46e5, #7c73f0);
-            color: #fff;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 0.75rem;
-            flex-shrink: 0; overflow: hidden;
-        }
+        .ps-comment-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #7c73f0); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; flex-shrink: 0; overflow: hidden; }
         .ps-comment-name { font-weight: 700; font-size: 0.78rem; color: var(--bb-text); }
         .ps-comment-text { font-size: 0.82rem; color: #374151; margin-top: 3px; line-height: 1.5; }
         .ps-comment-time { font-size: 0.68rem; color: var(--bb-muted); margin-top: 4px; }
         .ps-empty-comments { padding: 24px; text-align: center; color: var(--bb-muted); font-size: 0.82rem; }
 
-        /* Toast */
-        .ps-toast {
-            position: fixed; bottom: 24px; right: 24px;
-            background: #1f2937; color: #fff;
-            padding: 12px 20px; border-radius: 10px;
-            font-size: 0.82rem; font-weight: 600;
-            display: flex; align-items: center; gap: 8px;
-            z-index: 9999; transform: translateY(80px); opacity: 0;
-            transition: all .3s cubic-bezier(.34,1.56,.64,1);
-            max-width: 320px;
-        }
+        .ps-toast { position: fixed; bottom: 24px; right: 24px; background: #1f2937; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; display: flex; align-items: center; gap: 8px; z-index: 9999; transform: translateY(80px); opacity: 0; transition: all .3s cubic-bezier(.34,1.56,.64,1); max-width: 320px; }
         .ps-toast.show { transform: translateY(0); opacity: 1; }
         .ps-toast.success { border-left: 4px solid var(--bb-success); }
         .ps-toast.error   { border-left: 4px solid var(--bb-danger); }
@@ -289,9 +107,8 @@
 </head>
 <body>
 
-{{-- Top bar --}}
 <div class="ps-topbar">
-    <a href="{{ url('http://127.0.0.1:8000/admin/dashboard') }}" class="ps-back">
+    <a href="{{ url('/admin/dashboard') }}" class="ps-back">
         <i class="bi bi-arrow-left"></i> Back
     </a>
     <div>
@@ -307,7 +124,7 @@
 
 <div class="ps-layout">
 
-    {{-- Report banner (report দিয়ে এলে) --}}
+    {{-- Report banner --}}
     @if(isset($report))
     <div class="ps-report-banner">
         <i class="bi bi-exclamation-triangle-fill"></i>
@@ -321,12 +138,27 @@
             {{ $report->created_at->diffForHumans() }}
         </span>
     </div>
+
+    {{-- ✅ Appeal status banner — স্পষ্টভাবে appeal lifecycle দেখায় --}}
+    @if($report->appeal_status === 'pending')
+        <div class="ps-appeal-banner pending">
+            <span class="tag"><i class="bi bi-megaphone-fill"></i> User Has Appealed</span>
+            <p>{{ $report->appeal_message }}</p>
+        </div>
+    @elseif($report->appeal_status === 'reviewed')
+        <div class="ps-appeal-banner reviewed">
+            <span class="tag"><i class="bi bi-check-circle-fill"></i> Appeal Approved — Content Restored</span>
+        </div>
+    @elseif($report->appeal_status === 'ignored')
+        <div class="ps-appeal-banner ignored">
+            <span class="tag"><i class="bi bi-x-circle-fill"></i> Appeal Reviewed — Original Decision Upheld</span>
+        </div>
+    @endif
     @endif
 
     {{-- Main post card --}}
     <div class="ps-card">
 
-        {{-- Author --}}
         <div class="ps-author">
             <div class="ps-avatar">
                 @if($post->user->profile_picture)
@@ -360,12 +192,10 @@
             </div>
         </div>
 
-        {{-- Content --}}
         @if($post->content)
         <div class="ps-content">{{ $post->content }}</div>
         @endif
 
-        {{-- Media --}}
         @php
             $postImages = $post->images ?? [];
             $postVideos = [];
@@ -399,7 +229,6 @@
         </div>
         @endif
 
-        {{-- Stats --}}
         <div class="ps-stats">
             <div class="ps-stat likes">
                 <i class="bi bi-heart-fill"></i>
@@ -420,17 +249,26 @@
                 <span style="color:var(--bb-muted);">Post ID #{{ $post->id }}</span>
             </div>
         </div>
+       
 
-@if(isset($report))
-{{-- Review Note সেকশন --}}
-<div class="ps-card mt-3" style="padding:20px 22px;">
-    <h6 class="fw-bold mb-2" style="font-size:0.85rem;"><i class="bi bi-pencil-square text-primary me-2"></i>Admin Review Note</h6>
-    <textarea id="reviewNoteBox" class="form-control mb-2" rows="3" placeholder="Write a Note for User">{{ $report->admin_note }}</textarea>
-    <button class="ps-btn ps-btn-profile" onclick="submitReviewNote({{ $report->id }})">
-        <i class="bi bi-send-fill"></i> Send Review to User
-    </button>
-</div>
-@endif
+        {{-- Review Note section --}}
+        @if(isset($report))
+            @if($post->trashed())
+                <div style="padding:0 22px 20px;">
+                    <div class="alert alert-secondary mb-0" style="font-size:0.85rem;">
+                        <i class="bi bi-trash3-fill me-1"></i> This content has already been deleted. No further review is needed.
+                    </div>
+                </div>
+            @else
+                <div style="padding:0 22px 20px;">
+                    <h6 class="fw-bold mb-2" style="font-size:0.85rem;"><i class="bi bi-pencil-square text-primary me-2"></i>Admin Review Note</h6>
+                    <textarea id="reviewNoteBox" class="form-control mb-2" rows="3" placeholder="Write a note for the user...">{{ $report->admin_note }}</textarea>
+                    <button class="ps-btn ps-btn-profile" onclick="submitReviewNote({{ $report->id }})">
+                        <i class="bi bi-send-fill"></i> Send Review to User
+                    </button>
+                </div>
+            @endif
+        @endif
     </div>
 
     {{-- Comments --}}
@@ -480,7 +318,6 @@
 
 </div>
 
-{{-- Suspend modal --}}
 <div class="modal fade" id="suspendModal" tabindex="-1">
     <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content border-0 shadow" style="border-radius:14px;">
@@ -503,7 +340,6 @@
     </div>
 </div>
 
-{{-- Toast --}}
 <div class="ps-toast" id="psToast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -521,9 +357,9 @@ function showToast(message, type = 'success') {
 
 function adminAction(action, reportId) {
     const labels = {
-        warn: { msg: 'Send warning notification to user?', btnText: 'Yes, Warn', color: '#d97706' },
-        dismiss: { msg: 'Dismiss this report as resolved?', btnText: 'Dismiss', color: '#16a34a' },
-        'delete-content': { msg: 'Permanently delete this post?', btnText: 'Delete', color: '#dc2626' },
+        warn: { msg: 'Send warning notification to user?' },
+        dismiss: { msg: 'Dismiss this report as resolved?' },
+        'delete-content': { msg: 'Permanently delete this post?' },
     };
     const c = labels[action];
     if (!confirm(c.msg)) return;
@@ -537,9 +373,7 @@ function adminAction(action, reportId) {
     .then(d => {
         if (d.success) {
             showToast(d.message, 'success');
-            if (action === 'delete-content') {
-                setTimeout(() => window.history.back(), 1500);
-            }
+            setTimeout(() => location.reload(), 1200);
         } else {
             showToast(d.message || 'Something went wrong.', 'error');
         }
@@ -565,7 +399,7 @@ function adminActionWithNote(action, reportId) {
     .then(r => r.json())
     .then(d => {
         showToast(d.message || 'Done.', d.success ? 'success' : 'error');
-        if (d.success && action === 'delete-content') setTimeout(() => window.history.back(), 1500);
+        if (d.success) setTimeout(() => location.reload(), 1200);
     })
     .catch(() => showToast('Network error.', 'error'));
 }
@@ -583,11 +417,10 @@ function submitReviewNote(reportId) {
     .then(r => r.json())
     .then(d => {
         showToast(d.message, d.success ? 'success' : 'error');
-        if (d.success) box.value = ''; // ✅ শুধু বক্স খালি — রিলোড নেই
+        if (d.success) box.value = '';
     })
     .catch(() => showToast('Network error.', 'error'));
 }
-
 
 function showSuspendModal(userId) {
     suspendUserId = userId;
@@ -598,11 +431,7 @@ function doSuspend(type) {
     if (!suspendUserId) return;
     fetch('/admin/users/' + suspendUserId + '/suspension', {
         method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken
-        },
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
         body: JSON.stringify({ type: type })
     })
     .then(r => r.json())

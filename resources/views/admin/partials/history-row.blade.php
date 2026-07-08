@@ -26,9 +26,12 @@
         @endif
     </td>
     <td style="font-size:0.72rem;color:#64748b;">{{ $r->updated_at->format('d M Y, g:i a') }}</td>
+
     <td style="text-align:right;">
         @if($r->appeal_status === 'reviewed')
-            <span class="badge bg-success d-block mb-1" style="font-size:0.65rem;">Appeal Reviewed</span>
+            <span class="badge bg-success d-block mb-1" style="font-size:0.65rem;">Appeal Approved</span>
+        @elseif($r->appeal_status === 'ignored')
+            <span class="badge bg-secondary d-block mb-1" style="font-size:0.65rem;">Appeal Ignored</span>
         @else
             <span class="text-muted d-block mb-1" style="font-size:0.7rem;">— No appeal —</span>
         @endif
@@ -40,4 +43,5 @@
             <span class="text-muted" style="font-size:0.68rem;"><i class="fa-solid fa-check"></i> Read</span>
         @endif
     </td>
+
 </tr>
