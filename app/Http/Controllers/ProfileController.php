@@ -33,6 +33,8 @@ class ProfileController extends Controller
             : User::with($with)->find(Auth::id());
 
         $isOwner = Auth::id() === $user->id;
+        // 🆕 Admin অন্য কারো প্রোফাইল দেখলে review mode চালু হবে
+        $isAdminReviewMode = !$isOwner && (Auth::user()->role === 'admin' || Auth::user()->isSuperAdmin());
         $postCount = Post::where('user_id', $user->id)->count();
 
         // alumni হলে মোট job সংখ্যা (৫টার বেশি থাকলে "View all" দেখানোর জন্য)
@@ -41,7 +43,7 @@ class ProfileController extends Controller
             $totalJobCount = $user->jobPosts()->withTrashed()->count();
         }
 
-        return view('profile.show', compact('user', 'isOwner', 'postCount', 'totalJobCount'));
+        return view('profile.show', compact('user', 'isOwner', 'isAdminReviewMode', 'postCount', 'totalJobCount'));
     }
 
     // ==========================================

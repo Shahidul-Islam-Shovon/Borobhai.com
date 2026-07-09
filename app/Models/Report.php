@@ -64,4 +64,15 @@ class Report extends Model
             return null;
         }
     }
+
+    public static function isReportedByMe($reporterId, $type, $targetId): bool
+    {
+        if (!$reporterId) return false;
+        return static::where('reporter_id', $reporterId)
+            ->where('type', $type)
+            ->where('target_id', $targetId)
+            ->where('status', 'pending')
+            ->exists();
+    }
+    
 }

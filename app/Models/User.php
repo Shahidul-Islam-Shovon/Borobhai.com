@@ -217,6 +217,5 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\Friendship::class, 'sender_id')
             ->orWhere('receiver_id', $this->id);
-    }
-    
+    }   
 }

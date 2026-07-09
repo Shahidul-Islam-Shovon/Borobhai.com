@@ -1794,16 +1794,14 @@
     }
     .bb-msg-action-btn { width:22px;height:22px;border:none;background:transparent;color:#6b7280;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;padding:0; }
     .bb-msg-action-btn:hover { background:#e5e7eb; }
-    .bb-msg-menu { position:absolute; top:100%; margin-top:2px; background:#fff; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.18); z-index:300; width:160px; padding:4px; display:none; }
+    .bb-msg-menu { position:fixed; background:#fff; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.18); z-index:1500; width:170px; padding:4px; display:none; }
     .bb-msg-menu.show { display:block; }
     .bb-msg-menu-item { padding:7px 10px; font-size:12.5px; cursor:pointer; border-radius:6px; display:flex; align-items:center; gap:8px; color:#1e1f24; white-space:nowrap; }
     .bb-msg-menu-item:hover { background:#f3f4f6; }
     .bb-msg-menu-item.danger { color:#dc2626; }
     
-    .bb-react-bar { position:absolute; top:-36px; background:#fff; border-radius:20px; box-shadow:0 2px 10px rgba(0,0,0,.18); padding:4px 6px; display:none; gap:3px; z-index:300; width:max-content; }
+    .bb-react-bar { position:fixed; background:#fff; border-radius:20px; box-shadow:0 2px 10px rgba(0,0,0,.18); padding:4px 6px; display:none; gap:3px; z-index:1500; width:max-content; }
     .bb-react-bar.show { display:flex; }
-    .bb-msg-row.mine .bb-react-bar { right:0; }
-    .bb-msg-row.theirs .bb-react-bar { left:0; }
 
     .bb-react-emoji { cursor:pointer; font-size:15px; padding:2px 3px; border-radius:50%; transition:transform .1s; }
     .bb-react-emoji:hover { transform:scale(1.3); }
@@ -1881,6 +1879,22 @@
         color: #fff; font-weight: 700; font-size: 20px;
         display: flex; align-items: center; justify-content: center;
     }
+    .bb-msg-status { font-size:10px; color:#9ca3af; text-align:right; margin-top:2px; display:flex; align-items:center; justify-content:flex-end; gap:2px; }
+    .bb-msg-status.seen { color:#4f46e5; }
+
+    .bb-conv-menu-btn { width:26px;height:26px;border:none;background:transparent;color:#6b7280;border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0; }
+     
+    .msg-conv-item:hover .bb-conv-menu-btn { display:flex; }
+    .msg-conv-item:hover .msg-conv-time { display:none; }
+    .bb-conv-dropdown { position:fixed; background:#fff; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.18); z-index:2000; width:190px; padding:4px; display:none; }
+    .bb-conv-dropdown.show { display:block; }
+    .bb-conv-dropdown-item { padding:8px 12px; font-size:13px; cursor:pointer; border-radius:6px; display:flex; align-items:center; gap:9px; color:#1e1f24; }
+    .bb-conv-dropdown-item:hover { background:#f3f4f6; }
+    .bb-conv-dropdown-item.danger { color:#dc2626; }
+    .bb-delete-chat-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:6000; display:none; align-items:center; justify-content:center; }
+    .bb-delete-chat-modal { background:#fff; border-radius:16px; width:340px; padding:22px; text-align:center; animation:bbModalPop .25s ease; }
+    @keyframes bbModalPop { from{transform:scale(.9);opacity:0;} to{transform:scale(1);opacity:1;} }
+    .bb-chat-box .bb-conv-menu-btn { display:inline-flex !important; color:rgba(255,255,255,.9); }
 </style>
 
  
@@ -2093,6 +2107,9 @@
                 <a href="{{ route('saved.index') }}" class="sidebar-link"><i class="bi bi-bookmark-heart-fill text-warning"></i><span>Saved</span></a>
                 <a href="{{ route('jobs.myApplications') }}" class="sidebar-link"><i class="bi bi-briefcase-fill text-primary"></i><span>Job History</span></a>
                 <a href="{{ route('search.index') }}" class="sidebar-link"><i class="bi bi-search text-primary"></i><span>Search People</span></a>
+
+                 <a href="#" class="sidebar-link"><i class="fa-solid fa-ban"></i><span>Block List</span></a>
+
             </div>
         </div>
 
@@ -3421,20 +3438,30 @@ function searchMessengerContacts() {
 function sendToMessenger(userId, name, userHash) {
     var postId = document.getElementById('targetSharePostId').value;
     var type   = document.getElementById('sharePostType').value;
-    if (typeof openChatBox === 'function') {
-        openChatBox(userId, name, '', '', '0', userHash || userId);
-        setTimeout(function () {
-            var input = document.getElementById('chatinput-' + userId);
-            if (input) {
-                var link = window.location.origin + (type === 'job' ? '/jobs/' + postId : '/#postCard-' + postId);
-                input.value = '📎 Check this out: ' + link;
-                input.dispatchEvent(new Event('input'));
-            }
-        }, 300);
-    }
-    bootstrapShareModal?.hide();
-    Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true })
-        .fire({ icon: 'success', title: 'Sent to ' + name + '!' });
+    var comment = document.getElementById('shareComment')?.value.trim() || '';
+
+    fetch('/message/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+        body: JSON.stringify({ recipient_id: userId, type: type, item_id: postId, comment: comment })
+    })
+    .then(r => r.json())
+    .then(d => {
+        bootstrapShareModal?.hide();
+        if (!d.success) {
+            Swal.fire({ icon: 'error', title: 'Could not send', text: d.message || '' });
+            return;
+        }
+        Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true })
+            .fire({ icon: 'success', title: 'Sent to ' + name + '!' });
+
+        // চ্যাটবক্স খোলা থাকলে সাথে সাথে রিফ্রেশ করো
+        if (openChatBoxes[userId]) fetchMessages(userId);
+    })
+    .catch(() => {
+        bootstrapShareModal?.hide();
+        Swal.fire({ icon: 'error', title: 'Network error' });
+    });
 }
 
 function copyPostLink() {
@@ -4730,7 +4757,8 @@ function openChatBox(userId, name, pic, lastSeen, isOnline, userHash, skipSave) 
         + '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">'
         + '<div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-weight:bold;color:white;position:relative;overflow:hidden;flex-shrink:0;">' + avatarContent + onlineDot + '</div>'
         + '<div style="flex:1;min-width:0;">'
-        + '<p style="margin:0;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(name) + '</p>'
+        + '<p style="margin:0;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px;">' + escHtml(name)
+        + '<button onclick="event.stopPropagation();toggleConvMenu(event,' + userId + ')" class="bb-conv-menu-btn" style="display:inline-flex;color:#fff;width:20px;height:20px;"><i class="bi bi-three-dots"></i></button></p>'
         + '<p style="margin:0;font-size:11px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + statusText + '</p>'
         + '</div></div>'
         + '<div style="display:flex;gap:4px;" onclick="event.stopPropagation();">'
@@ -4742,7 +4770,7 @@ function openChatBox(userId, name, pic, lastSeen, isOnline, userHash, skipSave) 
         + '<div class="bb-search-box-chat" id="chatSearchBox-' + userId + '">'
         + '<input type="text" placeholder="Search in conversation..." oninput="searchInThread(' + userId + ',this.value)">'
         + '</div>'
-        + '<div id="msgZone-' + userId + '" class="bb-chat-body-zone" style="flex:1;overflow-y:auto;padding:12px;background:#fafbfc;display:flex;flex-direction:column;gap:4px;min-height:0;align-content:flex-start;">'
+        + '<div id="msgZone-' + userId + '" class="bb-chat-body-zone" style="flex:1;overflow-y:auto;overflow-x:hidden;padding:12px;background:#fafbfc;display:flex;flex-direction:column;gap:4px;min-height:0;align-content:flex-start;">'
         + '<div id="msgPlaceholder-' + userId + '" style="text-align:center;color:#9ca3af;margin:auto;"><i class="bi bi-chat-dots" style="font-size:2rem;display:block;margin-bottom:8px;color:#d1d5db;"></i>Start a conversation</div>'
         + '</div>'
         + '<div class="bb-chat-footer-zone" style="padding:12px;border-top:1px solid #e5e7eb;flex-shrink:0;">'
@@ -4872,8 +4900,22 @@ function fetchMessages(userId) {
         zone.setAttribute('data-has-more', d.has_more ? '1' : '0');
 
         if (appendedNew) zone.scrollTop = zone.scrollHeight;
+        updateLastMineStatus(userId);
     })
     .catch(err => console.error('Fetch error:', err));
+}
+
+function updateLastMineStatus(userId) {
+    var zone = document.getElementById('msgZone-' + userId);
+    if (!zone) return;
+
+    zone.querySelectorAll('.bb-msg-status-slot').forEach(function (el) { el.style.display = 'none'; });
+
+    var rows = zone.querySelectorAll('.bb-msg-row.mine');
+    if (!rows.length) return;
+    var lastRow = rows[rows.length - 1];
+    var slot = lastRow.querySelector('.bb-msg-status-slot');
+    if (slot) slot.style.display = 'flex';
 }
 
 function canEditMessage(msg) {
@@ -4905,7 +4947,8 @@ function renderMessageRow(msg, userId) {
     } else {
         var mediaHtml = renderMsgMedia(msg.media || []);
         var textHtml = msg.message ? '<div style="padding:2px 4px;">' + escHtml(msg.message) + '</div>' : '';
-        bodyHtml = replyHtml + mediaHtml + textHtml;
+        var shareHtml = renderShareCard(msg.share, msg.is_mine);
+        bodyHtml = replyHtml + textHtml + shareHtml + mediaHtml;
     }
 
     var reactionsHtml = '';
@@ -4924,11 +4967,12 @@ function renderMessageRow(msg, userId) {
     ).join('') + '</div>';
 
     var menuItems = [];
+    var isPureText = (!msg.media || !msg.media.length) && !msg.share;
     if (!msg.is_deleted) {
         menuItems.push('<div class="bb-msg-menu-item" onclick="startReplyTo(' + userId + ',' + msg.id + ')"><i class="bi bi-reply-fill"></i> Reply</div>');
         menuItems.push('<div class="bb-msg-menu-item" onclick="openForwardModal(' + msg.id + ')"><i class="bi bi-arrow-90deg-right"></i> Forward</div>');
         if (msg.is_mine) {
-            if (canEditMessage(msg)) {
+            if (isPureText) {
                 menuItems.push('<div class="bb-msg-menu-item" onclick="editMessageUI(' + userId + ',' + msg.id + ')"><i class="bi bi-pencil"></i> Edit</div>');
             }
             menuItems.push('<div class="bb-msg-menu-item danger" onclick="deleteMessageUI(' + userId + ',' + msg.id + ',\'me\')"><i class="bi bi-trash"></i> Delete for me</div>');
@@ -4945,6 +4989,15 @@ function renderMessageRow(msg, userId) {
         + '</div>'
         + '<div class="bb-msg-menu" id="msgMenu-' + msg.id + '">' + menuItems.join('') + '</div>';
 
+    var statusHtml = '';
+    if (msg.is_mine && !msg.is_deleted) {
+        var statusText = msg.seen ? 'Seen' : (msg.delivered ? 'Delivered' : 'Sent');
+        var statusIcon = msg.seen
+            ? '<i class="bi bi-check2-all"></i>'
+            : (msg.delivered ? '<i class="bi bi-check2-all"></i>' : '<i class="bi bi-check2"></i>');
+        statusHtml = '<div class="bb-msg-status bb-msg-status-slot' + (msg.seen ? ' seen' : '') + '" data-msg-id="' + msg.id + '" style="display:none;">' + statusIcon + ' ' + statusText + '</div>';
+    }
+
     return '<div class="bb-msg-row ' + side + '" data-msg-id="' + msg.id + '">'
         + (side === 'mine' ? dotsHtml : '')
         + '<div class="bb-msg-bubble-wrap">'
@@ -4952,7 +5005,7 @@ function renderMessageRow(msg, userId) {
         + '<div style="position:relative;padding:6px 8px;border-radius:' + radius + ';font-size:12px;word-wrap:break-word;' + bubbleBg + '">'
         + reactBarHtml + bodyHtml
         + '<div style="font-size:10px;opacity:.7;margin-top:2px;padding:0 4px;">' + msg.created_at + '</div>'
-        + '</div>' + reactionsHtml + '</div>'
+        + '</div>' + reactionsHtml + statusHtml + '</div>'
         + (side === 'theirs' ? dotsHtml : '')
         + '</div>';
 }
@@ -5022,6 +5075,23 @@ function escHtml(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function navigateToShared(url, type, id) {
+    showJumpOverlay(type === 'job' ? 'Opening job post…' : 'Taking you to the post…');
+
+    if (type === 'job') {
+        setTimeout(function () { window.location.href = url; }, 300);
+        return;
+    }
+
+    // post — same-page হলে client-side smooth jump, নাহলে navigate
+    var onHome = (location.pathname === '/' || location.pathname === '');
+    if (onHome) {
+        jumpToPost(id); // আগে থেকেই ডিফাইন করা আছে (Section 17), নিজে থেকেই overlay হাইড করবে
+    } else {
+        setTimeout(function () { window.location.href = url; }, 300);
+    }
+}
+
 function ensureReactModal() {
     if (document.getElementById('bbReactModalOverlay')) return;
     var el = document.createElement('div');
@@ -5089,31 +5159,57 @@ document.addEventListener('click', function (e) {
     }
 });
 
-function toggleReactBar(e, msgId) {
-    e.stopPropagation();
-    var bar = document.getElementById('reactBar-' + msgId);
-    if (!bar) return;
-    var wasOpen = bar.classList.contains('show');
-    document.querySelectorAll('.bb-react-bar.show, .bb-msg-menu.show').forEach(m => m.classList.remove('show'));
-    if (!wasOpen) bar.classList.add('show');
-}
 
 function toggleMsgMenu(e, msgId) {
     e.stopPropagation();
     var menu = document.getElementById('msgMenu-' + msgId);
     if (!menu) return;
     var wasOpen = menu.classList.contains('show');
-    document.querySelectorAll('.bb-msg-menu.show').forEach(m => m.classList.remove('show'));
+    document.querySelectorAll('.bb-msg-menu.show, .bb-react-bar.show').forEach(m => m.classList.remove('show'));
     if (wasOpen) return;
 
     var btn = e.target.closest('.bb-msg-action-btn');
-    var row = btn.closest('.bb-msg-row');
-    var rowRect = row.getBoundingClientRect();
     var btnRect = btn.getBoundingClientRect();
-    menu.style.top = (btnRect.bottom - rowRect.top) + 'px';
-    menu.style.left = row.classList.contains('mine') ? 'auto' : (btnRect.left - rowRect.left) + 'px';
-    menu.style.right = row.classList.contains('mine') ? (rowRect.right - btnRect.right) + 'px' : 'auto';
+
     menu.classList.add('show');
+    var menuWidth = menu.offsetWidth || 150;
+    var menuHeight = menu.offsetHeight || 180;
+
+    var left = btnRect.right - menuWidth;
+    if (left < 8) left = 8;
+    if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
+
+    var top = btnRect.bottom + 4;
+    if (top + menuHeight > window.innerHeight - 8) top = btnRect.top - menuHeight - 4;
+    if (top < 8) top = 8;
+
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+}
+
+function toggleReactBar(e, msgId) {
+    e.stopPropagation();
+    var bar = document.getElementById('reactBar-' + msgId);
+    if (!bar) return;
+    var wasOpen = bar.classList.contains('show');
+    document.querySelectorAll('.bb-react-bar.show, .bb-msg-menu.show').forEach(m => m.classList.remove('show'));
+    if (wasOpen) return;
+
+    var btn = e.target.closest('.bb-msg-action-btn');
+    var btnRect = btn.getBoundingClientRect();
+
+    bar.classList.add('show');
+    var barWidth = bar.offsetWidth || 160;
+
+    var left = btnRect.left + (btnRect.width / 2) - (barWidth / 2);
+    if (left < 8) left = 8;
+    if (left + barWidth > window.innerWidth - 8) left = window.innerWidth - barWidth - 8;
+
+    var top = btnRect.top - 42;
+    if (top < 8) top = btnRect.bottom + 4;
+
+    bar.style.left = left + 'px';
+    bar.style.top = top + 'px';
 }
 
 // ===== EDIT (inline in input box, Facebook style) =====
@@ -5358,7 +5454,7 @@ function renderThreadMessages(userId, messages, isSearch) {
     zone.innerHTML = messages.length
         ? messages.map(m => renderMessageRow(m, userId)).join('')
         : '<div style="text-align:center;color:#9ca3af;margin:auto;">' + (isSearch ? 'No matches found' : 'Start a conversation') + '</div>';
-    if (!isSearch) zone.scrollTop = zone.scrollHeight;
+    if (!isSearch) { zone.scrollTop = zone.scrollHeight; updateLastMineStatus(userId); }
 }
 
 // ===== INFINITE SCROLL (older messages) =====
@@ -5719,21 +5815,20 @@ function fetchConversationList(search = '') {
             }
 
             list.innerHTML = d.conversations.map(conv => {
-                var avatar = conv.avatar 
-                    ? '<img src="' + conv.avatar + '">'
-                    : conv.name.charAt(0).toUpperCase();
-                var badge = conv.unread > 0 
-                    ? '<div class="msg-conv-badge">' + (conv.unread > 9 ? '9+' : conv.unread) + '</div>'
-                    : '';
+                var avatar = conv.avatar ? '<img src="' + conv.avatar + '">' : conv.name.charAt(0).toUpperCase();
+                var badge = conv.unread > 0 ? '<div class="msg-conv-badge">' + (conv.unread > 9 ? '9+' : conv.unread) + '</div>' : '';
+                var muteIcon = conv.muted ? '<i class="bi bi-bell-slash-fill" style="font-size:10px;color:#9ca3af;margin-left:4px;"></i>' : '';
 
-                return '<div class="msg-conv-item" onclick="openConversationChat(' + conv.user_id + ', \'' + escHtml(conv.name) + '\', \'' + (conv.avatar || '') + '\')">'
+                return '<div class="msg-conv-item" data-user-id="' + conv.user_id + '">'
+                    + '<div onclick="openConversationChat(' + conv.user_id + ', \'' + escHtml(conv.name) + '\', \'' + (conv.avatar || '') + '\')" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer;">'
                     + '<div class="msg-conv-avatar">' + avatar + '</div>'
                     + '<div class="msg-conv-info">'
-                    + '<div class="msg-conv-name">' + escHtml(conv.name) + '</div>'
+                    + '<div class="msg-conv-name">' + escHtml(conv.name) + muteIcon + '</div>'
                     + '<div class="msg-conv-last">' + (conv.last_message || 'No messages') + '</div>'
-                    + '</div>'
+                    + '</div></div>'
                     + badge
                     + '<div class="msg-conv-time">' + (conv.last_at || '') + '</div>'
+                    + '<button class="bb-conv-menu-btn" onclick="toggleConvMenu(event,' + conv.user_id + ')"><i class="bi bi-three-dots"></i></button>'
                     + '</div>';
             }).join('');
         }
@@ -5865,6 +5960,164 @@ function escHtml(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// ===== CONVERSATION THREE-DOT DROPDOWN =====
+function ensureConvDropdown() {
+    if (document.getElementById('bbConvDropdown')) return;
+    var el = document.createElement('div');
+    el.id = 'bbConvDropdown';
+    el.className = 'bb-conv-dropdown';
+    document.body.appendChild(el);
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.bb-conv-dropdown') && !e.target.closest('.bb-conv-menu-btn')) {
+            el.classList.remove('show');
+        }
+    });
+}
+
+function convDropdownHtml(userId, name, hash, muted) {
+    return '<div class="bb-conv-dropdown-item" onclick="window.open(\'/profile/' + hash + '\',\'_blank\');closeConvMenu();"><i class="bi bi-person-fill"></i> View Profile</div>'
+        + '<div class="bb-conv-dropdown-item" onclick="toggleMuteChat(' + userId + ')"><i class="bi bi-bell-slash' + (muted ? '-fill' : '') + '"></i> ' + (muted ? 'Unmute' : 'Mute') + ' Messages</div>'
+        + '<div class="bb-conv-dropdown-item" onclick="toggleBlockUser(' + userId + ',\'' + escHtml(name).replace(/'/g,"\\'") + '\')"><i class="bi bi-slash-circle"></i> Block / Unblock</div>'
+        + '<div class="bb-conv-dropdown-item danger" onclick="confirmDeleteChat(' + userId + ',\'' + escHtml(name).replace(/'/g,"\\'") + '\')"><i class="bi bi-trash"></i> Delete Chat</div>';
+}
+
+function toggleConvMenu(e, userId) {
+    e.stopPropagation();
+    ensureConvDropdown();
+    var dd = document.getElementById('bbConvDropdown');
+    var wasOpen = dd.classList.contains('show') && dd.getAttribute('data-user-id') == userId;
+    dd.classList.remove('show');
+    if (wasOpen) return;
+
+    var conv = (_messengerConvCache || []).find(c => c.user_id == userId) || {};
+    dd.innerHTML = convDropdownHtml(userId, conv.name || '', conv.hash || userId, !!conv.muted);
+    dd.setAttribute('data-user-id', userId);
+
+    var btn = e.target.closest('.bb-conv-menu-btn');
+    var rect = btn.getBoundingClientRect();
+    dd.classList.add('show');
+    var w = dd.offsetWidth || 190;
+    var left = rect.right - w;
+    if (left < 8) left = 8;
+    var top = rect.bottom + 4;
+    if (top + 200 > window.innerHeight) top = rect.top - 200;
+    dd.style.left = left + 'px';
+    dd.style.top = top + 'px';
+}
+
+function closeConvMenu() {
+    var dd = document.getElementById('bbConvDropdown');
+    if (dd) dd.classList.remove('show');
+}
+
+function toggleMuteChat(userId) {
+    closeConvMenu();
+    fetch('/message/conversations/' + userId + '/mute', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) return;
+        Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1800 })
+            .fire({ icon: 'success', title: d.muted ? 'Chat muted' : 'Chat unmuted' });
+        fetchConversationList();
+    });
+}
+
+function toggleBlockUser(userId, name) {
+    closeConvMenu();
+    var conv = (_messengerConvCache || []).find(c => c.user_id == userId);
+    var isBlocked = conv && conv.is_blocked;
+    friendAction(isBlocked ? 'unblock' : 'block', userId, null);
+}
+
+// ===== DELETE CHAT (with export option) =====
+var _pendingDeleteChatUserId = null;
+
+function confirmDeleteChat(userId, name) {
+    closeConvMenu();
+    _pendingDeleteChatUserId = userId;
+
+    var overlay = document.getElementById('bbDeleteChatOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'bbDeleteChatOverlay';
+        overlay.className = 'bb-delete-chat-modal-overlay';
+        document.body.appendChild(overlay);
+    }
+    overlay.innerHTML = '<div class="bb-delete-chat-modal">'
+        + '<i class="bi bi-exclamation-triangle-fill" style="font-size:36px;color:#f59e0b;"></i>'
+        + '<h5 style="margin:12px 0 6px;font-weight:700;">Delete this chat?</h5>'
+        + '<p style="font-size:13px;color:#6b7280;margin-bottom:18px;">Would you like to download a copy of your conversation with <strong>' + escHtml(name) + '</strong> before deleting? '
+        + '<span style="color:#dc2626;">Once deleted, this chat cannot be recovered.</span></p>'
+        + '<div style="display:flex;gap:8px;">'
+        + '<button onclick="proceedDeleteChat(true)" style="flex:1;background:#4f46e5;color:#fff;border:none;padding:10px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;"><i class="bi bi-download"></i> Download &amp; Delete</button>'
+        + '</div>'
+        + '<div style="display:flex;gap:8px;margin-top:8px;">'
+        + '<button onclick="proceedDeleteChat(false)" style="flex:1;background:#fee2e2;color:#dc2626;border:none;padding:9px;border-radius:8px;font-weight:600;cursor:pointer;font-size:12.5px;">Delete Without Downloading</button>'
+        + '<button onclick="closeDeleteChatModal()" style="flex:1;background:#f3f4f6;color:#374151;border:none;padding:9px;border-radius:8px;font-weight:600;cursor:pointer;font-size:12.5px;">Cancel</button>'
+        + '</div></div>';
+    overlay.style.display = 'flex';
+    overlay.onclick = function (e) { if (e.target === overlay) closeDeleteChatModal(); };
+}
+
+function closeDeleteChatModal() {
+    var overlay = document.getElementById('bbDeleteChatOverlay');
+    if (overlay) overlay.style.display = 'none';
+    _pendingDeleteChatUserId = null;
+}
+
+function proceedDeleteChat(withDownload) {
+    var userId = _pendingDeleteChatUserId;
+    if (!userId) return;
+
+    var doDelete = function () {
+        fetch('/message/conversations/' + userId + '/delete-chat', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(d => {
+            closeDeleteChatModal();
+            if (openChatBoxes[userId]) closeChatBox(userId);
+            fetchConversationList();
+            Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1800 })
+                .fire({ icon: 'success', title: 'Chat deleted' });
+        });
+    };
+
+    if (withDownload) {
+        var a = document.createElement('a');
+        a.href = '/message/conversations/' + userId + '/export';
+        a.download = '';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(doDelete, 700); // ডাউনলোড শুরু হওয়ার সময় দাও
+    } else {
+        doDelete();
+    }
+}
+
+function renderShareCard(share, isMine) {
+    if (!share) return '';
+    var imgHtml = share.image
+        ? '<div style="width:100%;height:110px;background:#000;overflow:hidden;"><img src="' + share.image + '" style="width:100%;height:100%;object-fit:cover;"></div>'
+        : '<div style="width:100%;height:60px;background:' + (share.type === 'job' ? '#eef2ff' : '#f3f4f6') + ';display:flex;align-items:center;justify-content:center;">'
+          + '<i class="bi ' + (share.type === 'job' ? 'bi-briefcase-fill" style="font-size:24px;color:#4f46e5;"' : 'bi-file-post" style="font-size:24px;color:#9ca3af;"') + '></i></div>';
+
+    var cardTextColor = isMine ? '#1e1f24' : '#1e1f24';
+
+    return '<div onclick="navigateToShared(\'' + share.url + '\',\'' + share.type + '\',' + share.id + ')" '
+        + 'style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;cursor:pointer;margin:3px 0;width:220px;color:' + cardTextColor + ';">'
+        + imgHtml
+        + '<div style="padding:8px 10px;">'
+        + '<div style="font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(share.title) + '</div>'
+        + '<div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(share.subtitle) + '</div>'
+        + '<div style="font-size:10.5px;color:#4f46e5;font-weight:600;margin-top:5px;"><i class="bi bi-box-arrow-up-right"></i> View ' + (share.type === 'job' ? 'Job' : 'Post') + '</div>'
+        + '</div></div>';
+}
 
 function renderMsgMedia(media) {
     if (!media || !media.length) return '';

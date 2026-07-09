@@ -145,13 +145,14 @@ function pageNotifClick(el) {
 }
 
 function routeFromPage(action, target) {
-    if (action === 'profile')  { location.href = '/profile/' + target; return; }
-    if (action === 'job')      { location.href = '/jobs/' + target;    return; }
-    if (action === 'home')     { location.href = '/';                  return; }
-    if (action === 'comments') { location.href = '/?open_comments=' + target; return; }
-    if (action === 'post')     { location.href = '/?goto_post=' + target; }   // ← hash এর বদলে query
+    if (action === 'profile')          { location.href = '/profile/' + target; return; }
+    if (action === 'job')              { location.href = '/jobs/' + target;    return; }
+    if (action === 'report-decision')  { window.open('/reports/' + target + '/decision', '_blank'); return; }
+    if (action === 'myapplications')   { location.href = '/my-applications'; return; }
+    if (action === 'home')             { location.href = '/'; return; }
+    if (action === 'comments')         { location.href = '/?open_comments=' + target; return; }
+    if (action === 'post')             { location.href = '/?goto_post=' + target; }
 }
-
 
 function pageMarkAllRead() {
     fetch('/notifications/read-all', {

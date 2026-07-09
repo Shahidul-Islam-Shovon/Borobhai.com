@@ -118,68 +118,67 @@ class PostController extends Controller
     }
 
     private function buildFeed(int $page, int $meId, array $friendIds, string $filter = 'all'): array
-    {
-        $perPage = self::FEED_PER_PAGE;
-        $offset  = ($page - 1) * $perPage;
-        $need    = $offset + $perPage + 1;
+{
+    $perPage = self::FEED_PER_PAGE;
+    $offset  = ($page - 1) * $perPage;
+    $need    = $offset + $perPage + 1;
 
-        $posts = Post::with([
-                    'user', 'parentPost.user', 'likes',
-                    'comments' => fn($q) => $q->with('user')->latest()->limit(10),
-                ])
-                ->withCount('comments')
-                ->where(function ($q) use ($meId, $friendIds, $filter) {
-                    if ($filter === 'friends') {
-                        // শুধু friends এর post
-                        $q->whereIn('user_id', $friendIds)
-                          ->whereIn('privacy', ['public', 'friends']);
-                    } elseif ($filter === 'public') {
-                        // শুধু public post
-                        $q->where('privacy', 'public');
-                    } else {
-                        // all — নিজের সব + friends এর public/friends + অন্যদের public
-                        $q->where('user_id', $meId)
-                          ->orWhere(function ($sub) use ($friendIds) {
-                              $sub->whereIn('user_id', $friendIds)
-                                  ->whereIn('privacy', ['public', 'friends']);
-                          })
-                          ->orWhere(function ($sub) use ($meId, $friendIds) {
-                              $sub->whereNotIn('user_id', array_merge($friendIds, [$meId]))
-                                  ->where('privacy', 'public');
-                          });
-                    }
-                })
-                ->latest('created_at')
-                ->take($need)
-                ->get();
+    $mutedUserIds = \DB::table('muted_users')
+        ->where('user_id', $meId)
+        ->where(function ($q) { $q->whereNull('muted_until')->orWhere('muted_until', '>=', now()); })
+        ->pluck('muted_user_id')->toArray();
 
-        // Jobs — universal, সব filter এ দেখাবে (যেই পোস্ট করুক)
-        $jobs = JobPost::with('user')
-                ->withCount(['savedByUsers as is_saved_by_me' => fn($q) => $q->where('user_id', Auth::id())])
-                ->visible()
-                ->latest('created_at')
-                ->take($need)
-                ->get();
+    $hiddenPostIds = \DB::table('hidden_posts')->where('user_id', $meId)->pluck('post_id')->toArray(); // ✅ নতুন
 
-        $items = collect();
-        foreach ($posts as $p) {
-            $items->push(['type' => 'post', 'model' => $p, 'created_at' => $p->created_at]);
-        }
-        foreach ($jobs as $j) {
-            $items->push(['type' => 'job', 'model' => $j, 'created_at' => $j->created_at]);
-        }
+    $posts = Post::with([
+                'user', 'parentPost.user', 'likes',
+                'comments' => fn($q) => $q->with('user')->latest()->limit(10),
+            ])
+            ->withCount('comments')
+            ->whereNotIn('id', $hiddenPostIds)
+            ->whereNotIn('user_id', $mutedUserIds)
+            ->where(function ($q) use ($meId, $friendIds, $filter) {
+                if ($filter === 'friends') {
+                    $q->whereIn('user_id', $friendIds)->whereIn('privacy', ['public', 'friends']);
+                } elseif ($filter === 'public') {
+                    $q->where('privacy', 'public');
+                } else {
+                    $q->where('user_id', $meId)
+                      ->orWhere(function ($sub) use ($friendIds) {
+                          $sub->whereIn('user_id', $friendIds)->whereIn('privacy', ['public', 'friends']);
+                      })
+                      ->orWhere(function ($sub) use ($meId, $friendIds) {
+                          $sub->whereNotIn('user_id', array_merge($friendIds, [$meId]))->where('privacy', 'public');
+                      });
+                }
+            })
+            ->latest('created_at')
+            ->take($need)
+            ->get();
 
-        $sorted = $items->sort(function ($a, $b) {
-            $cmp = $b['created_at']->timestamp <=> $a['created_at']->timestamp;
-            if ($cmp !== 0) return $cmp;
-            return ($a['type'] === 'job' ? 0 : 1) <=> ($b['type'] === 'job' ? 0 : 1);
-        })->values();
+    $jobs = JobPost::with('user')
+            ->withCount(['savedByUsers as is_saved_by_me' => fn($q) => $q->where('user_id', Auth::id())])
+            ->whereNotIn('user_id', $mutedUserIds)
+            ->visible()
+            ->latest('created_at')
+            ->take($need)
+            ->get();
 
-        return [
-            'items'    => $sorted->slice($offset, $perPage)->values()->all(),
-            'has_more' => $sorted->count() > ($offset + $perPage),
-        ];
-    }
+    $items = collect();
+    foreach ($posts as $p) { $items->push(['type' => 'post', 'model' => $p, 'created_at' => $p->created_at]); }
+    foreach ($jobs as $j) { $items->push(['type' => 'job', 'model' => $j, 'created_at' => $j->created_at]); }
+
+    $sorted = $items->sort(function ($a, $b) {
+        $cmp = $b['created_at']->timestamp <=> $a['created_at']->timestamp;
+        if ($cmp !== 0) return $cmp;
+        return ($a['type'] === 'job' ? 0 : 1) <=> ($b['type'] === 'job' ? 0 : 1);
+    })->values();
+
+    return [
+        'items'    => $sorted->slice($offset, $perPage)->values()->all(),
+        'has_more' => $sorted->count() > ($offset + $perPage),
+    ];
+}
 
     private function getSuggested(int $meId, array $friendIds, array $blockedIds): \Illuminate\Support\Collection
     {

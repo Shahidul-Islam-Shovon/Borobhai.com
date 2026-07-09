@@ -41,6 +41,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/dashboard/analytics-data',  [AdminDashboardController::class, 'getAnalyticsData'])->name('dashboard.analytics');
     Route::get('/reports/history',           [AdminDashboardController::class, 'reportHistory'])->name('reports.history');
 
+    // admin routes এ
+    Route::get('/reports/poll', [AdminDashboardController::class, 'pollReports'])->name('reports.poll');
+
     Route::post('/users/{id}/change-role',   [AdminDashboardController::class, 'changeUserRole'])->name('users.change-role');
     Route::post('/users/{id}/suspension',    [AdminDashboardController::class, 'updateSuspensionStatus'])->name('users.suspension');
     Route::post('/reports/suspend/{userId}', [AdminDashboardController::class, 'suspendFromReport'])->name('reports.suspend');
@@ -120,7 +123,7 @@ Route::middleware('auth')->group(function () {
 
     // ⚠️ {user} routes (hashid) — static এর পরে
     Route::get('/profile/{user}/tab/content',   [ProfileController::class, 'tabContent'])->name('profile.tab.user');
-    Route::get('/profile/{userHash}', [ProfileController::class, 'show'])->name('profile.view');
+    Route::get('/profile/{user}', [ProfileController::class, 'show'])->name('profile.view');
     // ---------- FEED ----------
 
     Route::post('/presence/offline', [PostController::class, 'goOffline'])->name('presence.offline');
@@ -205,11 +208,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/message/{id}/delete', [MessageController::class, 'deleteMessage'])->name('message.delete');
     Route::get('/message/unread-count', [MessageController::class, 'unreadCount'])->name('message.unreadCount');
     Route::post('/message/{id}/react', [MessageController::class, 'reactMessage'])->name('message.react');
+    Route::post('/message/share', [MessageController::class, 'shareToMessenger']);
 
     Route::post('/message/{id}/forward', [MessageController::class, 'forwardMessage']);
     Route::get('/message/thread/{userId}/older', [MessageController::class, 'olderMessages']);
     Route::get('/message/thread/{userId}/search', [MessageController::class, 'searchThread']);
     Route::get('/message/thread/{userId}/media', [MessageController::class, 'threadMedia']);
+
+    Route::post('/message/conversations/{userId}/mute', [MessageController::class, 'toggleMute']);
+    Route::post('/message/conversations/{userId}/delete-chat', [MessageController::class, 'deleteChatForMe']);
+    Route::get('/message/conversations/{userId}/export', [MessageController::class, 'exportChatHtml']);
 
     // ---------- REPORT ----------
     Route::post('/report',                      [ReportController::class, 'store'])->name('report.store');

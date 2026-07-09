@@ -295,23 +295,28 @@
             <div class="content-preview mt-3" style="font-size:0.85rem;">{{ $report->appeal_message }}</div>
             @endif
 
-        @elseif(!$isAdminViewer && $isDeleted === false)
-            <p class="text-muted mb-2" style="font-size:0.85rem;">If you believe this decision is a mistake, you can submit an appeal below.</p>
+        @elseif(!$isAdminViewer)
+        <div id="appealPrompt">
+            <p class="text-muted mb-2" style="font-size:0.85rem;">
+                @if($isDeleted)
+                    Your content was removed by an admin. If you believe this was a mistake, you can appeal.
+                @else
+                    If you believe this decision is a mistake, you can appeal it.
+                @endif
+            </p>
+            <button type="button" class="btn btn-outline-primary btn-sm fw-bold"
+                    onclick="document.getElementById('appealPrompt').classList.add('d-none'); document.getElementById('appealFormWrap').classList.remove('d-none');">
+                <i class="bi bi-flag me-1"></i> Appeal This Decision
+            </button>
+        </div>
+        <div id="appealFormWrap" class="d-none">
             <form id="appealForm">
                 <textarea id="appealMessage" class="form-control mb-3" rows="4" placeholder="Explain why you think this decision is incorrect..."></textarea>
                 <button type="submit" class="btn btn-appeal">
                     <i class="bi bi-send-fill me-1"></i> Submit Appeal
                 </button>
             </form>
-
-        @elseif(!$isAdminViewer && $isDeleted === true)
-            <p class="text-muted mb-2" style="font-size:0.85rem;">If you believe this decision is a mistake, you can submit an appeal below.</p>
-            <form id="appealForm">
-                <textarea id="appealMessage" class="form-control mb-3" rows="4" placeholder="Explain why you think this decision is incorrect..."></textarea>
-                <button type="submit" class="btn btn-appeal">
-                    <i class="bi bi-send-fill me-1"></i> Submit Appeal
-                </button>
-            </form>
+        </div>
 
         @else
             <p class="text-muted mb-0" style="font-size:0.85rem;">No appeal has been submitted for this report yet.</p>

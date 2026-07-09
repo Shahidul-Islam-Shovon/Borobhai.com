@@ -121,13 +121,20 @@
                 </div>
             @else
                 {{-- অন্যের post এ report option --}}
+                {{-- অন্যের post এ report option --}}
                 <div class="dropdown">
                     <button class="bb-more-btn" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-1">
                         <li>
                             <a class="dropdown-item py-2 px-3 rounded text-danger" href="javascript:void(0)"
-                               onclick="openReport('post', {{ $post->id }}, '{{ e($post->user->name) }}')">
+                            onclick="bbOpenReport('post', {{ $post->id }}, '{{ e($post->user->name) }}', true)">
                                 <i class="bi bi-flag me-2"></i> Report post
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item py-2 px-3 rounded text-danger" href="javascript:void(0)"
+                            onclick="bbOpenReport('user', {{ $post->user_id }}, '{{ e($post->user->name) }}', false)">
+                                <i class="bi bi-person-x me-2"></i> Report This User {{ $post->user->name }}
                             </a>
                         </li>
                     </ul>
@@ -434,6 +441,108 @@ function postCardFriend(action, userId, btn) {
         }
     })
     .catch(() => { if (btn) btn.disabled = false; });
+}
+</script>
+@endonce
+
+@once
+<div class="modal fade" id="bbReportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold">Report <span id="bbReportName"></span></h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Why are you reporting this?</p>
+                <input type="hidden" id="bbReportType">
+                <input type="hidden" id="bbReportId">
+                <input type="hidden" id="bbReportReason">
+                <div id="bbReportReasons">
+                    <button class="bb-report-reason-btn" onclick="bbSelectReason(this,'spam')">Spam</button>
+                    <button class="bb-report-reason-btn" onclick="bbSelectReason(this,'harassment')">Harassment or bullying</button>
+                    <button class="bb-report-reason-btn" onclick="bbSelectReason(this,'fake')">Fake profile or impersonation</button>
+                    <button class="bb-report-reason-btn" onclick="bbSelectReason(this,'inappropriate')">Inappropriate content</button>
+                    <button class="bb-report-reason-btn" onclick="bbSelectReason(this,'other')">Something else</button>
+                </div>
+                <div id="bbReportDetailsSection" class="d-none mt-3">
+                    <textarea id="bbReportDetails" class="form-control border rounded-3 mb-2" rows="3" placeholder="Add more details (optional)..." style="font-size:13px;"></textarea>
+                    <div id="bbMuteOptionWrap" class="form-check mb-3" style="display:none;">
+                        <input class="form-check-input" type="checkbox" id="bbMuteCheckbox">
+                        <label class="form-check-label" style="font-size:13px;" for="bbMuteCheckbox">
+                            Also hide posts from this person for 30 days
+                        </label>
+                    </div>
+                    <div id="bbHideOptionWrap" class="form-check mb-2" style="display:none;">
+                        <input class="form-check-input" type="checkbox" id="bbHideCheckbox" checked>
+                        <label class="form-check-label" style="font-size:13px;" for="bbHideCheckbox">
+                            Hide this post from my feed
+                        </label>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light btn-sm" onclick="document.getElementById('bbReportDetailsSection').classList.add('d-none'); document.getElementById('bbReportReasons').classList.remove('d-none');">Back</button>
+                        <button class="btn btn-danger btn-sm px-4 fw-bold" onclick="bbSubmitReport()">Submit Report</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bb-report-reason-btn { display:flex; align-items:center; width:100%; padding:11px 14px; border-radius:10px; border:1.5px solid #eceef1; background:#fff; color:#1e1f24; font-size:13.5px; font-weight:600; cursor:pointer; transition:all .15s; margin-bottom:7px; }
+.bb-report-reason-btn:hover, .bb-report-reason-btn.selected { border-color:#4f46e5; background:#eef2ff; color:#4f46e5; }
+</style>
+
+<script>
+function bbOpenReport(type, id, name, showMute) {
+    document.getElementById('bbReportType').value = type;
+    document.getElementById('bbReportId').value = id;
+    document.getElementById('bbReportName').textContent = name;
+    document.getElementById('bbReportReason').value = '';
+    document.getElementById('bbReportReasons').classList.remove('d-none');
+    document.getElementById('bbReportDetailsSection').classList.add('d-none');
+    document.getElementById('bbHideOptionWrap').style.display = showMute ? 'block' : 'none';
+    document.getElementById('bbHideCheckbox').checked = true;
+    document.querySelectorAll('.bb-report-reason-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('bbMuteOptionWrap').style.display = showMute ? 'block' : 'none';
+    document.getElementById('bbMuteCheckbox').checked = false;
+    new bootstrap.Modal(document.getElementById('bbReportModal')).show();
+}
+function bbSelectReason(el, reason) {
+    document.getElementById('bbReportReason').value = reason;
+    document.querySelectorAll('.bb-report-reason-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('bbReportReasons').classList.add('d-none');
+    document.getElementById('bbReportDetailsSection').classList.remove('d-none');
+}
+function bbSubmitReport() {
+    const type = document.getElementById('bbReportType').value;
+    const id = document.getElementById('bbReportId').value;
+    const reason = document.getElementById('bbReportReason').value;
+    const details = document.getElementById('bbReportDetails').value;
+    const mute = document.getElementById('bbMuteCheckbox').checked;
+    const hide = document.getElementById('bbHideCheckbox')?.checked || false;
+    // body: JSON.stringify({ type, id, reason, details, mute_user: mute, hide_post: hide })
+
+    fetch('/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: JSON.stringify({ type, id, reason, details, mute_user: mute })
+    })
+    .then(r => r.json())
+    .then(d => {
+        bootstrap.Modal.getInstance(document.getElementById('bbReportModal'))?.hide();
+        if (typeof Swal !== 'undefined') {
+            Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2800 })
+                .fire({ icon: d.success ? 'success' : 'warning', title: d.message });
+        } else alert(d.message);
+
+        if (d.success && type === 'post' && hide) {
+            document.getElementById('postCard-' + id)?.remove();
+        }
+    })
+    .catch(() => alert('Network error.'));
 }
 </script>
 @endonce

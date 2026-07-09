@@ -612,7 +612,24 @@
 </head>
 <body>
 
-@include('partials.inner-navbar')
+@if($isAdminReviewMode ?? false)
+    <nav style="background:#0f172a;padding:.7rem 1.2rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);">
+        <div class="container-fluid d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2 text-white">
+                <i class="bi bi-shield-lock-fill text-warning"></i>
+                <span class="fw-bold" style="font-size:14px;">
+                    Admin Review Mode — Viewing: {{ $user->name }}
+                </span>
+            </div>
+            <a href="{{ route('admin.dashboard') }}"
+               style="background:#1e293b;color:#fff;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </nav>
+@else
+    @include('partials.inner-navbar')
+@endif
 
 @php
     $role = $user->role;
@@ -695,81 +712,121 @@
 
             
             {{-- add friend button --}}
-                @if($isOwner)
-                    <div class="pb-2">
-                        <button class="bb-edit-profile-btn" onclick="openEditModal()">
-                            <i class="bi bi-pencil-fill"></i> Edit Profile
+@if($isOwner)
+    <div class="pb-2">
+        <button class="bb-edit-profile-btn" onclick="openEditModal()">
+            <i class="bi bi-pencil-fill"></i> Edit Profile
+        </button>
+    </div>
+@elseif($isAdminReviewMode ?? false)
+    {{-- Admin Review Mode — Add Friend ও Report দুটোই হাইড, শুধু ভিউ --}}
+@else
+    {{-- অন্যের profile — friend + report button এখানে --}}
+    <div class="pb-2">
+       @php
+        $meId         = Auth::id();
+        $friendStatus = \App\Models\Friendship::statusWith($meId, $user->id);
+        $mutualCount  = \App\Models\Friendship::mutualCount($meId, $user->id);
+       @endphp
+
+        @if($mutualCount > 0)
+            <div class="bb-mutual-count">
+                <i class="bi bi-people-fill"></i>
+                {{ $mutualCount }} mutual friend{{ $mutualCount > 1 ? 's' : '' }}
+            </div>
+        @endif
+
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div id="friendBtnWrap-{{ $user->id }}">
+                @if($friendStatus === 'none')
+                    <button class="bb-friend-btn bb-friend-add"
+                            onclick="friendAction('send', {{ $user->id }}, this)">
+                        <i class="bi bi-person-plus-fill"></i> Add Friend
+                    </button>
+
+                @elseif($friendStatus === 'pending_sent')
+                    <button class="bb-friend-btn bb-friend-pending"
+                            onclick="friendAction('cancel', {{ $user->id }}, this)">
+                        <i class="bi bi-person-check-fill"></i> Request Sent
+                        <span class="bb-friend-cancel-hint">· Cancel</span>
+                    </button>
+
+                @elseif($friendStatus === 'pending_received')
+                    <button class="bb-friend-btn bb-friend-accept"
+                            onclick="friendAction('accept', {{ $user->id }}, this)">
+                        <i class="bi bi-check-lg"></i> Accept
+                    </button>
+                    <button class="bb-friend-btn bb-friend-decline"
+                            onclick="friendAction('decline', {{ $user->id }}, this)">
+                        <i class="bi bi-x-lg"></i> Decline
+                    </button>
+
+                @elseif($friendStatus === 'accepted')
+                    <div class="dropdown d-inline-block">
+                        <button class="bb-friend-btn bb-friend-already dropdown-toggle"
+                                data-bs-toggle="dropdown">
+                            <i class="bi bi-people-fill"></i> Friends
                         </button>
+                        <ul class="dropdown-menu shadow border-0 rounded-3">
+                            <li>
+                                <button class="dropdown-item text-danger py-2"
+                                        onclick="friendAction('unfriend', {{ $user->id }}, this)">
+                                    <i class="bi bi-person-x me-2"></i> Unfriend
+                                </button>
+                            </li>
+                            <li>
+                                <button class="dropdown-item py-2"
+                                        onclick="friendAction('block', {{ $user->id }}, this)">
+                                    <i class="bi bi-slash-circle me-2"></i> Block
+                                </button>
+                            </li>
+                        </ul>
                     </div>
+
+                @elseif($friendStatus === 'blocked')
+                    <button class="bb-friend-btn bb-friend-blocked"
+                            onclick="friendAction('unblock', {{ $user->id }}, this)">
+                        <i class="bi bi-slash-circle"></i> Blocked · Unblock
+                    </button>
+                @endif
+            </div>
+
+            @php $alreadyReportedUser = \App\Models\Report::isReportedByMe(Auth::id(), 'user', $user->id); @endphp
+            <div id="reportBtnWrap-{{ $user->id }}">
+                @if($alreadyReportedUser)
+                    <span class="badge bg-danger-subtle text-danger border" style="font-size:.72rem;font-weight:700;padding:8px 14px;border-radius:10px;">
+                        <i class="bi bi-flag-fill me-1"></i> You reported this User
+                    </span>
                 @else
-                    {{-- অন্যের profile — friend button এখানে --}}
-                    <div class="pb-2">
-                       @php
-                        $meId         = Auth::id();
-                        $friendStatus = \App\Models\Friendship::statusWith($meId, $user->id);
-                        $mutualCount  = \App\Models\Friendship::mutualCount($meId, $user->id);
-                    @endphp
+                    <button class="bb-friend-btn" style="background:#fff;color:#6b7280;border:1.5px solid #eceef1;"
+                            onclick="bbOpenReport('user', {{ $user->id }}, '{{ e($user->name) }}')">
+                        <i class="bi bi-flag"></i> Report
+                    </button>
+                @endif
+            </div>
+        </div>
+    </div>
+{{-- end --}}
+        </div>
 
-                        @if($mutualCount > 0)
-                            <div class="bb-mutual-count">
-                                <i class="bi bi-people-fill"></i>
-                                {{ $mutualCount }} mutual friend{{ $mutualCount > 1 ? 's' : '' }}
-                            </div>
-                        @endif
+        <div class="bb-stat-row">
 
-                        <div id="friendBtnWrap-{{ $user->id }}">
-                            @if($friendStatus === 'none')
-                                <button class="bb-friend-btn bb-friend-add"
-                                        onclick="friendAction('send', {{ $user->id }}, this)">
-                                    <i class="bi bi-person-plus-fill"></i> Add Friend
-                                </button>
+    {{-- ✅ Report — friend/non-friend সবার ক্ষেত্রে --}}
+    @php $alreadyReportedUser = \App\Models\Report::isReportedByMe(Auth::id(), 'user', $user->id); @endphp
+    <div id="reportBtnWrap-{{ $user->id }}">
+        @if($alreadyReportedUser)
+            <span class="badge bg-danger-subtle text-danger border" style="font-size:.72rem;font-weight:700;padding:8px 14px;border-radius:10px;">
+                <i class="bi bi-flag-fill me-1"></i> You reported this User
+            </span>
+        @else
+            <button class="bb-friend-btn" style="background:#fff;color:#6b7280;border:1.5px solid #eceef1;"
+                    onclick="bbOpenReport('user', {{ $user->id }}, '{{ e($user->name) }}')">
+                <i class="bi bi-flag"></i> Report
+            </button>
+        @endif
+    </div>
+</div>
 
-                            @elseif($friendStatus === 'pending_sent')
-                                <button class="bb-friend-btn bb-friend-pending"
-                                        onclick="friendAction('cancel', {{ $user->id }}, this)">
-                                    <i class="bi bi-person-check-fill"></i> Request Sent
-                                    <span class="bb-friend-cancel-hint">· Cancel</span>
-                                </button>
-
-                            @elseif($friendStatus === 'pending_received')
-                            <button class="bb-friend-btn bb-friend-accept"
-                                    onclick="friendAction('accept', {{ $user->id }}, this)">
-                                <i class="bi bi-check-lg"></i> Accept
-                            </button>
-                            <button class="bb-friend-btn bb-friend-decline"
-                                    onclick="friendAction('decline', {{ $user->id }}, this)">
-                                <i class="bi bi-x-lg"></i> Decline
-                            </button>
-
-                            @elseif($friendStatus === 'accepted')
-                                <div class="dropdown d-inline-block">
-                                    <button class="bb-friend-btn bb-friend-already dropdown-toggle"
-                                            data-bs-toggle="dropdown">
-                                        <i class="bi bi-people-fill"></i> Friends
-                                    </button>
-                                    <ul class="dropdown-menu shadow border-0 rounded-3">
-                                        <li>
-                                            <button class="dropdown-item text-danger py-2"
-                                                    onclick="friendAction('unfriend', {{ $user->id }}, this)">
-                                                <i class="bi bi-person-x me-2"></i> Unfriend
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button class="dropdown-item py-2"
-                                                    onclick="friendAction('block', {{ $user->id }}, this)">
-                                                <i class="bi bi-slash-circle me-2"></i> Block
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                            @elseif($friendStatus === 'blocked')
-                                <button class="bb-friend-btn bb-friend-blocked"
-                                        onclick="friendAction('unblock', {{ $user->id }}, this)">
-                                    <i class="bi bi-slash-circle"></i> Blocked · Unblock
-                                </button>
-                            @endif
-                        </div>
                     </div>
                 @endif
             {{-- end --}}
@@ -4222,6 +4279,7 @@ function showMutualModal() {
 
 
 </script>
+
 
 </body>
 </html>

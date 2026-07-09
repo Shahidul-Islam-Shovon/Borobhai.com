@@ -336,266 +336,93 @@
     </div>
 
     {{-- Reported Contents Tab --}}
-    <div id="posts-tab" class="tab-content-panel">
-        <div class="card-table-wrapper">
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
-                    <i class="fa-solid fa-flag text-danger me-2"></i>
-                    Reported Contents
-                    <span class="badge bg-danger ms-2 pending-reports-count" style="font-size:0.7rem;">
-                        {{ $reports->whereNotIn('type', ['job'])->count() }}
-                    </span>
-                </h6>
-            </div>
-
-            @php $contentReports = $reports->whereNotIn('type', ['job']); @endphp
-
-            @if($contentReports->isEmpty())
-                <div class="text-center py-5 text-muted">
-                    <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
-                    <p class="fw-semibold">No pending reports. All clear!</p>
-                </div>
-            @else
-            <div class="table-responsive">
-                <table class="table table-hover align-middle w-100" id="reportedTable">
-                    <thead>
-                        <tr>
-                            <th style="width:4%">#</th>
-                            <th style="width:8%">Type</th>
-                            <th style="width:24%">Reported Content</th>
-                            <th style="width:16%">Reported User</th>
-                            <th style="width:11%">Reason</th>
-                            <th style="width:14%">Appeal</th>
-                            <th style="width:23%;text-align:right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach($contentReports as $report)
-                    <tr id="report-row-{{ $report->id }}" class="{{ !$report->admin_seen ? 'table-warning' : '' }}">
-                        <td class="fw-bold text-secondary">
-                            @if(!$report->admin_seen)
-                                <span class="badge bg-danger" style="font-size:0.55rem;">NEW</span>
-                            @else
-                                •
-                            @endif
-                        </td>
-                        <td>
-                            @php $typeColor = match($report->type) { 'post'=>'primary','user'=>'danger',default=>'secondary' }; @endphp
-                            <span class="badge bg-{{ $typeColor }}-subtle text-{{ $typeColor }} border border-{{ $typeColor }}-subtle"
-                                  style="font-size:0.65rem;font-weight:700;text-transform:uppercase;">
-                                {{ $report->type }}
-                            </span>
-                            <div class="text-muted mt-1" style="font-size:0.62rem;">{{ $report->created_at->diffForHumans() }}</div>
-                        </td>
-                        <td>
-                            <div class="fw-semibold text-dark" style="font-size:0.78rem;">{{ $report->targetTitle }}</div>
-                            @if($report->targetLink)
-                                <a href="{{ $report->targetLink }}" target="_blank" rel="noopener noreferrer"
-                                   class="text-primary" style="font-size:0.68rem;">
-                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>
-                                    {{ $report->type === 'post' ? 'View Post' : 'Visit Profile' }}
-                                </a>
-                            @else
-                                <span class="text-muted" style="font-size:0.68rem;">[Content removed]</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if($report->targetUser)
-                            <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
-                            <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
-                            @php $uStatus = $report->targetUserStatus; @endphp
-                            <div class="mt-1">
-                                @if($uStatus === 'suspended_temp')
-                                    <span class="status-badge temp-suspended user-status-badge-{{ $report->targetUser->id }}"><i class="fa-solid fa-clock"></i> 7d Suspended</span>
-                                @elseif($uStatus === 'suspended_perm')
-                                    <span class="status-badge perm-suspended user-status-badge-{{ $report->targetUser->id }}"><i class="fa-solid fa-ban"></i> Permanent Banned</span>
-                                @else
-                                    <span class="status-badge active user-status-badge-{{ $report->targetUser->id }}"><i class="fa-solid fa-circle" style="font-size:5px;"></i> Active</span>
-                                @endif
-                            </div>
-                            @else
-                            <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
-                            @endif
-                        </td>
-                        <td>
-                            <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
-                            @if($report->details)
-                            <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
-                            @endif
-                        </td>
-                        <td>
-                            @if($report->appeal_status === 'pending')
-                                <div class="mb-2 p-2" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
-                                    <div class="fw-bold text-warning" style="font-size:0.65rem;text-transform:uppercase;">
-                                        <i class="fa-solid fa-megaphone"></i> Appealed
-                                    </div>
-                                    <div class="text-dark mt-1" style="font-size:0.7rem;">{{ \Illuminate\Support\Str::limit($report->appeal_message, 60) }}</div>
-                                </div>
-                                <button onclick="markReviewed({{ $report->id }})" class="btn-action-pill activate w-100 justify-content-center">
-                                    <i class="fa-solid fa-check-double"></i> Accept Appeal
-                                </button>
-                            @else
-                                <span class="text-muted" style="font-size:0.7rem;">— No appeal —</span>
-                            @endif
-                        </td>
-                        <td style="text-align:right;">
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size:0.75rem;border-radius:8px;">
-                                    <i class="fa-solid fa-gavel me-1"></i> Take Action
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.8rem;">
-                                    @if(!$report->admin_seen)
-                                        <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); markAsRead({{ $report->id }}, this)"><i class="fa-solid fa-eye text-primary me-2"></i>Mark as Read</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                    @endif
-                                    @if($report->targetUser)
-                                    <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('warn', {{ $report->id }})"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Warn User</a></li>
-                                    @endif
-
-                                    @if($report->type === 'user' && $report->targetUser)
-                                        <li><span id="suspend-btn-{{ $report->targetUser->id }}" class="d-block">
-                                            @if(in_array($report->targetUserStatus, ['suspended_temp','suspended_perm']))
-                                                <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'active')"><i class="fa-solid fa-circle-check text-success me-2"></i>Remove Suspension</a>
-                                            @else
-                                                <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'temp')"><i class="fa-solid fa-clock text-warning me-2"></i>Suspend 7 Days</a>
-                                                <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'perm')"><i class="fa-solid fa-ban text-danger me-2"></i>Permanent Ban</a>
-                                            @endif
-                                        </span></li>
-                                    @elseif($report->type === 'post')
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); adminAction('delete-content', {{ $report->id }})"><i class="fa-regular fa-trash-can me-2"></i>Delete Post</a></li>
-                                    @endif
-
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('dismiss', {{ $report->id }})"><i class="fa-solid fa-ban text-muted me-2"></i>Dismiss (No Violation)</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); completeReport({{ $report->id }})"><i class="fa-solid fa-check-double text-success me-2"></i>Mark Resolved</a></li>
-                                </ul>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
-            @endif
+<div id="posts-tab" class="tab-content-panel">
+    <div class="card-table-wrapper">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
+                <i class="fa-solid fa-flag text-danger me-2"></i>
+                Reported Contents
+                <span class="badge bg-danger ms-2 pending-reports-count" style="font-size:0.7rem;">
+                    {{ $reports->whereNotIn('type', ['job'])->count() }}
+                </span>
+            </h6>
         </div>
+
+        @php $contentReports = $reports->whereNotIn('type', ['job']); @endphp
+
+        @if($contentReports->isEmpty())
+            <div class="text-center py-5 text-muted">
+                <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
+                <p class="fw-semibold">No pending reports. All clear!</p>
+            </div>
+        @else
+        <div class="table-responsive">
+            <table class="table table-hover align-middle w-100" id="reportedTable">
+                <thead>
+                    <tr>
+                        <th style="width:4%">#</th>
+                        <th style="width:8%">Type</th>
+                        <th style="width:24%">Reported Content</th>
+                        <th style="width:16%">Reported User</th>
+                        <th style="width:11%">Reason</th>
+                        <th style="width:14%">Appeal</th>
+                        <th style="width:23%;text-align:right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach($contentReports as $report)
+                    @include('admin.partials.active-report-row', ['report' => $report, 'groupedByUser' => $groupedByUser])
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
     </div>
+</div>
 
     {{-- Reported Jobs Tab --}}
-    <div id="jobs-tab" class="tab-content-panel">
-        <div class="card-table-wrapper">
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
-                    <i class="fa-solid fa-briefcase text-warning me-2"></i>
-                    Reported Jobs
-                    <span class="badge bg-warning text-dark ms-2" style="font-size:0.7rem;">
-                        {{ $reports->where('type','job')->count() }}
-                    </span>
-                </h6>
-            </div>
-
-            @php $jobReports = $reports->where('type', 'job'); @endphp
-
-            @if($jobReports->isEmpty())
-                <div class="text-center py-5 text-muted">
-                    <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
-                    <p class="fw-semibold">No reported jobs. All clear!</p>
-                </div>
-            @else
-            <div class="table-responsive">
-                <table class="table table-hover align-middle w-100" id="jobsTable">
-                    <thead>
-                        <tr>
-                            <th style="width:4%">#</th>
-                            <th style="width:26%">Reported Job</th>
-                            <th style="width:18%">Posted By</th>
-                            <th style="width:12%">Reason</th>
-                            <th style="width:14%">Appeal</th>
-                            <th style="width:26%;text-align:right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach($jobReports as $report)
-                    <tr id="report-row-{{ $report->id }}" class="{{ !$report->admin_seen ? 'table-warning' : '' }}">
-                        <td class="fw-bold text-secondary">
-                            @if(!$report->admin_seen)
-                                <span class="badge bg-danger" style="font-size:0.55rem;">NEW</span>
-                            @else
-                                •
-                            @endif
-                        </td>
-                        <td>
-                            <div class="fw-semibold text-dark" style="font-size:0.78rem;">{{ $report->targetTitle }}</div>
-                            @if($report->targetLink)
-                            <a href="{{ $report->targetLink }}" target="_blank" rel="noopener noreferrer" class="text-primary" style="font-size:0.68rem;">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>View Job
-                            </a>
-                            @else
-                            <span class="text-muted" style="font-size:0.68rem;">[Job removed]</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if($report->targetUser)
-                            <div class="fw-semibold" style="font-size:0.78rem;">{{ $report->targetUser->name }}</div>
-                            <div class="text-muted" style="font-size:0.68rem;">{{ $report->targetUser->email }}</div>
-                            @else
-                            <span class="text-muted" style="font-size:0.72rem;">User deleted</span>
-                            @endif
-                        </td>
-                        <td>
-                            <span class="text-muted" style="font-size:0.72rem;">{{ ucfirst($report->reason) }}</span>
-                            @if($report->details)
-                            <div class="text-muted" style="font-size:0.65rem;">{{ \Illuminate\Support\Str::limit($report->details, 30) }}</div>
-                            @endif
-                        </td>
-                        <td>
-                            @if($report->appeal_status === 'pending')
-                                <div class="mb-2 p-2" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;">
-                                    <div class="fw-bold text-warning" style="font-size:0.65rem;text-transform:uppercase;"><i class="fa-solid fa-megaphone"></i> Appealed</div>
-                                    <div class="text-dark mt-1" style="font-size:0.7rem;">{{ \Illuminate\Support\Str::limit($report->appeal_message, 60) }}</div>
-                                </div>
-                                <button onclick="markReviewed({{ $report->id }})" class="btn-action-pill activate w-100 justify-content-center">
-                                    <i class="fa-solid fa-check-double"></i> Accept Appeal
-                                </button>
-                            @else
-                                <span class="text-muted" style="font-size:0.7rem;">— No appeal —</span>
-                            @endif
-                        </td>
-                        <td style="text-align:right;">
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="font-size:0.75rem;border-radius:8px;">
-                                    <i class="fa-solid fa-gavel me-1"></i> Take Action
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.8rem;">
-                                    @if(!$report->admin_seen)
-                                        <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); markAsRead({{ $report->id }}, this)"><i class="fa-solid fa-eye text-primary me-2"></i>Mark as Read</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                    @endif
-                                    @if($report->targetUser)
-                                    <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('warn', {{ $report->id }})"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Warn User</a></li>
-                                    <li><span id="suspend-btn-{{ $report->targetUser->id }}" class="d-block">
-                                        @if(in_array($report->targetUserStatus, ['suspended_temp','suspended_perm']))
-                                            <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'active')"><i class="fa-solid fa-circle-check text-success me-2"></i>Remove Suspension</a>
-                                        @else
-                                            <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'temp')"><i class="fa-solid fa-clock text-warning me-2"></i>Suspend 7 Days</a>
-                                            <a class="dropdown-item" href="#" onclick="event.preventDefault(); suspendFromReport({{ $report->targetUser->id }}, 'perm')"><i class="fa-solid fa-ban text-danger me-2"></i>Permanent Ban</a>
-                                        @endif
-                                    </span></li>
-                                    @endif
-                                    <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); adminAction('delete-content', {{ $report->id }})"><i class="fa-regular fa-trash-can me-2"></i>Delete Job</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); adminAction('dismiss', {{ $report->id }})"><i class="fa-solid fa-ban text-muted me-2"></i>Dismiss (No Violation)</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); completeReport({{ $report->id }})"><i class="fa-solid fa-check-double text-success me-2"></i>Mark Resolved</a></li>
-                                </ul>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
-            @endif
+<div id="jobs-tab" class="tab-content-panel">
+    <div class="card-table-wrapper">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h6 class="fw-bold mb-0" style="font-size:0.88rem;">
+                <i class="fa-solid fa-briefcase text-warning me-2"></i>
+                Reported Jobs
+                <span class="badge bg-warning text-dark ms-2" style="font-size:0.7rem;">
+                    {{ $reports->where('type','job')->count() }}
+                </span>
+            </h6>
         </div>
+
+        @php $jobReports = $reports->where('type', 'job'); @endphp
+
+        @if($jobReports->isEmpty())
+            <div class="text-center py-5 text-muted">
+                <i class="fa-solid fa-shield-check fa-2x mb-3 text-success"></i>
+                <p class="fw-semibold">No reported jobs. All clear!</p>
+            </div>
+        @else
+        <div class="table-responsive">
+            <table class="table table-hover align-middle w-100" id="jobsTable">
+                <thead>
+                    <tr>
+                        <th style="width:4%">#</th>
+                        <th style="width:26%">Reported Job</th>
+                        <th style="width:18%">Posted By</th>
+                        <th style="width:12%">Reason</th>
+                        <th style="width:14%">Appeal</th>
+                        <th style="width:26%;text-align:right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($jobReports as $report)
+                        @include('admin.partials.active-report-row', ['report' => $report, 'groupedByUser' => $groupedByUser])
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
     </div>
+</div>
 
     {{-- History Tab --}}
     <div id="history-tab" class="tab-content-panel">
@@ -673,6 +500,11 @@ document.querySelectorAll('.nav-link-custom').forEach(link => {
                 currentActiveContent.classList.remove('active');
                 const nextActiveContent = document.getElementById(targetTabId);
                 nextActiveContent.classList.add('active');
+
+                if (targetTabId === 'history-tab' && $.fn.DataTable.isDataTable('#historyTable')) {
+                    setTimeout(() => { $('#historyTable').DataTable().columns.adjust().draw(false); }, 200);
+                }
+                                
                 if (targetTabId === 'history-tab' && nextActiveContent.dataset.needsAdjust === '1') {
                     setTimeout(() => {
                         if ($.fn.DataTable.isDataTable('#historyTable')) {
@@ -707,6 +539,14 @@ $(document).ready(function () {
     if ($('#historyTable').length && !$.fn.DataTable.isDataTable('#historyTable')) {
         $('#historyTable').DataTable({ pageLength: 10, order: [], columnDefs: [{ orderable: false, targets: [0, 4, 6] }], language: { search: 'Search history:' } });
     }
+    if ($('#historyTable').length && !$.fn.DataTable.isDataTable('#historyTable')) {
+    $('#historyTable').DataTable({
+        pageLength: 10,
+        order: [[5, 'desc']],   // ✅ Resolved At অনুযায়ী নতুন→পুরাতন সবসময় সর্ট
+        columnDefs: [{ orderable: false, targets: [0, 4, 6] }],
+        language: { search: 'Search history:' }
+    });
+}
 });
 
 // ============================================================
@@ -901,6 +741,48 @@ function bumpHistoryBadge(delta) {
     badge.style.display = count > 0 ? '' : 'none';
 }
 
+// ============================================================
+// LIVE HISTORY COUNT (in-memory, no reload needed)
+// ============================================================
+let historyUnseenCount = parseInt(document.getElementById('history-unseen-badge')?.textContent || '0');
+
+function setHistoryBadge(count) {
+    const badge = document.getElementById('history-unseen-badge');
+    if (!badge) return;
+    historyUnseenCount = Math.max(0, count);
+    badge.textContent = historyUnseenCount;
+    badge.style.display = historyUnseenCount > 0 ? '' : 'none';
+}
+
+function addHistoryRowLive(html) {
+    if (!html) return;
+    const tbody = document.querySelector('#historyTable tbody');
+    if (!tbody) return;
+
+    // ✅ <tr> কে সঠিক table/tbody কনটেক্সটে পার্স করা — jQuery raw string parsing এর whitespace bug এড়াতে
+    const wrapper = document.createElement('table');
+    wrapper.innerHTML = `<tbody>${html.trim()}</tbody>`;
+    const trNode = wrapper.querySelector('tr');
+    if (!trNode) return;
+
+    if ($.fn.DataTable.isDataTable('#historyTable')) {
+        const table = $('#historyTable').DataTable();
+        table.row.add(trNode).draw(false);
+
+        const historyTabEl = document.getElementById('history-tab');
+        if (historyTabEl && historyTabEl.classList.contains('active')) {
+            table.columns.adjust().draw(false);
+        }
+    } else {
+        tbody.appendChild(trNode);
+    }
+
+    document.querySelector('#history-tab .text-center.py-5')?.remove();
+
+    setHistoryBadge(historyUnseenCount + 1);
+}
+
+
 function markAsRead(reportId, el) {
     fetch(`/admin/reports/${reportId}/mark-seen`, {
         method: 'POST',
@@ -922,13 +804,11 @@ function markAsRead(reportId, el) {
 
         if (el) {
             if (el.tagName === 'A') {
-                // active tables — dropdown "Mark as Read" লিংক
                 const li = el.closest('li');
                 const divider = li?.nextElementSibling;
                 li?.remove();
                 if (divider && divider.querySelector('hr')) divider.remove();
             } else if (el.tagName === 'BUTTON') {
-                // history table — "Mark as Read" বাটন
                 const span = document.createElement('span');
                 span.className = 'text-muted';
                 span.style.fontSize = '0.68rem';
@@ -937,26 +817,11 @@ function markAsRead(reportId, el) {
             }
         }
 
-        if (wasHistoryRow) bumpHistoryBadge(-1);
+        if (wasHistoryRow) setHistoryBadge(historyUnseenCount - 1); // ✅ লাইভ কাউন্ট -1
     })
     .catch(() => {});
 }
 
-
-function addHistoryRowLive(html) {
-    if (!html || !$.fn.DataTable.isDataTable('#historyTable')) return;
-    const table = $('#historyTable').DataTable();
-    table.row.add($(html)).draw(false);
-
-    // ✅ যদি History tab এই মুহূর্তে hidden থাকে, DataTables কে পরে columns.adjust() করতে বলা লাগবে
-    const historyTabEl = document.getElementById('history-tab');
-    if (historyTabEl && !historyTabEl.classList.contains('active')) {
-        // ট্যাব এখন visible না — পরে switch করলে ঠিক দেখানোর জন্য adjust flag রাখি
-        historyTabEl.dataset.needsAdjust = '1';
-    } else {
-        table.columns.adjust().draw(false);
-    }
-}
 
 // ============================================================
 // SUSPEND
@@ -1054,6 +919,142 @@ function markReviewed(reportId) {
         });
     });
 }
+
+// ============================================================
+// LIVE POLLING — প্রতি 15 সেকেন্ডে
+// ============================================================
+let lastPollTime = new Date().toISOString();
+let pollingActive = true;
+
+function injectRow(tableId, html, reportId) {
+    // duplicate check
+    if (document.getElementById('report-row-' + reportId)) return false;
+
+    const wrapper = document.createElement('table');
+    wrapper.innerHTML = `<tbody>${html}</tbody>`;
+    const trNode = wrapper.querySelector('tr');
+    if (!trNode) return false;
+
+    if ($.fn.DataTable.isDataTable(tableId)) {
+        $(tableId).DataTable().row.add(trNode).draw(false);
+    } else {
+        const tbody = document.querySelector(tableId + ' tbody');
+        if (tbody) tbody.appendChild(trNode);
+    }
+    return true;
+}
+
+function pollReports() {
+    if (!pollingActive) return;
+
+    fetch(`/admin/reports/poll?since=${encodeURIComponent(lastPollTime)}`, {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => {
+        if (!r.ok) throw new Error('Poll failed');
+        return r.json();
+    })
+    .then(d => {
+        if (!d.success) return;
+        lastPollTime = d.server_time;
+
+        let hasNewContent = false;
+        let hasNewJob     = false;
+
+        // ✅ নতুন content reports inject
+        (d.content_rows || []).forEach(item => {
+            const added = injectRow('#reportedTable', item.html, item.id);
+            if (added) {
+                hasNewContent = true;
+                // empty state সরাও
+                document.querySelector('#posts-tab .text-center.py-5')?.remove();
+            }
+        });
+
+        // ✅ নতুন job reports inject
+        (d.job_rows || []).forEach(item => {
+            const added = injectRow('#jobsTable', item.html, item.id);
+            if (added) {
+                hasNewJob = true;
+                document.querySelector('#jobs-tab .text-center.py-5')?.remove();
+            }
+        });
+
+        // ✅ নতুন/updated history rows
+        (d.history_rows || []).forEach(item => {
+            const existing = document.querySelector(`[data-report-id="${item.id}"]`);
+            const wrapper  = document.createElement('table');
+            wrapper.innerHTML = `<tbody>${item.html}</tbody>`;
+            const trNode = wrapper.querySelector('tr');
+            if (!trNode) return;
+
+            if ($.fn.DataTable.isDataTable('#historyTable')) {
+                const dt = $('#historyTable').DataTable();
+                if (existing) {
+                    // update existing row
+                    dt.row(existing).remove();
+                }
+                dt.row.add(trNode).draw(false);
+            } else {
+                const tbody = document.querySelector('#historyTable tbody');
+                if (tbody) {
+                    if (existing) existing.remove();
+                    tbody.appendChild(trNode);
+                }
+            }
+            document.querySelector('#history-tab .text-center.py-5')?.remove();
+        });
+
+        // ✅ Badge/count live update
+        updateLiveCounts(d.pending_content, d.pending_jobs, d.history_unseen);
+
+        // ✅ Toast — নতুন report এলে
+        if (hasNewContent || hasNewJob) {
+            Toast.fire({
+                icon: 'warning',
+                title: `🚨 New report${(hasNewContent && hasNewJob) ? 's' : ''} received!`
+            });
+        }
+    })
+    .catch(() => {}); // silent fail — network error হলে পরের poll এ আবার try করবে
+}
+
+function updateLiveCounts(pendingContent, pendingJobs, historyUnseen) {
+    // ✅ Reported Contents badge (sidebar + tab header)
+    document.querySelectorAll('.pending-reports-count').forEach(el => {
+        el.textContent = pendingContent;
+        el.style.display = pendingContent > 0 ? '' : 'none';
+    });
+
+    // ✅ Reported Jobs badge (sidebar)
+    const jobsNavEl = document.querySelector('[data-target="jobs-tab"]');
+    if (jobsNavEl) {
+        let jobBadge = jobsNavEl.querySelector('.badge');
+        if (!jobBadge) {
+            jobBadge = document.createElement('span');
+            jobBadge.className = 'badge bg-warning text-dark ms-auto';
+            jobBadge.style.fontSize = '0.6rem';
+            jobsNavEl.appendChild(jobBadge);
+        }
+        jobBadge.textContent = pendingJobs;
+        jobBadge.style.display = pendingJobs > 0 ? '' : 'none';
+    }
+
+    // ✅ History unseen badge
+    setHistoryBadge(historyUnseen);
+}
+
+// Page visible হলেই poll করো (background tab এ করবে না)
+document.addEventListener('visibilitychange', () => {
+    pollingActive = !document.hidden;
+    if (pollingActive) pollReports(); // tab এ ফিরলে সাথে সাথে poll
+});
+
+// শুরু করো
+pollReports();
+setInterval(pollReports, 15000);
+
+
 </script>
 </body>
 </html>

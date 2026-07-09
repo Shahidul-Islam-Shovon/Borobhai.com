@@ -293,6 +293,7 @@
                             onclick="applyExternalBtn(this)">
                         <i class="bi bi-box-arrow-up-right"></i> Apply via Company
                     </button>
+                                      
                 </div>
             @endif
         </div>
@@ -608,6 +609,8 @@ function openExternalTarget(applyType, applyHref){
         window.open(applyHref, '_blank');
     }
 }
+
+
 
 // "Open again" — আবার external সাইট/মেইল খোলে
 function reopenExternal(){

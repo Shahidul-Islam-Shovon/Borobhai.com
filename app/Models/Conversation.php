@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Conversation extends Model
 {
-    protected $fillable = ['user_id_1', 'user_id_2', 'last_message_at'];
+    protected $fillable = ['user_id_1', 'user_id_2', 'last_message_at', 'muted_by', 'deleted_by'];
     protected $casts = ['last_message_at' => 'datetime'];
 
     public function user1() { return $this->belongsTo(User::class, 'user_id_1'); }

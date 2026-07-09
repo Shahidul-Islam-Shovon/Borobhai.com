@@ -26,11 +26,14 @@ class AdminDashboardController extends Controller
         $circulars = \App\Models\JobPost::with('user')->latest()->get();
 
         $reports = \App\Models\Report::where(function ($q) {
-                $q->where('status', 'pending')->orWhere('appeal_status', 'pending');
+        $q->where('status', 'pending')->orWhere('appeal_status', 'pending');
             })
             ->orderBy('created_at', 'asc')
             ->get()
             ->map(fn($r) => $this->hydrateActiveReport($r));
+
+        // ✅ একই রিপোর্টেড ইউজারের একাধিক pending রিপোর্ট (user/post/job যেকোনো টাইপ) একসাথে গ্রুপ করা
+        $groupedByUser = $reports->filter(fn($r) => $r->targetUser)->groupBy(fn($r) => $r->targetUser->id);
 
         $completedReports = \App\Models\Report::whereIn('status', ['dismissed', 'completed'])
             ->where(function ($q) {
@@ -41,7 +44,7 @@ class AdminDashboardController extends Controller
             ->get()
             ->map(fn($r) => $this->hydrateHistoryReport($r));
 
-        return view('admin.dashboard', compact('counters', 'users', 'circulars', 'reports', 'completedReports'));
+        return view('admin.dashboard', compact('counters', 'users', 'circulars', 'reports', 'completedReports', 'groupedByUser'));
     }
 
     // ---------- HYDRATION HELPERS ----------
@@ -94,7 +97,7 @@ class AdminDashboardController extends Controller
     private function renderHistoryRow($report)
     {
         $hydrated = $this->hydrateHistoryReport($report);
-        return view('admin.partials.history-row', ['r' => $hydrated])->render();
+        return trim(view('admin.partials.history-row', ['r' => $hydrated])->render());
     }
 
     // ---------- SEEN TRACKING (single endpoint, handles active + history) ----------
@@ -449,4 +452,70 @@ public function completeReport($reportId)
         \DB::table('users')->where('id', $id)->update(['status' => $newStatus, 'suspended_until' => $newUntil, 'updated_at' => Carbon::now()]);
         return response()->json(['success' => true, 'message' => 'User status updated: ' . $newStatus]);
     }
+
+    // AdminDashboardController এ যোগ করো
+    public function pollReports(Request $request)
+    {
+        $since = $request->input('since', now()->subSeconds(20)->toISOString());
+
+        try {
+            $sinceCarbon = \Carbon\Carbon::parse($since);
+        } catch (\Exception $e) {
+            $sinceCarbon = now()->subSeconds(20);
+        }
+
+        // ✅ নতুন pending reports
+        $newActiveReports = \App\Models\Report::where(function($q) {
+                $q->where('status', 'pending')->orWhere('appeal_status', 'pending');
+            })
+            ->where('created_at', '>', $sinceCarbon)
+            ->get()
+            ->map(fn($r) => $this->hydrateActiveReport($r));
+
+        // ✅ নতুন completed reports (যেগুলো since এর পরে complete/dismiss হয়েছে)
+        $newHistoryReports = \App\Models\Report::whereIn('status', ['dismissed', 'completed'])
+            ->where(function($q) {
+                $q->whereNull('appeal_status')->orWhere('appeal_status', '!=', 'pending');
+            })
+            ->where('updated_at', '>', $sinceCarbon)
+            ->get()
+            ->map(fn($r) => $this->hydrateHistoryReport($r));
+
+        // ✅ Counts
+        $pendingContent  = \App\Models\Report::where('status', 'pending')->whereNotIn('type', ['job'])->count();
+        $pendingJobs     = \App\Models\Report::where('status', 'pending')->where('type', 'job')->count();
+        $historyUnseen   = \App\Models\Report::whereIn('status', ['dismissed', 'completed'])->where('history_seen', false)->count();
+
+        // ✅ Render rows as HTML
+        $contentRows = [];
+        $jobRows     = [];
+        foreach ($newActiveReports as $r) {
+            $html = view('admin.partials.active-report-row', ['report' => $r, 'groupedByUser' => collect()])->render();
+            if ($r->type === 'job') {
+                $jobRows[] = ['id' => $r->id, 'html' => trim($html)];
+            } else {
+                $contentRows[] = ['id' => $r->id, 'html' => trim($html)];
+            }
+        }
+
+        $historyRows = [];
+        foreach ($newHistoryReports as $r) {
+            $historyRows[] = [
+                'id'   => $r->id,
+                'html' => trim(view('admin.partials.history-row', ['r' => $r])->render()),
+            ];
+        }
+
+        return response()->json([
+            'success'         => true,
+            'server_time'     => now()->toISOString(),
+            'content_rows'    => $contentRows,
+            'job_rows'        => $jobRows,
+            'history_rows'    => $historyRows,
+            'pending_content' => $pendingContent,
+            'pending_jobs'    => $pendingJobs,
+            'history_unseen'  => $historyUnseen,
+        ]);
+    }
+
 }

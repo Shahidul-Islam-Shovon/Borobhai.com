@@ -168,30 +168,45 @@
                     @endif
                 </div>
 
-                {{-- Friend button — state aware --}}
-                <div id="sr-wrap-{{ $user->id }}">
-                    @if($fs === 'accepted')
-                        <button class="sr-btn sr-btn-friends" onclick="srAction('unfriend',{{ $user->id }},this)">
-                            <i class="bi bi-people-fill"></i> <span>Friends</span>
-                        </button>
-                    @elseif($fs === 'pending_sent')
-                        <button class="sr-btn sr-btn-pending" onclick="srAction('cancel',{{ $user->id }},this)">
-                            <i class="bi bi-person-check-fill"></i> <span>Requested</span>
-                        </button>
-                    @elseif($fs === 'pending_received')
-                        <button class="sr-btn sr-btn-accept" onclick="srAction('accept',{{ $user->id }},this)">
-                            <i class="bi bi-person-plus-fill"></i> <span>Accept</span>
-                        </button>
-                    @elseif($fs === 'blocked')
-                        <button class="sr-btn sr-btn-blocked" onclick="srAction('unblock',{{ $user->id }},this)">
-                            <i class="bi bi-slash-circle"></i> <span>Blocked</span>
-                        </button>
-                    @else
-                        <button class="sr-btn sr-btn-add" onclick="srAction('send',{{ $user->id }},this)">
-                            <i class="bi bi-person-plus-fill"></i> <span>Add Friend</span>
-                        </button>
-                    @endif
-                </div>
+                <div class="d-flex align-items-center gap-2">
+    <div id="sr-wrap-{{ $user->id }}">
+        @if($fs === 'accepted')
+            <button class="sr-btn sr-btn-friends" onclick="srAction('unfriend',{{ $user->id }},this)">
+                <i class="bi bi-people-fill"></i> <span>Friends</span>
+            </button>
+        @elseif($fs === 'pending_sent')
+            <button class="sr-btn sr-btn-pending" onclick="srAction('cancel',{{ $user->id }},this)">
+                <i class="bi bi-person-check-fill"></i> <span>Requested</span>
+            </button>
+        @elseif($fs === 'pending_received')
+            <button class="sr-btn sr-btn-accept" onclick="srAction('accept',{{ $user->id }},this)">
+                <i class="bi bi-person-plus-fill"></i> <span>Accept</span>
+            </button>
+        @elseif($fs === 'blocked')
+            <button class="sr-btn sr-btn-blocked" onclick="srAction('unblock',{{ $user->id }},this)">
+                <i class="bi bi-slash-circle"></i> <span>Blocked</span>
+            </button>
+        @else
+            <button class="sr-btn sr-btn-add" onclick="srAction('send',{{ $user->id }},this)">
+                <i class="bi bi-person-plus-fill"></i> <span>Add Friend</span>
+            </button>
+        @endif
+    </div>
+
+    {{-- ✅ Report — friend/non-friend নির্বিশেষে সবসময় দেখাবে --}}
+    @php $alreadyReported = \App\Models\Report::isReportedByMe(auth()->id(), 'user', $user->id); @endphp
+    @if($alreadyReported)
+        <span class="badge bg-danger-subtle text-danger border" style="font-size:.65rem;font-weight:700;padding:7px 11px;border-radius:9px;white-space:nowrap;">
+            <i class="bi bi-flag-fill me-1"></i>Reported
+        </span>
+    @else
+        <button class="sr-btn" style="background:#fff;color:#6b7280;border:1.5px solid #eceef1;" title="Report user"
+                onclick="bbOpenReport('user', {{ $user->id }}, '{{ e($user->name) }}')">
+            <i class="bi bi-flag"></i>
+        </button>
+    @endif
+</div>
+
             </div>
         @endforeach
 
@@ -267,6 +282,78 @@ function srAction(action, userId, btn) {
         Toast.fire({ icon: 'error', title: 'Network error. Please try again.' });
     });
 }
+
+function bbOpenReport(type, id, name) {
+    document.getElementById('bbReportType').value = type;
+    document.getElementById('bbReportId').value = id;
+    document.getElementById('bbReportName').textContent = name;
+    document.getElementById('bbReportReason').value = '';
+    document.getElementById('bbReportReasons').classList.remove('d-none');
+    document.getElementById('bbReportDetailsSection').classList.add('d-none');
+    document.querySelectorAll('.bb-report-reason-btn').forEach(b => b.classList.remove('selected'));
+    new bootstrap.Modal(document.getElementById('bbReportModal')).show();
+}
+function bbSelectReason(el, reason) {
+    document.getElementById('bbReportReason').value = reason;
+    document.querySelectorAll('.bb-report-reason-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('bbReportReasons').classList.add('d-none');
+    document.getElementById('bbReportDetailsSection').classList.remove('d-none');
+}
+function bbSubmitReport() {
+    const type = document.getElementById('bbReportType').value;
+    const id = document.getElementById('bbReportId').value;
+    const reason = document.getElementById('bbReportReason').value;
+    const details = document.getElementById('bbReportDetails').value;
+
+    fetch('/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: JSON.stringify({ type, id, reason, details })
+    })
+    .then(r => r.json())
+    .then(d => {
+        bootstrap.Modal.getInstance(document.getElementById('bbReportModal'))?.hide();
+        Toast.fire({ icon: d.success ? 'success' : 'warning', title: d.message });
+    });
+}
+
 </script>
+
+
+<div class="modal fade" id="bbReportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold">Report <span id="bbReportName"></span></h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Why are you reporting this?</p>
+                <input type="hidden" id="bbReportType">
+                <input type="hidden" id="bbReportId">
+                <input type="hidden" id="bbReportReason">
+                <div id="bbReportReasons">
+                    <button class="bb-report-reason-btn" onclick="bbSelectReason(this,'spam')">Spam</button>
+                    <button class="bb-report-reason-btn" onclick="bbSelectReason(this,'harassment')">Harassment or bullying</button>
+                    <button class="bb-report-reason-btn" onclick="bbSelectReason(this,'fake')">Fake profile or impersonation</button>
+                    <button class="bb-report-reason-btn" onclick="bbSelectReason(this,'other')">Something else</button>
+                </div>
+                <div id="bbReportDetailsSection" class="d-none mt-3">
+                    <textarea id="bbReportDetails" class="form-control border rounded-3 mb-3" rows="3" placeholder="Add more details (optional)..." style="font-size:13px;"></textarea>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light btn-sm" onclick="document.getElementById('bbReportDetailsSection').classList.add('d-none'); document.getElementById('bbReportReasons').classList.remove('d-none');">Back</button>
+                        <button class="btn btn-danger btn-sm px-4 fw-bold" onclick="bbSubmitReport()">Submit Report</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.bb-report-reason-btn { display:flex; align-items:center; width:100%; padding:11px 14px; border-radius:10px; border:1.5px solid #eceef1; background:#fff; color:#1e1f24; font-size:13.5px; font-weight:600; cursor:pointer; transition:all .15s; margin-bottom:7px; }
+.bb-report-reason-btn:hover, .bb-report-reason-btn.selected { border-color:#4f46e5; background:#eef2ff; color:#4f46e5; }
+</style>
+
 </body>
 </html>

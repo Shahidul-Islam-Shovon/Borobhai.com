@@ -25,7 +25,7 @@
             <div class="text-warning mt-1" style="font-size:0.62rem;"><i class="fa-solid fa-triangle-exclamation"></i> User was also warned</div>
         @endif
     </td>
-    <td style="font-size:0.72rem;color:#64748b;">{{ $r->updated_at->format('d M Y, g:i a') }}</td>
+    <td data-order="{{ $r->updated_at->timestamp }}" style="font-size:0.72rem;color:#64748b;">{{ $r->updated_at->format('d M Y, g:i a') }}</td>
 
     <td style="text-align:right;">
         @if($r->appeal_status === 'reviewed')

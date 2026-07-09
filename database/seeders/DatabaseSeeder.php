@@ -15,17 +15,17 @@ class DatabaseSeeder extends Seeder
     {
         // 👑 1. Create Chief Super Admin Account (আপনার রিয়েল প্রোফাইল)
         User::updateOrCreate(
-            ['email' => 'shahidul.webdev@gmail.com'],
+            ['email' => env('SUPER_ADMIN_EMAIL')],
             [
-                'name' => 'MD shahidul Islam Shovon',
-                'password' => Hash::make('Admin@1234'), // আপনার সিকিউর পাসওয়ার্ড দিতে পারেন
+                'name' => env('SUPER_ADMIN_NAME'),
+                'password' => Hash::make(env('SUPER_ADMIN_PASSWORD')),
                 'role' => 'admin',
-                'is_super_admin' => 1, // 🔥 এই লাইনটি মাস্ট! লজিক ঠিক রাখার জন্য
+                'is_super_admin' => true,
                 'status' => 'active',
                 'email_verified_at' => now(),
             ]
         );
-        
+                
         // only super admin id is required for the system to work, so we can stop here.
     }
 }

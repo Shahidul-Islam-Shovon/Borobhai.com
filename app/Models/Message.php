@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Message extends Model
 {
         protected $fillable = [
-        'conversation_id', 'sender_id', 'recipient_id', 'message',
-        'file_path', 'file_type', 'file_size', 'read_at', 'delivered_at',
-        'seen_at', 'is_deleted', 'reply_to_id', 'message_reactions', 'forwarded', 'deleted_for'
-    ];
-    
+            'conversation_id', 'sender_id', 'recipient_id', 'message',
+            'file_path', 'file_type', 'file_size', 'read_at', 'delivered_at',
+            'seen_at', 'is_deleted', 'reply_to_id', 'message_reactions', 'forwarded', 'deleted_for', 'share_meta'
+        ];
+            
     protected $casts = [
         'read_at' => 'datetime', 'delivered_at' => 'datetime', 'seen_at' => 'datetime',
         'created_at' => 'datetime', 'message' => 'encrypted', 'forwarded' => 'boolean',

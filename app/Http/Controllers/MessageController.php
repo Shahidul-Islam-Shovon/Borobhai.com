@@ -26,11 +26,12 @@ class MessageController extends Controller
         if ($validated['recipient_id'] == $me) abort(403);
 
         $conv = Conversation::getOrCreate($me, $validated['recipient_id']);
+        $rawMessage = $validated['message'] ?: '';
 
         $msg = new Message([
             'sender_id' => $me,
             'recipient_id' => $validated['recipient_id'],
-            'message' => $validated['message'] ?: '',
+            'message' => $rawMessage,
             'conversation_id' => $conv->id,
             'reply_to_id' => $validated['reply_to_id'] ?? null,
             'delivered_at' => now(),
@@ -48,6 +49,16 @@ class MessageController extends Controller
                 ];
             }
             $msg->file_path = json_encode($files);
+        } elseif ($rawMessage) {
+            // মিডিয়া নেই — টেক্সটে নিজের সাইটের post/job লিংক আছে কিনা চেক করো
+            $meta = $this->extractShareMeta($rawMessage);
+            if ($meta) {
+                $msg->share_meta = json_encode($meta);
+                // শুধু লিংকই পাঠানো হলে raw টেক্সট আর দেখানোর দরকার নেই, কার্ডই যথেষ্ট
+                if (trim($rawMessage) === $meta['url'] || preg_match('~^https?://\S+$~', trim($rawMessage))) {
+                    $msg->message = '';
+                }
+            }
         }
 
         $msg->save();
@@ -118,11 +129,13 @@ class MessageController extends Controller
             'media' => $m->is_deleted ? [] : $this->formatMedia($m),
             'reply_to' => $reply,
             'reactions' => $this->formatReactions($m, $me),
-            'created_at' => $m->created_at->format('g:i A'),
             // ফ্রন্টএন্ডে "১৫ মিনিটের পর এডিট বন্ধ" লজিকের জন্য মিলিসেকেন্ড টাইমস্ট্যাম্প
-            'created_at_ts' => $m->created_at->timestamp * 1000,
+            'created_at' => $m->created_at->format('g:i A'),
             'is_mine' => $m->sender_id === $me,
+            'delivered' => (bool) $m->delivered_at,
             'seen' => (bool) $m->seen_at,
+            'created_at_ts' => $m->created_at->timestamp * 1000,
+            'share' => $m->share_meta ? json_decode($m->share_meta, true) : null,
         ];
     }
 
@@ -271,6 +284,7 @@ class MessageController extends Controller
             'recipient_id' => $validated['recipient_id'],
             'message' => $original->message,
             'file_path' => $original->file_path,
+            'share_meta' => $original->share_meta,
             'conversation_id' => $conv->id,
             'forwarded' => true,
             'delivered_at' => now(),
@@ -294,6 +308,9 @@ class MessageController extends Controller
         ->get();
 
         $list = $convs->map(function($c) use ($me, $search) {
+            $deleted = json_decode($c->deleted_by ?? '[]', true) ?: [];
+            if (in_array($me, $deleted)) return null;
+
             $other = $c->getOtherUser($me);
             if ($search && !str_contains(strtolower($other->name), strtolower($search))) return null;
 
@@ -308,6 +325,8 @@ class MessageController extends Controller
                 ? \App\Http\Controllers\PostController::formatLastSeen($other->last_seen)
                 : 'Offline';
 
+            $muted = json_decode($c->muted_by ?? '[]', true) ?: [];
+
             return [
                 'user_id' => $other->id,
                 'name' => $other->name,
@@ -318,6 +337,7 @@ class MessageController extends Controller
                 'last_message' => $lastMsg ? ($lastMsg->sender_id === $me ? 'You: ' : '') . substr($lastMsg->message ?: '[Media]', 0, 50) : '',
                 'last_at' => $lastMsg ? $lastMsg->created_at->diffForHumans() : '',
                 'unread' => $unread,
+                'muted' => in_array($me, $muted),
             ];
         })->filter()->values();
 
@@ -399,5 +419,161 @@ class MessageController extends Controller
 
         $msg->update(['message_reactions' => json_encode($reactions)]);
         return response()->json(['success' => true, 'reactions' => $reactions]);
+    }
+
+    public function shareToMessenger(Request $request)
+    {
+        $validated = $request->validate([
+            'recipient_id' => 'required|integer|exists:users,id',
+            'type' => 'required|in:post,job',
+            'item_id' => 'required',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $me = Auth::id();
+        if ($validated['recipient_id'] == $me) abort(403);
+
+        $meta = null;
+
+        if ($validated['type'] === 'post') {
+            $post = \App\Models\Post::find($validated['item_id']);
+            if (!$post) return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+            $meta = $this->buildPostMeta($post);
+        } else {
+            $job = \App\Models\JobPost::find($validated['item_id']);
+            if (!$job) return response()->json(['success' => false, 'message' => 'Job not found'], 404);
+            $meta = $this->buildJobMeta($job);
+        }
+
+        $conv = Conversation::getOrCreate($me, $validated['recipient_id']);
+        $msg = Message::create([
+            'sender_id'    => $me,
+            'recipient_id' => $validated['recipient_id'],
+            'message'      => $validated['comment'] ?? '',
+            'conversation_id' => $conv->id,
+            'share_meta'   => json_encode($meta),
+            'delivered_at' => now(),
+        ]);
+        $conv->update(['last_message_at' => now()]);
+
+        return response()->json(['success' => true, 'message_id' => $msg->id]);
+    }
+
+    private function buildPostMeta($post)
+    {
+        $author = $post->user;
+        $firstImage = null;
+        if ($post->images) {
+            $imgs = is_array($post->images) ? $post->images : json_decode($post->images, true);
+            if (is_array($imgs) && count($imgs)) $firstImage = asset('storage/' . $imgs[0]);
+        }
+        return [
+            'type'     => 'post',
+            'id'       => $post->id,
+            'title'    => ($author->name ?? 'User') . "'s post",
+            'subtitle' => \Illuminate\Support\Str::limit(strip_tags($post->content ?? ''), 80) ?: 'Shared a post',
+            'image'    => $firstImage,
+            'url'      => url('/?goto_post=' . $post->id),
+        ];
+    }
+
+    private function buildJobMeta($job)
+    {
+        return [
+            'type'     => 'job',
+            'id'       => $job->id,
+            'title'    => $job->title,
+            'subtitle' => $job->company . ($job->location ? ' · ' . $job->location : ''),
+            'image'    => null,
+            'url'      => url('/jobs/' . $job->id),
+        ];
+    }
+
+    // পেস্ট করা মেসেজ টেক্সটের ভেতর নিজের সাইটের post/job লিংক থাকলে auto-detect করে preview meta বানায়
+    private function extractShareMeta($text)
+    {
+        if (!$text) return null;
+
+        if (preg_match('/#postCard-(\d+)/', $text, $m) || preg_match('/goto_post=(\d+)/', $text, $m)) {
+            $post = \App\Models\Post::find($m[1]);
+            if ($post) return $this->buildPostMeta($post);
+        }
+
+        if (preg_match('~/jobs/(\d+)~', $text, $m)) {
+            $job = \App\Models\JobPost::find($m[1]);
+            if ($job) return $this->buildJobMeta($job);
+        }
+
+        return null;
+    }
+
+    private function getConv($me, $userId)
+    {
+        $conv = Conversation::whereRaw("
+            (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)
+        ", [$me, $userId, $userId, $me])->first();
+        if (!$conv) $conv = Conversation::getOrCreate($me, $userId);
+        return $conv;
+    }
+
+    public function toggleMute($userId)
+    {
+        $me = Auth::id();
+        $conv = $this->getConv($me, (int) $userId);
+        $muted = json_decode($conv->muted_by ?? '[]', true) ?: [];
+
+        if (in_array($me, $muted)) {
+            $muted = array_values(array_filter($muted, fn($id) => $id != $me));
+            $isMuted = false;
+        } else {
+            $muted[] = $me;
+            $isMuted = true;
+        }
+        $conv->update(['muted_by' => json_encode($muted)]);
+        return response()->json(['success' => true, 'muted' => $isMuted]);
+    }
+
+    public function deleteChatForMe($userId)
+    {
+        $me = Auth::id();
+        $conv = $this->getConv($me, (int) $userId);
+        $deleted = json_decode($conv->deleted_by ?? '[]', true) ?: [];
+        if (!in_array($me, $deleted)) $deleted[] = $me;
+        $conv->update(['deleted_by' => json_encode($deleted)]);
+        return response()->json(['success' => true]);
+    }
+
+    public function exportChatHtml($userId)
+    {
+        $me = Auth::id();
+        $other = User::findOrFail((int) $userId);
+        $conv = $this->getConv($me, (int) $userId);
+
+        $messages = Message::where('conversation_id', $conv->id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chat with ' . e($other->name) . '</title>'
+            . '<style>body{font-family:sans-serif;background:#f0f2f5;padding:20px;}'
+            . '.msg{max-width:70%;padding:8px 14px;border-radius:14px;margin-bottom:8px;word-wrap:break-word;}'
+            . '.mine{background:#4f46e5;color:#fff;margin-left:auto;}'
+            . '.theirs{background:#e5e7eb;color:#1e1f24;}'
+            . '.time{font-size:11px;opacity:.7;margin-top:3px;}'
+            . '.wrap{display:flex;flex-direction:column;}</style></head><body>'
+            . '<h3>Chat between ' . e(Auth::user()->name) . ' and ' . e($other->name) . '</h3><div class="wrap">';
+
+        foreach ($messages as $m) {
+            $isMine = $m->sender_id === $me;
+            $text = $m->is_deleted ? '[Deleted message]' : e($m->message ?: '[Media]');
+            $html .= '<div class="msg ' . ($isMine ? 'mine' : 'theirs') . '">' . nl2br($text)
+                . '<div class="time">' . $m->created_at->format('M d, Y g:i A') . '</div></div>';
+        }
+        $html .= '</div></body></html>';
+
+        $filename = 'chat_with_' . \Illuminate\Support\Str::slug($other->name) . '_' . date('Ymd') . '.html';
+        return response($html, 200, [
+            'Content-Type' => 'text/html',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 }
