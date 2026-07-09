@@ -2108,7 +2108,7 @@
                 <a href="{{ route('jobs.myApplications') }}" class="sidebar-link"><i class="bi bi-briefcase-fill text-primary"></i><span>Job History</span></a>
                 <a href="{{ route('search.index') }}" class="sidebar-link"><i class="bi bi-search text-primary"></i><span>Search People</span></a>
 
-                 <a href="#" class="sidebar-link"><i class="fa-solid fa-ban"></i><span>Block List</span></a>
+                 <a href="{{ route('friends.blocked') }}" class="sidebar-link"><i class="fa-solid fa-ban"></i><span>Block List</span></a>
 
             </div>
         </div>

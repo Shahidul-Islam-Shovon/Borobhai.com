@@ -292,8 +292,7 @@
                             data-apply-href="{{ $applyHref }}"
                             onclick="applyExternalBtn(this)">
                         <i class="bi bi-box-arrow-up-right"></i> Apply via Company
-                    </button>
-                                      
+                    </button>                                      
                 </div>
             @endif
         </div>

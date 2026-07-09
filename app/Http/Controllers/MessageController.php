@@ -62,7 +62,7 @@ class MessageController extends Controller
         }
 
         $msg->save();
-        $conv->update(['last_message_at' => now()]);
+        $conv->update(['last_message_at' => now(), 'deleted_by' => '[]']);
 
         return response()->json(['success' => true, 'message_id' => $msg->id]);
     }
@@ -290,7 +290,7 @@ class MessageController extends Controller
             'delivered_at' => now(),
         ]);
 
-        $conv->update(['last_message_at' => now()]);
+        $conv->update(['last_message_at' => now(), 'deleted_by' => '[]']);
         return response()->json(['success' => true, 'message_id' => $newMsg->id]);
     }
 
@@ -454,7 +454,7 @@ class MessageController extends Controller
             'share_meta'   => json_encode($meta),
             'delivered_at' => now(),
         ]);
-        $conv->update(['last_message_at' => now()]);
+        $conv->update(['last_message_at' => now(), 'deleted_by' => '[]']);
 
         return response()->json(['success' => true, 'message_id' => $msg->id]);
     }
@@ -532,16 +532,34 @@ class MessageController extends Controller
         $conv->update(['muted_by' => json_encode($muted)]);
         return response()->json(['success' => true, 'muted' => $isMuted]);
     }
+  
+    // ===== DELETE (me | everyone) ===== এর ঠিক পরে, deleteChatForMe() replace করো:
 
-    public function deleteChatForMe($userId)
-    {
-        $me = Auth::id();
-        $conv = $this->getConv($me, (int) $userId);
-        $deleted = json_decode($conv->deleted_by ?? '[]', true) ?: [];
-        if (!in_array($me, $deleted)) $deleted[] = $me;
-        $conv->update(['deleted_by' => json_encode($deleted)]);
-        return response()->json(['success' => true]);
-    }
+public function deleteChatForMe($userId)
+{
+    $me = Auth::id();
+    $conv = $this->getConv($me, (int) $userId);
+
+    // ১. কনভারসেশন লিস্ট থেকে হাইড করো (শুধু নিজের সাইডে)
+    $deleted = json_decode($conv->deleted_by ?? '[]', true) ?: [];
+    if (!in_array($me, $deleted)) $deleted[] = $me;
+    $conv->update(['deleted_by' => json_encode($deleted)]);
+
+    // ২. এই কনভারসেশনের সব existing মেসেজ নিজের ভিউ থেকে delete করো
+    // (Facebook স্টাইল — শুধু নিজের কাছ থেকে যাবে, অন্যজনের কাছে থেকে যাবে)
+    Message::where('conversation_id', $conv->id)
+        ->chunkById(200, function ($chunk) use ($me) {
+            foreach ($chunk as $m) {
+                $df = json_decode($m->deleted_for ?? '[]', true) ?: [];
+                if (!in_array($me, $df)) {
+                    $df[] = $me;
+                    $m->update(['deleted_for' => json_encode($df)]);
+                }
+            }
+        });
+
+    return response()->json(['success' => true]);
+}
 
     public function exportChatHtml($userId)
     {

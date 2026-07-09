@@ -184,8 +184,10 @@ Route::middleware('auth')->group(function () {
     Route::prefix('friends')->name('friends.')->group(function () {
         Route::get('/',                         [FriendController::class, 'friendsList'])->name('index');
         Route::get('/suggested',                [FriendController::class, 'suggestedAll'])->name('suggested');
+        Route::get('/blocked', [FriendController::class, 'blockedList'])->name('blocked');
         Route::get('/{userId}/mutual',          [FriendController::class, 'mutualFriends'])->name('mutual');
         Route::get('/status/{userId}',          [FriendController::class, 'statusWith'])->name('status');
+       
         Route::post('/send',                    [FriendController::class, 'sendRequest'])->name('send');
         Route::post('/accept',                  [FriendController::class, 'acceptRequest'])->name('accept');
         Route::post('/decline',                 [FriendController::class, 'declineRequest'])->name('decline');

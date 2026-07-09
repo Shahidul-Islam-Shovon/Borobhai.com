@@ -47,6 +47,23 @@ class FriendController extends Controller
         return view('friends.index', compact('friends', 'pendingSent', 'pendingReceived', 'blocked'));
     }
 
+        // ==========================================
+    // BLOCKED USERS — Full page
+    // ==========================================
+    public function blockedList()
+    {
+        $meId = Auth::id();
+
+        // যাদের আমি ব্লক করেছি (আমি sender হিসেবে blocked রেকর্ড তৈরি করেছি)
+        $blocked = Friendship::where('sender_id', $meId)
+            ->where('status', 'blocked')
+            ->with('receiver:id,name,role,profile_picture,department,section')
+            ->latest('updated_at')
+            ->paginate(15);
+
+        return view('friends.blocked', compact('blocked'));
+    }
+
     // ==========================================
     // SUGGESTED CONTACTS — 5 জন (dashboard)
     // ==========================================
