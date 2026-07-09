@@ -295,54 +295,86 @@ class MessageController extends Controller
     }
 
     // ===== CONVERSATION LIST =====
-    public function conversations(Request $request)
-    {
-        $me = Auth::id();
-        $search = $request->get('q', '');
+    // ===== CONVERSATION LIST (Facebook style — সব বন্ধু সবসময় দেখাবে) =====
+public function conversations(Request $request)
+{
+    $me = Auth::id();
+    $search = trim($request->get('q', ''));
 
-        $convs = Conversation::where(function($q) use ($me) {
-            $q->where('user_id_1', $me)->orWhere('user_id_2', $me);
-        })
-        ->with(['user1', 'user2', 'messages' => function($q) { $q->latest()->limit(1); }])
-        ->orderByDesc('last_message_at')
-        ->get();
-
-        $list = $convs->map(function($c) use ($me, $search) {
-            $deleted = json_decode($c->deleted_by ?? '[]', true) ?: [];
-            if (in_array($me, $deleted)) return null;
-
-            $other = $c->getOtherUser($me);
-            if ($search && !str_contains(strtolower($other->name), strtolower($search))) return null;
-
-            $lastMsg = $c->messages->first();
-            $unread = Message::where('conversation_id', $c->id)
-                ->where('recipient_id', $me)
-                ->whereNull('read_at')
-                ->count();
-
-            $isOnline = $other->last_seen && $other->last_seen >= now()->subSeconds(40);
-            $lastSeenText = $other->last_seen
-                ? \App\Http\Controllers\PostController::formatLastSeen($other->last_seen)
-                : 'Offline';
-
-            $muted = json_decode($c->muted_by ?? '[]', true) ?: [];
-
-            return [
-                'user_id' => $other->id,
-                'name' => $other->name,
-                'avatar' => $other->profile_picture ? asset('storage/' . $other->profile_picture) : null,
-                'hash' => method_exists($other, 'getHashidAttribute') ? $other->hashid : $other->id,
-                'is_online' => $isOnline,
-                'last_seen_text' => $lastSeenText,
-                'last_message' => $lastMsg ? ($lastMsg->sender_id === $me ? 'You: ' : '') . substr($lastMsg->message ?: '[Media]', 0, 50) : '',
-                'last_at' => $lastMsg ? $lastMsg->created_at->diffForHumans() : '',
-                'unread' => $unread,
-                'muted' => in_array($me, $muted),
-            ];
-        })->filter()->values();
-
-        return response()->json(['conversations' => $list]);
+    $friendIds = \App\Models\Friendship::friendIds($me);
+    if (empty($friendIds)) {
+        return response()->json(['conversations' => []]);
     }
+
+    $query = User::whereIn('id', $friendIds);
+    if ($search) {
+        $query->where('name', 'like', '%' . $search . '%');
+    }
+    $friends = $query->select('id', 'name', 'profile_picture', 'last_seen')->get();
+
+    // এই ইউজারের সব conversation একসাথে লোড করে নাও (other_user_id => Conversation)
+    $convs = Conversation::where(function ($q) use ($me) {
+        $q->where('user_id_1', $me)->orWhere('user_id_2', $me);
+    })->get()->keyBy(function ($c) use ($me) {
+        return $c->getOtherUser($me)->id;
+    });
+
+    $list = $friends->map(function ($u) use ($me, $convs) {
+        $conv = $convs->get($u->id);
+        $lastMsgText = 'Say hi 👋';
+        $lastAt = '';
+        $sortTs = 0;
+        $unread = 0;
+        $muted = false;
+
+        if ($conv) {
+            $muted = in_array($me, json_decode($conv->muted_by ?? '[]', true) ?: []);
+
+            // সর্বশেষ ভিজিবল (deleted_for-এ নিজের ID নেই এমন) মেসেজ খুঁজে বের করো
+            $recent = Message::where('conversation_id', $conv->id)
+                ->orderByDesc('created_at')->limit(20)->get();
+            $lastMsg = $recent->first(function ($m) use ($me) {
+                $df = json_decode($m->deleted_for ?? '[]', true) ?: [];
+                return !in_array($me, $df);
+            });
+
+            if ($lastMsg) {
+                $preview = $lastMsg->is_deleted ? '[Deleted message]' : ($lastMsg->message ?: '[Media]');
+                $lastMsgText = ($lastMsg->sender_id === $me ? 'You: ' : '') . \Illuminate\Support\Str::limit($preview, 50);
+                $lastAt = $lastMsg->created_at->diffForHumans();
+                $sortTs = $lastMsg->created_at->timestamp;
+            }
+
+            $unread = Message::where('conversation_id', $conv->id)
+                ->where('recipient_id', $me)->whereNull('read_at')->count();
+        }
+
+        $isOnline = $u->last_seen && $u->last_seen >= now()->subSeconds(40);
+        $lastSeenText = $u->last_seen ? \App\Http\Controllers\PostController::formatLastSeen($u->last_seen) : 'Offline';
+
+        return [
+            'user_id'        => $u->id,
+            'name'           => $u->name,
+            'avatar'         => $u->profile_picture ? asset('storage/' . $u->profile_picture) : null,
+            'hash'           => method_exists($u, 'getHashidAttribute') ? $u->hashid : $u->id,
+            'is_online'      => $isOnline,
+            'last_seen_text' => $lastSeenText,
+            'last_message'   => $lastMsgText,
+            'last_at'        => $lastAt,
+            'unread'         => $unread,
+            'muted'          => $muted,
+            '_sort'          => $sortTs,
+        ];
+    })
+    ->sortByDesc('_sort')
+    ->values()
+    ->map(function ($item) {
+        unset($item['_sort']);
+        return $item;
+    });
+
+    return response()->json(['conversations' => $list]);
+}
 
     // ===== EDIT MESSAGE =====
     public function editMessage(Request $request, $id)
@@ -534,32 +566,28 @@ class MessageController extends Controller
     }
   
     // ===== DELETE (me | everyone) ===== এর ঠিক পরে, deleteChatForMe() replace করো:
+                    
+    // ===== DELETE CHAT FOR ME (শুধু মেসেজ ডিলিট হবে, লিস্ট থেকে নাম থাকবেই) =====
+    public function deleteChatForMe($userId)
+    {
+        $me = Auth::id();
+        $conv = $this->getConv($me, (int) $userId);
 
-public function deleteChatForMe($userId)
-{
-    $me = Auth::id();
-    $conv = $this->getConv($me, (int) $userId);
-
-    // ১. কনভারসেশন লিস্ট থেকে হাইড করো (শুধু নিজের সাইডে)
-    $deleted = json_decode($conv->deleted_by ?? '[]', true) ?: [];
-    if (!in_array($me, $deleted)) $deleted[] = $me;
-    $conv->update(['deleted_by' => json_encode($deleted)]);
-
-    // ২. এই কনভারসেশনের সব existing মেসেজ নিজের ভিউ থেকে delete করো
-    // (Facebook স্টাইল — শুধু নিজের কাছ থেকে যাবে, অন্যজনের কাছে থেকে যাবে)
-    Message::where('conversation_id', $conv->id)
-        ->chunkById(200, function ($chunk) use ($me) {
-            foreach ($chunk as $m) {
-                $df = json_decode($m->deleted_for ?? '[]', true) ?: [];
-                if (!in_array($me, $df)) {
-                    $df[] = $me;
-                    $m->update(['deleted_for' => json_encode($df)]);
+        // এই কনভারসেশনের সব মেসেজ শুধু নিজের ভিউ থেকে delete করো
+        // (conversation-কে deleted_by দিয়ে hide করা হচ্ছে না — তাই লিস্ট থেকে ID সরবে না)
+        Message::where('conversation_id', $conv->id)
+            ->chunkById(200, function ($chunk) use ($me) {
+                foreach ($chunk as $m) {
+                    $df = json_decode($m->deleted_for ?? '[]', true) ?: [];
+                    if (!in_array($me, $df)) {
+                        $df[] = $me;
+                        $m->update(['deleted_for' => json_encode($df)]);
+                    }
                 }
-            }
-        });
+            });
 
-    return response()->json(['success' => true]);
-}
+        return response()->json(['success' => true]);
+    }
 
     public function exportChatHtml($userId)
     {

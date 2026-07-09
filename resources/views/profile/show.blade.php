@@ -711,133 +711,110 @@
             </div>
 
             
-            {{-- add friend button --}}
-@if($isOwner)
-    <div class="pb-2">
-        <button class="bb-edit-profile-btn" onclick="openEditModal()">
-            <i class="bi bi-pencil-fill"></i> Edit Profile
-        </button>
-    </div>
-@elseif($isAdminReviewMode ?? false)
-    {{-- Admin Review Mode — Add Friend ও Report দুটোই হাইড, শুধু ভিউ --}}
-@else
-    {{-- অন্যের profile — friend + report button এখানে --}}
-    <div class="pb-2">
-       @php
-        $meId         = Auth::id();
-        $friendStatus = \App\Models\Friendship::statusWith($meId, $user->id);
-        $mutualCount  = \App\Models\Friendship::mutualCount($meId, $user->id);
-       @endphp
-
-        @if($mutualCount > 0)
-            <div class="bb-mutual-count">
-                <i class="bi bi-people-fill"></i>
-                {{ $mutualCount }} mutual friend{{ $mutualCount > 1 ? 's' : '' }}
-            </div>
-        @endif
-
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-            <div id="friendBtnWrap-{{ $user->id }}">
-                @if($friendStatus === 'none')
-                    <button class="bb-friend-btn bb-friend-add"
-                            onclick="friendAction('send', {{ $user->id }}, this)">
-                        <i class="bi bi-person-plus-fill"></i> Add Friend
+            {{-- friend start --}}
+            @if($isOwner)
+                <div class="pb-2">
+                    <button class="bb-edit-profile-btn" onclick="openEditModal()">
+                        <i class="bi bi-pencil-fill"></i> Edit Profile
                     </button>
+                </div>
+            @elseif($isAdminReviewMode ?? false)
+                {{-- Admin Review Mode — Add Friend ও Report দুটোই হাইড, শুধু ভিউ --}}
+            @else
+                {{-- অন্যের profile — friend + report button এখানে --}}
+                <div class="pb-2">
+                @php
+                    $meId         = Auth::id();
+                    $friendStatus = \App\Models\Friendship::statusWith($meId, $user->id);
+                    $mutualCount  = \App\Models\Friendship::mutualCount($meId, $user->id);
+                @endphp
 
-                @elseif($friendStatus === 'pending_sent')
-                    <button class="bb-friend-btn bb-friend-pending"
-                            onclick="friendAction('cancel', {{ $user->id }}, this)">
-                        <i class="bi bi-person-check-fill"></i> Request Sent
-                        <span class="bb-friend-cancel-hint">· Cancel</span>
-                    </button>
+                    @if($mutualCount > 0)
+                        <div class="bb-mutual-count">
+                            <i class="bi bi-people-fill"></i>
+                            {{ $mutualCount }} mutual friend{{ $mutualCount > 1 ? 's' : '' }}
+                        </div>
+                    @endif
 
-                @elseif($friendStatus === 'pending_received')
-                    <button class="bb-friend-btn bb-friend-accept"
-                            onclick="friendAction('accept', {{ $user->id }}, this)">
-                        <i class="bi bi-check-lg"></i> Accept
-                    </button>
-                    <button class="bb-friend-btn bb-friend-decline"
-                            onclick="friendAction('decline', {{ $user->id }}, this)">
-                        <i class="bi bi-x-lg"></i> Decline
-                    </button>
-
-                @elseif($friendStatus === 'accepted')
-                    <div class="dropdown d-inline-block">
-                        <button class="bb-friend-btn bb-friend-already dropdown-toggle"
-                                data-bs-toggle="dropdown">
-                            <i class="bi bi-people-fill"></i> Friends
-                        </button>
-                        <ul class="dropdown-menu shadow border-0 rounded-3">
-                            <li>
-                                <button class="dropdown-item text-danger py-2"
-                                        onclick="friendAction('unfriend', {{ $user->id }}, this)">
-                                    <i class="bi bi-person-x me-2"></i> Unfriend
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <div id="friendBtnWrap-{{ $user->id }}">
+                            @if($friendStatus === 'none')
+                                <button class="bb-friend-btn bb-friend-add"
+                                        onclick="friendAction('send', {{ $user->id }}, this)">
+                                    <i class="bi bi-person-plus-fill"></i> Add Friend
                                 </button>
-                            </li>
-                            <li>
-                                <button class="dropdown-item py-2"
-                                        onclick="friendAction('block', {{ $user->id }}, this)">
-                                    <i class="bi bi-slash-circle me-2"></i> Block
+
+                            @elseif($friendStatus === 'pending_sent')
+                                <button class="bb-friend-btn bb-friend-pending"
+                                        onclick="friendAction('cancel', {{ $user->id }}, this)">
+                                    <i class="bi bi-person-check-fill"></i> Request Sent
+                                    <span class="bb-friend-cancel-hint">· Cancel</span>
                                 </button>
-                            </li>
-                        </ul>
+
+                            @elseif($friendStatus === 'pending_received')
+                                <button class="bb-friend-btn bb-friend-accept"
+                                        onclick="friendAction('accept', {{ $user->id }}, this)">
+                                    <i class="bi bi-check-lg"></i> Accept
+                                </button>
+                                <button class="bb-friend-btn bb-friend-decline"
+                                        onclick="friendAction('decline', {{ $user->id }}, this)">
+                                    <i class="bi bi-x-lg"></i> Decline
+                                </button>
+
+                            @elseif($friendStatus === 'accepted')
+                                <div class="dropdown d-inline-block">
+                                    <button class="bb-friend-btn bb-friend-already dropdown-toggle"
+                                            data-bs-toggle="dropdown">
+                                        <i class="bi bi-people-fill"></i> Friends
+                                    </button>
+                                    <ul class="dropdown-menu shadow border-0 rounded-3">
+                                        <li>
+                                            <button class="dropdown-item text-danger py-2"
+                                                    onclick="friendAction('unfriend', {{ $user->id }}, this)">
+                                                <i class="bi bi-person-x me-2"></i> Unfriend
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item py-2"
+                                                    onclick="friendAction('block', {{ $user->id }}, this)">
+                                                <i class="bi bi-slash-circle me-2"></i> Block
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                            @elseif($friendStatus === 'blocked')
+                                <button class="bb-friend-btn bb-friend-blocked"
+                                        onclick="friendAction('unblock', {{ $user->id }}, this)">
+                                    <i class="bi bi-slash-circle"></i> Blocked · Unblock
+                                </button>
+                            @endif
+                        </div>
+
+                        @php $alreadyReportedUser = \App\Models\Report::isReportedByMe(Auth::id(), 'user', $user->id); @endphp
+                        <div id="reportBtnWrap-{{ $user->id }}">
+                            @if($alreadyReportedUser)
+                                <span class="badge bg-danger-subtle text-danger border" style="font-size:.72rem;font-weight:700;padding:8px 14px;border-radius:10px;">
+                                    <i class="bi bi-flag-fill me-1"></i> You reported this User
+                                </span>
+                            @else
+                                <button class="bb-friend-btn" style="background:#fff;color:#6b7280;border:1.5px solid #eceef1;"
+                                        onclick="bbOpenReport('user', {{ $user->id }}, '{{ e($user->name) }}')">
+                                    <i class="bi bi-flag"></i> Report
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
                     </div>
 
-                @elseif($friendStatus === 'blocked')
-                    <button class="bb-friend-btn bb-friend-blocked"
-                            onclick="friendAction('unblock', {{ $user->id }}, this)">
-                        <i class="bi bi-slash-circle"></i> Blocked · Unblock
-                    </button>
-                @endif
-            </div>
-
-            @php $alreadyReportedUser = \App\Models\Report::isReportedByMe(Auth::id(), 'user', $user->id); @endphp
-            <div id="reportBtnWrap-{{ $user->id }}">
-                @if($alreadyReportedUser)
-                    <span class="badge bg-danger-subtle text-danger border" style="font-size:.72rem;font-weight:700;padding:8px 14px;border-radius:10px;">
-                        <i class="bi bi-flag-fill me-1"></i> You reported this User
-                    </span>
-                @else
-                    <button class="bb-friend-btn" style="background:#fff;color:#6b7280;border:1.5px solid #eceef1;"
-                            onclick="bbOpenReport('user', {{ $user->id }}, '{{ e($user->name) }}')">
-                        <i class="bi bi-flag"></i> Report
-                    </button>
-                @endif
-            </div>
-        </div>
-    </div>
-{{-- end --}}
-        </div>
-
-        <div class="bb-stat-row">
-
-    {{-- ✅ Report — friend/non-friend সবার ক্ষেত্রে --}}
-    @php $alreadyReportedUser = \App\Models\Report::isReportedByMe(Auth::id(), 'user', $user->id); @endphp
-    <div id="reportBtnWrap-{{ $user->id }}">
-        @if($alreadyReportedUser)
-            <span class="badge bg-danger-subtle text-danger border" style="font-size:.72rem;font-weight:700;padding:8px 14px;border-radius:10px;">
-                <i class="bi bi-flag-fill me-1"></i> You reported this User
-            </span>
-        @else
-            <button class="bb-friend-btn" style="background:#fff;color:#6b7280;border:1.5px solid #eceef1;"
-                    onclick="bbOpenReport('user', {{ $user->id }}, '{{ e($user->name) }}')">
-                <i class="bi bi-flag"></i> Report
-            </button>
-        @endif
-    </div>
-</div>
-
+                    <div class="bb-stat-row">
+                        <div class="bb-stat"><b>{{ $postCount }}</b><span>Posts</span></div>
+                        <div class="bb-stat"><b>0</b><span>Connections</span></div>
                     </div>
-                @endif
-            {{-- end --}}
-
-        </div>
-
-        <div class="bb-stat-row">
-            <div class="bb-stat"><b>{{ $postCount }}</b><span>Posts</span></div>
-            <div class="bb-stat"><b>0</b><span>Connections</span></div>
-        </div>
-           {{--  new add  --}}
+            {{-- friend end --}}
+           
            {{-- Mutual Friends Circles --}}
         @if(!$isOwner)
         @php
@@ -4277,9 +4254,101 @@ function showMutualModal() {
     });
 }
 
+// ==========================================
+// REPORT MODAL
+// ==========================================
+let _reportModal = null;
+document.addEventListener('DOMContentLoaded', () => {
+    const rmEl = document.getElementById('reportModal');
+    if (rmEl) _reportModal = new bootstrap.Modal(rmEl);
+});
+
+function bbOpenReport(type, id, name) {
+    if (!_reportModal) return;
+    document.getElementById('rType').value = type;
+    document.getElementById('rId').value   = id;
+    document.getElementById('rTargetName').textContent = name || '';
+    document.getElementById('rReason').value = '';
+    document.getElementById('rReasons').classList.remove('d-none');
+    document.getElementById('rDetailsSection').classList.add('d-none');
+    _reportModal.show();
+}
+
+function rSelectReason(r) {
+    document.getElementById('rReason').value = r;
+    document.getElementById('rReasons').classList.add('d-none');
+    document.getElementById('rDetailsSection').classList.remove('d-none');
+}
+
+function rSubmit() {
+    fetch('/report', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            type:    document.getElementById('rType').value,
+            id:      document.getElementById('rId').value,
+            reason:  document.getElementById('rReason').value,
+            details: document.getElementById('rDetails').value
+        })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (_reportModal) _reportModal.hide();
+        Swal.mixin({ toast:true, position:'top-end', showConfirmButton:false, timer:2500, timerProgressBar:true })
+            .fire({ icon: d.success ? 'success' : 'warning', title: d.message });
+
+        // সফল হলে বাটনের জায়গায় "reported" ব্যাজ বসাও (reload ছাড়া)
+        if (d.success) {
+            const type = document.getElementById('rType').value;
+            const id   = document.getElementById('rId').value;
+            const wrap = document.getElementById(type === 'user' ? 'reportBtnWrap-' + id : null);
+            if (wrap) {
+                wrap.innerHTML = `<span class="badge bg-danger-subtle text-danger border" style="font-size:.72rem;font-weight:700;padding:8px 14px;border-radius:10px;"><i class="bi bi-flag-fill me-1"></i> You reported this User</span>`;
+            }
+        }
+    })
+    .catch(() => {
+        if (_reportModal) _reportModal.hide();
+        Swal.fire({ icon:'error', title:'Network error' });
+    });
+}
 
 </script>
 
+
+{{-- Report Modal --}}
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold">Report <span id="rTargetName"></span></h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Why are you reporting this?</p>
+                <input type="hidden" id="rType"><input type="hidden" id="rId"><input type="hidden" id="rReason">
+                <div id="rReasons">
+                    <button class="w-100 text-start btn btn-light border mb-2 py-2" onclick="rSelectReason('spam')"><i class="bi bi-envelope-exclamation-fill text-warning me-2"></i> Spam</button>
+                    <button class="w-100 text-start btn btn-light border mb-2 py-2" onclick="rSelectReason('harassment')"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> Harassment or bullying</button>
+                    <button class="w-100 text-start btn btn-light border mb-2 py-2" onclick="rSelectReason('fake')"><i class="bi bi-person-fill-slash text-secondary me-2"></i> Fake / Impersonation</button>
+                    <button class="w-100 text-start btn btn-light border mb-2 py-2" onclick="rSelectReason('inappropriate')"><i class="bi bi-shield-fill-exclamation text-danger me-2"></i> Inappropriate content</button>
+                    <button class="w-100 text-start btn btn-light border mb-2 py-2" onclick="rSelectReason('other')"><i class="bi bi-three-dots text-muted me-2"></i> Something else</button>
+                </div>
+                <div id="rDetailsSection" class="d-none">
+                    <textarea id="rDetails" class="form-control rounded-3 mt-2" rows="3" placeholder="Add details (optional)..." style="font-size:13px;"></textarea>
+                    <div class="d-flex gap-2 mt-3">
+                        <button class="btn btn-light btn-sm" onclick="document.getElementById('rDetailsSection').classList.add('d-none');document.getElementById('rReasons').classList.remove('d-none')">Back</button>
+                        <button class="btn btn-danger btn-sm px-4 fw-bold" onclick="rSubmit()">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
