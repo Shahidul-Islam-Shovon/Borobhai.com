@@ -313,4 +313,92 @@ class ProfileController extends Controller
 
         return Redirect::to('/');
     }
+
+    // ✅ Deactivate
+    public function deactivate(Request $request)
+    {
+        $request->validate([
+            'password' => 'required'
+        ]);
+
+        if (!\Hash::check($request->password, auth()->user()->password)) {
+            return back()->withErrors(['password' => 'Password is incorrect.']);
+        }
+
+        \DB::table('users')->where('id', auth()->id())->update([
+            'status'         => 'deactivated',
+            'deactivated_at' => now(),
+            'updated_at'     => now(),
+        ]);
+
+        Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        return redirect()->route('login')
+            ->with('success', 'Your account has been deactivated. Login anytime to reactivate.');
+    }
+
+    // ✅ Reactivate
+    public function reactivate()
+    {
+        return view('account.reactivate');
+    }
+
+    public function reactivatePost(Request $request)
+    {
+        $request->validate(['confirm' => 'required|accepted']);
+
+        \DB::table('users')->where('id', auth()->id())->update([
+            'status'         => 'active',
+            'deactivated_at' => null,
+            'updated_at'     => now(),
+        ]);
+
+        return redirect()->route('home')
+            ->with('success', 'Welcome back! Your account has been reactivated.');
+    }
+
+    // ✅ Delete request
+    public function requestDelete(Request $request)
+    {
+        $request->validate(['password' => 'required']);
+
+        if (!\Hash::check($request->password, auth()->user()->password)) {
+            return back()->withErrors(['password' => 'Password is incorrect.']);
+        }
+
+        \DB::table('users')->where('id', auth()->id())->update([
+            'status'                 => 'pending_delete',
+            'deletion_requested_at'  => now(),
+            'updated_at'             => now(),
+        ]);
+
+        Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        return redirect()->route('login')
+            ->with('success', 'Your account will be permanently deleted in 30 days. Login before then to cancel.');
+    }
+
+    // ✅ Recovery — pending_delete থেকে ফিরে আসা
+    public function recovery()
+    {
+        return view('account.recovery');
+    }
+
+    public function recover(Request $request)
+    {
+        $request->validate(['confirm' => 'required|accepted']);
+
+        \DB::table('users')->where('id', auth()->id())->update([
+            'status'                => 'active',
+            'deletion_requested_at' => null,
+            'updated_at'            => now(),
+        ]);
+
+        return redirect()->route('home')
+            ->with('success', 'Your account has been successfully recovered!');
+    }
 }

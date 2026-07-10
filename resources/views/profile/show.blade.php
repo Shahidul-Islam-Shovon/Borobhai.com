@@ -1157,9 +1157,119 @@
         @endif
         </div>
     </div>
-    @endif
+    @endif 
+
+    {{-- DELETE AND DEACTIVATE ACCOUNT START --}}
+    {{-- Danger Zone --}}
+<div class="card mt-4" style="border: 1px solid #fca5a5; border-radius: 16px; overflow: hidden;">
+    <div class="card-header" style="background: #fef2f2; border-bottom: 1px solid #fca5a5; padding: 16px 20px;">
+        <h6 class="fw-bold mb-0 text-danger" style="font-size: 0.88rem;">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> Danger Zone
+        </h6>
+    </div>
+    <div class="card-body p-4">
+
+        {{-- Deactivate --}}
+        <div class="d-flex align-items-start justify-content-between gap-3 pb-4" style="border-bottom: 1px solid #f1f5f9;">
+            <div>
+                <div class="fw-bold text-dark" style="font-size: 0.88rem;">Deactivate Account</div>
+                <div class="text-muted" style="font-size: 0.78rem; margin-top: 4px;">
+                    Your profile will be hidden. You can reactivate anytime by logging in.
+                    Messages will be disabled while deactivated.
+                </div>
+            </div>
+            <button onclick="showDeactivateModal()" class="btn btn-outline-warning btn-sm fw-600" style="white-space:nowrap; font-size: 0.8rem;">
+                <i class="bi bi-pause-circle me-1"></i> Deactivate
+            </button>
+        </div>
+
+        {{-- Delete --}}
+        <div class="d-flex align-items-start justify-content-between gap-3 pt-4">
+            <div>
+                <div class="fw-bold text-danger" style="font-size: 0.88rem;">Delete Account</div>
+                <div class="text-muted" style="font-size: 0.78rem; margin-top: 4px;">
+                    Your account will be scheduled for deletion. You have <strong>30 days</strong> to log in
+                    and cancel. After that, all your data will be permanently removed.
+                </div>
+            </div>
+            <button onclick="showDeleteModal()" class="btn btn-danger btn-sm fw-600" style="white-space:nowrap; font-size: 0.8rem;">
+                <i class="bi bi-trash3 me-1"></i> Delete Account
+            </button>
+        </div>
+
+    </div>
+</div>
+
+{{-- Deactivate Modal --}}
+<div class="modal fade" id="deactivateModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none;">
+            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9;">
+                <h5 class="modal-title fw-bold" style="font-size: 1rem;">
+                    <i class="bi bi-pause-circle text-warning me-2"></i> Deactivate Account
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-warning" style="border-radius: 10px; font-size: 0.82rem;">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Your profile, posts, and connections will be hidden. You can reactivate anytime by logging back in.
+                </div>
+                <form method="POST" action="{{ route('account.deactivate') }}">
+                    @csrf
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size: 0.82rem;">Confirm your password</label>
+                        <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+                        @error('password') <div class="text-danger" style="font-size:0.75rem;">{{ $message }}</div> @enderror
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100 fw-bold">
+                        <i class="bi bi-pause-circle me-1"></i> Yes, Deactivate My Account
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Delete Modal --}}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none;">
+            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9;">
+                <h5 class="modal-title fw-bold text-danger" style="font-size: 1rem;">
+                    <i class="bi bi-trash3 me-2"></i> Delete Account
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-danger" style="border-radius: 10px; font-size: 0.82rem;">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    <strong>This cannot be undone after 30 days.</strong> Your account, posts, messages,
+                    and all data will be permanently deleted.
+                </div>
+                <p style="font-size: 0.82rem; color: #64748b;">
+                    You have <strong>30 days</strong> to log in and cancel the deletion.
+                </p>
+                <form method="POST" action="{{ route('account.delete') }}">
+                    @csrf
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size: 0.82rem;">Confirm your password</label>
+                        <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+                        @error('password') <div class="text-danger" style="font-size:0.75rem;">{{ $message }}</div> @enderror
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100 fw-bold">
+                        <i class="bi bi-trash3 me-1"></i> Yes, Schedule Account Deletion
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+    {{-- DELETE END --}}
 
     </div>{{-- /TAB 1: Details --}}
+
+    
 
     {{-- ===== TAB 2: ALL POSTS ===== --}}
     <div class="bb-tab-panel active" id="tab-posts">
@@ -4320,8 +4430,14 @@ function rSubmit() {
     });
 }
 
-</script>
+function showDeactivateModal() {
+    new bootstrap.Modal(document.getElementById('deactivateModal')).show();
+}
+function showDeleteModal() {
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
 
+</script>
 
 {{-- Report Modal --}}
 <div class="modal fade" id="reportModal" tabindex="-1">

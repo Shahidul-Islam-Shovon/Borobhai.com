@@ -13,59 +13,68 @@ class MessageController extends Controller
 {
     // ===== SEND MESSAGE (with optional media + reply) =====
     public function send(Request $request)
-    {
-        $validated = $request->validate([
-            'recipient_id' => 'required|integer|exists:users,id',
-            'message' => 'nullable|string|max:5000',
-            'media' => 'nullable|array|max:5',
-            'media.*' => 'file|max:26214400',
-            'reply_to_id' => 'nullable|integer|exists:messages,id',
-        ]);
+{
+    $validated = $request->validate([
+        'recipient_id' => 'required|integer|exists:users,id',
+        'message'      => 'nullable|string|max:5000',
+        'media'        => 'nullable|array',
+        'media.*'      => 'file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar|max:25600',
+        'reply_to_id'  => 'nullable|integer|exists:messages,id',
+    ]);
 
-        $me = Auth::id();
-        if ($validated['recipient_id'] == $me) abort(403);
+    $receiverId = $validated['recipient_id'];
+    $receiver   = User::findOrFail($receiverId);
 
-        $conv = Conversation::getOrCreate($me, $validated['recipient_id']);
-        $rawMessage = $validated['message'] ?: '';
-
-        $msg = new Message([
-            'sender_id' => $me,
-            'recipient_id' => $validated['recipient_id'],
-            'message' => $rawMessage,
-            'conversation_id' => $conv->id,
-            'reply_to_id' => $validated['reply_to_id'] ?? null,
-            'delivered_at' => now(),
-        ]);
-
-        if ($request->hasFile('media')) {
-            $files = [];
-            foreach ($request->file('media') as $file) {
-                $path = $file->store('messages/' . date('Y/m'), 'public');
-                $files[] = [
-                    'path' => $path,
-                    'name' => $file->getClientOriginalName(),
-                    'type' => in_array($file->getMimeType(), ['image/jpeg', 'image/png', 'image/gif', 'image/webp']) ? 'image' : (str_contains($file->getMimeType(), 'video') ? 'video' : 'file'),
-                    'size' => $file->getSize(),
-                ];
-            }
-            $msg->file_path = json_encode($files);
-        } elseif ($rawMessage) {
-            // মিডিয়া নেই — টেক্সটে নিজের সাইটের post/job লিংক আছে কিনা চেক করো
-            $meta = $this->extractShareMeta($rawMessage);
-            if ($meta) {
-                $msg->share_meta = json_encode($meta);
-                // শুধু লিংকই পাঠানো হলে raw টেক্সট আর দেখানোর দরকার নেই, কার্ডই যথেষ্ট
-                if (trim($rawMessage) === $meta['url'] || preg_match('~^https?://\S+$~', trim($rawMessage))) {
-                    $msg->message = '';
-                }
-            }
-        }
-
-        $msg->save();
-        $conv->update(['last_message_at' => now(), 'deleted_by' => '[]']);
-
-        return response()->json(['success' => true, 'message_id' => $msg->id]);
+    // ✅ deactivated/pending_delete check
+    if (in_array($receiver->status, ['deactivated', 'pending_delete'])) {
+        return response()->json([
+            'success'  => false,
+            'disabled' => true,
+            'status'   => $receiver->status,
+        ], 403);
     }
+
+    if (!$request->hasFile('media') && empty($validated['message'])) {
+        return response()->json(['success' => false, 'message' => 'Message cannot be empty.'], 422);
+    }
+
+    $me   = Auth::id();
+    $conv = Conversation::getOrCreate($me, $receiverId); // ✅ conversation_id বাধ্যতামূলক
+
+    $filePath = null;
+    if ($request->hasFile('media')) {
+        $items = [];
+        foreach ($request->file('media') as $file) {
+            $path = $file->store('messages/media', 'public');
+            $type = str_starts_with($file->getMimeType(), 'video') ? 'video'
+                : (str_starts_with($file->getMimeType(), 'image') ? 'image' : 'file');
+            $items[] = [
+                'path' => $path,
+                'name' => $file->getClientOriginalName(),
+                'type' => $type,
+                'size' => $file->getSize(),
+            ];
+        }
+        $filePath = json_encode($items); // ✅ formatMedia() যেভাবে পড়ে, ঠিক সেভাবে
+    }
+
+    $message = Message::create([
+        'conversation_id' => $conv->id,       // ✅ আগে এটাই ছিল না
+        'sender_id'        => $me,
+        'recipient_id'      => $receiverId,
+        'message'           => $validated['message'] ?? null,
+        'file_path'         => $filePath,      // ✅ media_path নয়, file_path
+        'reply_to_id'       => $validated['reply_to_id'] ?? null,
+        'delivered_at'      => now(),
+    ]);
+
+    $conv->update(['last_message_at' => now(), 'deleted_by' => '[]']);
+
+    return response()->json([
+        'success' => true,
+        'message' => $this->formatMessage($message, $me),
+    ]);
+}
 
     private function formatMedia($m)
     {
@@ -621,5 +630,17 @@ public function conversations(Request $request)
             'Content-Type' => 'text/html',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
+    }
+
+   public function userStatus($id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+        $disabled = in_array($user->status, ['deactivated', 'pending_delete']);
+
+        return response()->json([
+            'disabled' => $disabled,
+            'status'   => $user->status,
+        ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        ->header('Pragma', 'no-cache');
     }
 }

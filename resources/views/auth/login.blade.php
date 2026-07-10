@@ -322,9 +322,6 @@
                 <a href="#" class="btn-social" onclick="return socialLogin(event, 'google')">
                     <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google"> Continue with Google
                 </a>
-                <a href="#" class="btn-social fb-btn" onclick="return socialLogin(event, 'facebook')">
-                    <i class="fa-brands fa-facebook"></i> Continue with Facebook
-                </a>
             </div>
 
             <div class="auth-divider">or sign in with email</div>

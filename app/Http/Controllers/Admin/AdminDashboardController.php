@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Post;
 use Carbon\Carbon;
 use Exception;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminDashboardController extends Controller
 {
@@ -516,6 +517,41 @@ public function completeReport($reportId)
             'pending_jobs'    => $pendingJobs,
             'history_unseen'  => $historyUnseen,
         ]);
+    }
+
+    public function downloadReport()
+    {
+        $counters = [
+            'total_users'     => User::count(),
+            'total_students'  => User::where('role', 'student')->count(),
+            'total_alumni'    => User::where('role', 'alumni')->count(),
+            'total_teachers'  => User::where('role', 'teacher')->count(),
+            'total_circulars' => \App\Models\JobPost::count(),
+            'pending_reports' => \App\Models\Report::where('status', 'pending')->count(),
+            'resolved_reports'=> \App\Models\Report::whereIn('status', ['dismissed', 'completed'])->count(),
+            'suspended_temp'  => User::where('status', 'suspended_temp')->count(),
+            'suspended_perm'  => User::where('status', 'suspended_perm')->count(),
+        ];
+
+        $users = User::orderBy('name')->get(['id', 'name', 'email', 'role', 'status', 'created_at']);
+
+        $reportHistory = \App\Models\Report::whereIn('status', ['dismissed', 'completed'])
+            ->latest('updated_at')
+            ->limit(200) // অনেক বেশি হলে PDF ভারী হয়ে যায় — প্রয়োজনে বাড়ান/কমান
+            ->get()
+            ->map(fn($r) => $this->hydrateHistoryReport($r));
+
+        $pdf = Pdf::loadView('admin.partials.full-report-pdf', [
+            'counters'      => $counters,
+            'users'         => $users,
+            'reportHistory' => $reportHistory,
+            'generated'     => now(),
+            'generatedBy'   => auth()->user()->name,
+        ])->setPaper('a4', 'portrait');
+
+        $fileName = 'borobhai-admin-report-' . now()->format('Ymd-His') . '.pdf';
+
+        return $pdf->download($fileName);
     }
 
 }

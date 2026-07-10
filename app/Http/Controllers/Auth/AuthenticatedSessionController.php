@@ -26,94 +26,67 @@ class AuthenticatedSessionController extends Controller
      * Handle an incoming authentication request.
      */
     public function store(LoginRequest $request)
-    {
-        // ইউজার খুঁজে বের করা
-        $user = User::where('email', $request->email)->first();
+{
+    $user = User::where('email', $request->email)->first();
 
-        if ($user) {
+    if ($user && Hash::check($request->password, $user->password)) {
 
-            // পাসওয়ার্ড মিলানো
-            if (Hash::check($request->password, $user->password)) {
+        // ✅ শুধু প্রকৃত suspension status গুলোই ব্লক করবে
+        if (in_array($user->status, ['suspended_temp', 'suspended_perm'])) {
 
-                // যদি ইউজার active না থাকে
-                if ($user->status !== 'active') {
+            if (
+                $user->status === 'suspended_temp' &&
+                $user->suspended_until &&
+                Carbon::now()->greaterThan(Carbon::parse($user->suspended_until))
+            ) {
+                // টেম্পোরারি সাসপেনশন শেষ — auto active
+                $user->status = 'active';
+                $user->suspended_until = null;
+                $user->save();
 
-                    // টেম্পোরারি সাসপেনশন শেষ হয়ে গেলে auto active
-                    if (
-                        $user->status === 'suspended_temp' &&
-                        $user->suspended_until &&
-                        Carbon::now()->greaterThan(
-                            Carbon::parse($user->suspended_until)
-                        )
-                    ) {
+            } else {
 
-                        $user->status = 'active';
-                        $user->suspended_until = null;
-                        $user->save();
-
-                    } else {
-
-                        // Permanent Suspend
-                        if ($user->status === 'suspended_perm') {
-
-                            $errorMessage = "Access Denied ! You are Permanently Blocked.";
-
-                        } else {
-
-                            // Temporary Suspend Time Format
-                            $unlockTime = $user->suspended_until
-                                ? Carbon::parse($user->suspended_until)
-                                    ->format('j F Y \a\t g.i A')
-                                : 'N/A';
-
-                            $errorMessage =
-                                "Access Blocked ! You are Temporarily Suspended By Admin. Unlocks at " .
-                                $unlockTime;
-                        }
-
-                        // AJAX Request
-                        if ($request->wantsJson() || $request->ajax()) {
-
-                            return response()->json([
-                                'errors' => [
-                                    'email' => [$errorMessage]
-                                ]
-                            ], 422);
-                        }
-
-                        // Normal Request
-                        return redirect()
-                            ->back()
-                            ->withInput($request->only('email', 'remember'))
-                            ->withErrors([
-                                'email' => $errorMessage,
-                            ]);
-                    }
+                if ($user->status === 'suspended_perm') {
+                    $errorMessage = "Access Denied ! You are Permanently Blocked.";
+                } else {
+                    $unlockTime = $user->suspended_until
+                        ? Carbon::parse($user->suspended_until)->format('j F Y \a\t g.i A')
+                        : 'N/A';
+                    $errorMessage = "Access Blocked ! You are Temporarily Suspended By Admin. Unlocks at " . $unlockTime;
                 }
+
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json(['errors' => ['email' => [$errorMessage]]], 422);
+                }
+
+                return redirect()->back()
+                    ->withInput($request->only('email', 'remember'))
+                    ->withErrors(['email' => $errorMessage]);
             }
         }
-
-        // Normal Laravel Breeze Authentication
-        $request->authenticate();
-
-        $request->session()->regenerate();
-
-        // Role Based Redirect
-        $redirectUrl = Auth::user()->role === 'admin'
-            ? '/admin/dashboard'
-            : '/dashboard';
-
-        // AJAX Login Response
-        if ($request->wantsJson() || $request->ajax()) {
-
-            return response()->json([
-                'success' => true,
-                'redirect' => url($redirectUrl)
-            ], 200);
-        }
-
-        return redirect()->intended($redirectUrl);
+        // ✅ deactivated / pending_delete হলে এখানে কিছুই করা হচ্ছে না —
+        // স্বাভাবিকভাবে authenticate() এ যাবে, ইউজার লগইন করতে পারবে (Facebook-এর মতো,
+        // deactivated অ্যাকাউন্টে লগইন করলেই সেটা reactivate হওয়ার সুযোগ দেয়া উচিত)
     }
+
+    $request->authenticate();
+    $request->session()->regenerate();
+
+    // ✅ বোনাস: deactivated/pending_delete ইউজার লগইন করলে status active করে দিন
+    $authUser = Auth::user();
+    if (in_array($authUser->status, ['deactivated', 'pending_delete'])) {
+        $authUser->status = 'active';
+        $authUser->save();
+    }
+
+    $redirectUrl = $authUser->role === 'admin' ? '/admin/dashboard' : '/dashboard';
+
+    if ($request->wantsJson() || $request->ajax()) {
+        return response()->json(['success' => true, 'redirect' => url($redirectUrl)], 200);
+    }
+
+    return redirect()->intended($redirectUrl);
+}
 
     /**
      * Destroy an authenticated session.

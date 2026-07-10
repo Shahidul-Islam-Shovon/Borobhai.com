@@ -164,7 +164,24 @@
 </head>
 <body>
 
-@include('partials.inner-navbar')
+@if($isAdminReviewMode ?? false)
+    <nav style="background:#0f172a;padding:.7rem 1.2rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);">
+        <div class="container-fluid d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2 text-white">
+                <i class="bi bi-shield-lock-fill text-warning"></i>
+                <span class="fw-bold" style="font-size:14px;">
+                    Admin Review Mode — Viewing Job: {{ $job->title }}
+                </span>
+            </div>
+            <a href="{{ route('admin.dashboard') }}"
+               style="background:#1e293b;color:#fff;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </nav>
+@else
+    @include('partials.inner-navbar')
+@endif
 
 @php
     $expired = $job->is_expired;
@@ -244,6 +261,14 @@
 
     {{-- APPLY --}}
     <div class="jp-apply">
+        @if($isAdminReviewMode ?? false)
+        <div class="jp-apply-card">
+            <div class="jp-apply-info">
+                <strong><i class="bi bi-shield-lock-fill text-warning"></i> Admin Review Mode</strong>
+                Apply and interaction options are hidden while reviewing this job.
+            </div>
+        </div>
+        @else
         <div class="jp-apply-card" id="applyCard">
             @if($isOwner)
                 <div class="jp-apply-info">
@@ -295,7 +320,8 @@
                     </button>                                      
                 </div>
             @endif
-        </div>
+        @endif
+    </div>
 
         @if(!$isOwner && !$expired && !$hasApplied)
         {{-- Continue ক্লিকের পর দেখানো confirm banner (real-life style) --}}

@@ -70,29 +70,31 @@ class JobController extends Controller
     // ==========================================
     // Job Portal — বিস্তারিত পেজ
     // ==========================================
-    public function show($id)
-    {
-        self::cleanupExpired();
+   public function show($id)
+{
+    self::cleanupExpired();
 
-        $jobId = JobPost::decodeHashid($id);          // ⬅️ hashid → real id
-        $job   = JobPost::with('user')->findOrFail($jobId);
+    $jobId = JobPost::decodeHashid($id);
+    $job   = JobPost::with('user')->findOrFail($jobId);
 
-        // applicant থাকলে job কখনো auto-delete হবে না (history রক্ষা),
-        // শুধু applicant-শূন্য + অনেক পুরোনো (৩০ দিন) হলে পরিষ্কার হবে
-        if ($job->should_auto_delete) {
-            $job->delete();
-            abort(404);
-        }
-
-        $myApplication = \App\Models\JobApplication::where('user_id', Auth::id())
-            ->where('job_post_id', $job->id)->first();
-
-        $hasApplied  = (bool) $myApplication;
-        $myAppStatus = $myApplication->status ?? null;
-        $myAppMethod = $myApplication->apply_method ?? null;
-
-        return view('jobs.show', compact('job', 'hasApplied', 'myAppStatus', 'myAppMethod'));
+    if ($job->should_auto_delete) {
+        $job->delete();
+        abort(404);
     }
+
+    $myApplication = \App\Models\JobApplication::where('user_id', Auth::id())
+        ->where('job_post_id', $job->id)->first();
+
+    $hasApplied  = (bool) $myApplication;
+    $myAppStatus = $myApplication->status ?? null;
+    $myAppMethod = $myApplication->apply_method ?? null;
+
+    // ✅ Admin অন্য কারো পোস্ট করা job দেখলে review mode চালু হবে (profile পেজের মতো)
+    $isOwner = Auth::id() === $job->user_id;
+    $isAdminReviewMode = !$isOwner && (Auth::user()->role === 'admin' || Auth::user()->isSuperAdmin());
+
+    return view('jobs.show', compact('job', 'hasApplied', 'myAppStatus', 'myAppMethod', 'isAdminReviewMode'));
+}
 
     // ==========================================
     // সব job এক পেজে (See all) — search + filter সহ

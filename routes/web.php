@@ -47,6 +47,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/reports/history',           [AdminDashboardController::class, 'reportHistory'])->name('reports.history');
     Route::get('/reports/poll', [AdminDashboardController::class, 'pollReports'])->name('reports.poll');
 
+    Route::get('/dashboard/report/download', [AdminDashboardController::class, 'downloadReport'])->name('dashboard.report.download');
+
     Route::post('/users/{id}/change-role',   [AdminDashboardController::class, 'changeUserRole'])->name('users.change-role');
     Route::post('/users/{id}/suspension',    [AdminDashboardController::class, 'updateSuspensionStatus'])->name('users.suspension');
     Route::post('/reports/suspend/{userId}', [AdminDashboardController::class, 'suspendFromReport'])->name('reports.suspend');
@@ -118,6 +120,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/muted-accounts',              [\App\Http\Controllers\MutedUserController::class, 'index'])->name('muted.index');
     
     Route::post('/muted-accounts/{userId}/unmute', [\App\Http\Controllers\MutedUserController::class, 'unmute'])->name('muted.unmute');
+
+    // auth group এর ভেতরে
+    Route::post('/account/deactivate',  [ProfileController::class, 'deactivate'])->name('account.deactivate');
+    Route::post('/account/delete',      [ProfileController::class, 'requestDelete'])->name('account.delete');
+
+    // ✅ deactivated/pending_delete user এর জন্য — auth middleware শুধু
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/account/reactivate',       [ProfileController::class, 'reactivate'])->name('account.reactivate');
+        Route::post('/account/reactivate',      [ProfileController::class, 'reactivatePost'])->name('account.reactivate.post');
+        Route::get('/account/recovery',         [ProfileController::class, 'recovery'])->name('account.recovery');
+        Route::post('/account/recover',         [ProfileController::class, 'recover'])->name('account.recover');
+    });
 
     // ---------- FEED ----------
     Route::post('/presence/offline', [PostController::class, 'goOffline'])->name('presence.offline');
@@ -203,6 +217,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/message/thread/{userId}/older', [MessageController::class, 'olderMessages'])->name('message.thread.older');
     Route::get('/message/thread/{userId}/search', [MessageController::class, 'searchThread'])->name('message.thread.search');
     Route::get('/message/thread/{userId}/media', [MessageController::class, 'threadMedia'])->name('message.thread.media');
+
+    Route::get('/message/user-status/{id}', [\App\Http\Controllers\MessageController::class, 'userStatus']);
 
     Route::post('/message/conversations/{userId}/mute', [MessageController::class, 'toggleMute'])->name('message.conversations.mute');
     Route::post('/message/conversations/{userId}/delete-chat', [MessageController::class, 'deleteChatForMe'])->name('message.conversations.deleteChat');

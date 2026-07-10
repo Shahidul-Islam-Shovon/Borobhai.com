@@ -10,3 +10,11 @@ Artisan::command('inspire', function () {
 
 // ✅ এভাবে লিখতে হবে
 Schedule::command('jobs:notify-deadlines')->dailyAt('08:00');
+
+
+Schedule::call(function () {
+    \DB::table('users')
+        ->where('status', 'pending_delete')
+        ->where('deletion_requested_at', '<', now()->subDays(30))
+        ->delete();
+})->daily()->name('delete-pending-accounts');

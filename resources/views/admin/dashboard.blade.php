@@ -106,6 +106,7 @@
         <div>
             <h2>
                 Welcome back, {{ auth()->user()->name }}
+
                 @if(auth()->user()->isSuperAdmin())
                     <span class="badge bg-dark text-white border ms-1" style="font-size: 0.65rem; padding: 4px 8px; vertical-align: middle; border-radius: 4px; font-weight: 700;">Super Admin</span>
                 @else
@@ -125,11 +126,17 @@
                         <span class="badge bg-dark text-white border" style="font-size: 0.65rem; padding: 4px 8px; border-radius: 4px; font-weight: 700;">Super Admin</span>
                     @else
                         <span class="badge bg-secondary text-white border" style="font-size: 0.65rem; padding: 4px 8px; border-radius: 4px; font-weight: 700;">Admin</span>
-                    @endif
+                    @endif                   
                 </div>
+                
             </div>
         </div>
+        <a href="{{ route('admin.dashboard.report.download') }}"
+                class="btn btn-sm btn-primary" style="border-radius:8px;font-weight:600;">
+                    <i class="fa-solid fa-file-arrow-down me-1"></i> Generate Full Report
+                </a>
     </div>
+    
 
     <div class="row g-4 mb-5">
         <div class="col-md-3">

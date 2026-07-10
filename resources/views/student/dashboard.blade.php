@@ -2590,6 +2590,12 @@ var _messengerConvCache = [];
 // ============================================================
 document.addEventListener('DOMContentLoaded', function () {
 
+     // ✅ Input bar default HTML save
+    const inputBar = document.getElementById('chatInputArea');
+    if (inputBar) {
+        window.defaultInputBarHTML = inputBar.innerHTML;
+    }
+
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
     var params = new URLSearchParams(location.search);
@@ -4509,17 +4515,74 @@ var replyToState = {};      // userId -> msgId or null
 var REACT_EMOJIS = ['👍','❤️','😂','😮','😢'];
 
 var _msgTimers = {};
+var _statusTimers = {};
 var _chatUnreadKnown = {};
 var _lastSoundAt = 0;
 var _audioCtx = null;
 var _badgeCountKnown = null;
 var _pollMinimizedTimer = null;
 
+function renderChatDisabledBanner(userId, status) {
+    var footer = document.querySelector('#chatbox-' + userId + ' .bb-chat-footer-zone');
+    if (!footer) return;
+    footer.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;'
+        + 'gap:4px;padding:14px 10px;text-align:center;">'
+        + '<i class="bi bi-exclamation-circle" style="font-size:18px;color:#9ca3af;"></i>'
+        + '<span style="font-size:12.5px;font-weight:600;color:#6b7280;">This person is not available on Borobhai.online</span>'
+        + '</div>';
+}
+
+function checkChatUserStatus(userId) {
+    fetch('/message/user-status/' + userId + '?_=' + Date.now(), {
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (d.disabled) {
+            renderChatDisabledBanner(userId, d.status);
+        } else {
+            var input = document.getElementById('msgInput-' + userId);
+            if (input) {
+                input.disabled = false;
+                input.style.opacity = '1';
+            } else {
+                // ব্যানার বসানো ছিল, এখন স্বাভাবিক ফুটার ফিরিয়ে আনো
+                restoreChatFooter(userId);
+            }
+        }
+    })
+    .catch(function () {
+        var input = document.getElementById('msgInput-' + userId);
+        if (input) { input.disabled = false; input.style.opacity = '1'; }
+    });
+}
+
+function restoreChatFooter(userId) {
+    var footer = document.querySelector('#chatbox-' + userId + ' .bb-chat-footer-zone');
+    if (!footer) return;
+    footer.innerHTML =
+          '<div class="bb-reply-compose" id="replyCompose-' + userId + '">'
+        + '<div style="min-width:0;flex:1;"><div style="font-weight:700;color:#4f46e5;font-size:11px;" id="replyComposeSender-' + userId + '"></div>'
+        + '<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#374151;" id="replyComposeText-' + userId + '"></div></div>'
+        + '<button type="button" onclick="clearReplyTo(' + userId + ')" style="background:transparent;border:none;color:#6b7280;cursor:pointer;font-size:14px;padding:2px 6px;">✕</button>'
+        + '</div>'
+        + '<div id="mediaPreview-' + userId + '" style="margin-bottom:8px;display:none;flex-wrap:wrap;gap:6px;max-height:70px;overflow-y:auto;"></div>'
+        + '<input type="file" id="mediaInput-' + userId + '" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar" style="display:none;" onchange="handleMediaSelect(' + userId + ')">'
+        + '<div style="display:flex;gap:4px;align-items:flex-end;">'
+        + '<button type="button" onclick="document.getElementById(\'mediaInput-' + userId + '\').click()" title="Attach media" style="background:transparent;border:none;color:#4f46e5;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:17px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><i class="bi bi-image-fill"></i></button>'
+        + '<textarea id="msgInput-' + userId + '" placeholder="Aa" rows="1" style="flex:1;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;resize:none;" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendMessageWithMedia(' + userId + ');}" oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,80)+\'px\'"></textarea>'
+        + '<button type="button" class="bb-emoji-btn" data-target="#msgInput-' + userId + '" title="Emoji" style="width:30px;height:30px;flex-shrink:0;font-size:17px;padding:0;display:flex;align-items:center;justify-content:center;"><i class="bi bi-emoji-smile"></i></button>'
+        + '<button onclick="sendMessageWithMedia(' + userId + ')" style="background:#4f46e5;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;width:44px;flex-shrink:0;"><i class="bi bi-send-fill"></i></button>'
+        + '</div>';
+}
+
 function openChatBox(userId, name, pic, lastSeen, isOnline, userHash, skipSave) {
     userHash = userHash || userId;
     if (openChatBoxes[userId]) {
         openChatBoxes[userId].classList.remove('minimized');
         openChatBoxes[userId].classList.remove('bb-chat-highlight');
+        checkChatUserStatus(userId);   // ✅ যোগ করুন
         saveOpenChatsState();
         return;
     }
@@ -4575,7 +4638,9 @@ function openChatBox(userId, name, pic, lastSeen, isOnline, userHash, skipSave) 
         + '<input type="file" id="mediaInput-' + userId + '" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar" style="display:none;" onchange="handleMediaSelect(' + userId + ')">'
         + '<div style="display:flex;gap:4px;align-items:flex-end;">'
         + '<button type="button" onclick="document.getElementById(\'mediaInput-' + userId + '\').click()" title="Attach media" style="background:transparent;border:none;color:#4f46e5;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:17px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><i class="bi bi-image-fill"></i></button>'
-        + '<textarea id="msgInput-' + userId + '" placeholder="Aa" rows="1" style="flex:1;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;resize:none;" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendMessageWithMedia(' + userId + ');}" oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,80)+\'px\'"></textarea>'
+        
+       +'<textarea id="msgInput-' + userId + '" placeholder="Aa" rows="1" disabled style="flex:1;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;resize:none;opacity:.6;" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendMessageWithMedia(' + userId + ');}" oninput="this.style.height=\'auto\';this.style.height=Math.min(this.scrollHeight,80)+\'px\'"></textarea>'
+
         + '<button type="button" class="bb-emoji-btn" data-target="#msgInput-' + userId + '" title="Emoji" style="width:30px;height:30px;flex-shrink:0;font-size:17px;padding:0;display:flex;align-items:center;justify-content:center;"><i class="bi bi-emoji-smile"></i></button>'
         + '<button onclick="sendMessageWithMedia(' + userId + ')" style="background:#4f46e5;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;width:44px;flex-shrink:0;"><i class="bi bi-send-fill"></i></button>'
         + '</div></div>';
@@ -4603,6 +4668,70 @@ function openChatBox(userId, name, pic, lastSeen, isOnline, userHash, skipSave) 
     }, 100);
 }
 
+function loadChat(userId) {
+    currentChatUserId = userId;
+    document.getElementById('chatBox').classList.remove('d-none');
+    document.getElementById('noChatSelected')?.classList.add('d-none');
+
+    // Active state sidebar এ
+    document.querySelectorAll('.bb-conv-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.bb-conv-item[data-user-id="${userId}"]`)?.classList.add('active');
+
+    const box = document.getElementById('messagesContainer');
+    if (box) box.innerHTML = `<div class="text-center text-muted py-4" style="font-size:0.8rem;">
+        <div class="spinner-border spinner-border-sm me-2"></div> Loading...
+    </div>`;
+
+    // ✅ messages + receiver status একসাথে load
+    Promise.all([
+        fetch(`/messages/${userId}/history`, { headers: { 'Accept': 'application/json' } }).then(r => r.json()),
+        fetch(`/messages/user-status/${userId}`, { headers: { 'Accept': 'application/json' } }).then(r => r.json())
+    ])
+    .then(([msgData, statusData]) => {
+        // Messages render
+        if (box) {
+            box.innerHTML = '';
+            if (msgData.messages?.length) {
+                msgData.messages.forEach(m => appendMessage(m));
+            }
+            scrollToBottom();
+        }
+
+        // Receiver info header update
+        if (msgData.receiver) {
+            document.getElementById('chatUserName').textContent  = msgData.receiver.name ?? '';
+            document.getElementById('chatUserAvatar').src        = msgData.receiver.avatar ?? '';
+        }
+
+        // ✅ Input bar — deactivated/deleted হলে disable
+        const inputBar = document.getElementById('msgInputBar');
+        if (!inputBar) return;
+
+        if (statusData.disabled) {
+            inputBar.style.justifyContent = 'center';
+            inputBar.style.padding        = '14px 20px';
+            inputBar.innerHTML = `
+                <div style="
+                    display:flex;align-items:center;justify-content:center;
+                    gap:8px;background:#f1f5f9;border:1px solid #e2e8f0;
+                    padding:12px 20px;border-radius:20px;color:#94a3b8;
+                    font-size:0.82rem;font-weight:500;width:100%;
+                ">
+                    <i class="bi bi-slash-circle"></i>
+                    ${statusData.status === 'deactivated'
+                        ? '🔕 This account is deactivated. Messaging is disabled.'
+                        : '🗑️ This account is scheduled for deletion. Messaging is disabled.'
+                    }
+                </div>`;
+        } else {
+            // ✅ Normal — input restore করো
+            inputBar.style.justifyContent = '';
+            inputBar.style.padding        = '';
+            inputBar.innerHTML = window.defaultInputBarHTML ?? '';
+        }
+    })
+    .catch(err => console.error('loadChat error:', err));
+}
 
 function toggleChatMinimize(userId) {
     var box = openChatBoxes[userId];
@@ -4624,7 +4753,10 @@ function unminimizeChatBox(userId) {
     box.classList.remove('bb-chat-highlight');
     delete _chatUnreadKnown[userId];
     fetchMessages(userId);       // এখনই থ্রেড ফেচ — read মার্ক হবে
+    checkChatUserStatus(userId);   // ✅ যোগ করুন
     startMessagePolling(userId); // normal polling আবার চালু
+    checkChatUserStatus(userId); 
+    if (!skipSave) saveOpenChatsState();
     updateMessengerBadge();      // navbar badge সাথে সাথে আপডেট
     saveOpenChatsState();
 }
@@ -4642,16 +4774,32 @@ function closeChatBox(userId) {
 // ============================================================
 // MESSAGE POLLING — প্রতি ৫ সেকেন্ডে নতুন message fetch
 // ============================================================
+
+
 function startMessagePolling(userId) {
     if (_msgTimers[userId]) clearInterval(_msgTimers[userId]);
-    fetchMessages(userId);  // এখনই একবার
-    _msgTimers[userId] = setInterval(function() { fetchMessages(userId); }, 5000);
+    fetchMessages(userId);
+    checkChatUserStatus(userId);   // ✅ পোলিং শুরুর সাথে সাথেও একবার চেক
+
+    _msgTimers[userId] = setInterval(function () {
+        fetchMessages(userId);
+    }, 5000);
+
+    // ✅ প্রতি ১৫ সেকেন্ডে স্ট্যাটাস আলাদাভাবে recheck (কম ফ্রিকোয়েন্সি, বেশি খরচ না করার জন্য)
+    if (_statusTimers[userId]) clearInterval(_statusTimers[userId]);
+    _statusTimers[userId] = setInterval(function () {
+        checkChatUserStatus(userId);
+    }, 15000);
 }
 
 function stopMessagePolling(userId) {
     if (_msgTimers[userId]) {
         clearInterval(_msgTimers[userId]);
         delete _msgTimers[userId];
+    }
+    if (_statusTimers[userId]) {          // ✅ যোগ করুন
+        clearInterval(_statusTimers[userId]);
+        delete _statusTimers[userId];
     }
 }
 
@@ -4804,67 +4952,64 @@ function renderMessageRow(msg, userId) {
         + '</div>';
 }
 
+function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const msg = input?.value.trim();
+    const recipientId = window.currentChatUserId;
 
-function sendMessage(userId) {
-    var input = document.getElementById('msgInput-' + userId);
-    if (!input) return;
+    if (!msg && !selectedFile) return;
+    if (!recipientId) return;
 
-    var text = input.value.trim();
-    if (!text) return;
-
-    var zone = document.getElementById('msgZone-' + userId);
-    var tempDiv = null;
-
-    if (zone) {
-        var placeholder = document.getElementById('msgPlaceholder-' + userId);
-        if (placeholder) placeholder.remove();
-
-        tempDiv = document.createElement('div');
-        tempDiv.setAttribute('data-msg-id', 'temp-' + Date.now());
-        tempDiv.style.cssText = 'padding:8px 12px;border-radius:10px;margin-bottom:6px;word-wrap:break-word;font-size:12px;max-width:80%;background:#4f46e5;color:#fff;margin-left:auto;';
-        tempDiv.innerHTML = '<div>' + escHtml(text) + '</div><div style="font-size:10px;opacity:.7;margin-top:2px;">Sending...</div>';
-        zone.appendChild(tempDiv);
-        zone.scrollTop = zone.scrollHeight;
-    }
-
-    input.value = '';
-    input.style.height = 'auto';
+    const formData = new FormData();
+    formData.append('recipient_id', recipientId);
+    if (msg) formData.append('message', msg);
+    if (selectedFile) formData.append('media', selectedFile);
+    if (replyToId) formData.append('reply_to_id', replyToId);
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
 
     fetch('/message/send', {
         method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ recipient_id: userId, message: text })
+        body: formData
     })
-    .then(r => r.json())
-    .then(d => {
-        if (d.success) {
-            if (tempDiv) {
-                tempDiv.setAttribute('data-msg-id', d.message_id);
-                var timeDiv = tempDiv.querySelector('div:last-child');
-                if (timeDiv) timeDiv.textContent = 'Just now';
-            }
-            if (zone) {
-                var currentLast = parseInt(zone.getAttribute('data-last-id') || '0');
-                if (d.message_id > currentLast) {
-                    zone.setAttribute('data-last-id', d.message_id);
-                }
-            }
-        } else {
-            if (tempDiv) tempDiv.remove();
-            alert('Error: ' + (d.error || 'Could not send'));
-        }
-    })
-    .catch(err => {
-        console.error('Send error:', err);
-        if (tempDiv) tempDiv.remove();
-        alert('Network error');
-    });
-}
+    .then(async response => {
+        const d = await response.json();
 
+        // ✅ Deactivated/deleted account
+        if (!d.success && d.disabled) {
+            const inputBar = document.getElementById('msgInputBar');
+            if (inputBar) {
+                inputBar.style.justifyContent = 'center';
+                inputBar.style.padding = '14px 20px';
+                inputBar.innerHTML = `
+                    <div style="
+                        display:flex;align-items:center;justify-content:center;
+                        gap:8px;background:#f1f5f9;border:1px solid #e2e8f0;
+                        padding:12px 20px;border-radius:20px;color:#94a3b8;
+                        font-size:0.82rem;font-weight:500;width:100%;
+                    ">
+                        <i class="bi bi-slash-circle"></i>
+                        ${d.status === 'deactivated'
+                            ? '🔕 This account is deactivated. Messaging is disabled.'
+                            : '🗑️ This account is scheduled for deletion. Messaging is disabled.'
+                        }
+                    </div>`;
+            }
+            return;
+        }
+
+        if (!d.success) return;
+
+        // ✅ Success — বাকি অপরিবর্তিত
+        input.value = '';
+        selectedFile = null;
+        replyToId = null;
+        document.getElementById('replyPreview')?.remove();
+        document.getElementById('filePreview')?.remove();
+        appendMessage(d.message);
+        scrollToBottom();
+    })
+    .catch(err => console.error('Send error:', err));
+}
 
 function escHtml(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -5867,7 +6012,11 @@ function sendMessageWithMedia(userId) {
             updateMediaPreview(userId);
             clearReplyTo(userId);
             setTimeout(() => fetchMessages(userId), 1000);
-        } else alert('Error: ' + (d.error || 'Send failed'));
+        } else if (d.disabled) {
+            renderChatDisabledBanner(userId, d.status);   // ✅ এই সেটাই স্ক্রিনশটে কাজ করেছিল
+        } else {
+            alert('Error: ' + (d.message || d.error || 'Send failed'));
+        }
     })
     .catch(err => alert('Network error'));
 }

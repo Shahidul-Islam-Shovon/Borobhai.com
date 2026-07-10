@@ -310,9 +310,7 @@
                 <a href="#" id="googleSignup" class="btn-social" onclick="return socialSignup(event, 'google')">
                     <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google"> Sign up with Google
                 </a>
-                <a href="#" id="facebookSignup" class="btn-social fb-btn" onclick="return socialSignup(event, 'facebook')">
-                    <i class="fa-brands fa-facebook"></i> Sign up with Facebook
-                </a>
+              
             </div>
 
             <div class="auth-divider">or sign up with email</div>
