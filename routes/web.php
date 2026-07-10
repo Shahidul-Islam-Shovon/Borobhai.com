@@ -29,6 +29,11 @@ Route::get('/', function () {
     return app(PostController::class)->index();
 })->middleware(['auth', 'verified'])->name('home');
 
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/student/dashboard', [PostController::class, 'index'])->name('student.dashboard');
+    Route::get('/alumni/dashboard', [PostController::class, 'index'])->name('alumni.dashboard');
+});
+
 Route::get('/dashboard', function () {
     return redirect()->route('home');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -40,8 +45,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/dashboard',                 [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/analytics-data',  [AdminDashboardController::class, 'getAnalyticsData'])->name('dashboard.analytics');
     Route::get('/reports/history',           [AdminDashboardController::class, 'reportHistory'])->name('reports.history');
-
-    // admin routes এ
     Route::get('/reports/poll', [AdminDashboardController::class, 'pollReports'])->name('reports.poll');
 
     Route::post('/users/{id}/change-role',   [AdminDashboardController::class, 'changeUserRole'])->name('users.change-role');
@@ -52,7 +55,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/circulars/{id}/delete',  [AdminDashboardController::class, 'deleteCircular'])->name('circulars.delete');
     Route::post('/manage-authority',         [AdminDashboardController::class, 'manageAuthority'])->name('manage.authority');
 
-    // Reports — action routes
     Route::post('/reports/{id}/warn',             [AdminDashboardController::class, 'warnUser'])->name('reports.warn');
     Route::post('/reports/{id}/dismiss',          [AdminDashboardController::class, 'dismissReport'])->name('reports.dismiss');
     Route::post('/reports/{id}/mark-seen',        [AdminDashboardController::class, 'markSeen'])->name('reports.markSeen');
@@ -69,18 +71,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/reports/{hashid}/decision',  [\App\Http\Controllers\ReportDecisionController::class, 'show'])->name('reports.decision');
     Route::post('/reports/{hashid}/appeal',   [\App\Http\Controllers\ReportDecisionController::class, 'appeal'])->name('reports.appeal');
-});
-
-
-
-// ==========================================
-// LEGACY DASHBOARD ROUTES
-// ==========================================
-Route::middleware(['auth', 'role:student'])->prefix('student')->group(function () {
-    Route::get('/dashboard', [PostController::class, 'index'])->name('student.dashboard');
-});
-Route::middleware(['auth', 'role:alumni'])->prefix('alumni')->group(function () {
-    Route::get('/dashboard', [PostController::class, 'index'])->name('alumni.dashboard');
 });
 
 // Breeze auth routes
@@ -121,11 +111,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/document',            [DocumentController::class, 'store'])->name('profile.document.store');
     Route::delete('/profile/document/{id}',     [DocumentController::class, 'destroy'])->name('profile.document.delete');
 
-    // ⚠️ {user} routes (hashid) — static এর পরে
     Route::get('/profile/{user}/tab/content',   [ProfileController::class, 'tabContent'])->name('profile.tab.user');
     Route::get('/profile/{user}', [ProfileController::class, 'show'])->name('profile.view');
-    // ---------- FEED ----------
 
+    // ---------- FEED ----------
     Route::post('/presence/offline', [PostController::class, 'goOffline'])->name('presence.offline');
 
     Route::get('/feed/load',                    [PostController::class, 'loadMore'])->name('feed.load');
@@ -134,28 +123,26 @@ Route::middleware('auth')->group(function () {
     Route::delete('/posts/{id}',                [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/posts/{id}/share',            [PostController::class, 'share'])->name('posts.share');
     Route::post('/posts/{post}/save',           [SavedPostController::class, 'toggle'])->name('posts.save');
-   
+
     Route::get('/saved',                        [SavedPostController::class, 'index'])->name('saved.index');
-    //LIVE COUNTS
     Route::get('/feed/live-counts', [PostController::class, 'liveCounts'])->name('feed.liveCounts');
 
     // ---------- JOBS ----------
-    Route::post('/jobs',                        [JobController::class, 'store'])->name('jobs.store');
+    Route::post('/jobs',                        [JobController::class, 'store'])->name('jobs.store')->middleware('role:alumni,teacher');
     Route::get('/jobs',                         [JobController::class, 'all'])->name('jobs.all');
     Route::get('/my-applications',              [JobApplicationController::class, 'myApplications'])->name('jobs.myApplications');
-    Route::get('/my-applications/live-status', [JobApplicationController::class, 'liveStatus'])->name('jobs.myApplications.live');
-    Route::get('/jobs/{id}/applicants/live', [JobApplicationController::class, 'applicantsLive'])->name('jobs.applicants.live');
-    Route::get('/jobs/{id}/data',               [JobController::class, 'getJob'])->name('jobs.data');
-    Route::get('/jobs/{id}/report', [JobController::class, 'downloadReport'])->name('jobs.report');
-    Route::post('/jobs/{id}/save',              [JobController::class, 'toggleSave'])->name('jobs.save');
-    Route::post('/jobs/{id}/apply',             [JobApplicationController::class, 'apply'])->name('jobs.apply');
-    Route::post('/jobs/{id}/withdraw',          [JobApplicationController::class, 'withdraw'])->name('jobs.withdraw');
-    Route::get('/jobs/{id}/applicants',         [JobApplicationController::class, 'applicants'])->name('jobs.applicants');
+    Route::get('/my-applications/live-status',  [JobApplicationController::class, 'liveStatus'])->name('jobs.myApplications.live');
+    Route::get('/jobs/{id}/applicants/live',    [JobApplicationController::class, 'applicantsLive'])->name('jobs.applicants.live');
+    Route::get('/jobs/{id}/data',                [JobController::class, 'getJob'])->name('jobs.data');
+    Route::get('/jobs/{id}/report',              [JobController::class, 'downloadReport'])->name('jobs.report');
+    Route::post('/jobs/{id}/save',               [JobController::class, 'toggleSave'])->name('jobs.save');
+    Route::post('/jobs/{id}/apply',              [JobApplicationController::class, 'apply'])->name('jobs.apply');
+    Route::post('/jobs/{id}/withdraw',           [JobApplicationController::class, 'withdraw'])->name('jobs.withdraw');
+    Route::get('/jobs/{id}/applicants',          [JobApplicationController::class, 'applicants'])->name('jobs.applicants');
 
-    // পরে
     Route::post('/applications/{application}/status', [JobApplicationController::class, 'updateStatus'])->name('jobs.application.status');
 
-    Route::delete('/jobs/{id}',                 [JobController::class, 'destroy'])->name('jobs.delete');
+    Route::delete('/jobs/{id}',                 [JobController::class, 'destroy'])->name('jobs.delete')->middleware('role:alumni,teacher');
     Route::get('/jobs/{id}',                    [JobController::class, 'show'])->name('jobs.show');
 
     // ---------- LIKES + COMMENTS ----------
@@ -170,8 +157,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/active-now',                   [PostController::class, 'activeNow'])->name('active.now');
     Route::post('/heartbeat', [PostController::class, 'heartbeat'])->name('heartbeat');
     Route::get('/friends/messenger-contacts', [\App\Http\Controllers\PostController::class, 'messengerContacts'])
-    ->name('friends.messengerContacts');
-
+        ->name('friends.messengerContacts');
 
     // ---------- SEARCH ----------
     Route::get('/search',                       [SearchController::class, 'index'])->name('search.index');
@@ -187,7 +173,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/blocked', [FriendController::class, 'blockedList'])->name('blocked');
         Route::get('/{userId}/mutual',          [FriendController::class, 'mutualFriends'])->name('mutual');
         Route::get('/status/{userId}',          [FriendController::class, 'statusWith'])->name('status');
-       
+
         Route::post('/send',                    [FriendController::class, 'sendRequest'])->name('send');
         Route::post('/accept',                  [FriendController::class, 'acceptRequest'])->name('accept');
         Route::post('/decline',                 [FriendController::class, 'declineRequest'])->name('decline');
@@ -195,31 +181,27 @@ Route::middleware('auth')->group(function () {
         Route::post('/unfriend',                [FriendController::class, 'unfriend'])->name('unfriend');
         Route::post('/block',                   [FriendController::class, 'block'])->name('block');
         Route::post('/unblock',                 [FriendController::class, 'unblock'])->name('unblock');
-        Route::post('/not-interested',     [FriendController::class, 'notInterested']);
+        Route::post('/not-interested',          [FriendController::class, 'notInterested']);
     });
 
     // ---------- MESSAGING ----------
     Route::post('/message/send', [MessageController::class, 'send'])->name('message.send');
     Route::get('/message/thread/{userId}', [MessageController::class, 'thread'])->name('message.thread');
     Route::get('/message/unread-count', [MessageController::class, 'unreadCount'])->name('message.unreadCount');
-
-    Route::post('/message/send', [MessageController::class, 'send'])->name('message.send');
-    Route::get('/message/thread/{userId}', [MessageController::class, 'thread'])->name('message.thread');
     Route::get('/message/conversations', [MessageController::class, 'conversations'])->name('message.conversations');
     Route::post('/message/{id}/edit', [MessageController::class, 'editMessage'])->name('message.edit');
     Route::post('/message/{id}/delete', [MessageController::class, 'deleteMessage'])->name('message.delete');
-    Route::get('/message/unread-count', [MessageController::class, 'unreadCount'])->name('message.unreadCount');
     Route::post('/message/{id}/react', [MessageController::class, 'reactMessage'])->name('message.react');
-    Route::post('/message/share', [MessageController::class, 'shareToMessenger']);
+    Route::post('/message/share', [MessageController::class, 'shareToMessenger'])->name('message.share');
 
-    Route::post('/message/{id}/forward', [MessageController::class, 'forwardMessage']);
-    Route::get('/message/thread/{userId}/older', [MessageController::class, 'olderMessages']);
-    Route::get('/message/thread/{userId}/search', [MessageController::class, 'searchThread']);
-    Route::get('/message/thread/{userId}/media', [MessageController::class, 'threadMedia']);
+    Route::post('/message/{id}/forward', [MessageController::class, 'forwardMessage'])->name('message.forward');
+    Route::get('/message/thread/{userId}/older', [MessageController::class, 'olderMessages'])->name('message.thread.older');
+    Route::get('/message/thread/{userId}/search', [MessageController::class, 'searchThread'])->name('message.thread.search');
+    Route::get('/message/thread/{userId}/media', [MessageController::class, 'threadMedia'])->name('message.thread.media');
 
-    Route::post('/message/conversations/{userId}/mute', [MessageController::class, 'toggleMute']);
-    Route::post('/message/conversations/{userId}/delete-chat', [MessageController::class, 'deleteChatForMe']);
-    Route::get('/message/conversations/{userId}/export', [MessageController::class, 'exportChatHtml']);
+    Route::post('/message/conversations/{userId}/mute', [MessageController::class, 'toggleMute'])->name('message.conversations.mute');
+    Route::post('/message/conversations/{userId}/delete-chat', [MessageController::class, 'deleteChatForMe'])->name('message.conversations.deleteChat');
+    Route::get('/message/conversations/{userId}/export', [MessageController::class, 'exportChatHtml'])->name('message.conversations.export');
 
     // ---------- REPORT ----------
     Route::post('/report',                      [ReportController::class, 'store'])->name('report.store');

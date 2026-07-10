@@ -34,13 +34,10 @@ trait HasHashid
     }
 
     /** hashid string → raw id */
-    public static function decodeHashid($value): ?int
+    public static function decodeHashid($hashid): int
     {
-        $decoded = Hashids::decode($value);
-        if (! empty($decoded)) {
-            return (int) $decoded[0];
-        }
-        // ⚠️ migration fallback — সব module hashid পেলে শেষ ধাপে এই লাইন মুছে দাও
-        return ctype_digit((string) $value) ? (int) $value : null;
+        $decoded = Hashids::decode((string) $hashid);   // ✅ Vinkla Hashids — trait এর getRouteKey() এর সাথে মিলে যায়
+        abort_if(empty($decoded), 404);
+        return (int) $decoded[0];
     }
 }

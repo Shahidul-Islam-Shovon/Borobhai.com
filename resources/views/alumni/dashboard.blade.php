@@ -2664,7 +2664,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg postjob-dialog">
         <div class="modal-content border-0 shadow-lg rounded-4 postjob-content">
             <div class="modal-header border-bottom">
-                <h5 class="modal-title fw-bold" id="postJobModalTitle"><i class="bi bi-briefcase-fill text-primary me-1"></i> Post A Job</h5>
+                <h5 class="modal-title fw-bold" id="postJobModalTitle"><i class="bi bi-briefcase-fill text-primary me-1"></i></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="postJobForm" class="postjob-form">

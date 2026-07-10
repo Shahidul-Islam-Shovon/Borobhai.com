@@ -1131,7 +1131,7 @@
     </div>
 
     {{-- ===== MY JOB POSTS (alumni only) ===== --}}
-    @if($isAlumni)
+    @if($isAlumni || $isTeacher)
     <div class="bb-card">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="bb-card-title m-0"><i class="bi bi-briefcase"></i> Job Posts {{ $totalJobCount ? '· '.$totalJobCount : '' }}</h2>
@@ -3981,7 +3981,7 @@ function highlightMentions(text) {
 </script>
 
 
-@if($isAlumni)
+@if($isAlumni || $isTeacher)
 {{-- ==================== POST A JOB MODAL (profile edit) ==================== --}}
 <div class="modal fade" id="postJobModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg postjob-dialog">

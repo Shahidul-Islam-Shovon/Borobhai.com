@@ -39,7 +39,7 @@ class ProfileController extends Controller
 
         // alumni হলে মোট job সংখ্যা (৫টার বেশি থাকলে "View all" দেখানোর জন্য)
         $totalJobCount = 0;
-        if ($user->role === 'alumni') {
+        if (in_array($user->role, ['alumni', 'teacher'])) {
             $totalJobCount = $user->jobPosts()->withTrashed()->count();
         }
 

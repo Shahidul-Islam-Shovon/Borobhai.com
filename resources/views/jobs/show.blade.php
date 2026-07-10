@@ -237,7 +237,7 @@
             </div>
             <div class="jp-poster-name">
                 {{ $job->user->name }}
-                <small>Alumni · posted {{ $job->created_at->diffForHumans() }}</small>
+               <small>{{ ucfirst($job->user->role) }} · posted {{ $job->created_at->diffForHumans() }}</small>
             </div>
         </div>
     </div>

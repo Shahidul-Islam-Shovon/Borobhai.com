@@ -17,91 +17,53 @@ class JobController extends Controller
     // ==========================================
     public function store(Request $request)
     {
-        if (Auth::user()->role !== 'alumni') {
-            return response()->json(['success' => false, 'message' => 'Only alumni can post jobs.'], 403);
+        if (!in_array(Auth::user()->role, ['alumni', 'teacher'])) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. Only alumni and teachers can post jobs.'], 403);
         }
 
-        $request->merge([
-            'deadline' => $request->deadline ?: null,
+        $validated = $request->validate([
+            'title'         => 'required|string|max:255',
+            'company'       => 'required|string|max:255',
+            'location'      => 'nullable|string|max:255',
+            'job_type'      => 'required|in:Full-time,Part-time,Remote,Internship,Contract,Freelance',
+            'salary'        => 'nullable|string|max:100',
+            'experience'    => 'nullable|string|max:100',
+            'category'      => 'nullable|string|max:100',
+            'deadline'      => 'nullable|date',
+            'description'   => 'required|string',
+            'requirements'  => 'nullable|string',
+            'skills'        => 'nullable|string',
+            'apply_type'    => 'nullable|in:link,email',
+            'apply_value'   => 'nullable|string|max:500',
         ]);
 
-        $applyRule = $request->apply_type === 'email'
-            ? 'required|email:rfc|max:255'
-            : 'required|url|max:255';
+        $jobId = $request->input('id');
 
-        if ($request->apply_type === 'link' && $request->filled('apply_value')) {
-            $val = trim($request->apply_value);
-            if (!preg_match('#^https?://#i', $val)) {
-                $request->merge(['apply_value' => 'https://' . $val]);
+        if ($jobId) {
+            // ===== UPDATE =====
+            $realId = JobPost::decodeHashid($jobId);
+            $job = JobPost::withTrashed()->findOrFail($realId);
+            if ($job->user_id !== Auth::id()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
             }
-        }
-
-        try {
-            $data = $request->validate([
-                'id'           => 'nullable|string',   // ⬅️ এখন hashid string (raw int নয়)
-                'title'        => 'required|string|max:255',
-                'company'      => 'required|string|max:255',
-                'location'     => 'nullable|string|max:255',
-                'job_type'     => 'required|string|max:50',
-                'experience'   => 'nullable|string|max:100',
-                'salary'       => 'nullable|string|max:100',
-                'description'  => 'required|string|max:5000',
-                'requirements' => 'nullable|string|max:5000',
-                'skills'       => 'nullable|string|max:500',
-                'apply_type'   => 'required|in:link,email',
-                'apply_value'  => $applyRule,
-                'deadline'     => 'nullable|date|after_or_equal:today',
-                'category'     => 'nullable|string|max:100',
-            ], [
-                'apply_value.email'       => 'Please enter a valid email address.',
-                'apply_value.url'         => 'Please enter a valid website link (e.g. https://...).',
-                'deadline.after_or_equal' => 'Deadline must be today or a future date.',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['success' => false, 'errors' => $e->errors()], 422);
-        }
-
-        $isNew = !$request->filled('id');
-
-        if (!$isNew) {
-            // edit — hidden field এর hashid decode করে নিজের job খুঁজি
-            $realId = JobPost::decodeHashid($request->id);
-            $job = JobPost::where('id', $realId)->where('user_id', Auth::id())->firstOrFail();
+            $job->update($validated);
+            $job = $job->fresh()->load('user');
+            $message = 'Job updated successfully!';
         } else {
-            $job = new JobPost();
-            $job->user_id = Auth::id();
+            // ===== CREATE =====
+            $validated['user_id'] = Auth::id();
+            $job = JobPost::create($validated);
+            $job->load('user');
+            $message = 'Job posted successfully!';
         }
-
-        $job->fill($data);          // 'id' fillable নয় → নিরাপদে উপেক্ষা হবে
-        $job->status = 'active';
-        $job->save();
-
-        if ($isNew) {
-            $friendIds = Friendship::friendIds(Auth::id());
-            foreach ($friendIds as $friendId) {
-                BbNotification::send(
-                    $friendId,
-                    Auth::id(),
-                    'new_job',
-                    Auth::user()->name . ' posted a new job: ' . Str::limit($job->title, 50),
-                    'job',
-                    $job->id
-                );
-            }
-        }
-
-        $fresh = $job->fresh();
-        $fresh->load('user');
-
-        $html        = view('partials.job-card', ['job' => $fresh])->render();
-        $profileHtml = view('partials.myjob-item', ['job' => $fresh])->render();
 
         return response()->json([
             'success'      => true,
-            'message'      => 'Job posted successfully!',
-            'job_id'       => $job->getRouteKey(),   // ⬅️ hashid (DOM card targeting consistent থাকবে)
-            'html'         => $html,
-            'profile_html' => $profileHtml,
+            'message'      => $message,
+            'job'          => $job,
+            'job_id'       => $job->getRouteKey(),
+            'html'         => view('partials.job-card', ['job' => $job, 'appliedJobIds' => []])->render(),
+            'profile_html' => view('partials.myjob-item', ['job' => $job])->render(),
         ]);
     }
 

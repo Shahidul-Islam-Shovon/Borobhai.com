@@ -51,7 +51,7 @@ class PostController extends Controller
 
         $feedItems   = $feed['items'];
         $hasMore     = $feed['has_more'];
-        $canPostJobs = $user->role === 'alumni';
+        $canPostJobs = in_array(Auth::user()->role, ['alumni', 'teacher']);
 
         // Active Now — 3 ঘন্টার মধ্যে active friends
         // Active Now — 3 ঘন্টার মধ্যে active friends (activeNow() এর সাথে মিলিয়ে)
