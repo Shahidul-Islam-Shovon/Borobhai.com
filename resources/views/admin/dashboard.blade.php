@@ -536,16 +536,15 @@ $(document).ready(function () {
     if ($('#jobsTable').length && !$.fn.DataTable.isDataTable('#jobsTable')) {
         $('#jobsTable').DataTable({ pageLength: 10, order: [], columnDefs: [{ orderable: false, targets: [0, 4, 5] }], language: { search: 'Search jobs:' } });
     }
-    if ($('#historyTable').length && !$.fn.DataTable.isDataTable('#historyTable')) {
-        $('#historyTable').DataTable({ pageLength: 10, order: [], columnDefs: [{ orderable: false, targets: [0, 4, 6] }], language: { search: 'Search history:' } });
-    }
+    
     if ($('#historyTable').length && !$.fn.DataTable.isDataTable('#historyTable')) {
     $('#historyTable').DataTable({
         pageLength: 10,
-        order: [[5, 'desc']],   // ✅ Resolved At অনুযায়ী নতুন→পুরাতন সবসময় সর্ট
+        order: [[5, 'desc']],
         columnDefs: [{ orderable: false, targets: [0, 4, 6] }],
         language: { search: 'Search history:' }
     });
+
 }
 });
 
@@ -759,7 +758,6 @@ function addHistoryRowLive(html) {
     const tbody = document.querySelector('#historyTable tbody');
     if (!tbody) return;
 
-    // ✅ <tr> কে সঠিক table/tbody কনটেক্সটে পার্স করা — jQuery raw string parsing এর whitespace bug এড়াতে
     const wrapper = document.createElement('table');
     wrapper.innerHTML = `<tbody>${html.trim()}</tbody>`;
     const trNode = wrapper.querySelector('tr');
@@ -767,18 +765,18 @@ function addHistoryRowLive(html) {
 
     if ($.fn.DataTable.isDataTable('#historyTable')) {
         const table = $('#historyTable').DataTable();
-        table.row.add(trNode).draw(false);
+        table.row.add(trNode);
+        table.order([5, 'desc']).draw();   // ✅ প্রতিবার নতুন রো যোগের পর Resolved At অনুযায়ী আবার সর্ট — তাই সবার আগে বসবে
 
         const historyTabEl = document.getElementById('history-tab');
         if (historyTabEl && historyTabEl.classList.contains('active')) {
-            table.columns.adjust().draw(false);
+            table.columns.adjust();
         }
     } else {
-        tbody.appendChild(trNode);
+        tbody.insertBefore(trNode, tbody.firstChild);   // ✅ DataTable init না থাকলেও সবার আগে বসবে
     }
 
     document.querySelector('#history-tab .text-center.py-5')?.remove();
-
     setHistoryBadge(historyUnseenCount + 1);
 }
 
@@ -982,27 +980,14 @@ function pollReports() {
 
         // ✅ নতুন/updated history rows
         (d.history_rows || []).forEach(item => {
-            const existing = document.querySelector(`[data-report-id="${item.id}"]`);
-            const wrapper  = document.createElement('table');
-            wrapper.innerHTML = `<tbody>${item.html}</tbody>`;
-            const trNode = wrapper.querySelector('tr');
-            if (!trNode) return;
-
-            if ($.fn.DataTable.isDataTable('#historyTable')) {
-                const dt = $('#historyTable').DataTable();
-                if (existing) {
-                    // update existing row
-                    dt.row(existing).remove();
+            document.querySelectorAll(`[data-report-id="${item.id}"]`).forEach(row => {
+                if ($.fn.DataTable.isDataTable('#historyTable')) {
+                    $('#historyTable').DataTable().row(row).remove();
+                } else {
+                    row.remove();
                 }
-                dt.row.add(trNode).draw(false);
-            } else {
-                const tbody = document.querySelector('#historyTable tbody');
-                if (tbody) {
-                    if (existing) existing.remove();
-                    tbody.appendChild(trNode);
-                }
-            }
-            document.querySelector('#history-tab .text-center.py-5')?.remove();
+            });
+            addHistoryRowLive(item.html);
         });
 
         // ✅ Badge/count live update
