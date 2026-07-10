@@ -114,6 +114,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/{user}/tab/content',   [ProfileController::class, 'tabContent'])->name('profile.tab.user');
     Route::get('/profile/{user}', [ProfileController::class, 'show'])->name('profile.view');
 
+
+    Route::get('/muted-accounts',              [\App\Http\Controllers\MutedUserController::class, 'index'])->name('muted.index');
+    
+    Route::post('/muted-accounts/{userId}/unmute', [\App\Http\Controllers\MutedUserController::class, 'unmute'])->name('muted.unmute');
+
     // ---------- FEED ----------
     Route::post('/presence/offline', [PostController::class, 'goOffline'])->name('presence.offline');
 

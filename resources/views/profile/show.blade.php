@@ -717,6 +717,9 @@
                     <button class="bb-edit-profile-btn" onclick="openEditModal()">
                         <i class="bi bi-pencil-fill"></i> Edit Profile
                     </button>
+                    <a href="{{ route('muted.index') }}" class="bb-edit-profile-btn" style="background:#fff;color:#4f46e5;border:1.5px solid #4f46e5;text-decoration:none;">
+                        <i class="bi bi-volume-mute-fill"></i> Muted Accounts
+                    </a>
                 </div>
             @elseif($isAdminReviewMode ?? false)
                 {{-- Admin Review Mode — Add Friend ও Report দুটোই হাইড, শুধু ভিউ --}}

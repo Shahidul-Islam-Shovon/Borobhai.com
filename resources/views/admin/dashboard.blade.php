@@ -997,7 +997,7 @@ function pollReports() {
         if (hasNewContent || hasNewJob) {
             Toast.fire({
                 icon: 'warning',
-                title: `🚨 New report${(hasNewContent && hasNewJob) ? 's' : ''} received!`
+                title: `🚨 New report${(hasNewContent && hasNewJob) ? 's' : ''} received! Please Reload The Page`
             });
         }
     })
