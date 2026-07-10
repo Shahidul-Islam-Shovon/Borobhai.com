@@ -37,6 +37,9 @@ class ProfileController extends Controller
         $isAdminReviewMode = !$isOwner && (Auth::user()->role === 'admin' || Auth::user()->isSuperAdmin());
         $postCount = Post::where('user_id', $user->id)->count();
 
+        // ✅ Connections (accepted friends) সংখ্যা
+        $connectionCount = count(Friendship::friendIds($user->id));
+
         // alumni হলে মোট job সংখ্যা (৫টার বেশি থাকলে "View all" দেখানোর জন্য)
         $totalJobCount = 0;
         if (in_array($user->role, ['alumni', 'teacher'])) {

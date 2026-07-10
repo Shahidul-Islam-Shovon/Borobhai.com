@@ -814,7 +814,7 @@
 
                     <div class="bb-stat-row">
                         <div class="bb-stat"><b>{{ $postCount }}</b><span>Posts</span></div>
-                        <div class="bb-stat"><b>0</b><span>Connections</span></div>
+                        <div class="bb-stat"><b>{{ count(\App\Models\Friendship::friendIds($user->id)) }}</b><span>Connections</span></div>
                     </div>
             {{-- friend end --}}
            
